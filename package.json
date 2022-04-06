@@ -1,0 +1,16 @@
+{
+  "name": "subgraph",
+  "version": "0.1.0",
+  "scripts": {
+    "create": "graph create ajna-finance/subgraph --node https://api.thegraph.com/deploy/",
+    "create-local": "graph create ajna-finance/subgraph --node http://0.0.0.0:8020",
+    "codegen": "graph codegen --output-dir src/types/",
+    "build": "graph build",
+    "deploy": "graph deploy ajna-finance/subgraph --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-local": "graph deploy ajna-finance/subgraph --ipfs http://0.0.0.0:5001 --node http://0.0.0.0:8020"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.29.0",
+    "@graphprotocol/graph-ts": "^0.26.0"
+  }
+}
