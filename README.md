@@ -10,11 +10,18 @@ This repository doesn't index the GrantFund contract found [here](https://github
 
 Commands for adding new data sources to the subgraph are listed in the [add-commands.txt](./add-commands.txt) file.
 
-This subgraph can be run locally, with instructions available in the [Graph Protocols Documentation](https://thegraph.com/docs/en/cookbook/quick-start/).
+This subgraph can be run locally using provided docker containers. To start, set the environment variable *ETH_RPC_URL* in your .env file. Then, run `docker-compose up`. Once the node is running, deploy the subgraph with:
+```
+npm run build
+npm run create-local
+npm run deploy-local
+```
+
+Instructions on creating your own deployment are available in the [Graph Protocols Documentation](https://thegraph.com/docs/en/cookbook/quick-start/).
 
 ## Tests
 
-Tests are written using the [Matchstick unit testing framework](https://github.com/LimeChain/matchstick/blob/main/README.md). Tests require a local graph node to be available for saving artifacts used in the tests.
+Tests are written using the [Matchstick unit testing framework](https://github.com/LimeChain/matchstick/blob/main/README.md).
 
 Run the Matchstick tests by executing: 
 ```
