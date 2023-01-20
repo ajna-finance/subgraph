@@ -14,8 +14,5 @@
     "@graphprotocol/graph-cli": "0.37.6",
     "@graphprotocol/graph-ts": "0.29.1"
   },
-  "devDependencies": { "matchstick-as": "0.5.0" },
-  "resolutions": {
-    "@graphprotocol/graph-cli/gluegun/ejs": "^3.1.7"
-  }
+  "devDependencies": { "matchstick-as": "0.5.0" }
 }
