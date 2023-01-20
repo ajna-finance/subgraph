@@ -1,0 +1,12 @@
+# Goerli ERC20PoolFactory
+graph add 0xbF332da94B818AC7972484997100c8cBB400b991 --abi ../contracts/forge_out/ERC20PoolFactory.sol/ERC20PoolFactory.json --contract-name ERC20PoolFactory
+
+# Goerli ERC721PoolFactory
+graph add 0x0bBd35022094a75b5A58A2E6Fa6F1989A0F682F5 --abi ../contracts/forge_out/ERC721PoolFactory.sol/ERC721PoolFactory.json --contract-name ERC721PoolFactory
+
+# Goerli PositionManager
+graph add 0x235162AF9407e485DeB9E2f65CDC621B087B540C --abi ../contracts/forge_out/PositionManager.sol/PositionManager.json --contract-name PositionManager
+
+# Goerli RewardsManager
+graph add 0x6757ccD59eCD0088f01c5F2d4992258CB12cC376 --abi ../contracts/forge_out/RewardsManager.sol/RewardsManager.json --contract-name RewardsManager
+

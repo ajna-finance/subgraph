@@ -1,3 +1,3 @@
-# Ajna Subgraph
+## Does not include GrantFund as that should be handled by a different subgraph
 
-An example to help you get started with The Graph. For more information see the docs on <https://thegraph.com/docs/>.
+## PoolInfoUtils isn't necessary as there are no entities to index
