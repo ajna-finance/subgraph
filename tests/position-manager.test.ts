@@ -36,22 +36,22 @@ describe("Describe entity assertions", () => {
   test("Approval created and stored", () => {
     assert.entityCount("Approval", 1)
 
-    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a is the default address used in newMockEvent() function
+    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
     assert.fieldEquals(
       "Approval",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "owner",
       "0x0000000000000000000000000000000000000001"
     )
     assert.fieldEquals(
       "Approval",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "approved",
       "0x0000000000000000000000000000000000000001"
     )
     assert.fieldEquals(
       "Approval",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "tokenId",
       "234"
     )

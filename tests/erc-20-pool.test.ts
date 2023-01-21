@@ -40,28 +40,28 @@ describe("Describe entity assertions", () => {
   test("AddCollateral created and stored", () => {
     assert.entityCount("AddCollateral", 1)
 
-    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a is the default address used in newMockEvent() function
+    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
     assert.fieldEquals(
       "AddCollateral",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "actor",
       "0x0000000000000000000000000000000000000001"
     )
     assert.fieldEquals(
       "AddCollateral",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "price",
       "234"
     )
     assert.fieldEquals(
       "AddCollateral",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
       "234"
     )
     assert.fieldEquals(
       "AddCollateral",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwarded",
       "234"
     )

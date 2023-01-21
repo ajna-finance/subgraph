@@ -32,10 +32,10 @@ describe("Describe entity assertions", () => {
   test("PoolCreated created and stored", () => {
     assert.entityCount("PoolCreated", 1)
 
-    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a is the default address used in newMockEvent() function
+    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
     assert.fieldEquals(
       "PoolCreated",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "pool_",
       "0x0000000000000000000000000000000000000001"
     )

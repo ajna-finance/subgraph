@@ -44,34 +44,34 @@ describe("Describe entity assertions", () => {
   test("ClaimRewards created and stored", () => {
     assert.entityCount("ClaimRewards", 1)
 
-    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a is the default address used in newMockEvent() function
+    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
     assert.fieldEquals(
       "ClaimRewards",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "owner",
       "0x0000000000000000000000000000000000000001"
     )
     assert.fieldEquals(
       "ClaimRewards",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "ajnaPool",
       "0x0000000000000000000000000000000000000001"
     )
     assert.fieldEquals(
       "ClaimRewards",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "tokenId",
       "234"
     )
     assert.fieldEquals(
       "ClaimRewards",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "epochsClaimed",
       "[234]"
     )
     assert.fieldEquals(
       "ClaimRewards",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
       "234"
     )
