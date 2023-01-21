@@ -23,7 +23,7 @@ jobs:
       - name: Build Subgraph
         run: |
           yarn codegen
-          yard build
+          yarn build
 
       - name: Run Tests
         run: yarn test
