@@ -1,3 +1,21 @@
+type ERC20PoolFactory @entity {
+  # factory address
+  id: Bytes!
+  # number of pools deployed by the factory
+  poolCount: BigInt!
+}
+
+type Pool @entity {
+  # pool address
+  id: Bytes!
+  # block pool was created at
+  createdAtBlockNumber: BigInt!
+  # creation timestamp
+  createdAtTimestamp: BigInt!  
+  # total number of transactions
+  txCount: BigInt!
+}
+
 type AddCollateral @entity(immutable: true) {
   id: Bytes!
   actor: Bytes! # address

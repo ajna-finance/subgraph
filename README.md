@@ -10,6 +10,12 @@ This repository doesn't index the GrantFund contract found [here](https://github
 
 Commands for adding new data sources to the subgraph are listed in the [add-commands.txt](./add-commands.txt) file.
 
+Once data sources have been added, entites can be modified in the [schema.graphql](./schema.graphql) file. After any update, the following commands must be run to ensure the new types are available for the event handlers:
+```
+npm run codegen
+npm run build
+```
+
 This subgraph can be run locally using provided docker containers. To start, set the environment variable *ETH_RPC_URL* in your .env file. Then, run `docker-compose up`. Once the node is running, deploy the subgraph with:
 ```
 npm run build
@@ -26,4 +32,19 @@ Tests are written using the [Matchstick unit testing framework](https://github.c
 Run the Matchstick tests by executing: 
 ```
 npm run test
+```
+
+## Querying
+
+Below are some examples of queries that can be made to the Ajna Subgraph.
+
+```
+{
+    pools {
+        id
+        createdAtBlockNumber
+        createdAtTimestamp
+        txCount
+    }
+}
 ```
