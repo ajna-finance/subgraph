@@ -23,12 +23,14 @@ import {
   AddQuoteToken,
   AuctionNFTSettle,
   AuctionSettle,
+  Bucket,
   BucketBankruptcy,
   BucketTake,
   BucketTakeLPAwarded,
   DrawDebt,
   Kick,
   MoveQuoteToken,
+  Pool,
   RemoveCollateral,
   RemoveQuoteToken,
   RepayDebt,
@@ -38,6 +40,9 @@ import {
   TransferLPTokens,
   UpdateInterestRate
 } from "../generated/schema"
+import { ONE_BI } from "./utils/constants"
+
+import { Bytes } from "@graphprotocol/graph-ts"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   let entity = new AddCollateral(
@@ -56,20 +61,46 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
 }
 
 export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
-  let entity = new AddQuoteToken(
+  let addQuoteToken = new AddQuoteToken(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.lender = event.params.lender
-  entity.price = event.params.price
-  entity.amount = event.params.amount
-  entity.lpAwarded = event.params.lpAwarded
-  entity.lup = event.params.lup
+  addQuoteToken.lender = event.params.lender
+  addQuoteToken.price = event.params.price
+  addQuoteToken.amount = event.params.amount
+  addQuoteToken.lpAwarded = event.params.lpAwarded
+  addQuoteToken.lup = event.params.lup
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  addQuoteToken.blockNumber = event.block.number
+  addQuoteToken.blockTimestamp = event.block.timestamp
+  addQuoteToken.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update pool information
+  const pool = Pool.load(event.address)
+  if (pool != null) {
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // TODO: add helper method to instantaite bucket if needed, and record bucket information
+    // update bucket information
+    const bucketId = pool.id.concat(Bytes.fromUTF8('#' + event.params.price.toString()))
+    let bucket = Bucket.load(bucketId)
+    if (bucket == null) {
+      // create new bucket if bucket hasn't already been loaded
+      bucket = new Bucket(bucketId) as Bucket
+
+      bucket.bucketIndex = event.params.price
+      bucket.poolAddress = pool.id.toHexString()
+    }
+
+    // save entities to store
+    pool.save()
+    bucket.save()
+
+    // TODO: verify this doesn't result in needing multiple queries to access nested entities
+    addQuoteToken.bucket = bucket.id
+    addQuoteToken.pool = pool.id
+  }
+
+  addQuoteToken.save()
 }
 
 export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
