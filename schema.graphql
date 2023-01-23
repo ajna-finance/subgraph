@@ -5,15 +5,23 @@ type ERC20PoolFactory @entity {
   poolCount: BigInt!
 }
 
-# TODO: add deposits in the pool
-# TODO: add quote and collateral by calling the smart contract in the factory mapping - Ethereum API
 type Pool @entity {
   # pool address
   id: Bytes!
   # block pool was created at
   createdAtBlockNumber: BigInt!
   # creation timestamp
-  createdAtTimestamp: BigInt!  
+  createdAtTimestamp: BigInt!
+  # address of the pool's collateral token
+  collateralToken: Bytes!
+  # address of the pool's quote token
+  quoteToken: Bytes!
+  # pool's current lowest utilized price
+  lup: BigDecimal!
+  # current total quote token deposits in the pool
+  totalDeposits: BigInt!
+  # current total LP for all lenders in the pool
+  totalLPB: BigInt!
   # total number of transactions
   txCount: BigInt!
 }
@@ -50,13 +58,13 @@ type AddCollateral @entity(immutable: true) {
 
 type AddQuoteToken @entity {
   id: Bytes!
-  bucket: Bucket!
-  pool: Pool!
-  lender: Bytes! # address
-  price: BigInt! # uint256
-  amount: BigInt! # uint256
+  bucket: Bucket!    # Bucket to which quote was added
+  pool: Pool!        # Pool to which quote was added
+  lender: Bytes!     # address
+  price: BigInt!     # uint256
+  amount: BigInt!    # uint256
   lpAwarded: BigInt! # uint256
-  lup: BigInt! # uint256
+  lup: BigInt!       # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

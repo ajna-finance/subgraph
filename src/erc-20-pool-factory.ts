@@ -1,9 +1,10 @@
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
-import { PoolCreated } from "../generated/schema"
+import { ERC20Pool } from "../generated/ERC20Pool/ERC20Pool"
 
+import { PoolCreated } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
 
-import { ERC20_FACTORY_ADDRESS, ZERO_BI } from "./utils/constants"
+import { ERC20_FACTORY_ADDRESS, MAX_PRICE, ZERO_BI } from "./utils/constants"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   let newPool = new PoolCreated(
@@ -23,10 +24,18 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     factory.poolCount = ZERO_BI
   }
 
+  // instantiate pool contract
+  const poolContract = ERC20Pool.bind(event.params.pool_)
+
   // record pool information
   const pool = new Pool(event.params.pool_) as Pool
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
+  pool.collateralToken = poolContract.collateralAddress()
+  pool.quoteToken = poolContract.quoteTokenAddress()
+  pool.lup = MAX_PRICE
+  pool.totalDeposits = ZERO_BI
+  pool.totalLPB = ZERO_BI
   pool.txCount = ZERO_BI
 
   // save entities to the store
