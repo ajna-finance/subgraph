@@ -39,7 +39,6 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.lup = MAX_PRICE
   pool.currentDebt = ZERO_BI
   pool.totalDeposits = ZERO_BI
-  pool.totalLPB = ZERO_BI
   pool.currentReserves = ZERO_BI
   pool.txCount = ZERO_BI
 

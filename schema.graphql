@@ -24,8 +24,6 @@ type Pool @entity {
   totalDeposits: BigInt!
   # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
   currentReserves: BigInt!
-  # current total LP for all lenders in the pool
-  totalLPB: BigInt!
   # total number of transactions sent to the pool
   txCount: BigInt!
 }
@@ -57,6 +55,8 @@ type Lender @entity {
   id: Bytes!
   # list of bucket indexes to which a depositer has lent
   bucketIndexes: [Bucket!]!
+  # list of pools to which a depositer has lent
+  pools: [Pool!]!
   # total quote token deposits across all buckets
   totalDeposits: BigInt!
   # total LPB across all buckets

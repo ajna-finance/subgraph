@@ -164,16 +164,11 @@ describe("Describe entity assertions", () => {
       "totalDeposits",
       `${amount}`
     )
-    assert.fieldEquals(
-      "Pool",
-      `${addressToBytes(poolAddress).toHexString()}`,
-      "totalLPB",
-      `${lpAwarded}`
-    )
 
     // check lender attributes updated
     const loadedLender = Lender.load(addressToBytes(lender))!
     assert.bytesEquals(bucketId, loadedLender.bucketIndexes[0])
+    assert.bytesEquals(addressToBytes(poolAddress), loadedLender.pools[0])
     assert.fieldEquals(
       "Lender",
       `${addressToBytes(lender).toHexString()}`,

@@ -12,6 +12,7 @@ export function loadOrCreateLender(lenderId: Bytes): Lender {
       lender = new Lender(lenderId) as Lender
 
       lender.bucketIndexes = []
+      lender.pools         = []
       lender.totalDeposits = ZERO_BI
       lender.totalLPB      = ZERO_BI
       lender.txCount       = ZERO_BI
