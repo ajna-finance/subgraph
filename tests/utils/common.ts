@@ -1,7 +1,6 @@
 import { Address, ethereum } from "@graphprotocol/graph-ts"
 import { createMockedFunction } from "matchstick-as"
 
-import { Pool } from "../../generated/schema"
 import { handlePoolCreated } from "../../src/erc-20-pool-factory"
 import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 

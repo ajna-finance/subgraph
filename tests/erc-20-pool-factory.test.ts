@@ -4,14 +4,9 @@ import {
   test,
   clearStore,
   beforeAll,
-  afterAll,
-  createMockedFunction
+  afterAll
 } from "matchstick-as/assembly/index"
-import { Address, ethereum } from "@graphprotocol/graph-ts"
-import { PoolCreated } from "../generated/schema"
-import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
-import { handlePoolCreated } from "../src/erc-20-pool-factory"
-import { createPoolCreatedEvent } from "./utils/erc-20-pool-factory-utils"
+import { Address } from "@graphprotocol/graph-ts"
 import { createPool } from "./utils/common"
 
 import { MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"

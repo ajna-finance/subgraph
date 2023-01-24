@@ -22,7 +22,7 @@ type Pool @entity {
   totalDeposits: BigInt!
   # current total LP for all lenders in the pool
   totalLPB: BigInt!
-  # total number of transactions
+  # total number of transactions sent to the pool
   txCount: BigInt!
 }
 
@@ -33,6 +33,12 @@ type Bucket @entity {
   bucketIndex: BigInt!
   # pool address
   poolAddress: String!
+  # total collateral available in the bucket
+  collateral: BigInt
+  # total quote tokens deposited in the bucket
+  deposit: BigInt!
+  # total LP for all lenders in the bucket
+  lpb: BigInt!
 }
 
 type Borrower @entity {
@@ -40,9 +46,17 @@ type Borrower @entity {
   id: Bytes!
 }
 
+# TODO: handle multi pool lenders
 type Lender @entity {
-  # TODO: implement this
   id: Bytes!
+  # list of bucket indexes to which a depositer has lent
+  bucketIndexes: [Bucket!]!
+  # total quote token deposits across all buckets
+  totalDeposits: BigInt!
+  # total LPB across all buckets
+  totalLPB: BigInt!
+  # total number of transactions sent by the lender
+  txCount: BigInt!
 }
 
 type AddCollateral @entity(immutable: true) {

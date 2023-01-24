@@ -5,13 +5,15 @@ import {
   clearStore,
   beforeAll,
   afterAll,
-  createMockedFunction,
   logStore
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken } from "../src/erc-20-pool"
 import { createAddCollateralEvent, createAddQuoteTokenEvent } from "./utils/erc-20-pool-utils"
 import { createPool } from "./utils/common"
+import { getBucketId } from "../src/utils/bucket"
+import { addressToBytes } from "../src/utils/convert"
+import { ZERO_BI } from "../src/utils/constants"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -78,18 +80,19 @@ describe("Describe entity assertions", () => {
     // https://thegraph.com/docs/en/developer/matchstick/#asserts
   })
 
-  test("AddQuoteToken created and stored", () => {
+  test("AddQuoteToken", () => {
     // check entity is unavailable prior to storage
     assert.entityCount("AddQuoteToken", 0)
 
-    let lender = Address.fromString("0x0000000000000000000000000000000000000002")
-    let price = BigInt.fromI32(234)
-    let amount = BigInt.fromI32(567)
-    let lpAwarded = BigInt.fromI32(567)
-    let lup = BigInt.fromI32(234)
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const lender = Address.fromString("0x0000000000000000000000000000000000000002")
+    const price = BigInt.fromI32(234)
+    const amount = BigInt.fromI32(567)
+    const lpAwarded = BigInt.fromI32(567)
+    const lup = BigInt.fromI32(234)
 
     const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
-      Address.fromString("0x0000000000000000000000000000000000000001"),
+      poolAddress,
       lender,
       price,
       amount,
@@ -130,6 +133,55 @@ describe("Describe entity assertions", () => {
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
       "234"
+    )
+
+    // check bucket attributes updated
+    const bucketId = getBucketId(addressToBytes(poolAddress), price)
+    assert.fieldEquals(
+      "Bucket",
+      `${bucketId.toHexString()}`,
+      "collateral",
+      `${ZERO_BI}`
+    )
+    assert.fieldEquals(
+      "Bucket",
+      `${bucketId.toHexString()}`,
+      "deposit",
+      `${amount}`
+    )
+    assert.fieldEquals(
+      "Bucket",
+      `${bucketId.toHexString()}`,
+      "lpb",
+      `${lpAwarded}`
+    )
+
+    // check pool attributes updated
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "totalDeposits",
+      `${amount}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "totalLPB",
+      `${lpAwarded}`
+    )
+
+    // check lender attributes updated
+    assert.fieldEquals(
+      "Lender",
+      `${addressToBytes(lender).toHexString()}`,
+      "totalDeposits",
+      `${amount}`
+    )
+    assert.fieldEquals(
+      "Lender",
+      `${addressToBytes(lender).toHexString()}`,
+      "totalLPB",
+      `${lpAwarded}`
     )
   })
 

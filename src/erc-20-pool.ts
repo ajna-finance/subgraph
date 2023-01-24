@@ -29,6 +29,7 @@ import {
   BucketTakeLPAwarded,
   DrawDebt,
   Kick,
+  Lender,
   MoveQuoteToken,
   Pool,
   RemoveCollateral,
@@ -40,8 +41,10 @@ import {
   TransferLPTokens,
   UpdateInterestRate
 } from "../generated/schema"
-import { ONE_BI } from "./utils/constants"
+import { ONE_BI, ZERO_BI } from "./utils/constants"
 import { addressToBytes } from "./utils/convert"
+import { getBucketId, loadOrCreateBucket } from "./utils/bucket"
+import { loadOrCreateLender } from "./utils/lender"
 
 import { Bytes, log } from "@graphprotocol/graph-ts"
 // import { log } from "matchstick-as/assembly/log";
@@ -75,32 +78,33 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   addQuoteToken.blockNumber = event.block.number
   addQuoteToken.blockTimestamp = event.block.timestamp
   addQuoteToken.transactionHash = event.transaction.hash
-  
-  // update pool information
+
+  // update entities
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-
     // update pool state
-    pool.totalDeposits = pool.totalDeposits.plus(event.params.amount)
-    pool.totalLPB      = pool.totalDeposits.plus(event.params.lpAwarded)
     // pool.lup           = event.params.lup //TODO: need to conver this to a decimal
+    pool.totalDeposits = pool.totalDeposits.plus(event.params.amount)
+    pool.totalLPB      = pool.totalLPB.plus(event.params.lpAwarded)
+    pool.txCount       = pool.txCount.plus(ONE_BI)
 
-    // TODO: add helper method to instantaite bucket if needed, and record bucket information
-    // update bucket information
-    const bucketId = pool.id.concat(Bytes.fromUTF8('#' + event.params.price.toString()))
-    let bucket = Bucket.load(bucketId)
-    if (bucket == null) {
-      // create new bucket if bucket hasn't already been loaded
-      bucket = new Bucket(bucketId) as Bucket
+    // update bucket state
+    const bucketId = getBucketId(pool.id, event.params.price)
+    const bucket   = loadOrCreateBucket(pool.id, bucketId, event.params.price)
+    bucket.deposit = bucket.deposit.plus(event.params.amount)
+    bucket.lpb     = bucket.lpb.plus(event.params.lpAwarded)
 
-      bucket.bucketIndex = event.params.price
-      bucket.poolAddress = pool.id.toHexString()
-    }
+    // update lender state
+    const lenderId = addressToBytes(event.params.lender)
+    const lender   = loadOrCreateLender(lenderId)
+    lender.totalDeposits = lender.totalDeposits.plus(event.params.amount)
+    lender.totalLPB      = lender.totalLPB.plus(event.params.lpAwarded)
+    lender.txCount       = lender.txCount.plus(ONE_BI)
 
     // save entities to store
     pool.save()
     bucket.save()
+    lender.save()
 
     // TODO: verify this doesn't result in needing multiple queries to access nested entities
     addQuoteToken.bucket = bucket.id
