@@ -19,11 +19,11 @@ type Pool @entity {
   # pool's current lowest utilized price
   lup: BigDecimal!
   # current total debt in the pool
-  totalDebt: BigInt!
+  currentDebt: BigInt!
   # current total quote token deposits in the pool
   totalDeposits: BigInt!
   # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
-  totalReserves: BigInt!
+  currentReserves: BigInt!
   # current total LP for all lenders in the pool
   totalLPB: BigInt!
   # total number of transactions sent to the pool

@@ -84,7 +84,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     // pool.lup           = event.params.lup //TODO: need to conver this to a decimal
     pool.totalDeposits = pool.totalDeposits.plus(event.params.amount)
     pool.totalLPB      = pool.totalLPB.plus(event.params.lpAwarded)
-    // pool.totalReserves = getPoolReserves(pool)
+    // pool.currentReserves = getPoolReserves(pool)
     pool.txCount       = pool.txCount.plus(ONE_BI)
 
     // update bucket state

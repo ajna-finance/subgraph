@@ -37,10 +37,10 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.collateralToken = poolContract.collateralAddress()
   pool.quoteToken = poolContract.quoteTokenAddress()
   pool.lup = MAX_PRICE
-  pool.totalDebt = ZERO_BI
+  pool.currentDebt = ZERO_BI
   pool.totalDeposits = ZERO_BI
   pool.totalLPB = ZERO_BI
-  pool.totalReserves = ZERO_BI
+  pool.currentReserves = ZERO_BI
   pool.txCount = ZERO_BI
 
   // save entities to the store
