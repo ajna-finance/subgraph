@@ -23,13 +23,11 @@ import {
   AddQuoteToken,
   AuctionNFTSettle,
   AuctionSettle,
-  Bucket,
   BucketBankruptcy,
   BucketTake,
   BucketTakeLPAwarded,
   DrawDebt,
   Kick,
-  Lender,
   MoveQuoteToken,
   Pool,
   RemoveCollateral,
@@ -86,6 +84,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     // pool.lup           = event.params.lup //TODO: need to conver this to a decimal
     pool.totalDeposits = pool.totalDeposits.plus(event.params.amount)
     pool.totalLPB      = pool.totalLPB.plus(event.params.lpAwarded)
+    // pool.totalReserves = getPoolReserves(pool)
     pool.txCount       = pool.txCount.plus(ONE_BI)
 
     // update bucket state
@@ -100,6 +99,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     lender.totalDeposits = lender.totalDeposits.plus(event.params.amount)
     lender.totalLPB      = lender.totalLPB.plus(event.params.lpAwarded)
     lender.txCount       = lender.txCount.plus(ONE_BI)
+    lender.bucketIndexes = lender.bucketIndexes.concat([bucketId])
 
     // save entities to store
     pool.save()

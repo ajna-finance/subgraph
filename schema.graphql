@@ -18,8 +18,12 @@ type Pool @entity {
   quoteToken: Bytes!
   # pool's current lowest utilized price
   lup: BigDecimal!
+  # current total debt in the pool
+  totalDebt: BigInt!
   # current total quote token deposits in the pool
   totalDeposits: BigInt!
+  # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
+  totalReserves: BigInt!
   # current total LP for all lenders in the pool
   totalLPB: BigInt!
   # total number of transactions sent to the pool
@@ -31,6 +35,8 @@ type Bucket @entity {
   id: Bytes!
   # bucket index
   bucketIndex: BigInt!
+  # current exchange rate of the bucket
+  exchangeRate: BigDecimal!
   # pool address
   poolAddress: String!
   # total collateral available in the bucket

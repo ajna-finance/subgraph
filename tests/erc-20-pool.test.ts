@@ -7,13 +7,14 @@ import {
   afterAll,
   logStore
 } from "matchstick-as/assembly/index"
-import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken } from "../src/erc-20-pool"
 import { createAddCollateralEvent, createAddQuoteTokenEvent } from "./utils/erc-20-pool-utils"
 import { createPool } from "./utils/common"
 import { getBucketId } from "../src/utils/bucket"
 import { addressToBytes } from "../src/utils/convert"
-import { ZERO_BI } from "../src/utils/constants"
+import { ONE_BI, ZERO_BI } from "../src/utils/constants"
+import { Lender } from "../generated/schema"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -171,6 +172,8 @@ describe("Describe entity assertions", () => {
     )
 
     // check lender attributes updated
+    const loadedLender = Lender.load(addressToBytes(lender))!
+    assert.bytesEquals(bucketId, loadedLender.bucketIndexes[0])
     assert.fieldEquals(
       "Lender",
       `${addressToBytes(lender).toHexString()}`,
@@ -182,6 +185,12 @@ describe("Describe entity assertions", () => {
       `${addressToBytes(lender).toHexString()}`,
       "totalLPB",
       `${lpAwarded}`
+    )
+    assert.fieldEquals(
+      "Lender",
+      `${addressToBytes(lender).toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
     )
   })
 
