@@ -10,7 +10,7 @@ import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { Approval } from "../generated/schema"
 import { Approval as ApprovalEvent } from "../generated/PositionManager/PositionManager"
 import { handleApproval } from "../src/position-manager"
-import { createApprovalEvent } from "./position-manager-utils"
+import { createApprovalEvent } from "./utils/position-manager-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0

@@ -4,7 +4,7 @@ import { ERC20Pool } from "../generated/ERC20Pool/ERC20Pool"
 import { PoolCreated } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
 
-import { ERC20_FACTORY_ADDRESS, MAX_PRICE, ZERO_BI } from "./utils/constants"
+import { ERC20_FACTORY_ADDRESS, MAX_PRICE, ONE_BI, ZERO_BI } from "./utils/constants"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   let newPool = new PoolCreated(
@@ -23,6 +23,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     factory = new ERC20PoolFactory(ERC20_FACTORY_ADDRESS) as ERC20PoolFactory
     factory.poolCount = ZERO_BI
   }
+
+  // increment pool count
+  factory.poolCount = factory.poolCount.plus(ONE_BI)
 
   // instantiate pool contract
   const poolContract = ERC20Pool.bind(event.params.pool_)

@@ -5,7 +5,7 @@ import {
   Stake,
   Unstake,
   UpdateExchangeRates
-} from "../generated/RewardsManager/RewardsManager"
+} from "../../generated/RewardsManager/RewardsManager"
 
 export function createClaimRewardsEvent(
   owner: Address,

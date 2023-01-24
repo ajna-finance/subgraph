@@ -9,7 +9,7 @@ import {
   MoveLiquidity,
   RedeemPosition,
   Transfer
-} from "../generated/PositionManager/PositionManager"
+} from "../../generated/PositionManager/PositionManager"
 
 export function createApprovalEvent(
   owner: Address,

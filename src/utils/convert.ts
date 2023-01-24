@@ -1,4 +1,4 @@
-import { BigInt, BigDecimal, ethereum } from '@graphprotocol/graph-ts'
+import { BigInt, BigDecimal, Bytes, Address } from '@graphprotocol/graph-ts'
 
 import { ONE_BI, ZERO_BI } from './constants'
 
@@ -8,7 +8,7 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
       bd = bd.times(BigDecimal.fromString('10'))
     }
     return bd
-  }
+}
 
 // TODO: may want to hardcode this to 18
 export function wadToDecimal(wad: BigInt, exchangeDecimals: BigInt): BigDecimal {
@@ -16,5 +16,9 @@ export function wadToDecimal(wad: BigInt, exchangeDecimals: BigInt): BigDecimal 
       return wad.toBigDecimal()
     }
     return wad.toBigDecimal().div(exponentToBigDecimal(exchangeDecimals))
-  }
+}
   
+export function addressToBytes(address: Address): Bytes {
+    // return address.map<Bytes>((b: Bytes) => b)
+    return Bytes.fromHexString(address.toHexString()) as Bytes
+}

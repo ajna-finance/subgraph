@@ -1,6 +1,7 @@
 import { newMockEvent } from "matchstick-as"
 import { ethereum, Address } from "@graphprotocol/graph-ts"
-import { PoolCreated } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
+import { PoolCreated } from "../../generated/ERC20PoolFactory/ERC20PoolFactory"
+import { Pool } from "../../generated/schema"
 
 export function createPoolCreatedEvent(pool_: Address): PoolCreated {
   let poolCreatedEvent = changetype<PoolCreated>(newMockEvent())

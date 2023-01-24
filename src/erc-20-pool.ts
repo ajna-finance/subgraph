@@ -41,8 +41,10 @@ import {
   UpdateInterestRate
 } from "../generated/schema"
 import { ONE_BI } from "./utils/constants"
+import { addressToBytes } from "./utils/convert"
 
-import { Bytes } from "@graphprotocol/graph-ts"
+import { Bytes, log } from "@graphprotocol/graph-ts"
+// import { log } from "matchstick-as/assembly/log";
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   let entity = new AddCollateral(
@@ -73,11 +75,16 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   addQuoteToken.blockNumber = event.block.number
   addQuoteToken.blockTimestamp = event.block.timestamp
   addQuoteToken.transactionHash = event.transaction.hash
-
+  
   // update pool information
-  const pool = Pool.load(event.address)
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update pool state
+    pool.totalDeposits = pool.totalDeposits.plus(event.params.amount)
+    pool.totalLPB      = pool.totalDeposits.plus(event.params.lpAwarded)
+    // pool.lup           = event.params.lup //TODO: need to conver this to a decimal
 
     // TODO: add helper method to instantaite bucket if needed, and record bucket information
     // update bucket information

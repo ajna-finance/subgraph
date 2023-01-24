@@ -10,7 +10,7 @@ import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { ClaimRewards } from "../generated/schema"
 import { ClaimRewards as ClaimRewardsEvent } from "../generated/RewardsManager/RewardsManager"
 import { handleClaimRewards } from "../src/rewards-manager"
-import { createClaimRewardsEvent } from "./rewards-manager-utils"
+import { createClaimRewardsEvent } from "./utils/rewards-manager-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0

@@ -19,7 +19,7 @@ import {
   Take,
   TransferLPTokens,
   UpdateInterestRate
-} from "../generated/ERC20Pool/ERC20Pool"
+} from "../../generated/ERC20Pool/ERC20Pool"
 
 export function createAddCollateralEvent(
   actor: Address,
@@ -51,6 +51,7 @@ export function createAddCollateralEvent(
 }
 
 export function createAddQuoteTokenEvent(
+  pool: Address,
   lender: Address,
   price: BigInt,
   amount: BigInt,
@@ -79,6 +80,8 @@ export function createAddQuoteTokenEvent(
   addQuoteTokenEvent.parameters.push(
     new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
   )
+
+  addQuoteTokenEvent.transaction.to = pool
 
   return addQuoteTokenEvent
 }

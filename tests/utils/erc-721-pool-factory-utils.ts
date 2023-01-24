@@ -1,6 +1,6 @@
 import { newMockEvent } from "matchstick-as"
 import { ethereum, Address } from "@graphprotocol/graph-ts"
-import { ERC721PoolFactoryPoolCreated } from "../generated/ERC721PoolFactory/ERC721PoolFactory"
+import { ERC721PoolFactoryPoolCreated } from "../../generated/ERC721PoolFactory/ERC721PoolFactory"
 
 export function createERC721PoolFactoryPoolCreatedEvent(
   pool_: Address

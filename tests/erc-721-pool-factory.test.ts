@@ -10,7 +10,7 @@ import { Address } from "@graphprotocol/graph-ts"
 import { ERC721PoolFactoryPoolCreated } from "../generated/schema"
 import { ERC721PoolFactoryPoolCreated as ERC721PoolFactoryPoolCreatedEvent } from "../generated/ERC721PoolFactory/ERC721PoolFactory"
 import { handleERC721PoolFactoryPoolCreated } from "../src/erc-721-pool-factory"
-import { createERC721PoolFactoryPoolCreatedEvent } from "./erc-721-pool-factory-utils"
+import { createERC721PoolFactoryPoolCreatedEvent } from "./utils/erc-721-pool-factory-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0

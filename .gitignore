@@ -65,3 +65,7 @@ typings/
 
 # local subgraph node files
 data/
+
+# matchstick test files
+tests/.bin/
+tests/.latest.json
