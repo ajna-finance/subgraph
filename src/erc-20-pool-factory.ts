@@ -4,7 +4,7 @@ import { ERC20Pool } from "../generated/ERC20Pool/ERC20Pool"
 import { PoolCreated } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
 
-import { ERC20_FACTORY_ADDRESS, MAX_PRICE, ONE_BI, ZERO_BI } from "./utils/constants"
+import { ERC20_FACTORY_ADDRESS, MAX_PRICE, ONE_BI, ZERO_BI, ZERO_BD } from "./utils/constants"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   let newPool = new PoolCreated(
@@ -36,10 +36,12 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.createdAtBlockNumber = event.block.number
   pool.collateralToken = poolContract.collateralAddress()
   pool.quoteToken = poolContract.quoteTokenAddress()
+  pool.htp = ZERO_BD
   pool.lup = MAX_PRICE
   pool.currentDebt = ZERO_BI
-  pool.totalDeposits = ZERO_BI
   pool.currentReserves = ZERO_BI
+  pool.totalDeposits = ZERO_BI
+  pool.targetUtilization = ZERO_BD
   pool.txCount = ZERO_BI
 
   // save entities to the store

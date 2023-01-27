@@ -42,7 +42,7 @@ import {
 import { ONE_BI, ZERO_BI } from "./utils/constants"
 import { addressToBytes } from "./utils/convert"
 import { getBucketId, loadOrCreateBucket } from "./utils/bucket"
-import { loadOrCreateLender } from "./utils/lender"
+import { loadOrCreateLender, loadOrCreatePoolLend } from "./utils/lender"
 
 import { Bytes, log } from "@graphprotocol/graph-ts"
 // import { log } from "matchstick-as/assembly/log";
@@ -95,16 +95,22 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     // update lender state
     const lenderId = addressToBytes(event.params.lender)
     const lender   = loadOrCreateLender(lenderId)
-    lender.totalDeposits = lender.totalDeposits.plus(event.params.amount)
-    lender.totalLPB      = lender.totalLPB.plus(event.params.lpAwarded)
     lender.txCount       = lender.txCount.plus(ONE_BI)
-    lender.bucketIndexes = lender.bucketIndexes.concat([bucketId])
     lender.pools         = lender.pools.concat([pool.id])
+
+    // update pool lend state
+    const poolLend = loadOrCreatePoolLend(pool.id, lenderId)
+    poolLend.bucketIndexes = poolLend.bucketIndexes.concat([bucketId])
+    poolLend.totalDeposits = poolLend.totalDeposits.plus(event.params.amount)
+    poolLend.totalLPB      = poolLend.totalLPB.plus(event.params.lpAwarded)
+
+    // update lender's loans tracker
 
     // save entities to store
     pool.save()
     bucket.save()
     lender.save()
+    poolLend.save()
 
     // TODO: verify this doesn't result in needing multiple queries to access nested entities
     addQuoteToken.bucket = bucket.id

@@ -5,6 +5,7 @@ type ERC20PoolFactory @entity {
   poolCount: BigInt!
 }
 
+# TODO: add colllateralization information
 type Pool @entity {
   # pool address
   id: Bytes!
@@ -16,14 +17,18 @@ type Pool @entity {
   collateralToken: Bytes!
   # address of the pool's quote token
   quoteToken: Bytes!
+  # pool's current highest threshold price
+  htp: BigDecimal!
   # pool's current lowest utilized price
   lup: BigDecimal!
   # current total debt in the pool
   currentDebt: BigInt!
-  # current total quote token deposits in the pool
-  totalDeposits: BigInt!
   # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
   currentReserves: BigInt!
+  # current total quote token deposits in the pool
+  totalDeposits: BigInt!
+  # target utilization rate
+  targetUtilization: BigDecimal!
   # total number of transactions sent to the pool
   txCount: BigInt!
 }
@@ -45,25 +50,55 @@ type Bucket @entity {
   lpb: BigInt!
 }
 
-type Borrower @entity {
-  # TODO: implement this
+type PoolBorrow @entity {
+  # poolLend id: $poolAddress + '|' + $lenderId
   id: Bytes!
+  # pool address
+  pool: Pool!
+  # TODO: how to track totals per pool?
+  collateralDeposited: BigInt!
+  # collateralization of the borrow position in the pool
+  collateralization: BigDecimal!
+  # borrowers highest threshold price
+  htp: BigDecimal!
 }
 
-# TODO: handle multi pool lenders
-type Lender @entity {
+type Borrower @entity {
+  id: Bytes!
+  # list of pools from which a borrower drew debt
+  pools: [Pool!]!
+  # list of borrows made by a borrower 
+  borrows: [PoolBorrow!]!
+  # total number of transactions sent by the borrower
+  txCount: BigInt!
+
+}
+
+type PoolLend @entity {
+  # poolLend id: $poolAddress + '|' + $lenderId
   id: Bytes!
   # list of bucket indexes to which a depositer has lent
-  bucketIndexes: [Bucket!]!
-  # list of pools to which a depositer has lent
-  pools: [Pool!]!
+  bucketIndexes: [Bucket!]!  
+  # pool address
+  pool: Pool!
   # total quote token deposits across all buckets
   totalDeposits: BigInt!
   # total LPB across all buckets
   totalLPB: BigInt!
+}
+
+type Lender @entity {
+  id: Bytes!
+  # list of pools to which a depositer has lent
+  pools: [Pool!]!
+  loans: [PoolLend!]!
   # total number of transactions sent by the lender
   txCount: BigInt!
 }
+
+  # # # # # #
+  # EVENTS  #
+  # # # # # #
 
 type AddCollateral @entity(immutable: true) {
   id: Bytes!
