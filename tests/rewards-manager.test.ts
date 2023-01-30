@@ -7,8 +7,6 @@ import {
   afterAll
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { ClaimRewards } from "../generated/schema"
-import { ClaimRewards as ClaimRewardsEvent } from "../generated/RewardsManager/RewardsManager"
 import { handleClaimRewards } from "../src/rewards-manager"
 import { createClaimRewardsEvent } from "./utils/rewards-manager-utils"
 

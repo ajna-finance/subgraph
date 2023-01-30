@@ -9,7 +9,7 @@ export function loadOrCreateBorrower(borrowerId: Bytes): Borrower {
       // create new borrower if borrower hasn't already been stored
       borrower = new Borrower(borrowerId) as Borrower
 
-      borrower.borrows   = []
+      borrower.borrows = []
       borrower.pools   = []
       borrower.txCount = ZERO_BI
     }

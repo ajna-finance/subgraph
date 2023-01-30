@@ -7,8 +7,6 @@ import {
   afterAll
 } from "matchstick-as/assembly/index"
 import { Address } from "@graphprotocol/graph-ts"
-import { ERC721PoolFactoryPoolCreated } from "../generated/schema"
-import { ERC721PoolFactoryPoolCreated as ERC721PoolFactoryPoolCreatedEvent } from "../generated/ERC721PoolFactory/ERC721PoolFactory"
 import { handleERC721PoolFactoryPoolCreated } from "../src/erc-721-pool-factory"
 import { createERC721PoolFactoryPoolCreatedEvent } from "./utils/erc-721-pool-factory-utils"
 

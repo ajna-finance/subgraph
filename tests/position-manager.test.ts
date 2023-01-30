@@ -7,8 +7,6 @@ import {
   afterAll
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { Approval } from "../generated/schema"
-import { Approval as ApprovalEvent } from "../generated/PositionManager/PositionManager"
 import { handleApproval } from "../src/position-manager"
 import { createApprovalEvent } from "./utils/position-manager-utils"
 

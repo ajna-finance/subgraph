@@ -22,10 +22,12 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     // create new factory
     factory = new ERC20PoolFactory(ERC20_FACTORY_ADDRESS) as ERC20PoolFactory
     factory.poolCount = ZERO_BI
+    factory.txCount   = ZERO_BI
   }
 
   // increment pool count
   factory.poolCount = factory.poolCount.plus(ONE_BI)
+  factory.txCount   = factory.txCount.plus(ONE_BI)
 
   // instantiate pool contract
   const poolContract = ERC20Pool.bind(event.params.pool_)

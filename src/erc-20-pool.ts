@@ -41,11 +41,11 @@ import {
 } from "../generated/schema"
 import { ONE_BI, ZERO_BI } from "./utils/constants"
 import { addressToBytes } from "./utils/convert"
+import { loadOrCreateAccount, updateAccountPools } from "./utils/account"
 import { getBucketId, loadOrCreateBucket } from "./utils/bucket"
-import { loadOrCreateLender, loadOrCreatePoolLend } from "./utils/lender"
+import { getLendId, loadOrCreateLend, lpbValueInQuote } from "./utils/lend"
 
 import { Bytes, log } from "@graphprotocol/graph-ts"
-// import { log } from "matchstick-as/assembly/log";
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   let entity = new AddCollateral(
@@ -92,25 +92,25 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     bucket.deposit = bucket.deposit.plus(event.params.amount)
     bucket.lpb     = bucket.lpb.plus(event.params.lpAwarded)
 
-    // update lender state
-    const lenderId = addressToBytes(event.params.lender)
-    const lender   = loadOrCreateLender(lenderId)
-    lender.txCount       = lender.txCount.plus(ONE_BI)
-    lender.pools         = lender.pools.concat([pool.id])
+    // update account state
+    const accountId = addressToBytes(event.params.lender)
+    const account   = loadOrCreateAccount(accountId)
+    account.txCount = account.txCount.plus(ONE_BI)
+    // update account's list of pools if necessary
+    updateAccountPools(account, pool)
 
     // update pool lend state
-    const poolLend = loadOrCreatePoolLend(pool.id, lenderId)
-    poolLend.bucketIndexes = poolLend.bucketIndexes.concat([bucketId])
-    poolLend.totalDeposits = poolLend.totalDeposits.plus(event.params.amount)
-    poolLend.totalLPB      = poolLend.totalLPB.plus(event.params.lpAwarded)
-
-    // update lender's loans tracker
+    const lendId = getLendId(bucketId, accountId)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id)
+    lend.deposit = lend.deposit.plus(event.params.amount)
+    lend.lpb     = lend.lpb.plus(event.params.lpAwarded)
+    lend.lpbValueInQuote = lpbValueInQuote(bucket, lend)
 
     // save entities to store
     pool.save()
     bucket.save()
-    lender.save()
-    poolLend.save()
+    account.save()
+    lend.save()
 
     // TODO: verify this doesn't result in needing multiple queries to access nested entities
     addQuoteToken.bucket = bucket.id

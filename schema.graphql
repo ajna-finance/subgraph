@@ -1,8 +1,11 @@
+# TODO: add list of pools deployed by the factory
 type ERC20PoolFactory @entity {
   # factory address
   id: Bytes!
   # number of pools deployed by the factory
   poolCount: BigInt!
+  # total number of transactions sent to the factory
+  txCount: BigInt!
 }
 
 # TODO: add colllateralization information
@@ -39,7 +42,7 @@ type Bucket @entity {
   # bucket index
   bucketIndex: BigInt!
   # current exchange rate of the bucket
-  exchangeRate: BigDecimal!
+  exchangeRate: BigInt!
   # pool address
   poolAddress: String!
   # total collateral available in the bucket
@@ -50,49 +53,56 @@ type Bucket @entity {
   lpb: BigInt!
 }
 
-type PoolBorrow @entity {
-  # poolLend id: $poolAddress + '|' + $lenderId
+type Loan @entity {
+  # Loan id: $poolAddress + '|' + $borrowerId
   id: Bytes!
   # pool address
+  poolAddress: String!
+  # pool pointer
   pool: Pool!
-  # TODO: how to track totals per pool?
+  # collateral tokens deposited in a pool by the borrower
   collateralDeposited: BigInt!
   # collateralization of the borrow position in the pool
   collateralization: BigDecimal!
+  # total quote drawn from the pool in the loan
+  debt: BigInt!
   # borrowers highest threshold price
   htp: BigDecimal!
 }
 
-type Borrower @entity {
+# lend occurs per bucket in a pool
+type Lend @entity {
+  # Lend id: $bucketId + '|' + $accountId
   id: Bytes!
-  # list of pools from which a borrower drew debt
-  pools: [Pool!]!
-  # list of borrows made by a borrower 
-  borrows: [PoolBorrow!]!
-  # total number of transactions sent by the borrower
-  txCount: BigInt!
-
-}
-
-type PoolLend @entity {
-  # poolLend id: $poolAddress + '|' + $lenderId
-  id: Bytes!
-  # list of bucket indexes to which a depositer has lent
-  bucketIndexes: [Bucket!]!  
+  # bucket to which a lend was made
+  bucket: Bucket!
   # pool address
+  poolAddress: String!
+  # pool pointer
   pool: Pool!
-  # total quote token deposits across all buckets
-  totalDeposits: BigInt!
-  # total LPB across all buckets
-  totalLPB: BigInt!
+  # quote token deposited in the bucket by the lender
+  deposit: BigInt!
+  # LPB in the bucket accrued to lender
+  lpb: BigInt!
+  # quote equivalent value of the lend's LPB in the bucket
+  lpbValueInQuote: BigInt!
 }
 
-type Lender @entity {
+type Account @entity {
+  # address of the account
   id: Bytes!
-  # list of pools to which a depositer has lent
+  # list of pools in which an account is present
   pools: [Pool!]!
-  loans: [PoolLend!]!
-  # total number of transactions sent by the lender
+
+  # kicks executed by the account
+  kicks: [Kick!]!
+  # buckets in a pool to which the account has lent quote
+  lends: [Lend!]!
+  loans: [Loan!]!
+  settles: [Settle!]!
+  takes: [Take!]!
+
+  # total number of transactions sent by the account
   txCount: BigInt!
 }
 

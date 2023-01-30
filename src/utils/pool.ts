@@ -1,4 +1,4 @@
-import { BigInt, Address } from '@graphprotocol/graph-ts'
+import { Bytes, Address } from '@graphprotocol/graph-ts'
 
 import { ERC20Pool } from "../../generated/ERC20Pool/ERC20Pool"
 import { Pool } from "../../generated/schema"
@@ -8,3 +8,7 @@ import { Pool } from "../../generated/schema"
 
 //     return pool.collateralReserve.plus(pool.quoteReserve)
 // }
+
+export function getPoolAddress(poolId: Bytes): Address {
+    return Address.fromBytes(poolId)
+}

@@ -7,14 +7,15 @@ import {
   afterAll,
   logStore
 } from "matchstick-as/assembly/index"
-import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
+import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken } from "../src/erc-20-pool"
 import { createAddCollateralEvent, createAddQuoteTokenEvent } from "./utils/erc-20-pool-utils"
 import { createPool } from "./utils/common"
 import { getBucketId } from "../src/utils/bucket"
 import { addressToBytes } from "../src/utils/convert"
 import { ONE_BI, ZERO_BI } from "../src/utils/constants"
-import { Lender } from "../generated/schema"
+import { Account, Lend } from "../generated/schema"
+import { getLendId } from "../src/utils/lend"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -153,6 +154,12 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "Bucket",
       `${bucketId.toHexString()}`,
+      "exchangeRate",
+      `${ONE_BI}`
+    )
+    assert.fieldEquals(
+      "Bucket",
+      `${bucketId.toHexString()}`,
       "lpb",
       `${lpAwarded}`
     )
@@ -165,28 +172,34 @@ describe("Describe entity assertions", () => {
       `${amount}`
     )
 
-    // check lender attributes updated
-    const loadedLender = Lender.load(addressToBytes(lender))!
-    assert.bytesEquals(bucketId, loadedLender.bucketIndexes[0])
-    assert.bytesEquals(addressToBytes(poolAddress), loadedLender.pools[0])
+    // check account attributes updated
+    const accountId = addressToBytes(lender)
+    const loadedAccount = Account.load(accountId)!
+    assert.bytesEquals(addressToBytes(poolAddress), loadedAccount.pools[0])
     assert.fieldEquals(
-      "Lender",
-      `${addressToBytes(lender).toHexString()}`,
-      "totalDeposits",
-      `${amount}`
-    )
-    assert.fieldEquals(
-      "Lender",
-      `${addressToBytes(lender).toHexString()}`,
-      "totalLPB",
-      `${lpAwarded}`
-    )
-    assert.fieldEquals(
-      "Lender",
-      `${addressToBytes(lender).toHexString()}`,
+      "Account",
+      `${accountId.toHexString()}`,
       "txCount",
       `${ONE_BI}`
     )
+
+    // check lend attributes updated
+    const lendId = getLendId(bucketId, accountId)
+    const loadedLend = Lend.load(lendId)!
+    assert.bytesEquals(bucketId, loadedLend.bucket)
+    assert.fieldEquals(
+      "Lend",
+      `${lendId.toHexString()}`,
+      "deposit",
+      `${amount}`
+    )
+    assert.fieldEquals(
+      "Lend",
+      `${lendId.toHexString()}`,
+      "lpb",
+      `${lpAwarded}`
+    )
+
   })
 
 })
