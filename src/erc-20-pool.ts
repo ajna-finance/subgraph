@@ -1,3 +1,5 @@
+import { Bytes, log } from "@graphprotocol/graph-ts"
+
 import {
   AddCollateral as AddCollateralEvent,
   AddQuoteToken as AddQuoteTokenEvent,
@@ -39,13 +41,14 @@ import {
   TransferLPTokens,
   UpdateInterestRate
 } from "../generated/schema"
+
 import { ONE_BI, ZERO_BI } from "./utils/constants"
 import { addressToBytes } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountPools } from "./utils/account"
 import { getBucketId, loadOrCreateBucket } from "./utils/bucket"
-import { getLendId, loadOrCreateLend, lpbValueInQuote } from "./utils/lend"
-
-import { Bytes, log } from "@graphprotocol/graph-ts"
+import { getLendId, loadOrCreateLend } from "./utils/lend"
+import { getLoanId, loadOrCreateLoan } from "./utils/loan"
+import { collateralization, lpbValueInQuote } from "./utils/common"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   let entity = new AddCollateral(
@@ -81,7 +84,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
-    // pool.lup           = event.params.lup //TODO: need to conver this to a decimal
+    // pool.lup           = event.params.lup //TODO: need to convert this to a decimal
     pool.totalDeposits = pool.totalDeposits.plus(event.params.amount)
     // pool.currentReserves = getPoolReserves(pool)
     pool.txCount       = pool.txCount.plus(ONE_BI)
@@ -99,11 +102,11 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     // update account's list of pools if necessary
     updateAccountPools(account, pool)
 
-    // update pool lend state
+    // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id)
-    lend.deposit = lend.deposit.plus(event.params.amount)
-    lend.lpb     = lend.lpb.plus(event.params.lpAwarded)
+    lend.deposit         = lend.deposit.plus(event.params.amount)
+    lend.lpb             = lend.lpb.plus(event.params.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(bucket, lend)
 
     // save entities to store
@@ -201,19 +204,52 @@ export function handleBucketTakeLPAwarded(
 }
 
 export function handleDrawDebt(event: DrawDebtEvent): void {
-  let entity = new DrawDebt(
+  const drawDebt = new DrawDebt(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.borrower = event.params.borrower
-  entity.amountBorrowed = event.params.amountBorrowed
-  entity.collateralPledged = event.params.collateralPledged
-  entity.lup = event.params.lup
+  drawDebt.borrower = event.params.borrower
+  drawDebt.amountBorrowed = event.params.amountBorrowed
+  drawDebt.collateralPledged = event.params.collateralPledged
+  drawDebt.lup = event.params.lup
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  drawDebt.blockNumber = event.block.number
+  drawDebt.blockTimestamp = event.block.timestamp
+  drawDebt.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // update pool state
+    // pool.lup = event.params.lup
+    log.info("lup", [`${event.params.lup}`])
+    pool.currentDebt   = pool.currentDebt.plus(event.params.amountBorrowed)
+    pool.txCount       = pool.txCount.plus(ONE_BI)
+
+    // TODO: update bucket state -> requires handling liquidations
+
+    // update account state
+    const accountId = addressToBytes(event.params.borrower)
+    const account   = loadOrCreateAccount(accountId)
+    account.txCount = account.txCount.plus(ONE_BI)
+    // update account's list of pools if necessary
+    updateAccountPools(account, pool)
+
+    // update loan state
+    const loanId = getLoanId(pool.id, accountId)
+    const loan = loadOrCreateLoan(loanId, pool.id)
+    loan.collateralDeposited = loan.collateralDeposited.plus(event.params.collateralPledged)
+    loan.debt = loan.debt.plus(event.params.amountBorrowed)
+    loan.collateralization = collateralization(loan.debt, loan.collateralDeposited)
+
+    // save entities to store
+    pool.save()
+    account.save()
+    loan.save()
+
+    drawDebt.pool = pool.id
+  }
+
+  drawDebt.save()
 }
 
 export function handleKick(event: KickEvent): void {

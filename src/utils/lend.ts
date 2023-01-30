@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Bucket, Lend } from "../../generated/schema"
 
 import { ZERO_BI } from "./constants"
@@ -22,14 +22,4 @@ export function loadOrCreateLend(bucketId: Bytes, lendId: Bytes, poolId: Bytes):
         lend.lpbValueInQuote = ZERO_BI
     }
     return lend
-}
-
-export function lpbValueInQuote(bucket: Bucket, lend: Lend): BigInt {
-    // TODO: need to convert from RAY to WAD
-    let quoteTokenAmount = lend.lpb.times(bucket.exchangeRate)
-
-    if (quoteTokenAmount.gt(bucket.deposit)) {
-        quoteTokenAmount = bucket.deposit
-    }
-    return quoteTokenAmount
 }

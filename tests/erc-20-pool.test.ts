@@ -5,23 +5,26 @@ import {
   clearStore,
   beforeAll,
   afterAll,
+  beforeEach,
+  afterEach,
   logStore
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent } from "./utils/erc-20-pool-utils"
+import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent } from "./utils/erc-20-pool-utils"
 import { createPool } from "./utils/common"
 import { getBucketId } from "../src/utils/bucket"
 import { addressToBytes } from "../src/utils/convert"
 import { ONE_BI, ZERO_BI } from "../src/utils/constants"
-import { Account, Lend } from "../generated/schema"
+import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
+import { getLoanId } from "../src/utils/loan"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
 
 describe("Describe entity assertions", () => {
-  beforeAll(() => {
+  beforeEach(() => {
     // deploy pool contract
     const pool_ = Address.fromString("0x0000000000000000000000000000000000000001")
     const collateralToken = Address.fromString("0x0000000000000000000000000000000000000010")
@@ -30,7 +33,10 @@ describe("Describe entity assertions", () => {
     createPool(pool_, collateralToken, quoteToken)
   })
 
-  afterAll(() => {
+  // afterAll(() => {
+  //   clearStore()
+  // })
+  afterEach(() => {
     clearStore()
   })
 
@@ -103,8 +109,8 @@ describe("Describe entity assertions", () => {
     )
     handleAddQuoteToken(newAddQuoteTokenEvent)
 
+    // check AddQuoteTokenEvent attributes
     assert.entityCount("AddQuoteToken", 1)
-
     // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
     assert.fieldEquals(
       "AddQuoteToken",
@@ -183,7 +189,7 @@ describe("Describe entity assertions", () => {
       `${ONE_BI}`
     )
 
-    // check lend attributes updated
+    // check Lend attributes updated
     const lendId = getLendId(bucketId, accountId)
     const loadedLend = Lend.load(lendId)!
     assert.bytesEquals(bucketId, loadedLend.bucket)
@@ -198,6 +204,96 @@ describe("Describe entity assertions", () => {
       `${lendId.toHexString()}`,
       "lpb",
       `${lpAwarded}`
+    )
+  })
+
+  test("DrawDebt", () => {
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const borrower = Address.fromString("0x0000000000000000000000000000000000000003")
+    const amountBorrowed = BigInt.fromI32(567)
+    const collateralPledged = BigInt.fromI32(1067)
+    const lup = BigInt.fromI32(234)
+
+    const newDrawDebtEvent = createDrawDebtEvent(
+      poolAddress,
+      borrower,
+      amountBorrowed,
+      collateralPledged,
+      lup
+    )
+    handleDrawDebt(newDrawDebtEvent)
+    
+    // check DrawDebtEvent attributes
+    assert.entityCount("DrawDebt", 1)
+    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
+    assert.fieldEquals(
+      "DrawDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "borrower",
+      "0x0000000000000000000000000000000000000003"
+    )
+    assert.fieldEquals(
+      "DrawDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "amountBorrowed",
+      `${amountBorrowed}`
+    )
+    assert.fieldEquals(
+      "DrawDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "collateralPledged",
+      `${collateralPledged}`
+    )
+    assert.fieldEquals(
+      "DrawDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lup",
+      `${lup}`
+    )
+
+    // TODO: check bucket attributes updated -> requires handling liquidations
+
+    // check pool attributes updated
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "currentDebt",
+      `${amountBorrowed}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
+    )
+    // TODO: check utilization for pool
+
+    // check Account attributes updated
+    const accountId = addressToBytes(borrower)
+    const loadedAccount = Account.load(accountId)!
+    assert.bytesEquals(addressToBytes(poolAddress), loadedAccount.pools[0])
+    assert.fieldEquals(
+      "Account",
+      `${accountId.toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
+    )
+
+    // check Loan attributes updated
+    const loanId = getLoanId(addressToBytes(poolAddress), accountId)
+    const loadedLoan = Loan.load(loanId)!
+    assert.bytesEquals(addressToBytes(poolAddress), loadedLoan.pool)
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "collateralDeposited",
+      `${collateralPledged}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "debt",
+      `${amountBorrowed}`
     )
 
   })

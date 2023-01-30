@@ -53,23 +53,6 @@ type Bucket @entity {
   lpb: BigInt!
 }
 
-type Loan @entity {
-  # Loan id: $poolAddress + '|' + $borrowerId
-  id: Bytes!
-  # pool address
-  poolAddress: String!
-  # pool pointer
-  pool: Pool!
-  # collateral tokens deposited in a pool by the borrower
-  collateralDeposited: BigInt!
-  # collateralization of the borrow position in the pool
-  collateralization: BigDecimal!
-  # total quote drawn from the pool in the loan
-  debt: BigInt!
-  # borrowers highest threshold price
-  htp: BigDecimal!
-}
-
 # lend occurs per bucket in a pool
 type Lend @entity {
   # Lend id: $bucketId + '|' + $accountId
@@ -86,6 +69,23 @@ type Lend @entity {
   lpb: BigInt!
   # quote equivalent value of the lend's LPB in the bucket
   lpbValueInQuote: BigInt!
+}
+
+type Loan @entity {
+  # Loan id: $poolAddress + '|' + $borrowerId
+  id: Bytes!
+  # pool address
+  poolAddress: String!
+  # pool pointer
+  pool: Pool!
+  # collateral tokens deposited in a pool by the borrower
+  collateralDeposited: BigInt!
+  # collateralization of the borrow position in the pool
+  collateralization: BigInt!
+  # total quote drawn from the pool in the loan
+  debt: BigInt!
+  # borrowers highest threshold price
+  htp: BigInt!
 }
 
 type Account @entity {
@@ -190,6 +190,7 @@ type BucketTakeLPAwarded @entity(immutable: true) {
 
 type DrawDebt @entity(immutable: true) {
   id: Bytes!
+  pool: Pool! # Pool debt was drawn from
   borrower: Bytes! # address
   amountBorrowed: BigInt! # uint256
   collateralPledged: BigInt! # uint256

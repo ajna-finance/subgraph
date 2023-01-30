@@ -81,6 +81,7 @@ export function createAddQuoteTokenEvent(
     new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
   )
 
+  // update transaction target to the expected pool address
   addQuoteTokenEvent.transaction.to = pool
 
   return addQuoteTokenEvent
@@ -230,6 +231,7 @@ export function createBucketTakeLPAwardedEvent(
 }
 
 export function createDrawDebtEvent(
+  pool: Address,
   borrower: Address,
   amountBorrowed: BigInt,
   collateralPledged: BigInt,
@@ -257,6 +259,9 @@ export function createDrawDebtEvent(
   drawDebtEvent.parameters.push(
     new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
   )
+
+  // update transaction target to the expected pool address
+  drawDebtEvent.transaction.to = pool
 
   return drawDebtEvent
 }
