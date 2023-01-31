@@ -43,11 +43,12 @@ import {
 } from "../generated/schema"
 
 import { ONE_BI, ZERO_BI } from "./utils/constants"
-import { addressToBytes } from "./utils/convert"
+import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountPools } from "./utils/account"
 import { getBucketId, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
+import { getPoolReserves } from "./utils/pool"
 import { collateralization, lpbValueInQuote } from "./utils/common"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
@@ -84,10 +85,10 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
-    // pool.lup           = event.params.lup //TODO: need to convert this to a decimal
-    pool.totalDeposits = pool.totalDeposits.plus(event.params.amount)
-    // pool.currentReserves = getPoolReserves(pool)
-    pool.txCount       = pool.txCount.plus(ONE_BI)
+    pool.lup             = wadToDecimal(event.params.lup)
+    pool.totalDeposits   = pool.totalDeposits.plus(event.params.amount)
+    pool.currentReserves = getPoolReserves(pool)
+    pool.txCount         = pool.txCount.plus(ONE_BI)
 
     // update bucket state
     const bucketId = getBucketId(pool.id, event.params.price)
@@ -220,10 +221,10 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
-    // pool.lup = event.params.lup
-    log.info("lup", [`${event.params.lup}`])
-    pool.currentDebt   = pool.currentDebt.plus(event.params.amountBorrowed)
-    pool.txCount       = pool.txCount.plus(ONE_BI)
+    pool.lup             = wadToDecimal(event.params.lup)
+    pool.currentDebt     = pool.currentDebt.plus(event.params.amountBorrowed)
+    pool.currentReserves = getPoolReserves(pool)
+    pool.txCount         = pool.txCount.plus(ONE_BI)
 
     // TODO: update bucket state -> requires handling liquidations
 
@@ -321,19 +322,48 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
 }
 
 export function handleRepayDebt(event: RepayDebtEvent): void {
-  let entity = new RepayDebt(
+  const repayDebt = new RepayDebt(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.borrower = event.params.borrower
-  entity.quoteRepaid = event.params.quoteRepaid
-  entity.collateralPulled = event.params.collateralPulled
-  entity.lup = event.params.lup
+  repayDebt.borrower = event.params.borrower
+  repayDebt.quoteRepaid = event.params.quoteRepaid
+  repayDebt.collateralPulled = event.params.collateralPulled
+  repayDebt.lup = event.params.lup
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  repayDebt.blockNumber = event.block.number
+  repayDebt.blockTimestamp = event.block.timestamp
+  repayDebt.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // update pool state
+    pool.lup             = wadToDecimal(event.params.lup)
+    pool.currentDebt     = pool.currentDebt.minus(event.params.quoteRepaid)
+    pool.currentReserves = getPoolReserves(pool)
+    pool.txCount         = pool.txCount.plus(ONE_BI)
+
+    // update account state
+    const accountId = addressToBytes(event.params.borrower)
+    const account   = loadOrCreateAccount(accountId)
+    account.txCount = account.txCount.plus(ONE_BI)
+
+    // update loan state
+    const loanId = getLoanId(pool.id, accountId)
+    const loan = loadOrCreateLoan(loanId, pool.id)
+    loan.collateralDeposited = loan.collateralDeposited.minus(event.params.collateralPulled)
+    loan.debt                = loan.debt.minus(event.params.quoteRepaid)
+    loan.collateralization   = collateralization(loan.debt, loan.collateralDeposited)
+
+    // save entities to store
+    pool.save()
+    account.save()
+    loan.save()
+
+    repayDebt.pool = pool.id
+  }
+
+  repayDebt.save()
 }
 
 export function handleReserveAuction(event: ReserveAuctionEvent): void {

@@ -1,4 +1,4 @@
-import { Address, ethereum } from "@graphprotocol/graph-ts"
+import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts"
 import { createMockedFunction } from "matchstick-as"
 
 import { handlePoolCreated } from "../../src/erc-20-pool-factory"
@@ -19,3 +19,9 @@ export function createPool(pool_: Address, collateral: Address, quote: Address):
     handlePoolCreated(newPoolCreatedEvent)
 }
 
+// mock getPoolReserves contract calls
+export function mockGetPoolReserves(poolAddress: Address, token: Address, expectedValue: BigInt): void {
+    createMockedFunction(token, 'balanceOf', 'balanceOf(address):(uint256)')
+      .withArgs([ethereum.Value.fromAddress(poolAddress)])
+      .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
+}

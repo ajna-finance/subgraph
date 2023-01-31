@@ -18,7 +18,7 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes): Loan {
       loan.collateralDeposited = ZERO_BI
       loan.collateralization   = ZERO_BI
       loan.debt                = ZERO_BI
-      loan.htp                 = ZERO_BI
+      loan.tp                  = ZERO_BD
     }
 
     return loan

@@ -402,6 +402,7 @@ export function createRemoveQuoteTokenEvent(
 }
 
 export function createRepayDebtEvent(
+  pool: Address,
   borrower: Address,
   quoteRepaid: BigInt,
   collateralPulled: BigInt,
@@ -429,6 +430,9 @@ export function createRepayDebtEvent(
   repayDebtEvent.parameters.push(
     new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
   )
+
+  // update transaction target to the expected pool address
+  repayDebtEvent.transaction.to = pool
 
   return repayDebtEvent
 }

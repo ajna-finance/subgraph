@@ -1,3 +1,19 @@
+# TODO: finish expanding this schema
+type Token @entity {
+  # token address
+  id: ID!
+  # token symbol
+  symbol: String!
+  # token name
+  name: String!
+  # token decimals
+  decimals: BigInt!
+  # number of pools including this token
+  poolCount: BigInt!
+  # transactions across all pools that include this token
+  txCount: BigInt!
+}
+
 # TODO: add list of pools deployed by the factory
 type ERC20PoolFactory @entity {
   # factory address
@@ -84,8 +100,8 @@ type Loan @entity {
   collateralization: BigInt!
   # total quote drawn from the pool in the loan
   debt: BigInt!
-  # borrowers highest threshold price
-  htp: BigInt!
+  # borrowers threshold price
+  tp: BigDecimal!
 }
 
 type Account @entity {
@@ -250,6 +266,7 @@ type RemoveQuoteToken @entity(immutable: true) {
 
 type RepayDebt @entity(immutable: true) {
   id: Bytes!
+  pool: Pool! # Pool debt was repaid to
   borrower: Bytes! # address
   quoteRepaid: BigInt! # uint256
   collateralPulled: BigInt! # uint256

@@ -4,7 +4,8 @@ import {
   test,
   clearStore,
   beforeAll,
-  afterAll
+  afterAll,
+  logStore
 } from "matchstick-as/assembly/index"
 import { Address } from "@graphprotocol/graph-ts"
 import { createPool } from "./utils/common"

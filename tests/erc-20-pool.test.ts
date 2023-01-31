@@ -10,12 +10,12 @@ import {
   logStore
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent } from "./utils/erc-20-pool-utils"
-import { createPool } from "./utils/common"
+import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleRepayDebt } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
+import { createPool, mockGetPoolReserves } from "./utils/common"
 import { getBucketId } from "../src/utils/bucket"
-import { addressToBytes } from "../src/utils/convert"
-import { ONE_BI, ZERO_BI } from "../src/utils/constants"
+import { addressToBytes, wadToDecimal } from "../src/utils/convert"
+import { MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
@@ -92,6 +92,7 @@ describe("Describe entity assertions", () => {
     // check entity is unavailable prior to storage
     assert.entityCount("AddQuoteToken", 0)
 
+    // mock parameters
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000002")
     const price = BigInt.fromI32(234)
@@ -99,6 +100,12 @@ describe("Describe entity assertions", () => {
     const lpAwarded = BigInt.fromI32(567)
     const lup = BigInt.fromI32(234)
 
+    // mock required contract calls
+    const quoteToken = Address.fromString("0x0000000000000000000000000000000000000012")
+    const expectedContractBalance = amount
+    mockGetPoolReserves(poolAddress, quoteToken, expectedContractBalance)
+
+    // mock add quote token event
     const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
       poolAddress,
       lender,
@@ -174,6 +181,18 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "Pool",
       `${addressToBytes(poolAddress).toHexString()}`,
+      "currentReserves",
+      `${0}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "lup",
+      `${wadToDecimal(lup)}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
       "totalDeposits",
       `${amount}`
     )
@@ -208,12 +227,19 @@ describe("Describe entity assertions", () => {
   })
 
   test("DrawDebt", () => {
+    // mock parameters
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const borrower = Address.fromString("0x0000000000000000000000000000000000000003")
     const amountBorrowed = BigInt.fromI32(567)
     const collateralPledged = BigInt.fromI32(1067)
-    const lup = BigInt.fromI32(234)
+    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
 
+    // mock required contract calls
+    // const quoteToken = Address.fromString("0x0000000000000000000000000000000000000012")
+    // const expectedContractBalance = amount
+    // mockGetPoolReserves(poolAddress, quoteToken, expectedContractBalance)
+
+    // mock drawDebt event
     const newDrawDebtEvent = createDrawDebtEvent(
       poolAddress,
       borrower,
@@ -222,7 +248,7 @@ describe("Describe entity assertions", () => {
       lup
     )
     handleDrawDebt(newDrawDebtEvent)
-    
+
     // check DrawDebtEvent attributes
     assert.entityCount("DrawDebt", 1)
     // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
@@ -263,9 +289,16 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "Pool",
       `${addressToBytes(poolAddress).toHexString()}`,
+      "lup",
+      "9.529276179422528643"
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
       "txCount",
       `${ONE_BI}`
     )
+
     // TODO: check utilization for pool
 
     // check Account attributes updated
@@ -295,7 +328,51 @@ describe("Describe entity assertions", () => {
       "debt",
       `${amountBorrowed}`
     )
+  })
 
+  test("RepayDebt", () => {
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const borrower = Address.fromString("0x0000000000000000000000000000000000000003")
+    const quoteRepaid = BigInt.fromI32(567)
+    const collateralPulled = BigInt.fromI32(1067)
+    const lup = BigInt.fromI32(234)
+
+    const newRepayDebtEvent = createRepayDebtEvent(
+      poolAddress,
+      borrower,
+      quoteRepaid,
+      collateralPulled,
+      lup
+    )
+    handleRepayDebt(newRepayDebtEvent)
+
+    // check RepayDebtEvent attributes
+    assert.entityCount("RepayDebt", 1)
+    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
+    assert.fieldEquals(
+      "RepayDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "borrower",
+      `${borrower.toHexString()}`
+    )
+    assert.fieldEquals(
+      "RepayDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "quoteRepaid",
+      `${quoteRepaid}`
+    )
+    assert.fieldEquals(
+      "RepayDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "collateralPulled",
+      `${collateralPulled}`
+    )
+    assert.fieldEquals(
+      "RepayDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lup",
+      `${lup}`
+    )
   })
 
 })

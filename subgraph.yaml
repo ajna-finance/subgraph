@@ -128,6 +128,9 @@ dataSources:
       abis:
         - name: ERC20PoolFactory
           file: ./abis/ERC20PoolFactory.json
+          # add token ABI to each respective factory type for querying token contracts
+        - name: ERC20
+          file: ./abis/ERC20.json          
       eventHandlers:
         - event: PoolCreated(address)
           handler: handlePoolCreated

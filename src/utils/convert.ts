@@ -1,6 +1,6 @@
-import { BigInt, BigDecimal, Bytes, Address } from '@graphprotocol/graph-ts'
+import { BigInt, BigDecimal, Bytes, Address, log } from '@graphprotocol/graph-ts'
 
-import { ONE_BI, ZERO_BI } from './constants'
+import { ONE_BI, ZERO_BD, ZERO_BI } from './constants'
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
     let bd = BigDecimal.fromString('1')
@@ -10,12 +10,21 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
     return bd
 }
 
-// TODO: may want to hardcode this to 18
-export function wadToDecimal(wad: BigInt, exchangeDecimals: BigInt): BigDecimal {
-    if (exchangeDecimals == ZERO_BI) {
-      return wad.toBigDecimal()
+export function bigDecimalExp18(): BigDecimal {
+    return BigDecimal.fromString('1000000000000000000')
+  }
+
+// return 0 if denominator is 0 in division
+export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
+    if (amount1.equals(ZERO_BD)) {
+        return ZERO_BD
+    } else {
+        return amount0.div(amount1)
     }
-    return wad.toBigDecimal().div(exponentToBigDecimal(exchangeDecimals))
+}
+
+export function wadToDecimal(wad: BigInt): BigDecimal {
+    return safeDiv(wad.toBigDecimal(), bigDecimalExp18())
 }
   
 export function addressToBytes(address: Address): Bytes {
