@@ -9,6 +9,8 @@ type Token @entity {
   name: String!
   # token decimals
   decimals: BigInt!
+  # flag for whether the token is an ERC721
+  isERC721: Boolean!
   # number of pools including this token
   poolCount: BigInt!
   # transactions across all pools that include this token
@@ -39,9 +41,9 @@ type Pool @entity {
   # address of the pool's quote token
   quoteToken: Token!
   # current total debt in the pool
-  currentDebt: BigInt!
+  currentDebt: BigDecimal!
   # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
-  currentReserves: BigInt!
+  currentReserves: BigDecimal!
   # current pool inflator snapshot
   inflator: BigDecimal!
   # block timestamp at which the inflator was last updated
@@ -50,8 +52,10 @@ type Pool @entity {
   htp: BigDecimal!
   # pool's current lowest utilized price
   lup: BigDecimal!  
+  # total collateral pledged to the pool
+  pledgedCollateral: BigDecimal!
   # current total quote token deposits in the pool
-  totalDeposits: BigInt!
+  totalDeposits: BigDecimal!
   # target utilization rate
   targetUtilization: BigDecimal!
   # total number of transactions sent to the pool
@@ -64,15 +68,15 @@ type Bucket @entity {
   # bucket index
   bucketIndex: BigInt!
   # current exchange rate of the bucket
-  exchangeRate: BigInt!
+  exchangeRate: BigDecimal!
   # pool address
   poolAddress: String!
   # total collateral available in the bucket
-  collateral: BigInt
+  collateral: BigDecimal!
   # total quote tokens deposited in the bucket
-  deposit: BigInt!
+  deposit: BigDecimal!
   # total LP for all lenders in the bucket
-  lpb: BigInt!
+  lpb: BigDecimal!
 }
 
 # lend occurs per bucket in a pool
@@ -86,11 +90,11 @@ type Lend @entity {
   # pool pointer
   pool: Pool!
   # quote token deposited in the bucket by the lender
-  deposit: BigInt!
+  deposit: BigDecimal!
   # LPB in the bucket accrued to lender
-  lpb: BigInt!
+  lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket
-  lpbValueInQuote: BigInt!
+  lpbValueInQuote: BigDecimal!
 }
 
 # each borrower has only one loan with a pool
@@ -102,11 +106,11 @@ type Loan @entity {
   # pool pointer
   pool: Pool!
   # collateral tokens deposited in a pool by the borrower
-  collateralDeposited: BigInt!
+  collateralDeposited: BigDecimal!
   # collateralization of the borrow position in the pool
-  collateralization: BigInt!
+  collateralization: BigDecimal!
   # total quote drawn from the pool in the loan
-  debt: BigInt!
+  debt: BigDecimal!
   # borrowers threshold price
   tp: BigDecimal!
 }

@@ -12,7 +12,7 @@ import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleRepayDe
 import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
 import { createPool, mockGetPoolReserves } from "./utils/common"
 import { getBucketId } from "../src/utils/bucket"
-import { addressToBytes, wadToDecimal } from "../src/utils/convert"
+import { addressToBytes, rayToDecimal, wadToDecimal } from "../src/utils/convert"
 import { ONE_BI, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
@@ -39,11 +39,16 @@ describe("Describe entity assertions", () => {
   // https://thegraph.com/docs/en/developer/matchstick/#write-a-unit-test
 
   test("AddCollateral created and stored", () => {
-    let actor = Address.fromString("0x0000000000000000000000000000000000000001")
-    let price = BigInt.fromI32(234)
-    let amount = BigInt.fromI32(234)
-    let lpAwarded = BigInt.fromI32(234)
-    let newAddCollateralEvent = createAddCollateralEvent(
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const actor = Address.fromString("0x0000000000000000000000000000000000000001")
+    const price = BigInt.fromI32(234)
+    const amount = BigInt.fromI32(234)
+    const lpAwarded = BigInt.fromI32(234)
+    
+    // mock addCollateralEvent
+    const newAddCollateralEvent = createAddCollateralEvent(
+      poolAddress,
       actor,
       price,
       amount,
@@ -79,8 +84,15 @@ describe("Describe entity assertions", () => {
       "234"
     )
 
-    // More assert options:
-    // https://thegraph.com/docs/en/developer/matchstick/#asserts
+    // check bucket attributes updated
+    const bucketId = getBucketId(addressToBytes(poolAddress), price)
+    assert.fieldEquals(
+      "Bucket",
+      `${bucketId.toHexString()}`,
+      "collateral",
+      `${wadToDecimal(amount)}`
+    )
+
   })
 
   test("AddQuoteToken", () => {
@@ -91,9 +103,9 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000002")
     const price = BigInt.fromI32(234)
-    const amount = BigInt.fromI32(567)
+    const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const lpAwarded = BigInt.fromI32(567)
-    const lup = BigInt.fromI32(234)
+    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
 
     // mock required contract calls
     const quoteToken = Address.fromString("0x0000000000000000000000000000000000000012")
@@ -130,7 +142,7 @@ describe("Describe entity assertions", () => {
       "AddQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      "567"
+      "567529276179422528643"
     )
     assert.fieldEquals(
       "AddQuoteToken",
@@ -142,7 +154,7 @@ describe("Describe entity assertions", () => {
       "AddQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
-      "234"
+      "9529276179422528643"
     )
 
     // check bucket attributes updated
@@ -157,7 +169,7 @@ describe("Describe entity assertions", () => {
       "Bucket",
       `${bucketId.toHexString()}`,
       "deposit",
-      `${amount}`
+      `${wadToDecimal(amount)}`
     )
     assert.fieldEquals(
       "Bucket",
@@ -169,7 +181,7 @@ describe("Describe entity assertions", () => {
       "Bucket",
       `${bucketId.toHexString()}`,
       "lpb",
-      `${lpAwarded}`
+      `${rayToDecimal(lpAwarded)}`
     )
 
     // check pool attributes updated
@@ -189,7 +201,7 @@ describe("Describe entity assertions", () => {
       "Pool",
       `${addressToBytes(poolAddress).toHexString()}`,
       "totalDeposits",
-      `${amount}`
+      `${wadToDecimal(amount)}`
     )
 
     // check account attributes updated
@@ -211,13 +223,13 @@ describe("Describe entity assertions", () => {
       "Lend",
       `${lendId.toHexString()}`,
       "deposit",
-      `${amount}`
+      `${wadToDecimal(amount)}`
     )
     assert.fieldEquals(
       "Lend",
       `${lendId.toHexString()}`,
       "lpb",
-      `${lpAwarded}`
+      `${rayToDecimal(lpAwarded)}`
     )
   })
 
@@ -225,7 +237,7 @@ describe("Describe entity assertions", () => {
     // mock parameters
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const borrower = Address.fromString("0x0000000000000000000000000000000000000003")
-    const amountBorrowed = BigInt.fromI32(567)
+    const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const collateralPledged = BigInt.fromI32(1067)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
 
@@ -279,7 +291,7 @@ describe("Describe entity assertions", () => {
       "Pool",
       `${addressToBytes(poolAddress).toHexString()}`,
       "currentDebt",
-      `${amountBorrowed}`
+      `${wadToDecimal(amountBorrowed)}`
     )
     assert.fieldEquals(
       "Pool",
@@ -315,13 +327,13 @@ describe("Describe entity assertions", () => {
       "Loan",
       `${loanId.toHexString()}`,
       "collateralDeposited",
-      `${collateralPledged}`
+      `${wadToDecimal(collateralPledged)}`
     )
     assert.fieldEquals(
       "Loan",
       `${loanId.toHexString()}`,
       "debt",
-      `${amountBorrowed}`
+      `${wadToDecimal(amountBorrowed)}`
     )
   })
 

@@ -12,7 +12,11 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
 
 export function bigDecimalExp18(): BigDecimal {
     return BigDecimal.fromString('1000000000000000000')
-  }
+}
+
+export function bigDecimalExp27(): BigDecimal {
+    return BigDecimal.fromString('1000000000000000000000000000')
+}
 
 // return 0 if denominator is 0 in division
 export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
@@ -23,6 +27,11 @@ export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
     }
 }
 
+export function rayToDecimal(ray: BigInt): BigDecimal {
+    return safeDiv(ray.toBigDecimal(), bigDecimalExp27())
+}
+
+// TODO: use raw .div instead of safeDiv
 export function wadToDecimal(wad: BigInt): BigDecimal {
     return safeDiv(wad.toBigDecimal(), bigDecimalExp18())
 }

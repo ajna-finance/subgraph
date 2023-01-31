@@ -22,6 +22,7 @@ import {
 } from "../../generated/ERC20Pool/ERC20Pool"
 
 export function createAddCollateralEvent(
+  pool: Address,
   actor: Address,
   price: BigInt,
   amount: BigInt,
@@ -46,6 +47,9 @@ export function createAddCollateralEvent(
       ethereum.Value.fromUnsignedBigInt(lpAwarded)
     )
   )
+
+  // update transaction target to the expected pool address
+  addCollateralEvent.transaction.to = pool
 
   return addCollateralEvent
 }

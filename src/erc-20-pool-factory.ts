@@ -40,13 +40,14 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.createdAtBlockNumber = event.block.number
   pool.collateralToken = Bytes.fromHexString(poolContract.collateralAddress().toHexString())
   pool.quoteToken = Bytes.fromHexString(poolContract.quoteTokenAddress().toHexString())
-  pool.currentDebt = ZERO_BI
-  pool.currentReserves = ZERO_BI
+  pool.currentDebt = ZERO_BD
+  pool.currentReserves = ZERO_BD
   pool.inflator = ONE_WAD_BD
   pool.inflatorUpdate = event.block.timestamp
   pool.htp = ZERO_BD
   pool.lup = MAX_PRICE
-  pool.totalDeposits = ZERO_BI
+  pool.pledgedCollateral = ZERO_BD
+  pool.totalDeposits = ZERO_BD
   pool.targetUtilization = ONE_WAD_BD
   pool.txCount = ZERO_BI
 

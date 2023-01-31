@@ -1,7 +1,7 @@
 import { BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Bucket, Lend } from "../../generated/schema"
 
-import { ZERO_BI } from "./constants"
+import { ZERO_BD, ZERO_BI } from "./constants"
 
 
 export function getLendId(bucketId: Bytes, accountId: Bytes): Bytes {
@@ -17,9 +17,9 @@ export function loadOrCreateLend(bucketId: Bytes, lendId: Bytes, poolId: Bytes):
         lend.bucket          = bucketId
         lend.pool            = poolId
         lend.poolAddress     = poolId.toHexString()
-        lend.deposit         = ZERO_BI
-        lend.lpb             = ZERO_BI
-        lend.lpbValueInQuote = ZERO_BI
+        lend.deposit         = ZERO_BD
+        lend.lpb             = ZERO_BD
+        lend.lpbValueInQuote = ZERO_BD
     }
     return lend
 }

@@ -1,4 +1,4 @@
-import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts"
 import { createMockedFunction } from "matchstick-as"
 
 import { handlePoolCreated } from "../../src/erc-20-pool-factory"
