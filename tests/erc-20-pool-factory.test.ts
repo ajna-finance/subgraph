@@ -56,6 +56,12 @@ describe("Describe entity assertions", () => {
       "poolCount",
       `${ONE_BI}`
     )
+    assert.fieldEquals(
+      "ERC20PoolFactory",
+      "0xbf332da94b818ac7972484997100c8cbb400b991",
+      "txCount",
+      `${ONE_BI}`
+    )
   })
 
   test("Pool entity attributes", () => {

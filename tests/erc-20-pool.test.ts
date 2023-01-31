@@ -3,8 +3,6 @@ import {
   describe,
   test,
   clearStore,
-  beforeAll,
-  afterAll,
   beforeEach,
   afterEach,
   logStore
@@ -15,7 +13,7 @@ import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent
 import { createPool, mockGetPoolReserves } from "./utils/common"
 import { getBucketId } from "../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
-import { MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"
+import { ONE_BI, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
@@ -33,9 +31,6 @@ describe("Describe entity assertions", () => {
     createPool(pool_, collateralToken, quoteToken)
   })
 
-  // afterAll(() => {
-  //   clearStore()
-  // })
   afterEach(() => {
     clearStore()
   })

@@ -1,10 +1,11 @@
+import { Bytes } from "@graphprotocol/graph-ts"
+
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
 import { ERC20Pool } from "../generated/ERC20Pool/ERC20Pool"
-
 import { PoolCreated } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
 
-import { ERC20_FACTORY_ADDRESS, MAX_PRICE, ONE_BI, ZERO_BI, ZERO_BD } from "./utils/constants"
+import { ERC20_FACTORY_ADDRESS, MAX_PRICE, ONE_BI, ZERO_BI, ZERO_BD, ONE_WAD_BD } from "./utils/constants"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   let newPool = new PoolCreated(
@@ -22,6 +23,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     // create new factory
     factory = new ERC20PoolFactory(ERC20_FACTORY_ADDRESS) as ERC20PoolFactory
     factory.poolCount = ZERO_BI
+    factory.pools     = []
     factory.txCount   = ZERO_BI
   }
 
@@ -36,15 +38,20 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   const pool = new Pool(event.params.pool_) as Pool
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
-  pool.collateralToken = poolContract.collateralAddress()
-  pool.quoteToken = poolContract.quoteTokenAddress()
-  pool.htp = ZERO_BD
-  pool.lup = MAX_PRICE
+  pool.collateralToken = Bytes.fromHexString(poolContract.collateralAddress().toHexString())
+  pool.quoteToken = Bytes.fromHexString(poolContract.quoteTokenAddress().toHexString())
   pool.currentDebt = ZERO_BI
   pool.currentReserves = ZERO_BI
+  pool.inflator = ONE_WAD_BD
+  pool.inflatorUpdate = event.block.timestamp
+  pool.htp = ZERO_BD
+  pool.lup = MAX_PRICE
   pool.totalDeposits = ZERO_BI
-  pool.targetUtilization = ZERO_BD
+  pool.targetUtilization = ONE_WAD_BD
   pool.txCount = ZERO_BI
+
+  // add pool reference to factories' list of pools
+  factory.pools = factory.pools.concat([pool.id])
 
   // save entities to the store
   factory.save()

@@ -1,7 +1,11 @@
-import { BigInt, Bytes, Address } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, Bytes, Address } from '@graphprotocol/graph-ts'
 
 import { ERC20 } from '../../generated/ERC20PoolFactory/ERC20'
 import { Pool } from "../../generated/schema"
+
+export function getPoolAddress(poolId: Bytes): Address {
+    return Address.fromBytes(poolId)
+}
 
 export function getPoolReserves(pool: Pool): BigInt {
     const contractQuoteToken = ERC20.bind(Address.fromBytes(pool.quoteToken))
@@ -15,6 +19,7 @@ export function getPoolReserves(pool: Pool): BigInt {
                 // .minus(pool.unclaimedReserves)
 }
 
-export function getPoolAddress(poolId: Bytes): Address {
-    return Address.fromBytes(poolId)
+export function getPoolTargetUtilization(pool: Pool): BigDecimal {
+    // debtEMA / lupColEMA
+    return pool.targetUtilization
 }

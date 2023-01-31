@@ -1,7 +1,8 @@
-# TODO: finish expanding this schema
+# TODO: finish expanding this schema -> ERC20 / ERC721?
+# this supports both ERC20 and ERC721 tokens, as union type's aren't currently supported
 type Token @entity {
   # token address
-  id: ID!
+  id: Bytes!
   # token symbol
   symbol: String!
   # token name
@@ -14,17 +15,18 @@ type Token @entity {
   txCount: BigInt!
 }
 
-# TODO: add list of pools deployed by the factory
 type ERC20PoolFactory @entity {
   # factory address
   id: Bytes!
   # number of pools deployed by the factory
   poolCount: BigInt!
+  # list of pools deployed by the factory
+  pools: [Pool!]!
   # total number of transactions sent to the factory
   txCount: BigInt!
 }
 
-# TODO: add colllateralization information
+# TODO: add colllateralization and utilization information
 type Pool @entity {
   # pool address
   id: Bytes!
@@ -33,17 +35,21 @@ type Pool @entity {
   # creation timestamp
   createdAtTimestamp: BigInt!
   # address of the pool's collateral token
-  collateralToken: Bytes!
+  collateralToken: Token!
   # address of the pool's quote token
-  quoteToken: Bytes!
-  # pool's current highest threshold price
-  htp: BigDecimal!
-  # pool's current lowest utilized price
-  lup: BigDecimal!
+  quoteToken: Token!
   # current total debt in the pool
   currentDebt: BigInt!
   # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
   currentReserves: BigInt!
+  # current pool inflator snapshot
+  inflator: BigDecimal!
+  # block timestamp at which the inflator was last updated
+  inflatorUpdate: BigInt!
+  # pool's current highest threshold price
+  htp: BigDecimal!
+  # pool's current lowest utilized price
+  lup: BigDecimal!  
   # current total quote token deposits in the pool
   totalDeposits: BigInt!
   # target utilization rate
@@ -87,6 +93,7 @@ type Lend @entity {
   lpbValueInQuote: BigInt!
 }
 
+# each borrower has only one loan with a pool
 type Loan @entity {
   # Loan id: $poolAddress + '|' + $borrowerId
   id: Bytes!
@@ -114,6 +121,7 @@ type Account @entity {
   kicks: [Kick!]!
   # buckets in a pool to which the account has lent quote
   lends: [Lend!]!
+  # loans which the account has taken from pools
   loans: [Loan!]!
   settles: [Settle!]!
   takes: [Take!]!
