@@ -82,6 +82,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     const bucket   = loadOrCreateBucket(pool.id, bucketId, event.params.price)
     bucket.collateral = bucket.collateral.plus(wadToDecimal(event.params.amount))
     bucket.lpb        = bucket.lpb.plus(rayToDecimal(event.params.lpAwarded))
+    // TODO: update exchange rate
 
     // update lend state
     const lendId = getLendId(bucketId, accountId)
@@ -127,6 +128,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     const bucket   = loadOrCreateBucket(pool.id, bucketId, event.params.price)
     bucket.deposit = bucket.deposit.plus(wadToDecimal(event.params.amount))
     bucket.lpb     = bucket.lpb.plus(rayToDecimal(event.params.lpAwarded))
+    // bucket.exchangeRate = calculateExchangeRate() // update exchange rate
 
     // update account state
     const accountId = addressToBytes(event.params.lender)

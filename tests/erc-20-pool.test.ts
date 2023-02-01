@@ -10,10 +10,10 @@ import {
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleRepayDebt } from "../src/erc-20-pool"
 import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
-import { createPool, mockGetPoolReserves } from "./utils/common"
+import { assertBucketUpdate, assertPoolUpdate, createPool, mockGetPoolReserves } from "./utils/common"
 import { getBucketId } from "../src/utils/bucket"
 import { addressToBytes, rayToDecimal, wadToDecimal } from "../src/utils/convert"
-import { ONE_BI, ZERO_BI } from "../src/utils/constants"
+import { ONE_BI, ONE_RAY_BI, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
@@ -159,50 +159,23 @@ describe("Describe entity assertions", () => {
 
     // check bucket attributes updated
     const bucketId = getBucketId(addressToBytes(poolAddress), price)
-    assert.fieldEquals(
-      "Bucket",
-      `${bucketId.toHexString()}`,
-      "collateral",
-      `${ZERO_BI}`
-    )
-    assert.fieldEquals(
-      "Bucket",
-      `${bucketId.toHexString()}`,
-      "deposit",
-      `${wadToDecimal(amount)}`
-    )
-    assert.fieldEquals(
-      "Bucket",
-      `${bucketId.toHexString()}`,
-      "exchangeRate",
-      `${ONE_BI}`
-    )
-    assert.fieldEquals(
-      "Bucket",
-      `${bucketId.toHexString()}`,
-      "lpb",
-      `${rayToDecimal(lpAwarded)}`
-    )
+    assertBucketUpdate({
+      id: bucketId,
+      collateral: ZERO_BI,
+      deposit: amount,
+      exchangeRate: ONE_RAY_BI,
+      bucketIndex: price,
+      lpb: lpAwarded
+    })
 
     // check pool attributes updated
-    assert.fieldEquals(
-      "Pool",
-      `${addressToBytes(poolAddress).toHexString()}`,
-      "currentReserves",
-      `${0}`
-    )
-    assert.fieldEquals(
-      "Pool",
-      `${addressToBytes(poolAddress).toHexString()}`,
-      "lup",
-      `${wadToDecimal(lup)}`
-    )
-    assert.fieldEquals(
-      "Pool",
-      `${addressToBytes(poolAddress).toHexString()}`,
-      "totalDeposits",
-      `${wadToDecimal(amount)}`
-    )
+    assertPoolUpdate({
+      poolAddress: addressToBytes(poolAddress).toHexString(),
+      currentReserves: ZERO_BI,
+      lup: lup,
+      totalDeposits: amount,
+      txCount: ONE_BI
+    })
 
     // check account attributes updated
     const accountId = addressToBytes(lender)

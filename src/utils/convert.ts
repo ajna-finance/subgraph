@@ -18,7 +18,7 @@ export function bigDecimalExp27(): BigDecimal {
     return BigDecimal.fromString('1000000000000000000000000000')
 }
 
-// return 0 if denominator is 0 in division
+// returns 0 if denominator is 0 in division
 export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
     if (amount1.equals(ZERO_BD)) {
         return ZERO_BD
@@ -28,12 +28,15 @@ export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
 }
 
 export function rayToDecimal(ray: BigInt): BigDecimal {
-    return safeDiv(ray.toBigDecimal(), bigDecimalExp27())
+    return ray.toBigDecimal().div(bigDecimalExp27())
 }
 
-// TODO: use raw .div instead of safeDiv
 export function wadToDecimal(wad: BigInt): BigDecimal {
-    return safeDiv(wad.toBigDecimal(), bigDecimalExp18())
+    return wad.toBigDecimal().div(bigDecimalExp18())
+}
+
+export function wadToRay(wad: BigDecimal): BigDecimal {
+    return wad.times(bigDecimalExp18())
 }
   
 export function addressToBytes(address: Address): Bytes {
