@@ -15,7 +15,7 @@ import { poolInfoUtilsNetworkLookUpTable } from "../../src/utils/constants"
 export class BucketUpdatedParams {
     id: Bytes
     collateral: BigInt
-    deposit: BigInt
+    quoteTokens: BigInt
     exchangeRate: BigInt
     bucketIndex: BigInt
     lpb: BigInt
@@ -30,14 +30,14 @@ export function assertBucketUpdate(params: BucketUpdatedParams): void {
     assert.fieldEquals(
         "Bucket",
         `${params.id.toHexString()}`,
-        "deposit",
-        `${wadToDecimal(params.deposit)}`
+        "quoteTokens",
+        `${wadToDecimal(params.quoteTokens)}`
     )
     assert.fieldEquals(
         "Bucket",
         `${params.id.toHexString()}`,
         "exchangeRate",
-        `${params.exchangeRate.toBigDecimal()}`
+        `${rayToDecimal(params.exchangeRate)}`
     )
     assert.fieldEquals(
         "Bucket",
@@ -57,10 +57,27 @@ export class LendUpdatedParams {
     poolAddress: String
     deposit: BigInt
     lpb: BigInt
-    lpbValueInQuote: BigDecimal
+    lpbValueInQuote: BigInt
 }
 export function assertLendUpdate(params: LendUpdatedParams): void {
-
+    assert.fieldEquals(
+        "Lend",
+        `${params.id.toHexString()}`,
+        "deposit",
+        `${wadToDecimal(params.deposit)}`
+    )
+    assert.fieldEquals(
+        "Lend",
+        `${params.id.toHexString()}`,
+        "lpb",
+        `${rayToDecimal(params.lpb)}`
+    )
+    assert.fieldEquals(
+        "Lend",
+        `${params.id.toHexString()}`,
+        "lpbValueInQuote",
+        `${wadToDecimal(params.lpbValueInQuote)}`
+    )      
 }
 
 /***********************/
@@ -142,8 +159,8 @@ export function mockGetBucketInfo(pool: Address, bucketIndex: BigInt, expectedIn
 }
 
 // mock getLPBValueInQuote contract calls
-export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, expectedValue: BigDecimal): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'getLPBValueInQuote', 'getLPBValueInQuote(address,uint256):(uint256)')
-      .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(lpb)])
-      .returns([ethereum.Value.fromUnsignedBigInt(expectedValue.times(BigInt.fromI32(10).pow(18)).toBigInt())])
+export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, bucketIndex: BigInt, expectedValue: BigInt): void {
+    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lpsToQuoteTokens', 'lpsToQuoteTokens(address,uint256,uint256):(uint256)')
+      .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(lpb), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
+      .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
 }

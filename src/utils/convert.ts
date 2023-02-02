@@ -2,8 +2,9 @@ import { BigInt, BigDecimal, Bytes, Address, log } from '@graphprotocol/graph-ts
 
 import { ONE_BI, ZERO_BD, ZERO_BI } from './constants'
 
-export function bigDecimalToBigInt(value: BigDecimal): BigInt {
-    return BigInt.fromString(value.toString())
+// converts a BigDecimal RAY to a BigInt
+export function bigDecimalRayToBigInt(value: BigDecimal): BigInt {
+    return BigInt.fromString(value.times(bigDecimalExp27()).toString())
 }
 
 export function bigDecimalExp18(): BigDecimal {
@@ -31,6 +32,7 @@ export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
     }
 }
 
+// converts a ray to a decimal
 export function rayToDecimal(ray: BigInt): BigDecimal {
     return ray.toBigDecimal().div(bigDecimalExp27())
 }

@@ -12,7 +12,7 @@ import {
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleRepayDebt } from "../src/erc-20-pool"
 import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
-import { assertBucketUpdate, assertPoolUpdate, createPool, mockGetBucketInfo, mockGetPoolReserves } from "./utils/common"
+import { assertBucketUpdate, assertLendUpdate, assertPoolUpdate, createPool, mockGetBucketInfo, mockGetLPBValueInQuote, mockGetPoolReserves } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, rayToDecimal, wadToDecimal } from "../src/utils/convert"
 import { ONE_BI, ONE_RAY_BI, ZERO_BI } from "../src/utils/constants"
@@ -54,6 +54,7 @@ describe("Describe entity assertions", () => {
     const collateralAmount = BigInt.fromI32(234)
     const lpAwarded = BigInt.fromI32(234)
     
+    // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
       price,
       ZERO_BI,
@@ -63,6 +64,8 @@ describe("Describe entity assertions", () => {
       ONE_RAY_BI
     )
     mockGetBucketInfo(poolAddress, price, expectedBucketInfo)
+
+    mockGetLPBValueInQuote(poolAddress, lpAwarded, price, lpAwarded)
 
     // mock addCollateralEvent
     const newAddCollateralEvent = createAddCollateralEvent(
@@ -139,6 +142,9 @@ describe("Describe entity assertions", () => {
       ONE_RAY_BI
     )
     mockGetBucketInfo(poolAddress, price, expectedBucketInfo)
+    
+    const expectedLPBValueInQuote = lpAwarded
+    mockGetLPBValueInQuote(poolAddress, lpAwarded, price, expectedLPBValueInQuote)
 
     // mock add quote token event
     const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
@@ -190,7 +196,7 @@ describe("Describe entity assertions", () => {
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,
-      deposit: amount,
+      quoteTokens: amount,
       exchangeRate: ONE_RAY_BI,
       bucketIndex: price,
       lpb: lpAwarded
@@ -220,18 +226,14 @@ describe("Describe entity assertions", () => {
     const lendId = getLendId(bucketId, accountId)
     const loadedLend = Lend.load(lendId)!
     assert.bytesEquals(bucketId, loadedLend.bucket)
-    assert.fieldEquals(
-      "Lend",
-      `${lendId.toHexString()}`,
-      "deposit",
-      `${wadToDecimal(amount)}`
-    )
-    assert.fieldEquals(
-      "Lend",
-      `${lendId.toHexString()}`,
-      "lpb",
-      `${rayToDecimal(lpAwarded)}`
-    )
+    assertLendUpdate({
+      id: lendId,
+      bucketId: bucketId,
+      poolAddress: poolAddress.toHexString(),
+      deposit: amount,
+      lpb: lpAwarded,
+      lpbValueInQuote: lpAwarded
+    })
   })
 
   test("DrawDebt", () => {
