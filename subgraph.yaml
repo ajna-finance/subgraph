@@ -34,6 +34,8 @@ dataSources:
       abis:
         - name: ERC20Pool
           file: ./abis/ERC20Pool.json
+        - name: PoolInfoUtils
+          file: ./abis/PoolInfoUtils.json          
       eventHandlers:
         - event: AddCollateral(indexed address,indexed uint256,uint256,uint256)
           handler: handleAddCollateral
@@ -130,7 +132,7 @@ dataSources:
           file: ./abis/ERC20PoolFactory.json
           # add token ABI to each respective factory type for querying token contracts
         - name: ERC20
-          file: ./abis/ERC20.json          
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: PoolCreated(address)
           handler: handlePoolCreated
@@ -178,6 +180,8 @@ dataSources:
       abis:
         - name: ERC721PoolFactory
           file: ./abis/ERC721PoolFactory.json
+        - name: ERC20
+          file: ./abis/ERC20.json          
       eventHandlers:
         - event: ERC721PoolFactoryPoolCreated(address)
           handler: handleERC721PoolFactoryPoolCreated

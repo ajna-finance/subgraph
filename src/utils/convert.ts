@@ -2,12 +2,8 @@ import { BigInt, BigDecimal, Bytes, Address, log } from '@graphprotocol/graph-ts
 
 import { ONE_BI, ZERO_BD, ZERO_BI } from './constants'
 
-export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
-    let bd = BigDecimal.fromString('1')
-    for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
-      bd = bd.times(BigDecimal.fromString('10'))
-    }
-    return bd
+export function bigDecimalToBigInt(value: BigDecimal): BigInt {
+    return BigInt.fromString(value.toString())
 }
 
 export function bigDecimalExp18(): BigDecimal {
@@ -16,6 +12,14 @@ export function bigDecimalExp18(): BigDecimal {
 
 export function bigDecimalExp27(): BigDecimal {
     return BigDecimal.fromString('1000000000000000000000000000')
+}
+
+export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
+    let bd = BigDecimal.fromString('1')
+    for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
+      bd = bd.times(BigDecimal.fromString('10'))
+    }
+    return bd
 }
 
 // returns 0 if denominator is 0 in division

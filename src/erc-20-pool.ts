@@ -42,10 +42,10 @@ import {
   UpdateInterestRate
 } from "../generated/schema"
 
-import { ONE_BI, ZERO_BI } from "./utils/constants"
+import { ONE_BI } from "./utils/constants"
 import { addressToBytes, wadToDecimal, rayToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountPools } from "./utils/account"
-import { getBucketId, loadOrCreateBucket } from "./utils/bucket"
+import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getPoolReserves } from "./utils/pool"
@@ -78,17 +78,19 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     updateAccountPools(account, pool)
 
     // update bucket state
-    const bucketId = getBucketId(pool.id, event.params.price)
-    const bucket   = loadOrCreateBucket(pool.id, bucketId, event.params.price)
-    bucket.collateral = bucket.collateral.plus(wadToDecimal(event.params.amount))
-    bucket.lpb        = bucket.lpb.plus(rayToDecimal(event.params.lpAwarded))
-    // TODO: update exchange rate
+    const bucketId   = getBucketId(pool.id, event.params.price)
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.price)
+    const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
+    bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+    bucket.quoteTokens  = wadToDecimal(bucketInfo.quoteTokens)
+    bucket.lpb          = rayToDecimal(bucketInfo.lpb)
+    bucket.exchangeRate = rayToDecimal(bucketInfo.exchangeRate)
 
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id)
     lend.lpb             = lend.lpb.plus(rayToDecimal(event.params.lpAwarded))
-    lend.lpbValueInQuote = lpbValueInQuote(bucket, lend)
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
 
     // save entities to store
     account.save()
@@ -124,11 +126,13 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     pool.txCount         = pool.txCount.plus(ONE_BI)
 
     // update bucket state
-    const bucketId = getBucketId(pool.id, event.params.price)
-    const bucket   = loadOrCreateBucket(pool.id, bucketId, event.params.price)
-    bucket.deposit = bucket.deposit.plus(wadToDecimal(event.params.amount))
-    bucket.lpb     = bucket.lpb.plus(rayToDecimal(event.params.lpAwarded))
-    // bucket.exchangeRate = calculateExchangeRate() // update exchange rate
+    const bucketId   = getBucketId(pool.id, event.params.price)
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.price)
+    const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
+    bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+    bucket.quoteTokens  = wadToDecimal(bucketInfo.quoteTokens)
+    bucket.lpb          = rayToDecimal(bucketInfo.lpb)
+    bucket.exchangeRate = rayToDecimal(bucketInfo.exchangeRate)
 
     // update account state
     const accountId = addressToBytes(event.params.lender)
@@ -142,7 +146,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     const lend = loadOrCreateLend(bucketId, lendId, pool.id)
     lend.deposit         = lend.deposit.plus(wadToDecimal(event.params.amount))
     lend.lpb             = lend.lpb.plus(rayToDecimal(event.params.lpAwarded))
-    lend.lpbValueInQuote = lpbValueInQuote(bucket, lend)
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
 
     // save entities to store
     pool.save()

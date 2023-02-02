@@ -5,13 +5,15 @@ import {
   clearStore,
   beforeEach,
   afterEach,
-  logStore
+  logStore,
+  beforeAll,
+  dataSourceMock
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleRepayDebt } from "../src/erc-20-pool"
 import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
-import { assertBucketUpdate, assertPoolUpdate, createPool, mockGetPoolReserves } from "./utils/common"
-import { getBucketId } from "../src/utils/bucket"
+import { assertBucketUpdate, assertPoolUpdate, createPool, mockGetBucketInfo, mockGetPoolReserves } from "./utils/common"
+import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, rayToDecimal, wadToDecimal } from "../src/utils/convert"
 import { ONE_BI, ONE_RAY_BI, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan } from "../generated/schema"
@@ -22,6 +24,12 @@ import { getLoanId } from "../src/utils/loan"
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
 
 describe("Describe entity assertions", () => {
+
+  beforeAll(() => {
+    // set dataSource.network() return value to "goerli" so constant mapping for poolInfoUtils can be accessed
+    dataSourceMock.setNetwork("goerli")
+  })
+
   beforeEach(() => {
     // deploy pool contract
     const pool_ = Address.fromString("0x0000000000000000000000000000000000000001")
@@ -43,15 +51,25 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const actor = Address.fromString("0x0000000000000000000000000000000000000001")
     const price = BigInt.fromI32(234)
-    const amount = BigInt.fromI32(234)
+    const collateralAmount = BigInt.fromI32(234)
     const lpAwarded = BigInt.fromI32(234)
     
+    const expectedBucketInfo = new BucketInfo(
+      price,
+      ZERO_BI,
+      collateralAmount,
+      lpAwarded,
+      ZERO_BI,
+      ONE_RAY_BI
+    )
+    mockGetBucketInfo(poolAddress, price, expectedBucketInfo)
+
     // mock addCollateralEvent
     const newAddCollateralEvent = createAddCollateralEvent(
       poolAddress,
       actor,
       price,
-      amount,
+      collateralAmount,
       lpAwarded
     )
     handleAddCollateral(newAddCollateralEvent)
@@ -90,7 +108,7 @@ describe("Describe entity assertions", () => {
       "Bucket",
       `${bucketId.toHexString()}`,
       "collateral",
-      `${wadToDecimal(amount)}`
+      `${wadToDecimal(collateralAmount)}`
     )
 
   })
@@ -111,6 +129,16 @@ describe("Describe entity assertions", () => {
     const quoteToken = Address.fromString("0x0000000000000000000000000000000000000012")
     const expectedContractBalance = amount
     mockGetPoolReserves(poolAddress, quoteToken, expectedContractBalance)
+
+    const expectedBucketInfo = new BucketInfo(
+      price,
+      amount,
+      ZERO_BI,
+      lpAwarded,
+      ZERO_BI,
+      ONE_RAY_BI
+    )
+    mockGetBucketInfo(poolAddress, price, expectedBucketInfo)
 
     // mock add quote token event
     const newAddQuoteTokenEvent = createAddQuoteTokenEvent(

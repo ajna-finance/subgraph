@@ -38,6 +38,8 @@ type Pool @entity {
   createdAtTimestamp: BigInt!
   # address of the pool's collateral token
   collateralToken: Token!
+  # fee rate of the pool
+  feeRate: BigDecimal!
   # address of the pool's quote token
   quoteToken: Token!
   # current total debt in the pool
@@ -73,8 +75,8 @@ type Bucket @entity {
   poolAddress: String!
   # total collateral available in the bucket
   collateral: BigDecimal!
-  # total quote tokens deposited in the bucket
-  deposit: BigDecimal!
+  # total quote tokens deposited in the bucket, inclusive of interest
+  quoteTokens: BigDecimal!
   # total LP for all lenders in the bucket
   lpb: BigDecimal!
 }

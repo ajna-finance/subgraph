@@ -1,11 +1,12 @@
-import { Address, BigDecimal, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes, ethereum, dataSource } from "@graphprotocol/graph-ts"
 import { assert, createMockedFunction } from "matchstick-as"
 
 import { handlePoolCreated } from "../../src/erc-20-pool-factory"
 import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
-import { getBucketId } from "../../src/utils/bucket"
+import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, rayToDecimal, wadToDecimal } from "../../src/utils/convert"
+import { poolInfoUtilsNetworkLookUpTable } from "../../src/utils/constants"
 
 /*************************/
 /*** Bucket Assertions ***/
@@ -50,6 +51,18 @@ export function assertBucketUpdate(params: BucketUpdatedParams): void {
 /*** Lend Assertions ***/
 /***********************/
 
+export class LendUpdatedParams {
+    id: Bytes
+    bucketId: Bytes
+    poolAddress: String
+    deposit: BigInt
+    lpb: BigInt
+    lpbValueInQuote: BigDecimal
+}
+export function assertLendUpdate(params: LendUpdatedParams): void {
+
+}
+
 /***********************/
 /*** Pool Assertions ***/
 /***********************/
@@ -88,6 +101,10 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
     )    
 }
 
+/**********************/
+/*** Mock Functions ***/
+/**********************/
+
 // create a pool entity and save it to the store
 export function createPool(pool_: Address, collateral: Address, quote: Address): void {
     // mock contract calls
@@ -108,4 +125,25 @@ export function mockGetPoolReserves(poolAddress: Address, token: Address, expect
     createMockedFunction(token, 'balanceOf', 'balanceOf(address):(uint256)')
       .withArgs([ethereum.Value.fromAddress(poolAddress)])
       .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
+}
+
+// mock getBucketInfo contract calls
+export function mockGetBucketInfo(pool: Address, bucketIndex: BigInt, expectedInfo: BucketInfo): void {
+    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'bucketInfo', 'bucketInfo(address,uint256):(uint256,uint256,uint256,uint256,uint256,uint256)')
+      .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
+      .returns([
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.price),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.quoteTokens),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.lpb),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.scale),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.exchangeRate)
+    ])
+}
+
+// mock getLPBValueInQuote contract calls
+export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, expectedValue: BigDecimal): void {
+    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'getLPBValueInQuote', 'getLPBValueInQuote(address,uint256):(uint256)')
+      .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(lpb)])
+      .returns([ethereum.Value.fromUnsignedBigInt(expectedValue.times(BigInt.fromI32(10).pow(18)).toBigInt())])
 }

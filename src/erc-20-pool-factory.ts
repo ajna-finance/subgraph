@@ -34,6 +34,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // instantiate pool contract
   const poolContract = ERC20Pool.bind(event.params.pool_)
 
+  // TODO: look into: https://thegraph.com/docs/en/developing/creating-a-subgraph/#data-source-templates-for-dynamically-created-contracts
   // record pool information
   const pool = new Pool(event.params.pool_) as Pool
   pool.createdAtTimestamp = event.block.timestamp
@@ -42,6 +43,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.quoteToken = Bytes.fromHexString(poolContract.quoteTokenAddress().toHexString())
   pool.currentDebt = ZERO_BD
   pool.currentReserves = ZERO_BD
+  pool.feeRate = ZERO_BD
   pool.inflator = ONE_WAD_BD
   pool.inflatorUpdate = event.block.timestamp
   pool.htp = ZERO_BD

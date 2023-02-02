@@ -1,16 +1,21 @@
-import { BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
+
 import { Bucket, Lend } from "../../generated/schema"
+import { PoolInfoUtils } from '../../generated/ERC20Pool/PoolInfoUtils'
 
-import { ZERO_BI } from "./constants"
+import { poolInfoUtilsNetworkLookUpTable } from "./constants"
+import { wadToDecimal } from "./convert"
 
-export function lpbValueInQuote(bucket: Bucket, lend: Lend): BigDecimal {
-    // TODO: need to convert from RAY to WAD
-    let quoteTokenAmount = lend.lpb.times(bucket.exchangeRate)
+export function lpbValueInQuote(pool: Bytes, bucket: Bucket, lend: Lend): BigDecimal {
+    const poolAddress = Address.fromBytes(pool)
+    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtils = PoolInfoUtils.bind(poolInfoUtilsAddress)
 
-    if (quoteTokenAmount.gt(bucket.deposit)) {
-        quoteTokenAmount = bucket.deposit
-    }
-    return quoteTokenAmount
+    log.info('lpbValueInQuote: poolAddress: {}, bucketIndex: {}, lend.lpb: {}', [poolAddress.toHexString(), bucket.bucketIndex.toString(), lend.lpb.toString()])
+    log.info('lpb decimal: lend.lpb: {}', [BigInt.fromString(lend.lpb.toString()).toString()])
+
+    const quoteTokenAmount = poolInfoUtils.lpsToQuoteTokens(poolAddress, BigInt.fromString(lend.lpb.toString()), bucket.bucketIndex)
+    return wadToDecimal(quoteTokenAmount)
 }
 
 export function encumberance(debt: BigInt, price: BigInt): BigInt {
