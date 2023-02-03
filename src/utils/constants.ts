@@ -18,6 +18,7 @@ export const ONE_RAY_BD = bigDecimalExp27()
 
 // max price of the pool is 1_004_968_987.606512354182109771 * 1e18
 export const MAX_PRICE = BigDecimal.fromString(`${1_004_968_987.606512354182109771}`)
+export const MAX_PRICE_INDEX = BigInt.fromI32(4156)
 
 export const poolInfoUtilsNetworkLookUpTable = new TypedMap<string, Address>()
 poolInfoUtilsNetworkLookUpTable.set('goerli', Address.fromString('0x32DA971821E6d88FCcD9861EbaCF8590553A2aA8'))

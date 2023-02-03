@@ -205,7 +205,7 @@ describe("Describe entity assertions", () => {
     // check pool attributes updated
     assertPoolUpdate({
       poolAddress: addressToBytes(poolAddress).toHexString(),
-      currentReserves: ZERO_BI,
+      reserves: ZERO_BI,
       lup: lup,
       totalDeposits: amount,
       txCount: ONE_BI

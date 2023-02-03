@@ -5,7 +5,15 @@ import { ERC20Pool } from "../generated/ERC20Pool/ERC20Pool"
 import { PoolCreated } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
 
-import { ERC20_FACTORY_ADDRESS, MAX_PRICE, ONE_BI, ZERO_BI, ZERO_BD, ONE_WAD_BD } from "./utils/constants"
+import {
+  ERC20_FACTORY_ADDRESS,
+  MAX_PRICE,
+  MAX_PRICE_INDEX,
+  ONE_BI,
+  ZERO_BI,
+  ZERO_BD,
+  ONE_WAD_BD
+} from "./utils/constants"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   let newPool = new PoolCreated(
@@ -42,16 +50,32 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.collateralToken = Bytes.fromHexString(poolContract.collateralAddress().toHexString())
   pool.quoteToken = Bytes.fromHexString(poolContract.quoteTokenAddress().toHexString())
   pool.currentDebt = ZERO_BD
-  pool.currentReserves = ZERO_BD
   pool.feeRate = ZERO_BD
   pool.inflator = ONE_WAD_BD
   pool.inflatorUpdate = event.block.timestamp
-  pool.htp = ZERO_BD
-  pool.lup = MAX_PRICE
   pool.pledgedCollateral = ZERO_BD
   pool.totalDeposits = ZERO_BD
-  pool.targetUtilization = ONE_WAD_BD
   pool.txCount = ZERO_BI
+
+  // pool prices information
+  pool.hpb = ZERO_BD
+  pool.hpbIndex = ZERO_BI
+  pool.htp = ZERO_BD
+  pool.htpIndex = ZERO_BI
+  pool.lup = MAX_PRICE
+  pool.lupIndex = MAX_PRICE_INDEX
+
+  // reserve auction information
+  pool.reserves = ZERO_BD
+  pool.claimableReserves = ZERO_BD
+  pool.reserveAuctionPrice = ZERO_BD
+  pool.reserveAuctionTimeRemaining = ZERO_BI
+
+  // utilization information
+  pool.minDebtAmount = ZERO_BD
+  pool.collateralization = ZERO_BD
+  pool.actualUtilization = ZERO_BD
+  pool.targetUtilization = ONE_WAD_BD
 
   // add pool reference to factories' list of pools
   factory.pools = factory.pools.concat([pool.id])

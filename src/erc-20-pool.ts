@@ -48,7 +48,7 @@ import { loadOrCreateAccount, updateAccountPools } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
-import { getPoolReserves } from "./utils/pool"
+import { updatePool } from "./utils/pool"
 import { collateralization, lpbValueInQuote } from "./utils/common"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
@@ -120,10 +120,8 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
-    pool.lup             = wadToDecimal(event.params.lup)
     pool.totalDeposits   = pool.totalDeposits.plus(wadToDecimal(event.params.amount))
-    pool.currentReserves = getPoolReserves(pool)
-    pool.txCount         = pool.txCount.plus(ONE_BI)
+    updatePool(pool)
 
     // update bucket state
     const bucketId   = getBucketId(pool.id, event.params.price)
@@ -261,7 +259,7 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
     // update pool state
     pool.lup               = wadToDecimal(event.params.lup)
     pool.currentDebt       = pool.currentDebt.plus(wadToDecimal(event.params.amountBorrowed))
-    pool.currentReserves   = getPoolReserves(pool)
+    // pool.currentReserves   = getPoolReservesInfo(pool)
     pool.pledgedCollateral = pool.pledgedCollateral.plus(wadToDecimal(event.params.collateralPledged))
     pool.txCount           = pool.txCount.plus(ONE_BI)
 
@@ -379,7 +377,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     // update pool state
     pool.lup               = wadToDecimal(event.params.lup)
     pool.currentDebt       = pool.currentDebt.minus(wadToDecimal(event.params.quoteRepaid))
-    pool.currentReserves   = getPoolReserves(pool)
+    // pool.currentReserves   = getPoolReservesInfo(pool)
     pool.pledgedCollateral = pool.pledgedCollateral.minus(wadToDecimal(event.params.collateralPulled))
     pool.txCount           = pool.txCount.plus(ONE_BI)
 

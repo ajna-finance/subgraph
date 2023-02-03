@@ -9,9 +9,9 @@ import { bigDecimalRayToBigInt, wadToDecimal } from "./convert"
 export function lpbValueInQuote(pool: Bytes, bucket: Bucket, lend: Lend): BigDecimal {
     const poolAddress = Address.fromBytes(pool)
     const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
-    const poolInfoUtils = PoolInfoUtils.bind(poolInfoUtilsAddress)
+    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
 
-    const quoteTokenAmount = poolInfoUtils.lpsToQuoteTokens(poolAddress, bigDecimalRayToBigInt(lend.lpb), bucket.bucketIndex)
+    const quoteTokenAmount = poolInfoUtilsContract.lpsToQuoteTokens(poolAddress, bigDecimalRayToBigInt(lend.lpb), bucket.bucketIndex)
     return wadToDecimal(quoteTokenAmount)
 }
 

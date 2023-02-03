@@ -94,7 +94,7 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "Pool",
       "0x0000000000000000000000000000000000000001",
-      "currentReserves",
+      "reserves",
       `${ZERO_BI}`
     )
     assert.fieldEquals(

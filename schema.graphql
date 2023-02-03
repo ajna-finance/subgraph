@@ -29,6 +29,7 @@ type ERC20PoolFactory @entity {
 }
 
 # TODO: add colllateralization and utilization information
+# TODO: add burn information
 type Pool @entity {
   # pool address
   id: Bytes!
@@ -38,30 +39,50 @@ type Pool @entity {
   createdAtTimestamp: BigInt!
   # address of the pool's collateral token
   collateralToken: Token!
-  # fee rate of the pool
-  feeRate: BigDecimal!
   # address of the pool's quote token
   quoteToken: Token!
+  # fee rate of the pool
+  feeRate: BigDecimal!
   # current total debt in the pool
   currentDebt: BigDecimal!
-  # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
-  currentReserves: BigDecimal!
   # current pool inflator snapshot
   inflator: BigDecimal!
   # block timestamp at which the inflator was last updated
   inflatorUpdate: BigInt!
-  # pool's current highest threshold price
-  htp: BigDecimal!
-  # pool's current lowest utilized price
-  lup: BigDecimal!  
   # total collateral pledged to the pool
   pledgedCollateral: BigDecimal!
   # current total quote token deposits in the pool
   totalDeposits: BigDecimal!
-  # target utilization rate
-  targetUtilization: BigDecimal!
   # total number of transactions sent to the pool
   txCount: BigInt!
+
+  # PRICES INFORMATION
+  hpb: BigDecimal! # current highest price bucket
+  hpbIndex: BigInt! # current highest price bucket index
+  htp: BigDecimal! # current highest threshold price
+  htpIndex: BigInt! # current highest threshold price index
+  lup: BigDecimal! # current lowest utilized price
+  lupIndex: BigInt! # current lowest utilized price index
+
+  # RESERVES INFORMATION
+  # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
+  reserves: BigDecimal!
+  # current pool claimable reserves
+  claimableReserves: BigDecimal!
+  # current reserve auction auctionPrice
+  reserveAuctionPrice: BigDecimal!
+  # current reserve auction timeRemaining
+  reserveAuctionTimeRemaining: BigInt!
+
+  # UTILIZATION INFORMATION
+  # current pool minimum debt amount for a new borrow
+  minDebtAmount: BigDecimal!
+  # current pool collateralization ratio across all borrowers
+  collateralization: BigDecimal!
+  # current pool utilization across all borrowers
+  actualUtilization: BigDecimal!
+  # current pool target utilization rate
+  targetUtilization: BigDecimal!
 }
 
 type Bucket @entity {

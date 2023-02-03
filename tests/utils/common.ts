@@ -86,7 +86,7 @@ export function assertLendUpdate(params: LendUpdatedParams): void {
 
 export class PoolUpdatedParams {
     poolAddress: String
-    currentReserves: BigInt
+    reserves: BigInt
     lup: BigInt
     totalDeposits: BigInt
     txCount: BigInt
@@ -95,8 +95,8 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
     assert.fieldEquals(
         "Pool",
         `${params.poolAddress}`,
-        "currentReserves",
-        `${wadToDecimal(params.currentReserves)}`
+        "reserves",
+        `${wadToDecimal(params.reserves)}`
     )
     assert.fieldEquals(
         "Pool",
@@ -163,4 +163,8 @@ export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, bucketIndex: 
     createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lpsToQuoteTokens', 'lpsToQuoteTokens(address,uint256,uint256):(uint256)')
       .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(lpb), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
       .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
+}
+
+export function mockUpdatePoolContractCalls(pool: Address): void {
+
 }

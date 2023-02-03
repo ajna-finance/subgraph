@@ -29,8 +29,8 @@ export class BucketInfo {
 export function getBucketInfo(pool: Bytes, bucketIndex: BigInt): BucketInfo {
     const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
     const poolAddress = Address.fromBytes(pool)
-    const poolInfoUtils = PoolInfoUtils.bind(poolInfoUtilsAddress) // TODO: what should this bind to?
-    const bucketInfoResult = poolInfoUtils.bucketInfo(poolAddress, bucketIndex)
+    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress) // TODO: what should this bind to?
+    const bucketInfoResult = poolInfoUtilsContract.bucketInfo(poolAddress, bucketIndex)
 
     const bucketInfo = new BucketInfo(
         bucketInfoResult.value0,
