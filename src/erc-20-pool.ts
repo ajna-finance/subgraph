@@ -68,7 +68,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
-    pool.txCount = pool.txCount.plus(ONE_BI)
+    // updatePool(pool)
 
     // update account state
     const accountId = addressToBytes(event.params.actor)
@@ -120,7 +120,6 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
-    pool.totalDeposits   = pool.totalDeposits.plus(wadToDecimal(event.params.amount))
     updatePool(pool)
 
     // update bucket state

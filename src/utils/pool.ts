@@ -12,6 +12,35 @@ export function getPoolAddress(poolId: Bytes): Address {
     return Address.fromBytes(poolId)
 }
 
+export class LoansInfo {
+    poolSize: BigInt
+    loansCount: BigInt
+    maxBorrower: Address
+    pendingInflator: BigInt
+    pendingInterestFactor: BigInt
+    constructor(poolSize: BigInt, loansCount: BigInt, maxBorrower: Address, pendingInflator: BigInt, pendingInterestFactor: BigInt) {
+        this.poolSize = poolSize
+        this.loansCount = loansCount
+        this.maxBorrower = maxBorrower
+        this.pendingInflator = pendingInflator
+        this.pendingInterestFactor = pendingInterestFactor
+    }
+}
+export function getPoolLoansInfo(pool: Pool): LoansInfo {
+    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
+    const loansInfoResult = poolInfoUtilsContract.poolLoansInfo(Address.fromBytes(pool.id))
+
+    const loansInfo = new LoansInfo(
+        loansInfoResult.value0,
+        loansInfoResult.value1,
+        loansInfoResult.value2,
+        loansInfoResult.value3,
+        loansInfoResult.value4
+    )
+    return loansInfo
+}
+
 export class ReservesInfo {
     reserves: BigInt
     claimableReserves: BigInt
@@ -42,15 +71,15 @@ export function getPoolReservesInfo(pool: Pool): ReservesInfo {
 }
 
 export class PoolUtilizationInfo {
-    poolMinDebtAmount: BigInt
-    poolCollateralization: BigInt
-    poolActualUtilization: BigInt
-    poolTargetUtilization: BigInt
-    constructor(poolMinDebtAmount: BigInt, poolCollateralization: BigInt, poolActualUtilization: BigInt, poolTargetUtilization: BigInt) {
-        this.poolMinDebtAmount = poolMinDebtAmount
-        this.poolCollateralization = poolCollateralization
-        this.poolActualUtilization = poolActualUtilization
-        this.poolTargetUtilization = poolTargetUtilization
+    minDebtAmount: BigInt
+    collateralization: BigInt
+    actualUtilization: BigInt
+    targetUtilization: BigInt
+    constructor(minDebtAmount: BigInt, collateralization: BigInt, actualUtilization: BigInt, targetUtilization: BigInt) {
+        this.minDebtAmount = minDebtAmount
+        this.collateralization = collateralization
+        this.actualUtilization = actualUtilization
+        this.targetUtilization = targetUtilization
     }
 }
 export function getPoolUtilizationInfo(pool: Pool): PoolUtilizationInfo {
@@ -100,6 +129,14 @@ export function getPoolPricesInfo(pool: Pool): PoolPricesInfo {
 }
 
 export function updatePool(pool: Pool): void {
+    // update pool loan information
+    const poolLoansInfo = getPoolLoansInfo(pool)
+    pool.poolSize              = wadToDecimal(poolLoansInfo.poolSize)
+    pool.loansCount            = poolLoansInfo.loansCount
+    pool.maxBorrower           = poolLoansInfo.maxBorrower
+    pool.pendingInflator       = wadToDecimal(poolLoansInfo.pendingInflator)
+    pool.pendingInterestFactor = wadToDecimal(poolLoansInfo.pendingInterestFactor)
+
     // update pool prices information
     const poolPricesInfo = getPoolPricesInfo(pool)
     pool.hpb = wadToDecimal(poolPricesInfo.hpb)
@@ -118,10 +155,10 @@ export function updatePool(pool: Pool): void {
 
     // update pool utilization information
     const poolUtilizationInfo = getPoolUtilizationInfo(pool)
-    pool.minDebtAmount     = wadToDecimal(poolUtilizationInfo.poolMinDebtAmount)
-    pool.collateralization = wadToDecimal(poolUtilizationInfo.poolCollateralization)
-    pool.actualUtilization = wadToDecimal(poolUtilizationInfo.poolActualUtilization)
-    pool.targetUtilization = wadToDecimal(poolUtilizationInfo.poolTargetUtilization)
+    pool.minDebtAmount     = wadToDecimal(poolUtilizationInfo.minDebtAmount)
+    pool.collateralization = wadToDecimal(poolUtilizationInfo.collateralization)
+    pool.actualUtilization = wadToDecimal(poolUtilizationInfo.actualUtilization)
+    pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
 
     // update pool transaction counter
     pool.txCount = pool.txCount.plus(ONE_BI)

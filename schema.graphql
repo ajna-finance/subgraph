@@ -51,10 +51,15 @@ type Pool @entity {
   inflatorUpdate: BigInt!
   # total collateral pledged to the pool
   pledgedCollateral: BigDecimal!
-  # current total quote token deposits in the pool
-  totalDeposits: BigDecimal!
   # total number of transactions sent to the pool
   txCount: BigInt!
+
+  # LOANS INFORMATION
+  poolSize: BigDecimal! # total amount of quote tokens in the pool
+  loansCount: BigInt! # total number of loans in the pool
+  maxBorrower: Bytes! # address of the borrower with the highest TP in the pool
+  pendingInflator: BigDecimal! # pending inflator value
+  pendingInterestFactor: BigDecimal! # pending interest factor used to scale the inflator
 
   # PRICES INFORMATION
   hpb: BigDecimal! # current highest price bucket
@@ -69,6 +74,8 @@ type Pool @entity {
   reserves: BigDecimal!
   # current pool claimable reserves
   claimableReserves: BigDecimal!
+  # remaining claimable reserves not yet taken
+  claimableReservesRemaining: BigDecimal!
   # current reserve auction auctionPrice
   reserveAuctionPrice: BigDecimal!
   # current reserve auction timeRemaining

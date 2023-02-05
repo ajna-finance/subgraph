@@ -12,10 +12,18 @@ import {
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleRepayDebt } from "../src/erc-20-pool"
 import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
-import { assertBucketUpdate, assertLendUpdate, assertPoolUpdate, createPool, mockGetBucketInfo, mockGetLPBValueInQuote, mockGetPoolReserves } from "./utils/common"
+import {
+  assertBucketUpdate,
+  assertLendUpdate,
+  assertPoolUpdate,
+  createPool,
+  mockGetBucketInfo,
+  mockGetLPBValueInQuote,
+  mockPoolInfoUtilsPoolUpdateCalls
+} from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, rayToDecimal, wadToDecimal } from "../src/utils/convert"
-import { ONE_BI, ONE_RAY_BI, ZERO_BI } from "../src/utils/constants"
+import { MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
@@ -129,10 +137,6 @@ describe("Describe entity assertions", () => {
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
 
     // mock required contract calls
-    const quoteToken = Address.fromString("0x0000000000000000000000000000000000000012")
-    const expectedContractBalance = amount
-    mockGetPoolReserves(poolAddress, quoteToken, expectedContractBalance)
-
     const expectedBucketInfo = new BucketInfo(
       price,
       amount,
@@ -145,6 +149,29 @@ describe("Describe entity assertions", () => {
     
     const expectedLPBValueInQuote = lpAwarded
     mockGetLPBValueInQuote(poolAddress, lpAwarded, price, expectedLPBValueInQuote)
+
+    mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
+      poolSize: amount,
+      loansCount: ZERO_BI,
+      maxBorrower: ZERO_ADDRESS,
+      pendingInflator: ONE_WAD_BI,
+      pendingInterestFactor: ZERO_BI,
+      hpb: ZERO_BI, //TODO: indexToPrice(price)
+      hpbIndex: price,
+      htp: ZERO_BI, //TODO: indexToPrice(price)
+      htpIndex: ZERO_BI,
+      lup: lup,
+      lupIndex: MAX_PRICE_INDEX,
+      reserves: ZERO_BI,
+      claimableReserves: ZERO_BI,
+      claimableReservesRemaining: ZERO_BI,
+      auctionPrice: ZERO_BI,
+      timeRemaining: ZERO_BI,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI
+    })
 
     // mock add quote token event
     const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
@@ -207,7 +234,7 @@ describe("Describe entity assertions", () => {
       poolAddress: addressToBytes(poolAddress).toHexString(),
       reserves: ZERO_BI,
       lup: lup,
-      totalDeposits: amount,
+      poolSize: amount,
       txCount: ONE_BI
     })
 

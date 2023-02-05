@@ -12,7 +12,9 @@ import {
   ONE_BI,
   ZERO_BI,
   ZERO_BD,
-  ONE_WAD_BD
+  ONE_WAD_BD,
+  ZERO_ADDRESS,
+  ONE_WAD_BI
 } from "./utils/constants"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
@@ -54,8 +56,14 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.inflator = ONE_WAD_BD
   pool.inflatorUpdate = event.block.timestamp
   pool.pledgedCollateral = ZERO_BD
-  pool.totalDeposits = ZERO_BD
   pool.txCount = ZERO_BI
+
+  // pool loans information
+  pool.poolSize = ZERO_BD
+  pool.loansCount = ZERO_BI
+  pool.maxBorrower = ZERO_ADDRESS
+  pool.pendingInflator = ONE_WAD_BD
+  pool.pendingInterestFactor = ZERO_BD
 
   // pool prices information
   pool.hpb = ZERO_BD
@@ -68,12 +76,13 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // reserve auction information
   pool.reserves = ZERO_BD
   pool.claimableReserves = ZERO_BD
+  pool.claimableReservesRemaining = ZERO_BD
   pool.reserveAuctionPrice = ZERO_BD
   pool.reserveAuctionTimeRemaining = ZERO_BI
 
   // utilization information
   pool.minDebtAmount = ZERO_BD
-  pool.collateralization = ZERO_BD
+  pool.collateralization = ONE_WAD_BD
   pool.actualUtilization = ZERO_BD
   pool.targetUtilization = ONE_WAD_BD
 
