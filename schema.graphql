@@ -28,8 +28,7 @@ type ERC20PoolFactory @entity {
   txCount: BigInt!
 }
 
-# TODO: add colllateralization and utilization information
-# TODO: add burn information
+# TODO: add burn information and total interst earned info
 type Pool @entity {
   # pool address
   id: Bytes!

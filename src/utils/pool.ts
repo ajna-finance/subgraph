@@ -41,18 +41,50 @@ export function getPoolLoansInfo(pool: Pool): LoansInfo {
     return loansInfo
 }
 
+export class PoolPricesInfo {
+    hpb: BigInt
+    hpbIndex: BigInt
+    htp: BigInt
+    htpIndex: BigInt
+    lup: BigInt
+    lupIndex: BigInt
+    constructor(hpb: BigInt, hpbIndex: BigInt, htp: BigInt, htpIndex: BigInt, lup: BigInt, lupIndex: BigInt) {
+        this.hpb = hpb
+        this.hpbIndex = hpbIndex
+        this.htp = htp
+        this.htpIndex = htpIndex
+        this.lup = lup
+        this.lupIndex = lupIndex
+    }
+}
+export function getPoolPricesInfo(pool: Pool): PoolPricesInfo {
+    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
+    const pricesInfoResult = poolInfoUtilsContract.poolPricesInfo(Address.fromBytes(pool.id))
+
+    const pricesInfo = new PoolPricesInfo(
+        pricesInfoResult.value0,
+        pricesInfoResult.value1,
+        pricesInfoResult.value2,
+        pricesInfoResult.value3,
+        pricesInfoResult.value4,
+        pricesInfoResult.value5
+    )
+    return pricesInfo
+}
+
 export class ReservesInfo {
     reserves: BigInt
     claimableReserves: BigInt
     claimableReservesRemaining: BigInt
-    auctionPrice: BigInt
-    timeRemaining: BigInt
-    constructor(reserves: BigInt, claimableReserves: BigInt, claimableReservesRemaining: BigInt, auctionPrice: BigInt, timeRemaining: BigInt) {
+    reserveAuctionPrice: BigInt
+    reserveAuctionTimeRemaining: BigInt
+    constructor(reserves: BigInt, claimableReserves: BigInt, claimableReservesRemaining: BigInt, reserveAuctionPrice: BigInt, reserveAuctionTimeRemaining: BigInt) {
         this.reserves = reserves
         this.claimableReserves = claimableReserves
         this.claimableReservesRemaining = claimableReservesRemaining
-        this.auctionPrice = auctionPrice
-        this.timeRemaining = timeRemaining
+        this.reserveAuctionPrice = reserveAuctionPrice
+        this.reserveAuctionTimeRemaining = reserveAuctionTimeRemaining
     }
 }
 export function getPoolReservesInfo(pool: Pool): ReservesInfo {
@@ -96,37 +128,6 @@ export function getPoolUtilizationInfo(pool: Pool): PoolUtilizationInfo {
     return poolUtilizationInfo
 }
 
-export class PoolPricesInfo {
-    hpb: BigInt
-    hpbIndex: BigInt
-    htp: BigInt
-    htpIndex: BigInt
-    lup: BigInt
-    lupIndex: BigInt
-    constructor(hpb: BigInt, hpbIndex: BigInt, htp: BigInt, htpIndex: BigInt, lup: BigInt, lupIndex: BigInt) {
-        this.hpb = hpb
-        this.hpbIndex = hpbIndex
-        this.htp = htp
-        this.htpIndex = htpIndex
-        this.lup = lup
-        this.lupIndex = lupIndex
-    }
-}
-export function getPoolPricesInfo(pool: Pool): PoolPricesInfo {
-    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
-    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
-    const pricesInfoResult = poolInfoUtilsContract.poolPricesInfo(Address.fromBytes(pool.id))
-
-    const pricesInfo = new PoolPricesInfo(
-        pricesInfoResult.value0,
-        pricesInfoResult.value1,
-        pricesInfoResult.value2,
-        pricesInfoResult.value3,
-        pricesInfoResult.value4,
-        pricesInfoResult.value5
-    )
-    return pricesInfo
-}
 
 export function updatePool(pool: Pool): void {
     // update pool loan information
@@ -150,8 +151,8 @@ export function updatePool(pool: Pool): void {
     const poolReservesInfo = getPoolReservesInfo(pool)
     pool.reserves = wadToDecimal(poolReservesInfo.reserves)
     pool.claimableReserves = wadToDecimal(poolReservesInfo.claimableReserves)
-    pool.reserveAuctionPrice = wadToDecimal(poolReservesInfo.auctionPrice)
-    pool.reserveAuctionTimeRemaining = poolReservesInfo.timeRemaining
+    pool.reserveAuctionPrice = wadToDecimal(poolReservesInfo.reserveAuctionPrice)
+    pool.reserveAuctionTimeRemaining = poolReservesInfo.reserveAuctionTimeRemaining
 
     // update pool utilization information
     const poolUtilizationInfo = getPoolUtilizationInfo(pool)

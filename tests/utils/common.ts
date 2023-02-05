@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, Bytes, ethereum, dataSource } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes, ethereum, dataSource, log } from "@graphprotocol/graph-ts"
 import { assert, createMockedFunction } from "matchstick-as"
 
 import { handlePoolCreated } from "../../src/erc-20-pool-factory"
@@ -87,17 +87,110 @@ export function assertLendUpdate(params: LendUpdatedParams): void {
 
 export class PoolUpdatedParams {
     poolAddress: String
-    reserves: BigInt
-    lup: BigInt
+    // loans info
     poolSize: BigInt
+    loansCount: BigInt
+    maxBorrower: String
+    inflator: BigInt
+    pendingInflator: BigInt
+    pendingInterestFactor: BigInt
+    currentDebt: BigInt
+    pledgedCollateral: BigInt
+    // prices info
+    hpb: BigInt
+    hpbIndex: BigInt
+    htp: BigInt
+    htpIndex: BigInt
+    lup: BigInt
+    lupIndex: BigInt
+    // reserve info
+    reserves: BigInt
+    claimableReserves: BigInt
+    claimableReservesRemaining: BigInt
+    reserveAuctionPrice: BigInt
+    reserveAuctionTimeRemaining: BigInt
+    // utilization info
+    minDebtAmount: BigInt
+    collateralization: BigInt
+    actualUtilization: BigInt
+    targetUtilization: BigInt
+    // misc
     txCount: BigInt
 }
 export function assertPoolUpdate(params: PoolUpdatedParams): void {
+    // loans assertions
     assert.fieldEquals(
         "Pool",
         `${params.poolAddress}`,
-        "reserves",
-        `${wadToDecimal(params.reserves)}`
+        "poolSize",
+        `${wadToDecimal(params.poolSize)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "loansCount",
+        `${params.loansCount}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "maxBorrower",
+        `${params.maxBorrower}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "inflator",
+        `${wadToDecimal(params.inflator)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "pendingInflator",
+        `${wadToDecimal(params.pendingInflator)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "pendingInterestFactor",
+        `${wadToDecimal(params.pendingInterestFactor)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "currentDebt",
+        `${wadToDecimal(params.currentDebt)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "pledgedCollateral",
+        `${wadToDecimal(params.pledgedCollateral)}`
+    )
+    // prices assertions
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "hpb",
+        `${wadToDecimal(params.hpb)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "hpbIndex",
+        `${params.hpbIndex}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "htp",
+        `${wadToDecimal(params.htp)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "htpIndex",
+        `${params.htpIndex}`
     )
     assert.fieldEquals(
         "Pool",
@@ -108,9 +201,66 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
     assert.fieldEquals(
         "Pool",
         `${params.poolAddress}`,
-        "poolSize",
-        `${wadToDecimal(params.poolSize)}`
+        "lupIndex",
+        `${params.lupIndex}`
     )
+    // reserves assertions
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "reserves",
+        `${wadToDecimal(params.reserves)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "claimableReserves",
+        `${wadToDecimal(params.claimableReserves)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "claimableReservesRemaining",
+        `${wadToDecimal(params.claimableReservesRemaining)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "reserveAuctionPrice",
+        `${wadToDecimal(params.reserveAuctionPrice)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "reserveAuctionTimeRemaining",
+        `${params.reserveAuctionTimeRemaining}`
+    )
+    // utilization assertions
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "minDebtAmount",
+        `${wadToDecimal(params.minDebtAmount)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "collateralization",
+        `${wadToDecimal(params.collateralization)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "actualUtilization",
+        `${wadToDecimal(params.actualUtilization)}`
+    )
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "targetUtilization",
+        `${wadToDecimal(params.targetUtilization)}`
+    )
+    // misc assertions
     assert.fieldEquals(
         "Pool",
         `${params.poolAddress}`,
@@ -194,8 +344,8 @@ export function mockGetPoolReserves(pool: Address, expectedInfo: ReservesInfo): 
         ethereum.Value.fromUnsignedBigInt(expectedInfo.reserves),
         ethereum.Value.fromUnsignedBigInt(expectedInfo.claimableReserves),
         ethereum.Value.fromUnsignedBigInt(expectedInfo.claimableReservesRemaining),
-        ethereum.Value.fromUnsignedBigInt(expectedInfo.auctionPrice),
-        ethereum.Value.fromUnsignedBigInt(expectedInfo.timeRemaining)
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.reserveAuctionPrice),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.reserveAuctionTimeRemaining)
     ])
 }
 
@@ -229,8 +379,8 @@ export class PoolMockParams {
     reserves: BigInt
     claimableReserves: BigInt
     claimableReservesRemaining: BigInt
-    auctionPrice: BigInt
-    timeRemaining: BigInt
+    reserveAuctionPrice: BigInt
+    reserveAuctionTimeRemaining: BigInt
     // utilization info mock params
     minDebtAmount: BigInt
     collateralization: BigInt
@@ -262,8 +412,8 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.reserves,
         params.claimableReserves,
         params.claimableReservesRemaining,
-        params.auctionPrice,
-        params.timeRemaining
+        params.reserveAuctionPrice,
+        params.reserveAuctionTimeRemaining
     )
     mockGetPoolReserves(pool, expectedPoolReservesInfo)
 

@@ -37,6 +37,7 @@ export function rayToDecimal(ray: BigInt): BigDecimal {
     return ray.toBigDecimal().div(bigDecimalExp27())
 }
 
+// convert an 18 decimal int to a decimal
 export function wadToDecimal(wad: BigInt): BigDecimal {
     return wad.toBigDecimal().div(bigDecimalExp18())
 }

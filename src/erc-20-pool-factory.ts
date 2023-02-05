@@ -14,7 +14,8 @@ import {
   ZERO_BD,
   ONE_WAD_BD,
   ZERO_ADDRESS,
-  ONE_WAD_BI
+  ONE_WAD_BI,
+  ONE_BD
 } from "./utils/constants"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
@@ -53,7 +54,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.quoteToken = Bytes.fromHexString(poolContract.quoteTokenAddress().toHexString())
   pool.currentDebt = ZERO_BD
   pool.feeRate = ZERO_BD
-  pool.inflator = ONE_WAD_BD
+  pool.inflator = ONE_BD //ONE_WAD_BD
   pool.inflatorUpdate = event.block.timestamp
   pool.pledgedCollateral = ZERO_BD
   pool.txCount = ZERO_BI

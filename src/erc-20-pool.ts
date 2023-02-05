@@ -68,7 +68,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
-    // updatePool(pool)
+    updatePool(pool)
 
     // update account state
     const accountId = addressToBytes(event.params.actor)
@@ -256,11 +256,9 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
-    pool.lup               = wadToDecimal(event.params.lup)
     pool.currentDebt       = pool.currentDebt.plus(wadToDecimal(event.params.amountBorrowed))
-    // pool.currentReserves   = getPoolReservesInfo(pool)
     pool.pledgedCollateral = pool.pledgedCollateral.plus(wadToDecimal(event.params.collateralPledged))
-    pool.txCount           = pool.txCount.plus(ONE_BI)
+    updatePool(pool)
 
     // TODO: update bucket state -> requires handling liquidations
 

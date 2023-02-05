@@ -23,7 +23,7 @@ import {
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, rayToDecimal, wadToDecimal } from "../src/utils/convert"
-import { MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BI } from "../src/utils/constants"
+import { MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
@@ -75,6 +75,29 @@ describe("Describe entity assertions", () => {
 
     mockGetLPBValueInQuote(poolAddress, lpAwarded, price, lpAwarded)
 
+    mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
+      poolSize: ZERO_BI,
+      loansCount: ZERO_BI,
+      maxBorrower: ZERO_ADDRESS,
+      pendingInflator: ONE_WAD_BI,
+      pendingInterestFactor: ZERO_BI,
+      hpb: ZERO_BI, //TODO: indexToPrice(price)
+      hpbIndex: price,
+      htp: ZERO_BI, //TODO: indexToPrice(price)
+      htpIndex: ZERO_BI,
+      lup: MAX_PRICE_BI,
+      lupIndex: MAX_PRICE_INDEX,
+      reserves: ZERO_BI,
+      claimableReserves: ZERO_BI,
+      claimableReservesRemaining: ZERO_BI,
+      reserveAuctionPrice: ZERO_BI,
+      reserveAuctionTimeRemaining: ZERO_BI,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI
+    })
+
     // mock addCollateralEvent
     const newAddCollateralEvent = createAddCollateralEvent(
       poolAddress,
@@ -122,6 +145,8 @@ describe("Describe entity assertions", () => {
       `${wadToDecimal(collateralAmount)}`
     )
 
+    // TODO: check pool attributes updated
+
   })
 
   test("AddQuoteToken", () => {
@@ -161,12 +186,12 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
       lup: lup,
-      lupIndex: MAX_PRICE_INDEX,
+      lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
-      auctionPrice: ZERO_BI,
-      timeRemaining: ZERO_BI,
+      reserveAuctionPrice: ZERO_BI,
+      reserveAuctionTimeRemaining: ZERO_BI,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
       actualUtilization: ZERO_BI,
@@ -232,9 +257,29 @@ describe("Describe entity assertions", () => {
     // check pool attributes updated
     assertPoolUpdate({
       poolAddress: addressToBytes(poolAddress).toHexString(),
-      reserves: ZERO_BI,
-      lup: lup,
       poolSize: amount,
+      loansCount: ZERO_BI,
+      maxBorrower: ZERO_ADDRESS.toHexString(),
+      inflator: ONE_WAD_BI,
+      pendingInflator: ONE_WAD_BI,
+      pendingInterestFactor: ZERO_BI,
+      currentDebt: ZERO_BI,
+      pledgedCollateral: ZERO_BI,
+      hpb: ZERO_BI,
+      hpbIndex: price,
+      htp: ZERO_BI,
+      htpIndex: ZERO_BI,
+      lup: lup,
+      lupIndex: MAX_PRICE_INDEX,
+      reserves: ZERO_BI,
+      claimableReserves: ZERO_BI,
+      claimableReservesRemaining: ZERO_BI,
+      reserveAuctionPrice: ZERO_BI,
+      reserveAuctionTimeRemaining: ZERO_BI,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI,
       txCount: ONE_BI
     })
 
@@ -270,11 +315,6 @@ describe("Describe entity assertions", () => {
     const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const collateralPledged = BigInt.fromI32(1067)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
-
-    // mock required contract calls
-    // const quoteToken = Address.fromString("0x0000000000000000000000000000000000000012")
-    // const expectedContractBalance = amount
-    // mockGetPoolReserves(poolAddress, quoteToken, expectedContractBalance)
 
     // mock drawDebt event
     const newDrawDebtEvent = createDrawDebtEvent(
@@ -335,8 +375,6 @@ describe("Describe entity assertions", () => {
       "txCount",
       `${ONE_BI}`
     )
-
-    // TODO: check utilization for pool
 
     // check Account attributes updated
     const accountId = addressToBytes(borrower)
