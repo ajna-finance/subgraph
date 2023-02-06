@@ -1,5 +1,5 @@
 import { BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { Bucket, Lend } from "../../generated/schema"
+import { Lend } from "../../generated/schema"
 
 import { ZERO_BD, ZERO_BI } from "./constants"
 

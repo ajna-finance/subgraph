@@ -300,6 +300,7 @@ export function createKickEvent(
 }
 
 export function createMoveQuoteTokenEvent(
+  pool: Address,
   lender: Address,
   from: BigInt,
   to: BigInt,
@@ -339,6 +340,9 @@ export function createMoveQuoteTokenEvent(
   moveQuoteTokenEvent.parameters.push(
     new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
   )
+
+  // update transaction target to the expected pool address
+  moveQuoteTokenEvent.transaction.to = pool
 
   return moveQuoteTokenEvent
 }

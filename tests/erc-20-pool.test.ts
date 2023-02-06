@@ -10,8 +10,8 @@ import {
   dataSourceMock
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleRepayDebt } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
+import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleMoveQuoteToken, handleRepayDebt } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createMoveQuoteTokenEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
 import {
   assertBucketUpdate,
   assertLendUpdate,
@@ -115,7 +115,7 @@ describe("Describe entity assertions", () => {
       "AddCollateral",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "actor",
-      "0x0000000000000000000000000000000000000001"
+      `${actor.toHexString()}`
     )
     assert.fieldEquals(
       "AddCollateral",
@@ -306,6 +306,140 @@ describe("Describe entity assertions", () => {
       lpb: lpAwarded,
       lpbValueInQuote: lpAwarded
     })
+  })
+
+  test("MoveQuoteToken", () => {
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const lender = Address.fromString("0x0000000000000000000000000000000000000025")
+    const fromBucketIndex = BigInt.fromI32(234)
+    const toBucketIndex = BigInt.fromI32(567)
+    const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const lpRedeemedFrom = BigInt.fromI32(567).times(ONE_RAY_BI)
+    const lpAwardedTo = BigInt.fromI32(567).times(ONE_RAY_BI)
+    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+
+    /***********************/
+    /*** Add Quote Token ***/
+    /***********************/
+
+    // mock required contract calls
+    const expectedBucketInfo = new BucketInfo(
+      fromBucketIndex,
+      amount,
+      ZERO_BI,
+      lpRedeemedFrom,
+      ZERO_BI,
+      ONE_RAY_BI
+    )
+    mockGetBucketInfo(poolAddress, fromBucketIndex, expectedBucketInfo)
+
+    const expectedLPBValueInQuote = lpRedeemedFrom
+    mockGetLPBValueInQuote(poolAddress, lpRedeemedFrom, fromBucketIndex, expectedLPBValueInQuote)
+
+    // mock add quote token event to provide quote that can later be moved
+    const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
+      poolAddress,
+      lender,
+      fromBucketIndex,
+      amount,
+      lpRedeemedFrom,
+      lup
+    )
+    handleAddQuoteToken(newAddQuoteTokenEvent)
+
+    /************************/
+    /*** Move Quote Token ***/
+    /************************/
+
+    // mock required contract calls
+    const expectedFromBucketInfo = new BucketInfo(
+      fromBucketIndex,
+      amount,
+      ZERO_BI,
+      lpRedeemedFrom,
+      ZERO_BI,
+      ONE_RAY_BI
+    )
+    mockGetBucketInfo(poolAddress, fromBucketIndex, expectedFromBucketInfo)
+    const expectedToBucketInfo = new BucketInfo(
+      toBucketIndex,
+      amount,
+      ZERO_BI,
+      lpAwardedTo,
+      ZERO_BI,
+      ONE_RAY_BI
+    )
+    mockGetBucketInfo(poolAddress, toBucketIndex, expectedToBucketInfo)
+
+    const expectedLPBValueInQuoteFromBucketLend = ZERO_BI
+    mockGetLPBValueInQuote(poolAddress, ZERO_BI, fromBucketIndex, expectedLPBValueInQuoteFromBucketLend)
+
+    const expectedLPBValueInQuoteToBucketLend = lpAwardedTo
+    mockGetLPBValueInQuote(poolAddress, lpAwardedTo, toBucketIndex, expectedLPBValueInQuoteToBucketLend)
+
+    // mock moveQuoteToken event
+    const newMoveQuoteTokenEvent = createMoveQuoteTokenEvent(
+      poolAddress,
+      lender,
+      fromBucketIndex,
+      toBucketIndex,
+      amount,
+      lpRedeemedFrom,
+      lpAwardedTo,
+      lup
+    )
+    handleMoveQuoteToken(newMoveQuoteTokenEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    assert.entityCount("MoveQuoteToken", 1)
+
+    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
+    assert.fieldEquals(
+      "MoveQuoteToken",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lender",
+      `${lender.toHexString()}`
+    )
+    assert.fieldEquals(
+      "MoveQuoteToken",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "from",
+      `${getBucketId(addressToBytes(poolAddress), fromBucketIndex).toHexString()}`
+    )
+    assert.fieldEquals(
+      "MoveQuoteToken",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "to",
+      `${getBucketId(addressToBytes(poolAddress), toBucketIndex).toHexString()}`
+    )
+    assert.fieldEquals(
+      "MoveQuoteToken",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "amount",
+      `${amount}`
+    )
+    assert.fieldEquals(
+      "MoveQuoteToken",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lpRedeemedFrom",
+      `${lpRedeemedFrom}`
+    )
+    assert.fieldEquals(
+      "MoveQuoteToken",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lpRedeemedFrom",
+      `${lpAwardedTo}`
+    )
+    assert.fieldEquals(
+      "MoveQuoteToken",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lup",
+      `${lup}`
+    )
   })
 
   test("DrawDebt", () => {

@@ -50,3 +50,13 @@ export function addressToBytes(address: Address): Bytes {
     // return address.map<Bytes>((b: Bytes) => b)
     return Bytes.fromHexString(address.toHexString()) as Bytes
 }
+
+// import prices from '../../prices.json'
+// export function indexToPrice(index: BigInt): BigDecimal {
+//     const bucketIndex = MAX_BUCKET_INDEX - index;
+//     if (bucketIndex < MIN_BUCKET_INDEX || bucketIndex > MAX_BUCKET_INDEX) {
+//       throw new Error('ERR_BUCKET_INDEX_OUT_OF_BOUNDS');
+//     }
+// }
+
+// export function priceToIndex(price: BigDecimal): BigInt {

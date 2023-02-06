@@ -270,9 +270,10 @@ type Kick @entity(immutable: true) {
 
 type MoveQuoteToken @entity(immutable: true) {
   id: Bytes!
+  pool: Pool! # Pool in which quote tokens were moved
   lender: Bytes! # address
-  from: BigInt! # uint256
-  to: BigInt! # uint256
+  from: Bucket! # bucket quote token was moved from
+  to: Bucket! # bucket quote token was moved to
   amount: BigInt! # uint256
   lpRedeemedFrom: BigInt! # uint256
   lpAwardedTo: BigInt! # uint256

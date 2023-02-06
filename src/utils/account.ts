@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { Account, Pool } from "../../generated/schema"
+import { Account, Lend, Loan, Pool } from "../../generated/schema"
 
 import { ZERO_BI } from "./constants"
 
@@ -29,5 +29,25 @@ export function updateAccountPools(account: Account, pool: Pool): void {
     const index = pools.indexOf(pool.id)
     if (index == -1) {
         account.pools = account.pools.concat([pool.id])
+    }
+}
+
+// update the list of lends initiated by an account, if it hasn't been added already
+export function updateAccountLends(account: Account, lend: Lend): void {
+    const lends = account.lends
+    // get current index of pool in account's list of pools
+    const index = lends.indexOf(lend.id)
+    if (index == -1) {
+        account.lends = account.lends.concat([lend.id])
+    }
+}
+
+// update the list of loans initiated by an account, if it hasn't been added already
+export function updateAccountLoans(account: Account, loan: Loan): void {
+    const loans = account.loans
+    // get current index of pool in account's list of pools
+    const index = loans.indexOf(loan.id)
+    if (index == -1) {
+        account.loans = account.loans.concat([loan.id])
     }
 }
