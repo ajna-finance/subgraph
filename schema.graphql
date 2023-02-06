@@ -134,7 +134,6 @@ type Lend @entity {
   lpbValueInQuote: BigDecimal!
 }
 
-# TODO: update the loanId creation?
 # each borrower has only one loan with a pool
 type Loan @entity {
   # Loan id: $poolAddress + '|' + $borrowerId
@@ -145,6 +144,8 @@ type Loan @entity {
   borrower: Bytes!
   # pool pointer
   pool: Pool!
+  # boolean indicating whether the loan is in liquidations
+  inLiquidation: Boolean!
   # collateral tokens deposited in a pool by the borrower
   collateralDeposited: BigDecimal!
   # collateralization of the borrow position in the pool
@@ -183,7 +184,7 @@ type LiquidationAuction @entity {
   kick: Kick! # kick which triggered the liquidation
   kickTime: BigInt! # block timestamp at which the kick was executed
   bondSize: BigDecimal! # bond provided by kicker to initate auction
-  bondFactor: BigDecimal! #
+  bondFactor: BigDecimal! # bond factor determining the reward or penalty for the kicker
   neutralPrice: BigDecimal! # price at which the auction is neutral
 }
 
@@ -283,9 +284,11 @@ type DrawDebt @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# TODO: add claimable and locked fields
 type Kick @entity(immutable: true) {
   id: Bytes!
   kicker: Bytes! # address of the kicker
+  kickMomp: BigDecimal! # pool MOMP at the time of kicking
   pool: Pool! # Pool in which a kick occurred
   loan: Loan! # Loan which was kicked
   liquidationAuction: LiquidationAuction! # Liquidation auction which was initiated
@@ -368,7 +371,11 @@ type Settle @entity(immutable: true) {
 
 type Take @entity(immutable: true) {
   id: Bytes!
-  borrower: Bytes! # address
+  taker: Bytes! # address of the taker
+  pool: Pool! # Pool in which the take occurred
+  borrower: Bytes! # address of the borrower being liquidated
+  liquidationAuction: LiquidationAuction! # Liquidation auction which was taken
+  loan: Loan! # Loan which was taken
   amount: BigInt! # uint256
   collateral: BigInt! # uint256
   bondChange: BigInt! # uint256

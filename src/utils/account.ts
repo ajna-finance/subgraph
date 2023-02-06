@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { Account, Kick, Lend, Loan, Pool } from "../../generated/schema"
+import { Account, Kick, Lend, Loan, Pool, Take } from "../../generated/schema"
 
 import { ZERO_BI } from "./constants"
 
@@ -52,12 +52,22 @@ export function updateAccountLoans(account: Account, loan: Loan): void {
     }
 }
 
-// update the list of loans initiated by an account, if it hasn't been added already
+// update the list of kicks initiated by an account, if it hasn't been added already
 export function updateAccountKicks(account: Account, kick: Kick): void {
     const kicks = account.kicks
     // get current index of pool in account's list of pools
     const index = kicks.indexOf(kick.id)
     if (index == -1) {
         account.kicks = account.kicks.concat([kick.id])
+    }
+}
+
+// update the list of loans initiated by an account, if it hasn't been added already
+export function updateAccountTakes(account: Account, take: Take): void {
+    const takes = account.takes
+    // get current index of pool in account's list of pools
+    const index = takes.indexOf(take.id)
+    if (index == -1) {
+        account.takes = account.takes.concat([take.id])
     }
 }

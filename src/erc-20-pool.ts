@@ -30,6 +30,7 @@ import {
   BucketTakeLPAwarded,
   DrawDebt,
   Kick,
+  LiquidationAuction,
   MoveQuoteToken,
   Pool,
   RemoveCollateral,
@@ -44,13 +45,13 @@ import {
 
 import { ONE_BI } from "./utils/constants"
 import { addressToBytes, wadToDecimal, rayToDecimal } from "./utils/convert"
-import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks } from "./utils/account"
+import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
-import { getLiquidationAuctionId, loadOrCreateLiquidationAuction } from "./utils/liquidation"
-import { updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
-import { collateralization, lpbValueInQuote } from "./utils/common"
+import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction } from "./utils/liquidation"
+import { getMomp, updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
+import { collateralization, collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   let addCollateral = new AddCollateral(
@@ -280,7 +281,8 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
     const loan = loadOrCreateLoan(loanId, pool.id, drawDebt.borrower)
     loan.collateralDeposited = loan.collateralDeposited.plus(wadToDecimal(event.params.collateralPledged))
     loan.debt                = loan.debt.plus(wadToDecimal(event.params.amountBorrowed))
-    loan.collateralization   = collateralization(loan.debt, loan.collateralDeposited)
+    loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
+    loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
 
     // update account's list of pools and loans if necessary
     updateAccountPools(account, pool)
@@ -327,11 +329,21 @@ export function handleKick(event: KickEvent): void {
     // update loan state
     const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
     const loan = loadOrCreateLoan(loanId, pool.id, kick.borrower)
+    loan.inLiquidation       = true
+    loan.collateralDeposited = wadToDecimal(kick.collateral)
+    loan.debt                = wadToDecimal(kick.debt) // update loan deebt to account for kick penalty
+    loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
+    loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
+
+    // retrieve auction information on the kicked loan
+    const auctionInfo = getAuctionInfoERC20Pool(kick.borrower, pool)
 
     // update liquidation auction state
     const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
     const liquidationAuction = loadOrCreateLiquidationAuction(pool.id, liquidationAuctionId, kick, loan)
+    updateLiquidationAuction(liquidationAuction, auctionInfo)
 
+    kick.kickMomp = wadToDecimal(auctionInfo.kickMomp)
     kick.pool = pool.id
     kick.loan = loan.id
     kick.liquidationAuction = liquidationAuctionId
@@ -488,7 +500,8 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     const loan = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
     loan.collateralDeposited = loan.collateralDeposited.minus(wadToDecimal(event.params.collateralPulled))
     loan.debt                = loan.debt.minus(wadToDecimal(event.params.quoteRepaid))
-    loan.collateralization   = collateralization(loan.debt, loan.collateralDeposited)
+    loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
+    loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
 
     // update account loans if necessary
     updateAccountLoans(account, loan)
@@ -533,20 +546,51 @@ export function handleSettle(event: SettleEvent): void {
 }
 
 export function handleTake(event: TakeEvent): void {
-  let entity = new Take(
+  const take = new Take(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.borrower = event.params.borrower
-  entity.amount = event.params.amount
-  entity.collateral = event.params.collateral
-  entity.bondChange = event.params.bondChange
-  entity.isReward = event.params.isReward
+  take.borrower = event.params.borrower
+  take.amount = event.params.amount
+  take.collateral = event.params.collateral
+  take.bondChange = event.params.bondChange
+  take.isReward = event.params.isReward
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  take.blockNumber = event.block.number
+  take.blockTimestamp = event.block.timestamp
+  take.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+
+    // update taker account state
+    const account   = loadOrCreateAccount(take.taker)
+    account.txCount = account.txCount.plus(ONE_BI)
+    updateAccountTakes(account, take)
+
+    // update loan state
+    const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
+    const loan = loadOrCreateLoan(loanId, pool.id, take.borrower)
+    // TODO: update loan state
+
+    // retrieve auction information on the take's auction
+    const auctionInfo = getAuctionInfoERC20Pool(take.borrower, pool)
+
+    // update liquidation auction state
+    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
+    const liquidationAuction = LiquidationAuction.load(liquidationAuctionId)!
+    updateLiquidationAuction(liquidationAuction, auctionInfo)
+
+    take.liquidationAuction = liquidationAuction.id
+    take.loan = loan.id
+    take.pool = pool.id
+
+    liquidationAuction.save()
+    loan.save()
+    pool.save()
+  }
+
+  take.save()
 }
 
 export function handleTransferLPTokens(event: TransferLPTokensEvent): void {

@@ -1,7 +1,5 @@
 import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
 
-import { ERC20 } from '../../generated/ERC20PoolFactory/ERC20'
-import { ERC20Pool } from '../../generated/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../generated/ERC20Pool/PoolInfoUtils'
 import { LiquidationAuction, Pool } from "../../generated/schema"
 
@@ -10,6 +8,15 @@ import { wadToDecimal } from './convert'
 
 export function getPoolAddress(poolId: Bytes): Address {
     return Address.fromBytes(poolId)
+}
+
+// retrieve the current pool MOMP by calling PoolInfoUtils.momp()
+export function getMomp(poolId: Bytes): BigDecimal {
+    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
+    const momp = poolInfoUtilsContract.momp(Address.fromBytes(poolId))
+
+    return wadToDecimal(momp)
 }
 
 export class LoansInfo {
@@ -128,7 +135,7 @@ export function getPoolUtilizationInfo(pool: Pool): PoolUtilizationInfo {
     return poolUtilizationInfo
 }
 
-
+// TODO: investigate multicall for faster rpc
 export function updatePool(pool: Pool): void {
     // update pool loan information
     const poolLoansInfo = getPoolLoansInfo(pool)

@@ -22,3 +22,13 @@ export function encumberance(debt: BigInt, price: BigInt): BigInt {
 export function collateralization(debt: BigDecimal, encumberedCollateral: BigDecimal): BigDecimal {
     return debt.div(encumberedCollateral)
 }
+
+// TODO: check for precision loss
+export function collateralizationAtLup(debt: BigDecimal, collateral: BigDecimal, lup: BigDecimal): BigDecimal {
+    const encumberedCollateral = debt.div(lup)
+    return debt.div(encumberedCollateral)
+}
+
+export function thresholdPrice(debt: BigDecimal, collateral: BigDecimal): BigDecimal {
+    return debt.div(collateral)
+}

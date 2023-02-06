@@ -10,13 +10,14 @@ import {
   dataSourceMock
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleMoveQuoteToken, handleRepayDebt } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createMoveQuoteTokenEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
+import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
 import {
   assertBucketUpdate,
   assertLendUpdate,
   assertPoolUpdate,
   createPool,
+  mockGetAuctionInfoERC20Pool,
   mockGetBucketInfo,
   mockGetLPBValueInQuote,
   mockPoolInfoUtilsPoolUpdateCalls
@@ -27,6 +28,7 @@ import { MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_B
 import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
+import { AuctionInfo } from "../src/utils/liquidation"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -582,6 +584,63 @@ describe("Describe entity assertions", () => {
       "lup",
       `${lup}`
     )
+  })
+
+  test("Kick", () => {
+    // mock event params
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
+    const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const collateral = BigInt.fromString("1067529276179422528643") // 1067.529276179422528643 * 1e18
+    const bond = BigInt.fromI32(234)
+
+    // TODO: how to set kicker address?
+    // TODO: how to access timestamp?
+    // mock auction info
+    const kicker = Address.fromString("0x0000000000000000000000000000000000000003")
+    const bondFactor = ONE_BI
+    const kickTime = BigInt.fromI32(123)
+    const kickMomp = BigInt.fromI32(456)
+    const neutralPrice = BigInt.fromI32(456)
+    const head = Address.fromString("0x0000000000000000000000000000000000000000")
+    const next = Address.fromString("0x0000000000000000000000000000000000000000")
+    const prev = Address.fromString("0x0000000000000000000000000000000000000000")
+    const expectedAuctionInfo = new AuctionInfo(
+      kicker,
+      bondFactor,
+      bond,
+      kickTime,
+      kickMomp,
+      neutralPrice,
+      head,
+      next,
+      prev
+    )
+    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+
+    // mock kick event
+    const newKickEvent = createKickEvent(
+      poolAddress,
+      borrower,
+      debt,
+      collateral,
+      bond
+    )
+    handleKick(newKickEvent)
+
+    // TODO: expand these assertions
+    // check KickEvent attributes
+    assert.entityCount("Kick", 1)
+    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
+    assert.fieldEquals(
+      "Kick",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "bond",
+      `${bond}`
+    )
+
+    // TODO: check LiquidationAuction attributes
+
   })
 
 })

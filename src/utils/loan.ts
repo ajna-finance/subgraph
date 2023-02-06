@@ -1,4 +1,4 @@
-import { BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 
 import { Loan }    from "../../generated/schema"
 import { ZERO_BD, ZERO_BI } from "./constants"
@@ -20,6 +20,7 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
       loan.collateralization   = ZERO_BD
       loan.debt                = ZERO_BD
       loan.tp                  = ZERO_BD
+      loan.inLiquidation       = false
     }
 
     return loan

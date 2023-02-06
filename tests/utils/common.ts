@@ -8,6 +8,7 @@ import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, rayToDecimal, wadToDecimal } from "../../src/utils/convert"
 import { poolInfoUtilsNetworkLookUpTable } from "../../src/utils/constants"
 import { LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
+import { AuctionInfo } from "../../src/utils/liquidation"
 
 /*************************/
 /*** Bucket Assertions ***/
@@ -358,6 +359,23 @@ export function mockGetPoolUtilizationInfo(pool: Address, expectedInfo: PoolUtil
         ethereum.Value.fromUnsignedBigInt(expectedInfo.collateralization),
         ethereum.Value.fromUnsignedBigInt(expectedInfo.actualUtilization),
         ethereum.Value.fromUnsignedBigInt(expectedInfo.targetUtilization)
+    ])
+}
+
+// mock auctionInfo contract calls
+export function mockGetAuctionInfoERC20Pool(borrower: Address, pool: Address, expectedInfo: AuctionInfo): void {
+    createMockedFunction(pool, 'auctionInfo', 'auctionInfo(address):(address,uint256,uint256,uint256,uint256,uint256,address,address,address)')
+    .withArgs([ethereum.Value.fromAddress(borrower)])
+    .returns([
+        ethereum.Value.fromAddress(expectedInfo.kicker),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.bondFactor),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.bondSize),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.kickTime),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.kickMomp),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice),
+        ethereum.Value.fromAddress(expectedInfo.head),
+        ethereum.Value.fromAddress(expectedInfo.next),
+        ethereum.Value.fromAddress(expectedInfo.prev)
     ])
 }
 

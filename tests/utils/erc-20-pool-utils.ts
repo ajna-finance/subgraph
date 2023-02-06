@@ -495,6 +495,7 @@ export function createSettleEvent(
 }
 
 export function createTakeEvent(
+  pool: Address,
   borrower: Address,
   amount: BigInt,
   collateral: BigInt,
@@ -526,6 +527,9 @@ export function createTakeEvent(
   takeEvent.parameters.push(
     new ethereum.EventParam("isReward", ethereum.Value.fromBoolean(isReward))
   )
+
+  // update transaction target to the expected pool address
+  takeEvent.transaction.to = pool
 
   return takeEvent
 }
