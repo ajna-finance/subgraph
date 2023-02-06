@@ -3,7 +3,7 @@ import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/g
 import { ERC20 } from '../../generated/ERC20PoolFactory/ERC20'
 import { ERC20Pool } from '../../generated/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../generated/ERC20Pool/PoolInfoUtils'
-import { Pool } from "../../generated/schema"
+import { LiquidationAuction, Pool } from "../../generated/schema"
 
 import { poolInfoUtilsNetworkLookUpTable, ONE_BI } from "./constants"
 import { wadToDecimal } from './convert'
@@ -163,4 +163,14 @@ export function updatePool(pool: Pool): void {
 
     // update pool transaction counter
     pool.txCount = pool.txCount.plus(ONE_BI)
+}
+
+// update the list of loans initiated by an account, if it hasn't been added already
+export function updatePoolLiquidationAuctions(pool: Pool, liquidationAuction: LiquidationAuction): void {
+    const liquidationAuctions = pool.liquidationAuctions
+    // get current index of pool in account's list of pools
+    const index = liquidationAuctions.indexOf(liquidationAuction.id)
+    if (index == -1) {
+        pool.liquidationAuctions = pool.liquidationAuctions.concat([liquidationAuction.id])
+    }
 }

@@ -87,6 +87,10 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.actualUtilization = ZERO_BD
   pool.targetUtilization = ONE_WAD_BD
 
+  // liquidation information
+  pool.totalBondEscrowed = ZERO_BD
+  pool.liquidationAuctions = []
+
   // add pool reference to factories' list of pools
   factory.pools = factory.pools.concat([pool.id])
 

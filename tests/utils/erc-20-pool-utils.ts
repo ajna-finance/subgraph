@@ -271,6 +271,7 @@ export function createDrawDebtEvent(
 }
 
 export function createKickEvent(
+  pool: Address,
   borrower: Address,
   debt: BigInt,
   collateral: BigInt,
@@ -295,6 +296,9 @@ export function createKickEvent(
   kickEvent.parameters.push(
     new ethereum.EventParam("bond", ethereum.Value.fromUnsignedBigInt(bond))
   )
+
+  // update transaction target to the expected pool address
+  kickEvent.transaction.to = pool
 
   return kickEvent
 }

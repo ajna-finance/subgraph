@@ -44,11 +44,12 @@ import {
 
 import { ONE_BI } from "./utils/constants"
 import { addressToBytes, wadToDecimal, rayToDecimal } from "./utils/convert"
-import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools } from "./utils/account"
+import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
-import { updatePool } from "./utils/pool"
+import { getLiquidationAuctionId, loadOrCreateLiquidationAuction } from "./utils/liquidation"
+import { updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
 import { collateralization, lpbValueInQuote } from "./utils/common"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
@@ -86,7 +87,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
 
     // update lend state
     const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, pool.id)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id, addCollateral.actor)
     lend.lpb             = lend.lpb.plus(rayToDecimal(event.params.lpAwarded))
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
 
@@ -99,6 +100,9 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     bucket.save()
     lend.save()
     pool.save()
+
+    addCollateral.pool = pool.id
+    addCollateral.bucket = bucketId
   }
 
   addCollateral.save()
@@ -140,7 +144,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
 
     // update lend state
     const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, pool.id)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
     lend.deposit         = lend.deposit.plus(wadToDecimal(event.params.amount))
     lend.lpb             = lend.lpb.plus(rayToDecimal(event.params.lpAwarded))
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
@@ -273,7 +277,7 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
 
     // update loan state
     const loanId = getLoanId(pool.id, accountId)
-    const loan = loadOrCreateLoan(loanId, pool.id)
+    const loan = loadOrCreateLoan(loanId, pool.id, drawDebt.borrower)
     loan.collateralDeposited = loan.collateralDeposited.plus(wadToDecimal(event.params.collateralPledged))
     loan.debt                = loan.debt.plus(wadToDecimal(event.params.amountBorrowed))
     loan.collateralization   = collateralization(loan.debt, loan.collateralDeposited)
@@ -294,19 +298,55 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
 }
 
 export function handleKick(event: KickEvent): void {
-  let entity = new Kick(
+  const kick = new Kick(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.borrower = event.params.borrower
-  entity.debt = event.params.debt
-  entity.collateral = event.params.collateral
-  entity.bond = event.params.bond
+  kick.borrower = event.params.borrower
+  kick.debt = event.params.debt
+  kick.collateral = event.params.collateral
+  kick.bond = event.params.bond
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  kick.blockNumber = event.block.number
+  kick.blockTimestamp = event.block.timestamp
+  kick.transactionHash = event.transaction.hash
 
-  entity.save()
+  kick.kicker = event.transaction.from
+
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // update pool state
+    updatePool(pool)
+    pool.totalBondEscrowed = pool.totalBondEscrowed.plus(wadToDecimal(event.params.bond))
+
+    // update kicker account state
+    const account   = loadOrCreateAccount(kick.kicker)
+    account.txCount = account.txCount.plus(ONE_BI)
+    updateAccountKicks(account, kick)
+
+    // update loan state
+    const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
+    const loan = loadOrCreateLoan(loanId, pool.id, kick.borrower)
+
+    // update liquidation auction state
+    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
+    const liquidationAuction = loadOrCreateLiquidationAuction(pool.id, liquidationAuctionId, kick, loan)
+
+    kick.pool = pool.id
+    kick.loan = loan.id
+    kick.liquidationAuction = liquidationAuctionId
+
+    // track new liquidation auction at the pool level
+    updatePoolLiquidationAuctions(pool, liquidationAuction)
+
+    // save entities to store
+    account.save()
+    liquidationAuction.save()
+    loan.save()
+    pool.save()
+  }
+
+  kick.save()
 }
 
 export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
@@ -349,14 +389,14 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
 
     // update from bucket lend state
     const fromBucketLendId = getLendId(fromBucketId, event.params.lender)
-    const fromBucketLend = loadOrCreateLend(fromBucketId, fromBucketLendId, pool.id)
+    const fromBucketLend = loadOrCreateLend(fromBucketId, fromBucketLendId, pool.id, moveQuoteToken.lender)
     fromBucketLend.deposit = fromBucketLend.deposit.minus(wadToDecimal(event.params.amount))
     fromBucketLend.lpb = fromBucketLend.lpb.minus(rayToDecimal(event.params.lpRedeemedFrom))
     fromBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, fromBucket, fromBucketLend)
 
     // update to bucket lend state
     const toBucketLendId = getLendId(toBucketId, event.params.lender)
-    const toBucketLend = loadOrCreateLend(toBucketId, toBucketLendId, pool.id)
+    const toBucketLend = loadOrCreateLend(toBucketId, toBucketLendId, pool.id, moveQuoteToken.lender)
     toBucketLend.deposit = toBucketLend.deposit.plus(wadToDecimal(event.params.amount))
     toBucketLend.lpb = toBucketLend.lpb.plus(rayToDecimal(event.params.lpAwardedTo))
     toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket, toBucketLend)
@@ -445,7 +485,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
 
     // update loan state
     const loanId = getLoanId(pool.id, accountId)
-    const loan = loadOrCreateLoan(loanId, pool.id)
+    const loan = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
     loan.collateralDeposited = loan.collateralDeposited.minus(wadToDecimal(event.params.collateralPulled))
     loan.debt                = loan.debt.minus(wadToDecimal(event.params.quoteRepaid))
     loan.collateralization   = collateralization(loan.debt, loan.collateralDeposited)
