@@ -9,9 +9,9 @@ import {
   beforeAll,
   dataSourceMock
 } from "matchstick-as/assembly/index"
-import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent } from "./utils/erc-20-pool-utils"
+import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleTake } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createTakeEvent } from "./utils/erc-20-pool-utils"
 import {
   assertBucketUpdate,
   assertLendUpdate,
@@ -28,7 +28,7 @@ import { MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_B
 import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
-import { AuctionInfo } from "../src/utils/liquidation"
+import { AuctionInfo, getLiquidationAuctionId } from "../src/utils/liquidation"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -282,6 +282,8 @@ describe("Describe entity assertions", () => {
       collateralization: ONE_WAD_BI,
       actualUtilization: ZERO_BI,
       targetUtilization: ONE_WAD_BI,
+      totalBondEscrowed: ZERO_BI,
+      // liquidationAuctions: Bytes.fromHexString("0x"),
       txCount: ONE_BI
     })
 
@@ -592,13 +594,12 @@ describe("Describe entity assertions", () => {
     const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
     const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const collateral = BigInt.fromString("1067529276179422528643") // 1067.529276179422528643 * 1e18
-    const bond = BigInt.fromI32(234)
+    const bond = BigInt.fromString("234000000000000000000")
 
-    // TODO: how to set kicker address?
     // TODO: how to access timestamp?
     // mock auction info
     const kicker = Address.fromString("0x0000000000000000000000000000000000000003")
-    const bondFactor = ONE_BI
+    const bondFactor = ONE_WAD_BI
     const kickTime = BigInt.fromI32(123)
     const kickMomp = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
@@ -621,6 +622,7 @@ describe("Describe entity assertions", () => {
     // mock kick event
     const newKickEvent = createKickEvent(
       poolAddress,
+      kicker,
       borrower,
       debt,
       collateral,
@@ -628,10 +630,12 @@ describe("Describe entity assertions", () => {
     )
     handleKick(newKickEvent)
 
-    // TODO: expand these assertions
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
     // check KickEvent attributes
     assert.entityCount("Kick", 1)
-    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
     assert.fieldEquals(
       "Kick",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
@@ -639,8 +643,279 @@ describe("Describe entity assertions", () => {
       `${bond}`
     )
 
-    // TODO: check LiquidationAuction attributes
+    // check Account attributes updated
+    const accountId = addressToBytes(kicker)
+    const loadedAccount = Account.load(accountId)!
+    assert.bytesEquals(addressToBytes(poolAddress), loadedAccount.pools[0])
+    assert.fieldEquals(
+      "Account",
+      `${accountId.toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
+    )
 
+    // check Loan attributes
+    const loanId = getLoanId(addressToBytes(poolAddress), addressToBytes(borrower))
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "inLiquidation",
+      `${true}`
+    )
+
+    // check LiquidationAuction attributes
+    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId)
+    assert.entityCount("LiquidationAuction", 1)
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "borrower",
+      `${borrower.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "loan",
+      `${loanId.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "kicker",
+      `${kicker.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "kick",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000"
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "kickTime",
+      `${kickTime}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "bondSize",
+      `${wadToDecimal(bond)}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "bondFactor",
+      `${wadToDecimal(bondFactor)}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "neutralPrice",
+      `${wadToDecimal(neutralPrice)}`
+    )
+
+    // TODO: check pool attributes updated
+    // assertPoolUpdate({
+    //   poolAddress: addressToBytes(poolAddress).toHexString(),
+    //   poolSize: debt,
+    //   loansCount: ZERO_BI, // should be one while kicked but not settled
+    //   maxBorrower: borrower.toHexString(),
+    //   inflator: ONE_WAD_BI,
+    //   pendingInflator: ONE_WAD_BI,
+    //   pendingInterestFactor: ZERO_BI,
+    //   currentDebt: ZERO_BI,
+    //   pledgedCollateral: ZERO_BI,
+    //   hpb: ZERO_BI,
+    //   hpbIndex: ZERO_BI,
+    //   htp: ZERO_BI,
+    //   htpIndex: ZERO_BI,
+    //   lup: MAX_PRICE_BI,
+    //   lupIndex: MAX_PRICE_INDEX,
+    //   reserves: ZERO_BI,
+    //   claimableReserves: ZERO_BI,
+    //   claimableReservesRemaining: ZERO_BI,
+    //   reserveAuctionPrice: ZERO_BI,
+    //   reserveAuctionTimeRemaining: ZERO_BI,
+    //   minDebtAmount: ZERO_BI,
+    //   collateralization: ONE_WAD_BI,
+    //   actualUtilization: ZERO_BI,
+    //   targetUtilization: ONE_WAD_BI,
+    //   totalBondEscrowed: bond,
+    //   // liquidationAuctions: liquidationAuctionId,
+    //   txCount: ONE_BI
+    // })
+    
   })
+
+  test("Take", () => {
+    // mock event params
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const taker = Address.fromString("0x0000000000000000000000000000000000000009")
+    const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
+    const amountToTake = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const collateral = BigInt.fromString("1067529276179422528643") // 1067.529276179422528643 * 1e18
+    const bondChange = BigInt.fromString("234000000000000000000")
+    const isReward = false
+
+    /********************/
+    /*** Kick Auction ***/
+    /********************/
+
+    // mock auction info
+    const kicker = Address.fromString("0x0000000000000000000000000000000000000003")
+    const bond = BigInt.fromString("234000000000000000000")
+    const bondFactor = ONE_WAD_BI
+    const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const kickTime = BigInt.fromI32(123)
+    const kickMomp = BigInt.fromI32(456)
+    const neutralPrice = BigInt.fromI32(456)
+    const head = Address.fromString("0x0000000000000000000000000000000000000000")
+    const next = Address.fromString("0x0000000000000000000000000000000000000000")
+    const prev = Address.fromString("0x0000000000000000000000000000000000000000")
+    let expectedAuctionInfo = new AuctionInfo(
+      kicker,
+      bondFactor,
+      bond,
+      kickTime,
+      kickMomp,
+      neutralPrice,
+      head,
+      next,
+      prev
+    )
+    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+
+    // mock kick event
+    const newKickEvent = createKickEvent(
+      poolAddress,
+      kicker,
+      borrower,
+      debt,
+      collateral,
+      bond
+    )
+    handleKick(newKickEvent)
+
+    /********************/
+    /*** Take Auction ***/
+    /********************/
+
+    // mock auction info
+    expectedAuctionInfo = new AuctionInfo(
+      kicker,
+      bondFactor,
+      bond,
+      kickTime,
+      kickMomp,
+      neutralPrice,
+      head,
+      next,
+      prev
+    )
+    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+
+    // mock take event
+    const newTakeEvent = createTakeEvent(
+      poolAddress,
+      taker,
+      borrower,
+      amountToTake,
+      collateral,
+      bondChange,
+      isReward
+    )
+    handleTake(newTakeEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // check TakeEvent attributes
+    assert.entityCount("Take", 1)
+    assert.fieldEquals(
+      "Take",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "taker",
+      `${taker.toHexString()}`
+    )    
+    assert.fieldEquals(
+      "Take",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "amount",
+      `${amountToTake}`
+    )
+
+    // check kick state updated
+    assert.entityCount("Kick", 1)
+    assert.fieldEquals(
+      "Kick",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "locked",
+      `${wadToDecimal(bond)}`
+    )    
+    assert.fieldEquals(
+      "Kick",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "claimable",
+      `${0}`
+    )
+    
+    // TODO: determine how to load multiple entities into the store
+    // check Account attributes updated
+    // const accountId = addressToBytes(taker)
+    // const loadedAccount = Account.load(accountId)!
+    // assert.bytesEquals(addressToBytes(poolAddress), loadedAccount.pools[0])
+    // assert.fieldEquals(
+    //   "Account",
+    //   `${accountId.toHexString()}`,
+    //   "txCount",
+    //   `${ONE_BI}`
+    // )
+
+    // check Loan attributes
+    const loanId = getLoanId(addressToBytes(poolAddress), addressToBytes(borrower))
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "inLiquidation",
+      `${true}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "debt",
+      `${debt.minus(amountToTake)}`
+    )
+
+    // check LiquidationAuction attributes
+    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId)
+    assert.entityCount("LiquidationAuction", 1)
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "borrower",
+      `${borrower.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "loan",
+      `${loanId.toHexString()}`
+    )
+  })
+
 
 })

@@ -284,13 +284,14 @@ type DrawDebt @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-# TODO: add claimable and locked fields
 type Kick @entity(immutable: true) {
   id: Bytes!
   kicker: Bytes! # address of the kicker
   kickMomp: BigDecimal! # pool MOMP at the time of kicking
   pool: Pool! # Pool in which a kick occurred
   loan: Loan! # Loan which was kicked
+  locked: BigDecimal! # amount of quote from the bond locked in the kick (updated on take)
+  claimable: BigDecimal! # amount of quote from the bond claimable by the kicker (updated on settle)
   liquidationAuction: LiquidationAuction! # Liquidation auction which was initiated
   borrower: Bytes! # address of the borrower being liquidated
   debt: BigInt! # uint256
@@ -351,8 +352,9 @@ type RepayDebt @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type ReserveAuction @entity(immutable: true) {
+type ReserveAuction @entity {
   id: Bytes!
+  pool: Pool! # Pool in which the reserve auction occurred
   claimableReservesRemaining: BigInt! # uint256
   auctionPrice: BigInt! # uint256
   blockNumber: BigInt!

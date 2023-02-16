@@ -115,6 +115,9 @@ export class PoolUpdatedParams {
     collateralization: BigInt
     actualUtilization: BigInt
     targetUtilization: BigInt
+    // liquidation info
+    totalBondEscrowed: BigInt
+    // liquidationAuctions: List // TODO: update this to check an array of ids
     // misc
     txCount: BigInt
 }
@@ -261,6 +264,19 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
         "targetUtilization",
         `${wadToDecimal(params.targetUtilization)}`
     )
+    // liquidation assertions
+    assert.fieldEquals(
+        "Pool",
+        `${params.poolAddress}`,
+        "totalBondEscrowed",
+        `${wadToDecimal(params.totalBondEscrowed)}`
+    )
+    // assert.fieldEquals(
+    //     "Pool",
+    //     `${params.poolAddress}`,
+    //     "liquidationAuctions",
+    //     `${params.liquidationAuctions.toHexString()}`
+    // )
     // misc assertions
     assert.fieldEquals(
         "Pool",

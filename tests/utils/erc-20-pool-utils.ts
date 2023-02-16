@@ -272,6 +272,7 @@ export function createDrawDebtEvent(
 
 export function createKickEvent(
   pool: Address,
+  kicker: Address,
   borrower: Address,
   debt: BigInt,
   collateral: BigInt,
@@ -297,7 +298,8 @@ export function createKickEvent(
     new ethereum.EventParam("bond", ethereum.Value.fromUnsignedBigInt(bond))
   )
 
-  // update transaction target to the expected pool address
+  // update transaction target to the expected pool address and kicker
+  kickEvent.transaction.from = kicker
   kickEvent.transaction.to = pool
 
   return kickEvent
@@ -496,6 +498,7 @@ export function createSettleEvent(
 
 export function createTakeEvent(
   pool: Address,
+  taker: Address,
   borrower: Address,
   amount: BigInt,
   collateral: BigInt,
@@ -528,7 +531,8 @@ export function createTakeEvent(
     new ethereum.EventParam("isReward", ethereum.Value.fromBoolean(isReward))
   )
 
-  // update transaction target to the expected pool address
+  // update transaction targets to the expected pool address and taker
+  takeEvent.transaction.from = taker
   takeEvent.transaction.to = pool
 
   return takeEvent

@@ -43,7 +43,7 @@ import {
   UpdateInterestRate
 } from "../generated/schema"
 
-import { ONE_BI } from "./utils/constants"
+import { ZERO_BD, ONE_BI } from "./utils/constants"
 import { addressToBytes, wadToDecimal, rayToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
@@ -213,21 +213,21 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
 }
 
 export function handleBucketTake(event: BucketTakeEvent): void {
-  let entity = new BucketTake(
+  const bucketTake = new BucketTake(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.borrower = event.params.borrower
-  entity.index = event.params.index
-  entity.amount = event.params.amount
-  entity.collateral = event.params.collateral
-  entity.bondChange = event.params.bondChange
-  entity.isReward = event.params.isReward
+  bucketTake.borrower = event.params.borrower
+  bucketTake.index = event.params.index
+  bucketTake.amount = event.params.amount
+  bucketTake.collateral = event.params.collateral
+  bucketTake.bondChange = event.params.bondChange
+  bucketTake.isReward = event.params.isReward
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  bucketTake.blockNumber = event.block.number
+  bucketTake.blockTimestamp = event.block.timestamp
+  bucketTake.transactionHash = event.transaction.hash
 
-  entity.save()
+  bucketTake.save()
 }
 
 export function handleBucketTakeLPAwarded(
@@ -307,6 +307,8 @@ export function handleKick(event: KickEvent): void {
   kick.debt = event.params.debt
   kick.collateral = event.params.collateral
   kick.bond = event.params.bond
+  kick.locked = wadToDecimal(kick.bond)
+  kick.claimable = ZERO_BD
 
   kick.blockNumber = event.block.number
   kick.blockTimestamp = event.block.timestamp
@@ -325,6 +327,7 @@ export function handleKick(event: KickEvent): void {
     const account   = loadOrCreateAccount(kick.kicker)
     account.txCount = account.txCount.plus(ONE_BI)
     updateAccountKicks(account, kick)
+    updateAccountPools(account, pool)
 
     // update loan state
     const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
@@ -550,6 +553,7 @@ export function handleTake(event: TakeEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   take.borrower = event.params.borrower
+  take.taker = event.transaction.from
   take.amount = event.params.amount
   take.collateral = event.params.collateral
   take.bondChange = event.params.bondChange
@@ -567,11 +571,22 @@ export function handleTake(event: TakeEvent): void {
     const account   = loadOrCreateAccount(take.taker)
     account.txCount = account.txCount.plus(ONE_BI)
     updateAccountTakes(account, take)
+    updateAccountPools(account, pool)
 
     // update loan state
     const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
     const loan = loadOrCreateLoan(loanId, pool.id, take.borrower)
-    // TODO: update loan state
+    loan.debt = loan.debt.minus(wadToDecimal(event.params.amount))
+    loan.collateralDeposited = loan.collateralDeposited.minus(wadToDecimal(event.params.collateral))
+    if (loan.debt.notEqual(ZERO_BD) && loan.collateralDeposited.notEqual(ZERO_BD)) {
+      loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
+      loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
+    }
+    else {
+      // set collateralization and tp to zero if loan is fully repaid
+      loan.collateralization = ZERO_BD
+      loan.tp = ZERO_BD
+    }
 
     // retrieve auction information on the take's auction
     const auctionInfo = getAuctionInfoERC20Pool(take.borrower, pool)
@@ -580,6 +595,18 @@ export function handleTake(event: TakeEvent): void {
     const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
     const liquidationAuction = LiquidationAuction.load(liquidationAuctionId)!
     updateLiquidationAuction(liquidationAuction, auctionInfo)
+
+    // update kick and pool for the change in bond as a result of the take
+    const kick = Kick.load(liquidationAuction.kick)!
+    if (take.isReward) {
+      // reward kicker if take is below neutral price
+      pool.totalBondEscrowed = pool.totalBondEscrowed.plus(wadToDecimal(event.params.bondChange))
+      kick.locked = kick.locked.plus(wadToDecimal(event.params.bondChange))
+    } else {
+      // penalize kicker if take is above neutral price
+      pool.totalBondEscrowed = pool.totalBondEscrowed.minus(wadToDecimal(event.params.bondChange))
+      kick.locked = kick.locked.minus(wadToDecimal(event.params.bondChange))
+    }
 
     take.liquidationAuction = liquidationAuction.id
     take.loan = loan.id
