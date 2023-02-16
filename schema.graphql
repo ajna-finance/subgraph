@@ -127,7 +127,7 @@ type Lend @entity {
   # pool pointer
   pool: Pool!
   # quote token deposited in the bucket by the lender
-  deposit: BigDecimal!
+  deposit: BigDecimal! # TODO: remove this in favor of just using lpbValueInQuote
   # LPB in the bucket accrued to lender
   lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket
@@ -250,6 +250,10 @@ type BucketBankruptcy @entity(immutable: true) {
 
 type BucketTake @entity(immutable: true) {
   id: Bytes!
+  taker: Bytes! # address of the taker
+  liquidationAuction: LiquidationAuction! # liquidation auction in which the take is occuring
+  loan: Loan! # loan which was taken
+  pool: Pool! # pool in which the take is occuring
   borrower: Bytes! # address
   index: BigInt! # uint256
   amount: BigInt! # uint256
@@ -264,6 +268,7 @@ type BucketTake @entity(immutable: true) {
 type BucketTakeLPAwarded @entity(immutable: true) {
   id: Bytes!
   taker: Bytes! # address
+  pool: Pool! # Pool in which the take occurred
   kicker: Bytes! # address
   lpAwardedTaker: BigInt! # uint256
   lpAwardedKicker: BigInt! # uint256
@@ -284,7 +289,7 @@ type DrawDebt @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type Kick @entity(immutable: true) {
+type Kick @entity {
   id: Bytes!
   kicker: Bytes! # address of the kicker
   kickMomp: BigDecimal! # pool MOMP at the time of kicking

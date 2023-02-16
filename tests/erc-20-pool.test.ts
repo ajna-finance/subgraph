@@ -10,8 +10,8 @@ import {
   dataSourceMock
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleTake } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createTakeEvent } from "./utils/erc-20-pool-utils"
+import { handleAddCollateral, handleAddQuoteToken, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleTake } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createTakeEvent } from "./utils/erc-20-pool-utils"
 import {
   assertBucketUpdate,
   assertLendUpdate,
@@ -867,17 +867,16 @@ describe("Describe entity assertions", () => {
       `${0}`
     )
     
-    // TODO: determine how to load multiple entities into the store
     // check Account attributes updated
-    // const accountId = addressToBytes(taker)
-    // const loadedAccount = Account.load(accountId)!
-    // assert.bytesEquals(addressToBytes(poolAddress), loadedAccount.pools[0])
-    // assert.fieldEquals(
-    //   "Account",
-    //   `${accountId.toHexString()}`,
-    //   "txCount",
-    //   `${ONE_BI}`
-    // )
+    const accountId = addressToBytes(taker)
+    const loadedAccount = Account.load(accountId)!
+    assert.bytesEquals(addressToBytes(poolAddress), loadedAccount.pools[0])
+    assert.fieldEquals(
+      "Account",
+      `${accountId.toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
+    )
 
     // check Loan attributes
     const loanId = getLoanId(addressToBytes(poolAddress), addressToBytes(borrower))
@@ -917,5 +916,104 @@ describe("Describe entity assertions", () => {
     )
   })
 
+  test("BucketTake", () => {
+    // mock event params
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const taker = Address.fromString("0x0000000000000000000000000000000000000009")
+    const takeIndex = BigInt.fromI32(123)
+    const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
+    const amountToTake = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const collateral = BigInt.fromString("1067529276179422528643") // 1067.529276179422528643 * 1e18
+    const bondChange = BigInt.fromString("234000000000000000000")
+    const isReward = false
+    const lpAwardedKicker = BigInt.fromString("0")
+    const lpAwardedTaker = BigInt.fromString("0")
+
+    /********************/
+    /*** Kick Auction ***/
+    /********************/
+
+    // mock auction info
+    const kicker = Address.fromString("0x0000000000000000000000000000000000000003")
+    const bond = BigInt.fromString("234000000000000000000")
+    const bondFactor = ONE_WAD_BI
+    const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const kickTime = BigInt.fromI32(123)
+    const kickMomp = BigInt.fromI32(456)
+    const neutralPrice = BigInt.fromI32(456)
+    const head = Address.fromString("0x0000000000000000000000000000000000000000")
+    const next = Address.fromString("0x0000000000000000000000000000000000000000")
+    const prev = Address.fromString("0x0000000000000000000000000000000000000000")
+    let expectedAuctionInfo = new AuctionInfo(
+      kicker,
+      bondFactor,
+      bond,
+      kickTime,
+      kickMomp,
+      neutralPrice,
+      head,
+      next,
+      prev
+    )
+    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+
+    // mock kick event
+    const newKickEvent = createKickEvent(
+      poolAddress,
+      kicker,
+      borrower,
+      debt,
+      collateral,
+      bond
+    )
+    handleKick(newKickEvent)
+
+    /********************/
+    /*** Take Auction ***/
+    /********************/
+
+    // mock auction info
+    expectedAuctionInfo = new AuctionInfo(
+      kicker,
+      bondFactor,
+      bond,
+      kickTime,
+      kickMomp,
+      neutralPrice,
+      head,
+      next,
+      prev
+    )
+    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+
+    // mock bucket take event
+    const newBucketTakeEvent = createBucketTakeEvent(
+      poolAddress,
+      taker,
+      borrower,
+      takeIndex,
+      amountToTake,
+      collateral,
+      bondChange,
+      isReward
+    )
+    handleBucketTake(newBucketTakeEvent)
+
+    // mock createBucketTakeLPAwardedEvent
+    const newBucketTakeLPAwardedEvent = createBucketTakeLPAwardedEvent(
+      poolAddress,
+      taker,
+      kicker,
+      lpAwardedTaker,
+      lpAwardedKicker
+    )
+    handleBucketTakeLPAwarded(newBucketTakeLPAwardedEvent)
+
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+  })
 
 })

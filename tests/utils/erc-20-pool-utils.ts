@@ -163,6 +163,8 @@ export function createBucketBankruptcyEvent(
 }
 
 export function createBucketTakeEvent(
+  pool: Address,
+  taker: Address,
   borrower: Address,
   index: BigInt,
   amount: BigInt,
@@ -199,10 +201,15 @@ export function createBucketTakeEvent(
     new ethereum.EventParam("isReward", ethereum.Value.fromBoolean(isReward))
   )
 
+  // update transaction targets to the expected pool address and taker
+  bucketTakeEvent.transaction.from = taker
+  bucketTakeEvent.transaction.to = pool
+
   return bucketTakeEvent
 }
 
 export function createBucketTakeLPAwardedEvent(
+  pool: Address,
   taker: Address,
   kicker: Address,
   lpAwardedTaker: BigInt,
@@ -230,6 +237,9 @@ export function createBucketTakeLPAwardedEvent(
       ethereum.Value.fromUnsignedBigInt(lpAwardedKicker)
     )
   )
+
+  // update transaction targets to the expected pool address
+  bucketTakeLpAwardedEvent.transaction.to = pool
 
   return bucketTakeLpAwardedEvent
 }

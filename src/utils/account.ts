@@ -63,11 +63,12 @@ export function updateAccountKicks(account: Account, kick: Kick): void {
 }
 
 // update the list of loans initiated by an account, if it hasn't been added already
-export function updateAccountTakes(account: Account, take: Take): void {
+// used by both take and bucket take
+export function updateAccountTakes(account: Account, take: Bytes): void {
     const takes = account.takes
     // get current index of pool in account's list of pools
-    const index = takes.indexOf(take.id)
+    const index = takes.indexOf(take)
     if (index == -1) {
-        account.takes = account.takes.concat([take.id])
+        account.takes = account.takes.concat([take])
     }
 }
