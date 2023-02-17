@@ -214,7 +214,7 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
 
 export function handleBucketTake(event: BucketTakeEvent): void {
   const bucketTake = new BucketTake(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.block.number.toI32())
   )
   bucketTake.borrower = event.params.borrower
   bucketTake.taker = event.transaction.from
@@ -311,7 +311,7 @@ export function handleBucketTakeLPAwarded(
     // pool doesn't need to be updated as it was already updated in the concurrent BucketTake event
 
     // load BucketTake entity to access the index used for bucketTake
-    const bucketTakeId = getBucketTakeIdFromBucketTakeLPAwarded(event.transaction.hash, event.logIndex)
+    const bucketTakeId = getBucketTakeIdFromBucketTakeLPAwarded(event.transaction.hash, event.block.number)
     const bucketTake = BucketTake.load(bucketTakeId)!
 
     // update bucket state

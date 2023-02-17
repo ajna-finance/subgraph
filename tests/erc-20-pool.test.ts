@@ -999,6 +999,23 @@ describe("Describe entity assertions", () => {
     )
     handleBucketTake(newBucketTakeEvent)
 
+    // mock required contract calls
+    const expectedBucketInfo = new BucketInfo(
+      takeIndex,
+      debt,
+      ZERO_BI,
+      lpAwardedKicker.plus(lpAwardedTaker),
+      ZERO_BI,
+      ONE_RAY_BI
+    )
+    mockGetBucketInfo(poolAddress, takeIndex, expectedBucketInfo)
+
+    const expectedKickerLPBValueInQuote = lpAwardedKicker
+    mockGetLPBValueInQuote(poolAddress, lpAwardedKicker, takeIndex, expectedKickerLPBValueInQuote)
+
+    const expectedTakerLPBValueInQuote = lpAwardedTaker
+    mockGetLPBValueInQuote(poolAddress, lpAwardedTaker, takeIndex, expectedTakerLPBValueInQuote)
+
     // mock createBucketTakeLPAwardedEvent
     const newBucketTakeLPAwardedEvent = createBucketTakeLPAwardedEvent(
       poolAddress,
@@ -1009,10 +1026,75 @@ describe("Describe entity assertions", () => {
     )
     handleBucketTakeLPAwarded(newBucketTakeLPAwardedEvent)
 
-
     /********************/
     /*** Assert State ***/
     /********************/
+
+    // check BucketTakeEvent attributes
+    assert.entityCount("BucketTake", 1)
+    assert.fieldEquals(
+      "BucketTake",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "taker",
+      `${taker.toHexString()}`
+    )
+    assert.fieldEquals(
+      "BucketTake",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "BucketTake",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "amount",
+      `${amountToTake}`
+    )
+    assert.fieldEquals(
+      "BucketTake",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "collateral",
+      `${collateral}`
+    )
+
+    // check BucketTakeLPAwarded attributes
+    assert.entityCount("BucketTakeLPAwarded", 1)
+    assert.fieldEquals(
+      "BucketTakeLPAwarded",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "taker",
+      `${taker.toHexString()}`
+    )
+    assert.fieldEquals(
+      "BucketTakeLPAwarded",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "BucketTakeLPAwarded",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "kicker",
+      `${kicker.toHexString()}`
+    )
+    assert.fieldEquals(
+      "BucketTakeLPAwarded",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lpAwardedTaker",
+      `${lpAwardedTaker}`
+    )
+    assert.fieldEquals(
+      "BucketTakeLPAwarded",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lpAwardedKicker",
+      `${lpAwardedKicker}`
+    )
+
+    // TODO: check lends attributes
+
+    // TODO: check bucket attributes
+
+    // TODO: check LiquidationAuction attributes
 
   })
 
