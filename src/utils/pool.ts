@@ -2,6 +2,7 @@ import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/g
 
 import { PoolInfoUtils } from '../../generated/ERC20Pool/PoolInfoUtils'
 import { LiquidationAuction, Pool } from "../../generated/schema"
+import { ERC20Pool } from '../../generated/ERC20Pool/ERC20Pool'
 
 import { poolInfoUtilsNetworkLookUpTable, ONE_BI } from "./constants"
 import { wadToDecimal } from './convert'
@@ -180,4 +181,32 @@ export function updatePoolLiquidationAuctions(pool: Pool, liquidationAuction: Li
     if (index == -1) {
         pool.liquidationAuctions = pool.liquidationAuctions.concat([liquidationAuction.id])
     }
+}
+
+export function getCurrentBurnEpoch(pool: Pool): BigInt {
+    const poolContract = ERC20Pool.bind(Address.fromBytes(pool.id))
+    const ajnaBurnEpoch = poolContract.currentBurnEpoch()
+    return ajnaBurnEpoch
+}
+
+export class BurnInfo {
+    timestamp: BigInt
+    totalInterest: BigInt
+    totalBurned: BigInt
+    constructor(timestamp: BigInt, totalInterest: BigInt, totalBurned: BigInt) {
+        this.timestamp = timestamp
+        this.totalInterest = totalInterest
+        this.totalBurned = totalBurned
+    }
+}
+export function getBurnInfo(pool: Pool, burnEpoch: BigInt): BurnInfo {
+    const poolContract = ERC20Pool.bind(Address.fromBytes(pool.id))
+    const burnInfoResult = poolContract.burnInfo(burnEpoch)
+
+    const burnInfo = new BurnInfo(
+        burnInfoResult.value0,
+        burnInfoResult.value1,
+        burnInfoResult.value2
+    )
+    return burnInfo
 }

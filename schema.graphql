@@ -29,7 +29,6 @@ type ERC20PoolFactory @entity {
 }
 
 # TODO: add momp
-# TODO: add burn information and total interst earned info
 type Pool @entity {
   # pool address
   id: Bytes!
@@ -51,6 +50,8 @@ type Pool @entity {
   inflatorUpdate: BigInt!
   # total collateral pledged to the pool
   pledgedCollateral: BigDecimal!
+  # total interest earned by all lenders in the pool
+  totalInterestEarned: BigDecimal!
   # total number of transactions sent to the pool
   txCount: BigInt!
 
@@ -80,6 +81,10 @@ type Pool @entity {
   reserveAuctionPrice: BigDecimal!
   # current reserve auction timeRemaining
   reserveAuctionTimeRemaining: BigInt!
+  # current burn epoch
+  burnEpoch: BigInt!
+  # total ajna burned in the pool
+  totalAjnaBurned: BigDecimal!
 
   # UTILIZATION INFORMATION
   # current pool minimum debt amount for a new borrow
@@ -363,8 +368,13 @@ type RepayDebt @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# TODO: create a separte entity to handle the global reserve auction process
+# TODO: add incremental ajna burned in each take
 type ReserveAuction @entity {
   id: Bytes!
+  kicker: Bytes! # address of the kicker
+  # taker: Bytes! # address of the taker
+  kickerAward: BigDecimal! # amount of quote rewarded to kicker for starting reserves auction
   pool: Pool! # Pool in which the reserve auction occurred
   claimableReservesRemaining: BigInt! # uint256
   auctionPrice: BigInt! # uint256

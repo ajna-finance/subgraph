@@ -462,6 +462,7 @@ export function createRepayDebtEvent(
 }
 
 export function createReserveAuctionEvent(
+  pool: Address,
   claimableReservesRemaining: BigInt,
   auctionPrice: BigInt
 ): ReserveAuction {
@@ -481,6 +482,9 @@ export function createReserveAuctionEvent(
       ethereum.Value.fromUnsignedBigInt(auctionPrice)
     )
   )
+
+  // update transaction target to the expected pool address
+  reserveAuctionEvent.transaction.to = pool
 
   return reserveAuctionEvent
 }

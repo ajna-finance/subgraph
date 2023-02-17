@@ -57,6 +57,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.inflator = ONE_BD //ONE_WAD_BD
   pool.inflatorUpdate = event.block.timestamp
   pool.pledgedCollateral = ZERO_BD
+  pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI
 
   // pool loans information
@@ -80,6 +81,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.claimableReservesRemaining = ZERO_BD
   pool.reserveAuctionPrice = ZERO_BD
   pool.reserveAuctionTimeRemaining = ZERO_BI
+  pool.burnEpoch = ZERO_BI
+  pool.totalAjnaBurned = ZERO_BD
 
   // utilization information
   pool.minDebtAmount = ZERO_BD

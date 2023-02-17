@@ -1,4 +1,4 @@
-import { Bytes, log } from "@graphprotocol/graph-ts"
+import { BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts"
 
 import {
   AddCollateral as AddCollateralEvent,
@@ -44,13 +44,13 @@ import {
 } from "../generated/schema"
 
 import { ZERO_BD, ONE_BI } from "./utils/constants"
-import { addressToBytes, wadToDecimal, rayToDecimal } from "./utils/convert"
+import { addressToBytes, wadToDecimal, rayToDecimal, bigDecimalExp18 } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getBucketTakeIdFromBucketTakeLPAwarded, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction } from "./utils/liquidation"
-import { getMomp, updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
+import { getBurnInfo, getCurrentBurnEpoch, getMomp, getPoolReservesInfo, updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
 import { collateralization, collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
@@ -654,18 +654,51 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   repayDebt.save()
 }
 
+// called on both start and take reserves
 export function handleReserveAuction(event: ReserveAuctionEvent): void {
-  let entity = new ReserveAuction(
+  const reserveAuction = new ReserveAuction(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.claimableReservesRemaining = event.params.claimableReservesRemaining
-  entity.auctionPrice = event.params.auctionPrice
+  reserveAuction.claimableReservesRemaining = event.params.claimableReservesRemaining
+  reserveAuction.auctionPrice = event.params.auctionPrice
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  reserveAuction.blockNumber = event.block.number
+  reserveAuction.blockTimestamp = event.block.timestamp
+  reserveAuction.transactionHash = event.transaction.hash
 
-  entity.save()
+  // TODO: handle updates to this from multiple transactions
+  reserveAuction.kicker = event.transaction.from
+
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // update pool state
+    updatePool(pool)
+
+    // if time remaining is 72 hours, then assume this is the start of the auction,
+    // and calculate kickerAward for calling startReserveAuction
+    if (pool.reserveAuctionTimeRemaining == BigInt.fromString("259200")) {
+      // kicker award = claimableReserves * 0.01 * 1e18
+      // stored as a decimal converted from wad
+      reserveAuction.kickerAward = BigDecimal.fromString(`${pool.claimableReserves}`)
+                                    .times(BigDecimal.fromString("10000000000000000"))
+                                    .div(bigDecimalExp18())
+    }
+
+    // update pool burn and interest earned information
+    const currentBurnEpoch = getCurrentBurnEpoch(pool)
+    pool.burnEpoch = currentBurnEpoch
+    const burnInfo = getBurnInfo(pool, currentBurnEpoch)
+    pool.totalAjnaBurned = wadToDecimal(burnInfo.totalBurned)
+    pool.totalInterestEarned = wadToDecimal(burnInfo.totalInterest)
+
+    reserveAuction.pool = pool.id
+
+    // save entities to store
+    pool.save()
+  }
+
+  reserveAuction.save()
 }
 
 export function handleSettle(event: SettleEvent): void {
@@ -693,13 +726,13 @@ export function handleSettle(event: SettleEvent): void {
     updateAccountPools(account, pool)
     updateAccountSettles(account, settle)
 
-    const loanId = getLoanId(pool.id, addressToBytes(settle.borrower))
+    const loanId = getLoanId(pool.id, settle.borrower)
 
     // retrieve auction information on the auction after settle
     const auctionInfo = getAuctionInfoERC20Pool(settle.borrower, pool)
 
     // update liquidation auction state
-    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
+    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loanId)
     const liquidationAuction = LiquidationAuction.load(liquidationAuctionId)!
     updateLiquidationAuction(liquidationAuction, auctionInfo)
     liquidationAuction.settled = true

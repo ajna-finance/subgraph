@@ -7,7 +7,7 @@ import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, rayToDecimal, wadToDecimal } from "../../src/utils/convert"
 import { poolInfoUtilsNetworkLookUpTable } from "../../src/utils/constants"
-import { LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
+import { BurnInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo } from "../../src/utils/liquidation"
 
 /*************************/
@@ -392,6 +392,24 @@ export function mockGetAuctionInfoERC20Pool(borrower: Address, pool: Address, ex
         ethereum.Value.fromAddress(expectedInfo.head),
         ethereum.Value.fromAddress(expectedInfo.next),
         ethereum.Value.fromAddress(expectedInfo.prev)
+    ])
+}
+
+// mock currentBurnEpoch contract calls
+export function mockGetCurrentBurnEpoch(pool: Address, expectedEpoch: BigInt): void {
+    createMockedFunction(pool, 'currentBurnEpoch', 'currentBurnEpoch():(uint256)')
+    .withArgs([])
+    .returns([ethereum.Value.fromUnsignedBigInt(expectedEpoch)])
+}
+
+// mock burnInfo contract calls
+export function mockGetBurnInfo(pool: Address, burnEpoch: BigInt, expectedInfo: BurnInfo): void {
+    createMockedFunction(pool, 'burnInfo', 'burnInfo(uint256):(uint256,uint256,uint256)')
+    .withArgs([ethereum.Value.fromUnsignedBigInt(burnEpoch)])
+    .returns([
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.timestamp),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.totalInterest),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.totalBurned)
     ])
 }
 

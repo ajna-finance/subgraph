@@ -10,8 +10,8 @@ import {
   dataSourceMock
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleTake } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createTakeEvent } from "./utils/erc-20-pool-utils"
+import { handleAddCollateral, handleAddQuoteToken, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuction, handleTake } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionEvent, createTakeEvent } from "./utils/erc-20-pool-utils"
 import {
   assertBucketUpdate,
   assertLendUpdate,
@@ -19,16 +19,19 @@ import {
   createPool,
   mockGetAuctionInfoERC20Pool,
   mockGetBucketInfo,
+  mockGetBurnInfo,
+  mockGetCurrentBurnEpoch,
   mockGetLPBValueInQuote,
   mockPoolInfoUtilsPoolUpdateCalls
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, rayToDecimal, wadToDecimal } from "../src/utils/convert"
-import { MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BI } from "../src/utils/constants"
+import { MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
 import { AuctionInfo, getLiquidationAuctionId } from "../src/utils/liquidation"
+import { BurnInfo } from "../src/utils/pool"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -1101,4 +1104,110 @@ describe("Describe entity assertions", () => {
   test("Settle", () => {
     // TODO: implement this test
   })
+
+  test("ReserveAuction", () => {
+    // mock event params
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const kicker = Address.fromString("0x0000000000000000000000000000000000000008")
+    let claimableReservesRemaining = BigInt.fromString("100000000000000000000") // Wad(100)
+    const auctionPrice = BigInt.fromI32(456)
+    const seventyTwoHours = BigInt.fromString("259200")
+    let timestamp = BigInt.fromI32(123)
+    let totalInterest = ZERO_BI
+    let totalBurned = ZERO_BI
+
+    /****************************/
+    /*** Kick Reserve Auction ***/
+    /****************************/
+
+    // mock pool info contract calls
+    mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
+      poolSize: ONE_WAD_BI,
+      loansCount: ZERO_BI,
+      maxBorrower: ZERO_ADDRESS,
+      pendingInflator: ONE_WAD_BI,
+      pendingInterestFactor: ZERO_BI,
+      hpb: ZERO_BI, //TODO: indexToPrice(price)
+      hpbIndex: ZERO_BI,
+      htp: ZERO_BI, //TODO: indexToPrice(price)
+      htpIndex: ZERO_BI,
+      lup: MAX_PRICE_BI,
+      lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      reserves: ZERO_BI,
+      claimableReserves: claimableReservesRemaining,
+      claimableReservesRemaining: claimableReservesRemaining,
+      reserveAuctionPrice: auctionPrice,
+      reserveAuctionTimeRemaining: seventyTwoHours,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI
+    })
+
+    // mock burnInfo contract calls
+    const expectedBurnEpoch = ONE_BI
+    mockGetCurrentBurnEpoch(poolAddress, expectedBurnEpoch)
+
+    let expectedBurnInfo = new BurnInfo(
+      timestamp,
+      totalInterest,
+      totalBurned
+    )
+    mockGetBurnInfo(poolAddress, ONE_BI, expectedBurnInfo)
+
+    let newReserveAuctionEvent = createReserveAuctionEvent(
+      poolAddress,
+      claimableReservesRemaining,
+      auctionPrice
+    )
+    handleReserveAuction(newReserveAuctionEvent)
+
+    /*********************************/
+    /*** Assert Reserve Kick State ***/
+    /*********************************/
+
+    assert.entityCount("ReserveAuction", 1)
+    // assert.fieldEquals(
+    //   "ReserveAuction",
+    //   "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+    //   "kicker",
+    //   `${kicker.toHexString()}`
+    // )
+    // assert.fieldEquals(
+    //   "ReserveAuction",
+    //   "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+    //   "kickerAward",
+    //   `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000")))}`
+    // )
+
+    /****************************/
+    /*** Take Reserve Auction ***/
+    /****************************/
+
+    timestamp = BigInt.fromI32(456)
+    totalInterest = ONE_WAD_BI
+    totalBurned = ONE_WAD_BI
+    expectedBurnInfo = new BurnInfo(
+      timestamp,
+      totalInterest,
+      totalBurned
+    )
+    mockGetBurnInfo(poolAddress, ONE_BI, expectedBurnInfo)
+
+    newReserveAuctionEvent = createReserveAuctionEvent(
+      poolAddress,
+      claimableReservesRemaining,
+      auctionPrice
+    )
+    handleReserveAuction(newReserveAuctionEvent)
+
+    /*********************************/
+    /*** Assert Reserve Kick State ***/
+    /*********************************/
+
+    // TODO: determine if should create new ReserveAuction entity or update existing
+    assert.entityCount("ReserveAuction", 1)
+
+  })
+
 })
