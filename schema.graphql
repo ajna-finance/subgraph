@@ -175,10 +175,13 @@ type Account @entity {
   txCount: BigInt!
 }
 
+# TODO: add bad debt field? debtAuctioned
 type LiquidationAuction @entity {
   id: Bytes! # $poolAddress + '|' + $loanId
   pool: Pool! # pool in which the liquidation occurred
   borrower: Bytes! # address of the borrower being liquidated
+  collateralAuctioned: BigDecimal! # collateral that was auctioned off
+  debtRepaid: BigDecimal! # debt that was repaid
   loan: Loan! # loan being liquidated
   kicker: Bytes! # address of the kicker
   kick: Kick! # kick which triggered the liquidation
@@ -186,6 +189,7 @@ type LiquidationAuction @entity {
   bondSize: BigDecimal! # bond provided by kicker to initate auction
   bondFactor: BigDecimal! # bond factor determining the reward or penalty for the kicker
   neutralPrice: BigDecimal! # price at which the auction is neutral
+  settled: Boolean! # boolean indicating whether the auction has been settled
 }
 
   # # # # # #
@@ -232,6 +236,8 @@ type AuctionNFTSettle @entity(immutable: true) {
 
 type AuctionSettle @entity(immutable: true) {
   id: Bytes!
+  pool: Pool! # Pool whose debt was settled
+  loan: Loan! # Loan which was settled
   borrower: Bytes! # address
   collateral: BigInt! # uint256
   blockNumber: BigInt!
@@ -369,6 +375,9 @@ type ReserveAuction @entity {
 
 type Settle @entity(immutable: true) {
   id: Bytes!
+  pool: Pool! # Pool whose debt was settled
+  liquidationAuction: LiquidationAuction! # Liquidation auction which was settled
+  loan: Loan! # Loan which was settled
   borrower: Bytes! # address
   settledDebt: BigInt! # uint256
   blockNumber: BigInt!

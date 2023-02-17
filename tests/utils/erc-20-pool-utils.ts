@@ -486,6 +486,8 @@ export function createReserveAuctionEvent(
 }
 
 export function createSettleEvent(
+  pool: Address,
+  settler: Address,
   borrower: Address,
   settledDebt: BigInt
 ): Settle {
@@ -502,6 +504,10 @@ export function createSettleEvent(
       ethereum.Value.fromUnsignedBigInt(settledDebt)
     )
   )
+
+  // update transaction targets to the expected pool address and taker
+  settleEvent.transaction.from = settler
+  settleEvent.transaction.to = pool
 
   return settleEvent
 }

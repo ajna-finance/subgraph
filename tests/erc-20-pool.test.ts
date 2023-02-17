@@ -1098,4 +1098,7 @@ describe("Describe entity assertions", () => {
 
   })
 
+  test("Settle", () => {
+    // TODO: implement this test
+  })
 })

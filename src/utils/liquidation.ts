@@ -4,7 +4,7 @@ import { LiquidationAuction, Kick, Loan, Pool } from "../../generated/schema"
 import { ERC20Pool } from '../../generated/ERC20Pool/ERC20Pool'
 
 import { wadToDecimal } from "./convert"
-import { ONE_BI } from "./constants"
+import { ONE_BI, ZERO_BD } from "./constants"
 
 // TODO: if logIndex doesn't work as expected, update the ID generation to use the taker addres as second param
 // return the id of a bucketTake given the transactionHash and logIndex of the BucketTakeLPAwarded event
@@ -34,10 +34,16 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
         liquidationAuction.loan = loan.id
         liquidationAuction.kicker = kick.kicker
         liquidationAuction.kick = kick.id
+
+        // write accumulators
+        liquidationAuction.collateralAuctioned = ZERO_BD
+        liquidationAuction.debtRepaid = ZERO_BD
+        liquidationAuction.settled = false
     }
     return liquidationAuction
 }
 
+// TODO: check if this needs to be called on every liquidation action
 export function updateLiquidationAuction(liquidationAuction: LiquidationAuction, auctionInfo: AuctionInfo): void {
     liquidationAuction.kickTime     = auctionInfo.kickTime
     liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)

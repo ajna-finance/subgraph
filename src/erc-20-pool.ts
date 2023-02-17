@@ -45,7 +45,7 @@ import {
 
 import { ZERO_BD, ONE_BI } from "./utils/constants"
 import { addressToBytes, wadToDecimal, rayToDecimal } from "./utils/convert"
-import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes } from "./utils/account"
+import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
@@ -168,6 +168,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   addQuoteToken.save()
 }
 
+// ERC721Pool only
 export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   let entity = new AuctionNFTSettle(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -184,18 +185,42 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   entity.save()
 }
 
+// TODO: add pointer to Settle event?
+// ERC20Pool only
+// emitted in conjunction with Settle
 export function handleAuctionSettle(event: AuctionSettleEvent): void {
-  let entity = new AuctionSettle(
+  const auctionSettle = new AuctionSettle(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.borrower = event.params.borrower
-  entity.collateral = event.params.collateral
+  auctionSettle.borrower = event.params.borrower
+  auctionSettle.collateral = event.params.collateral
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  auctionSettle.blockNumber = event.block.number
+  auctionSettle.blockTimestamp = event.block.timestamp
+  auctionSettle.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // pool doesn't need to be updated here as it was already updated in the concurrent Settle event
+
+    // update loan state
+    const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
+    const loan = loadOrCreateLoan(loanId, pool.id, addressToBytes(event.params.borrower))
+    loan.debt = ZERO_BD
+    loan.collateralDeposited = wadToDecimal(auctionSettle.collateral)
+    loan.inLiquidation = false
+    loan.collateralization = ZERO_BD
+    loan.tp = ZERO_BD
+
+    // save entities to the store
+    loan.save()
+
+    // update auctionSettle pointer
+    auctionSettle.loan = loan.id
+  }
+
+  auctionSettle.save()
 }
 
 export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
@@ -262,6 +287,8 @@ export function handleBucketTake(event: BucketTakeEvent): void {
     const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
     const liquidationAuction = LiquidationAuction.load(liquidationAuctionId)!
     updateLiquidationAuction(liquidationAuction, auctionInfo)
+    liquidationAuction.debtRepaid = liquidationAuction.debtRepaid.plus(wadToDecimal(event.params.amount))
+    liquidationAuction.collateralAuctioned = liquidationAuction.collateralAuctioned.plus(wadToDecimal(event.params.collateral))
 
     // update kick and pool for the change in bond as a result of the take
     const kick = Kick.load(liquidationAuction.kick)!
@@ -642,17 +669,53 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
 }
 
 export function handleSettle(event: SettleEvent): void {
-  let entity = new Settle(
+  const settle = new Settle(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.borrower = event.params.borrower
-  entity.settledDebt = event.params.settledDebt
+  settle.borrower = event.params.borrower
+  settle.settledDebt = event.params.settledDebt
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  settle.blockNumber = event.block.number
+  settle.blockTimestamp = event.block.timestamp
+  settle.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // update pool state
+    updatePool(pool)
+    pool.loansCount = pool.loansCount.minus(ONE_BI)
+    // TODO: update pool collateral balances here?
+
+    // update settler account state
+    const account   = loadOrCreateAccount(event.transaction.from)
+    account.txCount = account.txCount.plus(ONE_BI)
+    updateAccountPools(account, pool)
+    updateAccountSettles(account, settle)
+
+    const loanId = getLoanId(pool.id, addressToBytes(settle.borrower))
+
+    // retrieve auction information on the auction after settle
+    const auctionInfo = getAuctionInfoERC20Pool(settle.borrower, pool)
+
+    // update liquidation auction state
+    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
+    const liquidationAuction = LiquidationAuction.load(liquidationAuctionId)!
+    updateLiquidationAuction(liquidationAuction, auctionInfo)
+    liquidationAuction.settled = true
+
+    // update settle pointers
+    settle.pool = pool.id
+    settle.liquidationAuction = liquidationAuctionId
+    settle.loan = loanId
+
+    // save entities to the store
+    account.save()
+    liquidationAuction.save()
+    pool.save()
+  }
+
+  settle.save()
 }
 
 export function handleTake(event: TakeEvent): void {
@@ -670,6 +733,7 @@ export function handleTake(event: TakeEvent): void {
   take.blockTimestamp = event.block.timestamp
   take.transactionHash = event.transaction.hash
 
+  // TODO: update pool collateral and quote balances?
   // update entities
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
@@ -704,6 +768,8 @@ export function handleTake(event: TakeEvent): void {
     const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
     const liquidationAuction = LiquidationAuction.load(liquidationAuctionId)!
     updateLiquidationAuction(liquidationAuction, auctionInfo)
+    liquidationAuction.debtRepaid = liquidationAuction.debtRepaid.plus(wadToDecimal(event.params.amount))
+    liquidationAuction.collateralAuctioned = liquidationAuction.collateralAuctioned.plus(wadToDecimal(event.params.collateral))
 
     // update kick and pool for the change in bond as a result of the take
     const kick = Kick.load(liquidationAuction.kick)!
