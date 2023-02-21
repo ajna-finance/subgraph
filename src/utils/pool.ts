@@ -169,9 +169,6 @@ export function updatePool(pool: Pool): void {
     pool.collateralization = wadToDecimal(poolUtilizationInfo.collateralization)
     pool.actualUtilization = wadToDecimal(poolUtilizationInfo.actualUtilization)
     pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
-
-    // update pool transaction counter
-    pool.txCount = pool.txCount.plus(ONE_BI)
 }
 
 // update the list of loans initiated by an account, if it hasn't been added already
