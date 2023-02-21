@@ -45,7 +45,7 @@ import {
 
 import { ZERO_BD, ONE_BI } from "./utils/constants"
 import { addressToBytes, wadToDecimal, rayToDecimal, bigDecimalExp18 } from "./utils/convert"
-import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles } from "./utils/account"
+import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
@@ -225,17 +225,17 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
 }
 
 export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
-  let entity = new BucketBankruptcy(
+  const bucketBankruptcy = new BucketBankruptcy(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.index = event.params.index
-  entity.lpForfeited = event.params.lpForfeited
+  bucketBankruptcy.index = event.params.index
+  bucketBankruptcy.lpForfeited = event.params.lpForfeited
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  bucketBankruptcy.blockNumber = event.block.number
+  bucketBankruptcy.blockTimestamp = event.block.timestamp
+  bucketBankruptcy.transactionHash = event.transaction.hash
 
-  entity.save()
+  bucketBankruptcy.save()
 }
 
 export function handleBucketTake(event: BucketTakeEvent): void {
@@ -645,8 +645,8 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     updateAccountLoans(account, loan)
 
     // save entities to store
-    pool.save()
     account.save()
+    pool.save()
     loan.save()
 
     repayDebt.pool = pool.id
@@ -658,7 +658,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
 // called on both start and take reserves
 export function handleReserveAuction(event: ReserveAuctionEvent): void {
   const reserveAuction = new ReserveAuction(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concat(event.transaction.from)
   )
   reserveAuction.claimableReservesRemaining = event.params.claimableReservesRemaining
   reserveAuction.auctionPrice = event.params.auctionPrice
@@ -673,6 +673,12 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
     // update pool state
     updatePool(pool)
 
+    // update account state
+    const accountId = addressToBytes(event.transaction.from)
+    const account   = loadOrCreateAccount(accountId)
+    account.txCount = account.txCount.plus(ONE_BI)
+    updateAccountReserveAuctions(account, reserveAuction.id)
+
     // retrieve ajna burn information from the pool
     const currentBurnEpoch = getCurrentBurnEpoch(pool)
     const burnInfo = getBurnInfo(pool, currentBurnEpoch)
@@ -683,10 +689,11 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
 
     // if kicker is null, then assume this is the start of the auction,
     // and set kicker to the caller of startReserveAuction and calculate kickerAward
-    if (reserveAuctionProcess.kicker === Bytes.empty()) {
+    if (reserveAuctionProcess.kicker == Bytes.empty()) {
       reserveAuctionProcess.burnEpoch = currentBurnEpoch
       reserveAuctionProcess.kicker = event.transaction.from
       reserveAuctionProcess.kickerAward = reserveAuctionKickerReward(pool)
+      reserveAuctionProcess.kickTime = event.block.timestamp
       reserveAuctionProcess.pool = pool.id
 
       // set the total ajna burned at the start of the auction
@@ -701,8 +708,8 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
     }
 
     // update ReserveAuctionProcess with latest auction state
-    reserveAuctionProcess.auctionPrice = event.params.auctionPrice
-    reserveAuctionProcess.claimableReservesRemaining = event.params.claimableReservesRemaining
+    reserveAuctionProcess.auctionPrice = wadToDecimal(event.params.auctionPrice)
+    reserveAuctionProcess.claimableReservesRemaining = wadToDecimal(event.params.claimableReservesRemaining)
 
     // update burn information of the reserve auction take
     // since only one reserve auction can occur at a time, look at the difference since the last reserve auction
@@ -718,6 +725,7 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
     reserveAuction.reserveAuctionProcess = reserveAuctionProcessId
 
     // save entities to store
+    account.save()
     pool.save()
     reserveAuctionProcess.save()
   }

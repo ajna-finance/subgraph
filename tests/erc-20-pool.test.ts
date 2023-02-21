@@ -25,9 +25,9 @@ import {
   mockPoolInfoUtilsPoolUpdateCalls
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
-import { addressToBytes, rayToDecimal, wadToDecimal } from "../src/utils/convert"
+import { addressToBytes, bigDecimalExp18, rayToDecimal, wadToDecimal } from "../src/utils/convert"
 import { MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
-import { Account, Lend, Loan } from "../generated/schema"
+import { Account, Lend, Loan, ReserveAuction } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
 import { AuctionInfo, getLiquidationAuctionId } from "../src/utils/liquidation"
@@ -1116,7 +1116,7 @@ describe("Describe entity assertions", () => {
     const seventyTwoHours = BigInt.fromString("259200")
     let timestamp = BigInt.fromI32(123)
     let totalInterest = ZERO_BI
-    let totalBurned = ONE_WAD_BI
+    const totalBurnedAtKick = ONE_WAD_BI
 
     /****************************/
     /*** Kick Reserve Auction ***/
@@ -1153,7 +1153,7 @@ describe("Describe entity assertions", () => {
     let expectedBurnInfo = new BurnInfo(
       timestamp,
       totalInterest,
-      totalBurned
+      totalBurnedAtKick
     )
     mockGetBurnInfo(poolAddress, ONE_BI, expectedBurnInfo)
 
@@ -1171,7 +1171,6 @@ describe("Describe entity assertions", () => {
 
     assert.entityCount("ReserveAuction", 1)
 
-    logStore()
     const reserveAuctionProcessId = getReserveAuctionId(addressToBytes(poolAddress), expectedBurnEpoch)
     assert.entityCount("ReserveAuctionProcess", 1)
     assert.fieldEquals(
@@ -1184,37 +1183,219 @@ describe("Describe entity assertions", () => {
       "ReserveAuctionProcess",
       `${reserveAuctionProcessId.toHexString()}`,
       "kickerAward",
-      `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000")))}`
+      `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000"))).div(bigDecimalExp18())}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "burnEpoch",
+      `${expectedBurnEpoch}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "ajnaBurnedAcrossAllTakes",
+      `${0}`
     )
 
     /****************************/
     /*** Take Reserve Auction ***/
     /****************************/
 
+    const totalBurnedAtTake = BigInt.fromString("100000000000000000000") // Wad(100)
+    const claimableReservesRemainingAfterTake = BigInt.fromString("500000000000000000000") // Wad(500)
+    const seventyHours = BigInt.fromString("252000")
+
+    // mock pool info contract calls
+    mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
+      poolSize: ONE_WAD_BI,
+      loansCount: ZERO_BI,
+      maxBorrower: ZERO_ADDRESS,
+      pendingInflator: ONE_WAD_BI,
+      pendingInterestFactor: ZERO_BI,
+      hpb: ZERO_BI, //TODO: indexToPrice(price)
+      hpbIndex: ZERO_BI,
+      htp: ZERO_BI, //TODO: indexToPrice(price)
+      htpIndex: ZERO_BI,
+      lup: MAX_PRICE_BI,
+      lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      reserves: ZERO_BI,
+      claimableReserves: claimableReservesRemainingAfterTake,
+      claimableReservesRemaining: claimableReservesRemainingAfterTake,
+      reserveAuctionPrice: auctionPrice,
+      reserveAuctionTimeRemaining: seventyHours,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI
+    })
+
     timestamp = BigInt.fromI32(456)
     totalInterest = BigInt.fromString("100000000000000000000") // Wad(100)
-    totalBurned = BigInt.fromString("100000000000000000000") // Wad(100)
     expectedBurnInfo = new BurnInfo(
       timestamp,
       totalInterest,
-      totalBurned
+      totalBurnedAtTake
     )
     mockGetBurnInfo(poolAddress, ONE_BI, expectedBurnInfo)
 
     newReserveAuctionEvent = createReserveAuctionEvent(
       taker,
       poolAddress,
-      claimableReservesRemaining,
+      claimableReservesRemainingAfterTake,
       auctionPrice
     )
     handleReserveAuction(newReserveAuctionEvent)
 
-    // /*********************************/
-    // /*** Assert Reserve Kick State ***/
-    // /*********************************/
+    /*********************************/
+    /*** Assert Reserve Kick State ***/
+    /*********************************/
 
-    // TODO: determine if should create new ReserveAuction entity or update existing
-    // assert.entityCount("ReserveAuction", 2)
+    const kickReserveAuctionID = Bytes.fromHexString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a").concat(addressToBytes(kicker))
+    const takeReserveAuctionID = Bytes.fromHexString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a").concat(addressToBytes(taker))
+    const loadedKickReserveAuction = ReserveAuction.load(kickReserveAuctionID)!
+    const loadedTakeReserveAuction = ReserveAuction.load(takeReserveAuctionID)!
+    const incrementalAjnaBurned = wadToDecimal(totalBurnedAtTake.minus(totalBurnedAtKick))
+
+    assert.entityCount("ReserveAuction", 2)
+    // assert first kick reserve auction entity
+    assert.fieldEquals(
+      "ReserveAuction",
+      `${kickReserveAuctionID.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuction",
+      `${kickReserveAuctionID.toHexString()}`,
+      "reserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuction",
+      `${kickReserveAuctionID.toHexString()}`,
+      "incrementalAjnaBurned",
+      `${0}`
+    )
+    // assert.assertNull(loadedKickReserveAuction.taker) // FIXME: this is failing with a type issue
+
+    // assert second take reserve auction entity
+    assert.fieldEquals(
+      "ReserveAuction",
+      `${takeReserveAuctionID.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuction",
+      `${takeReserveAuctionID.toHexString()}`,
+      "taker",
+      `${taker.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuction",
+      `${takeReserveAuctionID.toHexString()}`,
+      "reserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuction",
+      `${takeReserveAuctionID.toHexString()}`,
+      "incrementalAjnaBurned",
+      `${incrementalAjnaBurned}`
+    )
+    // assert.assertNotNull(loadedTakeReserveAuction.taker) // FIXME: this is failing with a type issue
+
+    // assert reserve auction process entity
+    assert.entityCount("ReserveAuctionProcess", 1)
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "kicker",
+      `${kicker.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "kickerAward",
+      `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000"))).div(bigDecimalExp18())}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "claimableReservesRemaining",
+      `${wadToDecimal(claimableReservesRemainingAfterTake)}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "burnEpoch",
+      `${expectedBurnEpoch}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "ajnaBurnedAcrossAllTakes",
+      `${incrementalAjnaBurned}`
+    )
+
+    // check account state
+    assert.entityCount("Account", 2)
+    assert.fieldEquals(
+      "Account",
+      `${kicker.toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
+    )
+    assert.fieldEquals(
+      "Account",
+      `${taker.toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
+    )
+
+    // check pool attributed updated
+    assertPoolUpdate({
+      poolAddress: addressToBytes(poolAddress).toHexString(),
+      poolSize: ONE_WAD_BI,
+      loansCount: ZERO_BI,
+      maxBorrower: ZERO_ADDRESS.toHexString(),
+      inflator: ONE_WAD_BI,
+      pendingInflator: ONE_WAD_BI,
+      pendingInterestFactor: ZERO_BI,
+      currentDebt: ZERO_BI,
+      pledgedCollateral: ZERO_BI,
+      hpb: ZERO_BI,
+      hpbIndex: ZERO_BI,
+      htp: ZERO_BI,
+      htpIndex: ZERO_BI,
+      lup: MAX_PRICE_BI,
+      lupIndex: MAX_PRICE_INDEX,
+      reserves: ZERO_BI,
+      claimableReserves: claimableReservesRemainingAfterTake,
+      claimableReservesRemaining: claimableReservesRemainingAfterTake,
+      reserveAuctionPrice: auctionPrice,
+      reserveAuctionTimeRemaining: seventyHours,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI,
+      totalBondEscrowed: ZERO_BI,
+      // liquidationAuctions: Bytes.fromHexString("0x"),
+      txCount: BigInt.fromI32(2)
+    })
 
   })
 

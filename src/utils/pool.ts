@@ -159,6 +159,7 @@ export function updatePool(pool: Pool): void {
     const poolReservesInfo = getPoolReservesInfo(pool)
     pool.reserves = wadToDecimal(poolReservesInfo.reserves)
     pool.claimableReserves = wadToDecimal(poolReservesInfo.claimableReserves)
+    pool.claimableReservesRemaining = wadToDecimal(poolReservesInfo.claimableReservesRemaining)
     pool.reserveAuctionPrice = wadToDecimal(poolReservesInfo.reserveAuctionPrice)
     pool.reserveAuctionTimeRemaining = poolReservesInfo.reserveAuctionTimeRemaining
 

@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Pool, ReserveAuctionProcess } from "../../generated/schema"
-import { ONE_BI, ZERO_BD } from "./constants"
+import { ONE_BI, ZERO_BD, ZERO_BI } from "./constants"
 import { bigDecimalExp18 } from "./convert"
 
 export function getReserveAuctionId(poolId: Bytes, burnEpoch: BigInt): Bytes {
@@ -17,6 +17,7 @@ export function loadOrCreateReserveAuctionProcess(poolId: Bytes, reserveAuctionP
         reserveAuctionProcess.burnEpoch = ONE_BI
         reserveAuctionProcess.ajnaBurnedAcrossAllTakes = ZERO_BD
         reserveAuctionProcess.kickerAward = ZERO_BD
+        reserveAuctionProcess.kickTime = ZERO_BI
         reserveAuctionProcess.reserveAuctionTakes = []
         reserveAuctionProcess.pool = poolId
 
