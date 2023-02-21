@@ -10,7 +10,7 @@ import {
 import { Address } from "@graphprotocol/graph-ts"
 import { createPool } from "./utils/common"
 
-import { MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"
+import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -21,8 +21,10 @@ describe("Describe entity assertions", () => {
     const pool_ = Address.fromString("0x0000000000000000000000000000000000000001")
     const expectedCollateralToken = Address.fromString("0x0000000000000000000000000000000000000002")
     const expectedQuoteToken      = Address.fromString("0x0000000000000000000000000000000000000003")
+    const expectedInitialInterestRate = FIVE_PERCENT_BI
+    const expectedInitialFeeRate = ZERO_BI
 
-    createPool(pool_, expectedCollateralToken, expectedQuoteToken)
+    createPool(pool_, expectedCollateralToken, expectedQuoteToken, expectedInitialInterestRate, expectedInitialFeeRate)
   })
 
   afterAll(() => {

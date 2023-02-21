@@ -901,15 +901,27 @@ export function handleTransferLPTokens(event: TransferLPTokensEvent): void {
 }
 
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
-  let entity = new UpdateInterestRate(
+  const updateInterestRate = new UpdateInterestRate(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.oldRate = event.params.oldRate
-  entity.newRate = event.params.newRate
+  updateInterestRate.oldRate = event.params.oldRate
+  updateInterestRate.newRate = event.params.newRate
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  updateInterestRate.blockNumber = event.block.number
+  updateInterestRate.blockTimestamp = event.block.timestamp
+  updateInterestRate.transactionHash = event.transaction.hash
 
-  entity.save()
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // update pool state
+    updatePool(pool)
+    pool.interestRate = wadToDecimal(event.params.newRate)
+
+    updateInterestRate.pool = pool.id
+
+    // save entities to the store
+    pool.save()
+  }
+
+  updateInterestRate.save()
 }

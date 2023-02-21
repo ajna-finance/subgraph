@@ -597,6 +597,7 @@ export function createTransferLPTokensEvent(
 }
 
 export function createUpdateInterestRateEvent(
+  pool: Address,
   oldRate: BigInt,
   newRate: BigInt
 ): UpdateInterestRate {
@@ -616,6 +617,9 @@ export function createUpdateInterestRateEvent(
       ethereum.Value.fromUnsignedBigInt(newRate)
     )
   )
+
+  // update transaction target to the expected pool address
+  updateInterestRateEvent.transaction.to = pool
 
   return updateInterestRateEvent
 }

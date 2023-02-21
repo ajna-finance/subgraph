@@ -10,8 +10,8 @@ import {
   dataSourceMock
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuction, handleTake } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketBankruptcyEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionEvent, createTakeEvent } from "./utils/erc-20-pool-utils"
+import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuction, handleTake, handleUpdateInterestRate } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketBankruptcyEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionEvent, createTakeEvent, createUpdateInterestRateEvent } from "./utils/erc-20-pool-utils"
 import {
   assertBucketUpdate,
   assertLendUpdate,
@@ -26,7 +26,7 @@ import {
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, bigDecimalExp18, rayToDecimal, wadToDecimal } from "../src/utils/convert"
-import { MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
+import { FIVE_PERCENT_BD, FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan, ReserveAuction } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
@@ -49,8 +49,10 @@ describe("Describe entity assertions", () => {
     const pool_ = Address.fromString("0x0000000000000000000000000000000000000001")
     const collateralToken = Address.fromString("0x0000000000000000000000000000000000000010")
     const quoteToken = Address.fromString("0x0000000000000000000000000000000000000012")
+    const expectedInitialInterestRate = FIVE_PERCENT_BI
+    const expectedInitialFeeRate = ZERO_BI
 
-    createPool(pool_, collateralToken, quoteToken)
+    createPool(pool_, collateralToken, quoteToken, expectedInitialInterestRate, expectedInitialFeeRate)
   })
 
   afterEach(() => {
@@ -1467,6 +1469,39 @@ describe("Describe entity assertions", () => {
     })
     assert.entityCount("Bucket", 1)
     assert.entityCount("BucketBankruptcy", 1)
+  })
+
+  test("UpdateInterestRate", () => {
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const oldInterestRate = FIVE_PERCENT_BI
+    const newInterestRate = BigInt.fromString("55000000000000000") // 0.055 * 1e18
+
+    assert.fieldEquals(
+      "Pool",
+      `${poolAddress.toHexString()}`,
+      "interestRate",
+      `${wadToDecimal(oldInterestRate)}`
+    )
+
+    // mock update interest rate event
+    const newUpdateInterestRateEvent = createUpdateInterestRateEvent(
+      poolAddress,
+      oldInterestRate,
+      newInterestRate
+    )
+    handleUpdateInterestRate(newUpdateInterestRateEvent)
+
+    assert.entityCount("Pool", 1)
+    assert.entityCount("UpdateInterestRate", 1)
+
+    // check interest rate was updated
+    assert.fieldEquals(
+      "Pool",
+      `${poolAddress.toHexString()}`,
+      "interestRate",
+      `${wadToDecimal(newInterestRate)}`
+    )
   })
 
 })

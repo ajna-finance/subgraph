@@ -14,9 +14,9 @@ import {
   ZERO_BD,
   ONE_WAD_BD,
   ZERO_ADDRESS,
-  ONE_WAD_BI,
   ONE_BD
 } from "./utils/constants"
+import { wadToDecimal } from "./utils/convert"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   let newPool = new PoolCreated(
@@ -45,6 +45,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // instantiate pool contract
   const poolContract = ERC20Pool.bind(event.params.pool_)
 
+  // get pool initial interest rate
+  const interestRateResults = poolContract.interestRateInfo()
+
   // TODO: look into: https://thegraph.com/docs/en/developing/creating-a-subgraph/#data-source-templates-for-dynamically-created-contracts
   // record pool information
   const pool = new Pool(event.params.pool_) as Pool
@@ -53,9 +56,10 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.collateralToken = Bytes.fromHexString(poolContract.collateralAddress().toHexString())
   pool.quoteToken = Bytes.fromHexString(poolContract.quoteTokenAddress().toHexString())
   pool.currentDebt = ZERO_BD
-  pool.feeRate = ZERO_BD
+  pool.feeRate = wadToDecimal(interestRateResults.value1)
   pool.inflator = ONE_BD //ONE_WAD_BD
   pool.inflatorUpdate = event.block.timestamp
+  pool.interestRate = wadToDecimal(interestRateResults.value0)
   pool.pledgedCollateral = ZERO_BD
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI

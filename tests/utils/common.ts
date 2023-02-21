@@ -291,8 +291,16 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
 /**********************/
 
 // create a pool entity and save it to the store
-export function createPool(pool_: Address, collateral: Address, quote: Address): void {
-    // mock contract calls
+export function createPool(pool_: Address, collateral: Address, quote: Address, interestRate: BigInt, feeRate: BigInt): void {
+    // mock interest rate info contract call
+    createMockedFunction(pool_, 'interestRateInfo', 'interestRateInfo():(uint256,uint256)')
+      .withArgs([])
+      .returns([
+        ethereum.Value.fromUnsignedBigInt(interestRate),
+        ethereum.Value.fromUnsignedBigInt(feeRate)
+    ])
+
+    // mock token info contract calls
     createMockedFunction(pool_, 'collateralAddress', 'collateralAddress():(address)')
       .withArgs([])
       .returns([ethereum.Value.fromAddress(collateral)])
