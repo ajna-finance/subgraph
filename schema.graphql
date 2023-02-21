@@ -368,16 +368,29 @@ type RepayDebt @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-# TODO: create a separte entity to handle the global reserve auction process
-# TODO: add incremental ajna burned in each take
-type ReserveAuction @entity {
-  id: Bytes!
+# tracks the reserve auction process across multiple takes in a single auction
+# used as start and take events are emitted as ReserveAuction
+type ReserveAuctionProcess @entity {
+  id: Bytes! # $poolAddress + '|' + $burnEpoch
   kicker: Bytes! # address of the kicker
-  # taker: Bytes! # address of the taker
   kickerAward: BigDecimal! # amount of quote rewarded to kicker for starting reserves auction
   pool: Pool! # Pool in which the reserve auction occurred
-  claimableReservesRemaining: BigInt! # uint256
-  auctionPrice: BigInt! # uint256
+  claimableReservesRemaining: BigInt! # uint256 claimable reserves remaining at start or at latest take
+  auctionPrice: BigInt! # uint256 price at start or at latest take
+  burnEpoch: BigInt! # uint256 burn epoch at which the reserve auction was started
+  reserveAuctionTakes: [ReserveAuction!]! # list of reserve auction takes that occured during this auction process
+  ajnaBurnedAcrossAllTakes: BigDecimal! # total amount of ajna burned across all takes in the reserve auction
+}
+
+# a reserve auction take or start event
+type ReserveAuction @entity(immutable: true) {
+  id: Bytes!
+  taker: Bytes # address of the taker, null if emitted as start of event
+  reserveAuctionProcess: ReserveAuctionProcess! # reserve auction in which the take is occuring
+  pool: Pool! # pool in which the take is occuring
+  claimableReservesRemaining: BigInt! # uint256 remaining amount of claimable reserves in the auction
+  auctionPrice: BigInt! # uint256 auction price at time of event emit
+  incrementalAjnaBurned: BigDecimal! # amount of ajna burned in this take
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

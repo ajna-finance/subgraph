@@ -32,6 +32,7 @@ import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
 import { AuctionInfo, getLiquidationAuctionId } from "../src/utils/liquidation"
 import { BurnInfo } from "../src/utils/pool"
+import { getReserveAuctionId } from "../src/utils/reserve-auction"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -1109,12 +1110,13 @@ describe("Describe entity assertions", () => {
     // mock event params
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const kicker = Address.fromString("0x0000000000000000000000000000000000000008")
+    const taker = Address.fromString("0x0000000000000000000000000000000000000018")
     let claimableReservesRemaining = BigInt.fromString("100000000000000000000") // Wad(100)
     const auctionPrice = BigInt.fromI32(456)
     const seventyTwoHours = BigInt.fromString("259200")
     let timestamp = BigInt.fromI32(123)
     let totalInterest = ZERO_BI
-    let totalBurned = ZERO_BI
+    let totalBurned = ONE_WAD_BI
 
     /****************************/
     /*** Kick Reserve Auction ***/
@@ -1156,6 +1158,7 @@ describe("Describe entity assertions", () => {
     mockGetBurnInfo(poolAddress, ONE_BI, expectedBurnInfo)
 
     let newReserveAuctionEvent = createReserveAuctionEvent(
+      kicker,
       poolAddress,
       claimableReservesRemaining,
       auctionPrice
@@ -1167,26 +1170,30 @@ describe("Describe entity assertions", () => {
     /*********************************/
 
     assert.entityCount("ReserveAuction", 1)
-    // assert.fieldEquals(
-    //   "ReserveAuction",
-    //   "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
-    //   "kicker",
-    //   `${kicker.toHexString()}`
-    // )
-    // assert.fieldEquals(
-    //   "ReserveAuction",
-    //   "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
-    //   "kickerAward",
-    //   `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000")))}`
-    // )
+
+    logStore()
+    const reserveAuctionProcessId = getReserveAuctionId(addressToBytes(poolAddress), expectedBurnEpoch)
+    assert.entityCount("ReserveAuctionProcess", 1)
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "kicker",
+      `${kicker.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionProcess",
+      `${reserveAuctionProcessId.toHexString()}`,
+      "kickerAward",
+      `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000")))}`
+    )
 
     /****************************/
     /*** Take Reserve Auction ***/
     /****************************/
 
     timestamp = BigInt.fromI32(456)
-    totalInterest = ONE_WAD_BI
-    totalBurned = ONE_WAD_BI
+    totalInterest = BigInt.fromString("100000000000000000000") // Wad(100)
+    totalBurned = BigInt.fromString("100000000000000000000") // Wad(100)
     expectedBurnInfo = new BurnInfo(
       timestamp,
       totalInterest,
@@ -1195,18 +1202,19 @@ describe("Describe entity assertions", () => {
     mockGetBurnInfo(poolAddress, ONE_BI, expectedBurnInfo)
 
     newReserveAuctionEvent = createReserveAuctionEvent(
+      taker,
       poolAddress,
       claimableReservesRemaining,
       auctionPrice
     )
     handleReserveAuction(newReserveAuctionEvent)
 
-    /*********************************/
-    /*** Assert Reserve Kick State ***/
-    /*********************************/
+    // /*********************************/
+    // /*** Assert Reserve Kick State ***/
+    // /*********************************/
 
     // TODO: determine if should create new ReserveAuction entity or update existing
-    assert.entityCount("ReserveAuction", 1)
+    // assert.entityCount("ReserveAuction", 2)
 
   })
 

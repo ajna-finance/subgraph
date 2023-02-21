@@ -52,6 +52,7 @@ import { getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getBucketTakeIdFromBucketTakeLPAwarded, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction } from "./utils/liquidation"
 import { getBurnInfo, getCurrentBurnEpoch, getMomp, getPoolReservesInfo, updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
 import { collateralization, collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
+import { getReserveAuctionId, loadOrCreateReserveAuctionProcess, reserveAuctionKickerReward } from "./utils/reserve-auction"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   let addCollateral = new AddCollateral(
@@ -666,36 +667,59 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
   reserveAuction.blockTimestamp = event.block.timestamp
   reserveAuction.transactionHash = event.transaction.hash
 
-  // TODO: handle updates to this from multiple transactions
-  reserveAuction.kicker = event.transaction.from
-
   // update entities
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
     updatePool(pool)
 
-    // if time remaining is 72 hours, then assume this is the start of the auction,
-    // and calculate kickerAward for calling startReserveAuction
-    if (pool.reserveAuctionTimeRemaining == BigInt.fromString("259200")) {
-      // kicker award = claimableReserves * 0.01 * 1e18
-      // stored as a decimal converted from wad
-      reserveAuction.kickerAward = BigDecimal.fromString(`${pool.claimableReserves}`)
-                                    .times(BigDecimal.fromString("10000000000000000"))
-                                    .div(bigDecimalExp18())
+    // retrieve ajna burn information from the pool
+    const currentBurnEpoch = getCurrentBurnEpoch(pool)
+    const burnInfo = getBurnInfo(pool, currentBurnEpoch)
+
+    // update reserve auction process state
+    const reserveAuctionProcessId = getReserveAuctionId(pool.id, currentBurnEpoch)
+    const reserveAuctionProcess = loadOrCreateReserveAuctionProcess(pool.id, reserveAuctionProcessId)
+
+    // if kicker is null, then assume this is the start of the auction,
+    // and set kicker to the caller of startReserveAuction and calculate kickerAward
+    if (reserveAuctionProcess.kicker === Bytes.empty()) {
+      reserveAuctionProcess.burnEpoch = currentBurnEpoch
+      reserveAuctionProcess.kicker = event.transaction.from
+      reserveAuctionProcess.kickerAward = reserveAuctionKickerReward(pool)
+      reserveAuctionProcess.pool = pool.id
+
+      // set the total ajna burned at the start of the auction
+      pool.totalAjnaBurned = wadToDecimal(burnInfo.totalBurned)
+    }
+    else {
+      // if kicker is not null, then assume this is the takeReserveAuction call
+      // and set taker to the caller of takeReserveAuction
+      reserveAuction.taker = event.transaction.from
+      // concat the additional event into the reserveAuctionProcess list
+      reserveAuctionProcess.reserveAuctionTakes = reserveAuctionProcess.reserveAuctionTakes.concat([reserveAuction.id])
     }
 
+    // update ReserveAuctionProcess with latest auction state
+    reserveAuctionProcess.auctionPrice = event.params.auctionPrice
+    reserveAuctionProcess.claimableReservesRemaining = event.params.claimableReservesRemaining
+
+    // update burn information of the reserve auction take
+    // since only one reserve auction can occur at a time, look at the difference since the last reserve auction
+    reserveAuction.incrementalAjnaBurned = wadToDecimal(burnInfo.totalBurned).minus(pool.totalAjnaBurned)
+    reserveAuctionProcess.ajnaBurnedAcrossAllTakes = reserveAuctionProcess.ajnaBurnedAcrossAllTakes.plus(reserveAuction.incrementalAjnaBurned)
+
     // update pool burn and interest earned information
-    const currentBurnEpoch = getCurrentBurnEpoch(pool)
     pool.burnEpoch = currentBurnEpoch
-    const burnInfo = getBurnInfo(pool, currentBurnEpoch)
     pool.totalAjnaBurned = wadToDecimal(burnInfo.totalBurned)
     pool.totalInterestEarned = wadToDecimal(burnInfo.totalInterest)
 
     reserveAuction.pool = pool.id
+    reserveAuction.reserveAuctionProcess = reserveAuctionProcessId
 
     // save entities to store
     pool.save()
+    reserveAuctionProcess.save()
   }
 
   reserveAuction.save()

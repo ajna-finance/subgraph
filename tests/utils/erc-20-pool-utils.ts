@@ -462,6 +462,7 @@ export function createRepayDebtEvent(
 }
 
 export function createReserveAuctionEvent(
+  operator: Address,
   pool: Address,
   claimableReservesRemaining: BigInt,
   auctionPrice: BigInt
@@ -484,6 +485,7 @@ export function createReserveAuctionEvent(
   )
 
   // update transaction target to the expected pool address
+  reserveAuctionEvent.transaction.from = operator
   reserveAuctionEvent.transaction.to = pool
 
   return reserveAuctionEvent
