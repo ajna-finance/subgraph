@@ -10,8 +10,8 @@ import {
   dataSourceMock
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuction, handleTake } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionEvent, createTakeEvent } from "./utils/erc-20-pool-utils"
+import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuction, handleTake } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketBankruptcyEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionEvent, createTakeEvent } from "./utils/erc-20-pool-utils"
 import {
   assertBucketUpdate,
   assertLendUpdate,
@@ -1397,6 +1397,76 @@ describe("Describe entity assertions", () => {
       txCount: BigInt.fromI32(2)
     })
 
+  })
+
+  test("BucketBankruptcy", () => {
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const lender = Address.fromString("0x0000000000000000000000000000000000000002")
+    const index = BigInt.fromI32(234)
+    const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const lpAwarded = BigInt.fromI32(567)
+    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+
+    /***********************/
+    /*** Add Quote Token ***/
+    /***********************/
+
+    // mock required contract calls
+    const expectedBucketInfo = new BucketInfo(
+      index,
+      amount,
+      ZERO_BI,
+      lpAwarded,
+      ZERO_BI,
+      ONE_RAY_BI
+    )
+    mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
+
+    // mock add quote token event
+    const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
+      poolAddress,
+      lender,
+      index,
+      amount,
+      lpAwarded,
+      lup
+    )
+    handleAddQuoteToken(newAddQuoteTokenEvent)
+
+    // check bucket attributes updated
+    const bucketId = getBucketId(addressToBytes(poolAddress), index)
+    assertBucketUpdate({
+      id: bucketId,
+      collateral: ZERO_BI,
+      quoteTokens: amount,
+      exchangeRate: ONE_RAY_BI,
+      bucketIndex: index,
+      lpb: lpAwarded
+    })
+    assert.entityCount("Bucket", 1)
+
+    /*************************/
+    /*** Bucket Bankruptcy ***/
+    /*************************/
+
+    const newBucketBankruptcyEvent = createBucketBankruptcyEvent(
+      poolAddress,
+      index,
+      lpAwarded
+    )
+    handleBucketBankruptcy(newBucketBankruptcyEvent)
+
+    assertBucketUpdate({
+      id: bucketId,
+      collateral: ZERO_BI,
+      quoteTokens: ZERO_BI,
+      exchangeRate: ZERO_BI,
+      bucketIndex: index,
+      lpb: ZERO_BI
+    })
+    assert.entityCount("Bucket", 1)
+    assert.entityCount("BucketBankruptcy", 1)
   })
 
 })

@@ -142,6 +142,7 @@ export function createAuctionSettleEvent(
 }
 
 export function createBucketBankruptcyEvent(
+  pool: Address,
   index: BigInt,
   lpForfeited: BigInt
 ): BucketBankruptcy {
@@ -158,6 +159,9 @@ export function createBucketBankruptcyEvent(
       ethereum.Value.fromUnsignedBigInt(lpForfeited)
     )
   )
+
+  // update transaction target to the expected pool address
+  bucketBankruptcyEvent.transaction.to = pool
 
   return bucketBankruptcyEvent
 }

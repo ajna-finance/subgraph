@@ -161,7 +161,6 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     account.save()
     lend.save()
 
-    // TODO: verify this doesn't result in needing multiple queries to access nested entities
     addQuoteToken.bucket = bucket.id
     addQuoteToken.pool = pool.id
   }
@@ -234,6 +233,28 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
   bucketBankruptcy.blockNumber = event.block.number
   bucketBankruptcy.blockTimestamp = event.block.timestamp
   bucketBankruptcy.transactionHash = event.transaction.hash
+
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // update pool state
+    updatePool(pool)
+
+    // update bucket state to zero out bucket contents
+    const bucketId   = getBucketId(pool.id, event.params.index)
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index)
+    bucket.collateral = ZERO_BD
+    bucket.quoteTokens = ZERO_BD
+    bucket.lpb = ZERO_BD
+    bucket.exchangeRate = ZERO_BD
+
+    bucketBankruptcy.bucket = bucketId
+    bucketBankruptcy.pool = pool.id
+
+    // save entities to store
+    pool.save()
+    bucket.save()
+  }
 
   bucketBankruptcy.save()
 }

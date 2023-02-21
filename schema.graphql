@@ -270,7 +270,9 @@ type AuctionSettle @entity(immutable: true) {
 
 type BucketBankruptcy @entity(immutable: true) {
   id: Bytes!
+  bucket: Bucket! # Bucket which was bankrupted
   index: BigInt! # uint256
+  pool: Pool! # Pool whose bucket was bankrupted
   lpForfeited: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
