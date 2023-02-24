@@ -5,6 +5,7 @@ import { ERC20Pool } from '../../generated/ERC20Pool/ERC20Pool'
 
 import { wadToDecimal } from "./convert"
 import { ONE_BI, ZERO_BD } from "./constants"
+import { getLoanId } from "./loan"
 
 // TODO: if logIndex doesn't work as expected, update the ID generation to use the taker addres as second param
 // return the id of a bucketTake given the transactionHash and logIndex of the BucketTakeLPAwarded event
@@ -43,18 +44,15 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
     return liquidationAuction
 }
 
-// TODO: check if this needs to be called on every liquidation action
-export function updateLiquidationAuction(liquidationAuction: LiquidationAuction, auctionInfo: AuctionInfo): void {
+export function updateLiquidationAuction(liquidationAuction: LiquidationAuction, auctionInfo: AuctionInfo, poolId: Bytes): void {
     liquidationAuction.kickTime     = auctionInfo.kickTime
     liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)
     liquidationAuction.bondFactor   = wadToDecimal(auctionInfo.bondFactor)
     liquidationAuction.neutralPrice = wadToDecimal(auctionInfo.neutralPrice)
 
-    // TODO: determine how to handle auction queue ordering
-    // add these fields to the pool schema?
-    // liquidationAuction.head = auctionInfo.head
-    // liquidationAuction.next = auctionInfo.next
-    // liquidationAuction.prev = auctionInfo.prev
+    // update liquidation auction queue pointers
+    liquidationAuction.next = getLiquidationAuctionId(poolId, getLoanId(poolId, auctionInfo.next))
+    liquidationAuction.prev = getLiquidationAuctionId(poolId, getLoanId(poolId, auctionInfo.prev))
 }
 
 export class AuctionInfo {

@@ -16,7 +16,7 @@ import {
   ZERO_ADDRESS,
   ONE_BD
 } from "./utils/constants"
-import { wadToDecimal } from "./utils/convert"
+import { addressToBytes, wadToDecimal } from "./utils/convert"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   let newPool = new PoolCreated(
@@ -97,6 +97,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // liquidation information
   pool.totalBondEscrowed = ZERO_BD
   pool.liquidationAuctions = []
+  pool.liquidationAuctionsHead = addressToBytes(ZERO_ADDRESS)
 
   // add pool reference to factories' list of pools
   factory.pools = factory.pools.concat([pool.id])

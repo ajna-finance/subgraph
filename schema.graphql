@@ -100,8 +100,8 @@ type Pool @entity {
 
   # LIQUIDATION INFORMATION
   totalBondEscrowed: BigDecimal! # total bond escrowed in the pool
-  liquidationAuctions: [LiquidationAuction!]! # list of liquidation auctions in the pool
-  # TODO: add liquidations head and tail
+  liquidationAuctions: [LiquidationAuction!]! # list of liquidation auctions in the pool. This array is not resorted, but represents the order of insertion.
+  liquidationAuctionsHead: LiquidationAuction! # head of the liquidation auctions linked list
 }
 
 type Bucket @entity {
@@ -200,6 +200,8 @@ type LiquidationAuction @entity {
   bondFactor: BigDecimal! # bond factor determining the reward or penalty for the kicker
   neutralPrice: BigDecimal! # price at which the auction is neutral
   settled: Boolean! # boolean indicating whether the auction has been settled
+  next: LiquidationAuction! # id of the next auction in the queue
+  prev: LiquidationAuction! # id of the previous auction in the queue
 }
 
 # tracks the reserve auction process across multiple takes in a single auction
