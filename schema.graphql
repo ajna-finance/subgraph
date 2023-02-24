@@ -1,4 +1,5 @@
 # TODO: finish expanding this schema -> ERC20 / ERC721?
+# TODO: add pool balances to this
 # this supports both ERC20 and ERC721 tokens, as union type's aren't currently supported
 type Token @entity {
   # token address
@@ -13,6 +14,8 @@ type Token @entity {
   isERC721: Boolean!
   # number of pools including this token
   poolCount: BigInt!
+  # total supply of the token
+  totalSupply: BigInt!
   # transactions across all pools that include this token
   txCount: BigInt!
 }
@@ -185,11 +188,12 @@ type Account @entity {
   txCount: BigInt!
 }
 
-# TODO: add bad debt field? debtAuctioned
+# TODO: determine if it's worth adding borrowerDebt field updated in kick mapping
 type LiquidationAuction @entity {
   id: Bytes! # $poolAddress + '|' + $loanId
   pool: Pool! # pool in which the liquidation occurred
   borrower: Bytes! # address of the borrower being liquidated
+  # borrowerDebt: BigDecimal! # total debt of the borrower at kickTime
   collateralAuctioned: BigDecimal! # collateral that was auctioned off
   debtRepaid: BigDecimal! # debt that was repaid
   loan: Loan! # loan being liquidated

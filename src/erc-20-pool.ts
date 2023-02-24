@@ -432,8 +432,6 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
 
-    // TODO: update bucket state with liquidation info -> requires handling liquidations
-
     // update account state
     const accountId = addressToBytes(event.params.borrower)
     const account   = loadOrCreateAccount(accountId)
@@ -498,7 +496,7 @@ export function handleKick(event: KickEvent): void {
     const loan = loadOrCreateLoan(loanId, pool.id, kick.borrower)
     loan.inLiquidation       = true
     loan.collateralDeposited = wadToDecimal(kick.collateral)
-    loan.debt                = wadToDecimal(kick.debt) // update loan deebt to account for kick penalty
+    loan.debt                = wadToDecimal(kick.debt) // update loan debt to account for kick penalty
     loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
     loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
 

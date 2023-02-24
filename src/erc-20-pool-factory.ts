@@ -1,8 +1,6 @@
-import { Bytes } from "@graphprotocol/graph-ts"
-
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
 import { ERC20Pool } from "../generated/ERC20Pool/ERC20Pool"
-import { PoolCreated } from "../generated/schema"
+import { PoolCreated, Token } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
 
 import {
@@ -17,6 +15,7 @@ import {
   ONE_BD
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
+import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   let newPool = new PoolCreated(
@@ -48,13 +47,45 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // get pool initial interest rate
   const interestRateResults = poolContract.interestRateInfo()
 
+  // create Token entites associated with the pool
+  const collateralTokenAddress      = poolContract.collateralAddress()
+  const collateralTokenAddressBytes = addressToBytes(collateralTokenAddress)
+  const quoteTokenAddress      = poolContract.quoteTokenAddress()
+  const quoteTokenAddressBytes = addressToBytes(quoteTokenAddress)
+
+  // record token information
+  let collateralToken = Token.load(collateralTokenAddressBytes)
+  if (collateralToken == null) {
+    // create new token if it doesn't exist already
+    collateralToken = new Token(collateralTokenAddressBytes) as Token
+    collateralToken.name = getTokenName(collateralTokenAddress)
+    collateralToken.symbol = getTokenSymbol(collateralTokenAddress)
+    collateralToken.decimals = getTokenDecimals(collateralTokenAddress)
+    collateralToken.totalSupply = getTokenTotalSupply(collateralTokenAddress)
+    collateralToken.txCount = ZERO_BI
+    collateralToken.isERC721 = false
+    collateralToken.poolCount = ONE_BI
+  }
+  let quoteToken = Token.load(quoteTokenAddressBytes)
+  if (quoteToken == null) {
+    // create new token if it doesn't exist already
+    quoteToken = new Token(quoteTokenAddressBytes) as Token
+    quoteToken.name = getTokenName(quoteTokenAddress)
+    quoteToken.symbol = getTokenSymbol(quoteTokenAddress)
+    quoteToken.decimals = getTokenDecimals(quoteTokenAddress)
+    quoteToken.totalSupply = getTokenTotalSupply(quoteTokenAddress)
+    quoteToken.txCount = ZERO_BI
+    quoteToken.isERC721 = false
+    quoteToken.poolCount = ONE_BI
+  }
+
   // TODO: look into: https://thegraph.com/docs/en/developing/creating-a-subgraph/#data-source-templates-for-dynamically-created-contracts
   // record pool information
   const pool = new Pool(event.params.pool_) as Pool
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
-  pool.collateralToken = Bytes.fromHexString(poolContract.collateralAddress().toHexString())
-  pool.quoteToken = Bytes.fromHexString(poolContract.quoteTokenAddress().toHexString())
+  pool.collateralToken = collateralToken.id
+  pool.quoteToken = quoteToken.id
   pool.currentDebt = ZERO_BD
   pool.feeRate = wadToDecimal(interestRateResults.value1)
   pool.inflator = ONE_BD //ONE_WAD_BD
@@ -104,6 +135,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // save entities to the store
   factory.save()
+  // TODO: don't save newPool and pool
   newPool.save()
+  collateralToken.save()
+  quoteToken.save()
   pool.save()
 }

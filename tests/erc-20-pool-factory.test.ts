@@ -107,4 +107,37 @@ describe("Describe entity assertions", () => {
     )
   })
 
+  test("Token entity attributes", () => {
+    const expectedCollateralToken = Address.fromString("0x0000000000000000000000000000000000000002")
+    const expectedQuoteToken      = Address.fromString("0x0000000000000000000000000000000000000003")
+
+    logStore()
+    assert.entityCount("Token", 2)
+
+    assert.fieldEquals(
+      "Token",
+      `${expectedQuoteToken.toHexString()}`,
+      "name",
+      "quote"
+    )
+    assert.fieldEquals(
+      "Token",
+      `${expectedCollateralToken.toHexString()}`,
+      "name",
+      "collateral"
+    )
+    assert.fieldEquals(
+      "Token",
+      `${expectedQuoteToken.toHexString()}`,
+      "symbol",
+      "Q"
+    )
+    assert.fieldEquals(
+      "Token",
+      `${expectedCollateralToken.toHexString()}`,
+      "symbol",
+      "C"
+    )
+  })
+
 })
