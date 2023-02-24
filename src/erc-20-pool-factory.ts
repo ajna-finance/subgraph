@@ -18,14 +18,14 @@ import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
-  let newPool = new PoolCreated(
+  const poolCreated = new PoolCreated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  newPool.pool_ = event.params.pool_
+  poolCreated.pool_ = event.params.pool_
 
-  newPool.blockNumber = event.block.number
-  newPool.blockTimestamp = event.block.timestamp
-  newPool.transactionHash = event.transaction.hash
+  poolCreated.blockNumber = event.block.number
+  poolCreated.blockTimestamp = event.block.timestamp
+  poolCreated.transactionHash = event.transaction.hash
 
   // record factory information
   let factory = ERC20PoolFactory.load(ERC20_FACTORY_ADDRESS)
@@ -134,10 +134,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   factory.pools = factory.pools.concat([pool.id])
 
   // save entities to the store
-  factory.save()
-  // TODO: don't save newPool and pool
-  newPool.save()
   collateralToken.save()
   quoteToken.save()
+  factory.save()
   pool.save()
+  poolCreated.save()
 }

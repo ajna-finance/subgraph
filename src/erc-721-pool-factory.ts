@@ -4,14 +4,14 @@ import { ERC721PoolFactoryPoolCreated } from "../generated/schema"
 export function handleERC721PoolFactoryPoolCreated(
   event: ERC721PoolFactoryPoolCreatedEvent
 ): void {
-  let entity = new ERC721PoolFactoryPoolCreated(
+  const poolCreated = new ERC721PoolFactoryPoolCreated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.pool_ = event.params.pool_
+  poolCreated.pool_ = event.params.pool_
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  poolCreated.blockNumber = event.block.number
+  poolCreated.blockTimestamp = event.block.timestamp
+  poolCreated.transactionHash = event.transaction.hash
 
-  entity.save()
+  poolCreated.save()
 }
