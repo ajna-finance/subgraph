@@ -8,6 +8,7 @@
   },
   { "inputs": [], "name": "CreateFail", "type": "error" },
   { "inputs": [], "name": "DeployWithZeroAddress", "type": "error" },
+  { "inputs": [], "name": "NFTNotSupported", "type": "error" },
   { "inputs": [], "name": "PoolAlreadyExists", "type": "error" },
   { "inputs": [], "name": "PoolInterestRateInvalid", "type": "error" },
   {
@@ -20,12 +21,12 @@
         "type": "address"
       }
     ],
-    "name": "PoolCreated",
+    "name": "ERC721PoolFactoryPoolCreated",
     "type": "event"
   },
   {
     "inputs": [],
-    "name": "ERC20_NON_SUBSET_HASH",
+    "name": "ERC721_NON_SUBSET_HASH",
     "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
     "stateMutability": "view",
     "type": "function"
@@ -55,6 +56,7 @@
     "inputs": [
       { "internalType": "address", "name": "collateral_", "type": "address" },
       { "internalType": "address", "name": "quote_", "type": "address" },
+      { "internalType": "uint256[]", "name": "tokenIds_", "type": "uint256[]" },
       { "internalType": "uint256", "name": "interestRate_", "type": "uint256" }
     ],
     "name": "deployPool",
@@ -92,6 +94,15 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "uint256[]", "name": "tokenIds_", "type": "uint256[]" }
+    ],
+    "name": "getNFTSubsetHash",
+    "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getNumberOfDeployedPools",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
@@ -102,7 +113,7 @@
     "inputs": [],
     "name": "implementation",
     "outputs": [
-      { "internalType": "contract ERC20Pool", "name": "", "type": "address" }
+      { "internalType": "contract ERC721Pool", "name": "", "type": "address" }
     ],
     "stateMutability": "view",
     "type": "function"

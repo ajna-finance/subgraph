@@ -62,3 +62,10 @@ typings/
 
 # next.js build output
 .next
+
+# local subgraph node files
+data/
+
+# matchstick test files
+tests/.bin/
+tests/.latest.json

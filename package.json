@@ -1,16 +1,18 @@
 {
-  "name": "subgraph",
-  "version": "0.1.0",
+  "name": "ajna",
+  "license": "UNLICENSED",
   "scripts": {
-    "create": "graph create ajna-finance/subgraph --node https://api.thegraph.com/deploy/",
-    "create-local": "graph create ajna-finance/subgraph --node http://0.0.0.0:8020",
-    "codegen": "graph codegen --output-dir src/types/",
+    "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy ajna-finance/subgraph --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
-    "deploy-local": "graph deploy ajna-finance/subgraph --ipfs http://0.0.0.0:5001 --node http://0.0.0.0:8020"
+    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ ajna",
+    "create-local": "graph create --node http://localhost:8020/ ajna",
+    "remove-local": "graph remove --node http://localhost:8020/ ajna",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 ajna",
+    "test": "graph test"
   },
-  "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.29.0",
-    "@graphprotocol/graph-ts": "^0.26.0"
-  }
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.37.6",
+    "@graphprotocol/graph-ts": "0.29.1"
+  },
+  "devDependencies": { "matchstick-as": "0.5.0" }
 }
