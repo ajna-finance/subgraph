@@ -53,6 +53,7 @@ import { getBucketTakeIdFromBucketTakeLPAwarded, getLiquidationAuctionId, getAuc
 import { getBurnInfo, getCurrentBurnEpoch, getMomp, getPoolReservesInfo, updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 import { getReserveAuctionId, loadOrCreateReserveAuctionProcess, reserveAuctionKickerReward } from "./utils/reserve-auction"
+import { incrementTokenTxCount } from "./utils/token"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   let addCollateral = new AddCollateral(
@@ -73,6 +74,9 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     // update pool state
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
 
     // update bucket state
     const bucketId   = getBucketId(pool.id, event.params.price)
@@ -131,6 +135,9 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     // update pool state
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
 
     // update bucket state
     const bucketId   = getBucketId(pool.id, event.params.price)
@@ -284,6 +291,9 @@ export function handleBucketTake(event: BucketTakeEvent): void {
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
 
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
+
     // update taker account state
     const account   = loadOrCreateAccount(bucketTake.taker)
     account.txCount = account.txCount.plus(ONE_BI)
@@ -432,6 +442,9 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
 
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
+
     // update account state
     const accountId = addressToBytes(event.params.borrower)
     const account   = loadOrCreateAccount(accountId)
@@ -484,6 +497,9 @@ export function handleKick(event: KickEvent): void {
     updatePool(pool)
     pool.totalBondEscrowed = pool.totalBondEscrowed.plus(wadToDecimal(event.params.bond))
     pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
 
     // update kicker account state
     const account   = loadOrCreateAccount(kick.kicker)
@@ -549,6 +565,9 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
     // update pool state
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
 
     // update from bucket state
     const fromBucketId = getBucketId(pool.id, event.params.from)
@@ -660,6 +679,9 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
 
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
+
     // update account state
     const accountId = addressToBytes(event.params.borrower)
     const account   = loadOrCreateAccount(accountId)
@@ -705,6 +727,9 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
     // update pool state
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
 
     // update account state
     const accountId = addressToBytes(event.transaction.from)
@@ -786,6 +811,9 @@ export function handleSettle(event: SettleEvent): void {
     pool.txCount = pool.txCount.plus(ONE_BI)
     // TODO: update pool collateral balances here?
 
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
+
     // update settler account state
     const account   = loadOrCreateAccount(event.transaction.from)
     account.txCount = account.txCount.plus(ONE_BI)
@@ -842,6 +870,9 @@ export function handleTake(event: TakeEvent): void {
     // update pool state
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
 
     // update taker account state
     const account   = loadOrCreateAccount(take.taker)
