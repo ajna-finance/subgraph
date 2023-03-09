@@ -1,9 +1,8 @@
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
-import { ERC20Pool as ERC20PoolContract } from "../generated/ERC20Pool/ERC20Pool"
 import { PoolCreated, Token } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
-
 import { ERC20Pool } from "../generated/templates"
+import { ERC20Pool as ERC20PoolContract } from "../generated/templates/ERC20Pool/ERC20Pool"
 
 import {
   ERC20_FACTORY_ADDRESS,

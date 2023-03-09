@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
 import { Bucket, Lend } from "../../generated/schema"
-import { PoolInfoUtils } from '../../generated/ERC20Pool/PoolInfoUtils'
+import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
 import { poolInfoUtilsNetworkLookUpTable } from "./constants"
 import { bigDecimalRayToBigInt, wadToDecimal } from "./convert"

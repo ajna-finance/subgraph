@@ -1,5 +1,5 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
-import { PoolInfoUtils } from "../../generated/ERC20Pool/PoolInfoUtils"
+import { PoolInfoUtils } from "../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 import { Loan }    from "../../generated/schema"
 import { poolInfoUtilsNetworkLookUpTable, ZERO_BD, ZERO_BI } from "./constants"

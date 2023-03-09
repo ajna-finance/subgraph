@@ -19,7 +19,7 @@ import {
   Take,
   TransferLPTokens,
   UpdateInterestRate
-} from "../../generated/ERC20Pool/ERC20Pool"
+} from "../../generated/templates/ERC20Pool/ERC20Pool"
 
 export function createAddCollateralEvent(
   pool: Address,

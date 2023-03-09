@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts"
+import { Bytes } from "@graphprotocol/graph-ts"
 
 import {
   AddCollateral as AddCollateralEvent,
@@ -19,7 +19,7 @@ import {
   Take as TakeEvent,
   TransferLPTokens as TransferLPTokensEvent,
   UpdateInterestRate as UpdateInterestRateEvent
-} from "../generated/ERC20Pool/ERC20Pool"
+} from "../generated/templates/ERC20Pool/ERC20Pool"
 import {
   AddCollateral,
   AddQuoteToken,
@@ -44,13 +44,13 @@ import {
 } from "../generated/schema"
 
 import { ZERO_BD, ONE_BI } from "./utils/constants"
-import { addressToBytes, wadToDecimal, rayToDecimal, bigDecimalExp18 } from "./utils/convert"
+import { addressToBytes, wadToDecimal, rayToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getBucketTakeIdFromBucketTakeLPAwarded, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction } from "./utils/liquidation"
-import { getBurnInfo, getCurrentBurnEpoch, getMomp, getPoolReservesInfo, updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
+import { getBurnInfo, getCurrentBurnEpoch, updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 import { getReserveAuctionId, loadOrCreateReserveAuctionProcess, reserveAuctionKickerReward } from "./utils/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token"
