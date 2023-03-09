@@ -1,7 +1,9 @@
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
-import { ERC20Pool } from "../generated/ERC20Pool/ERC20Pool"
+import { ERC20Pool as ERC20PoolContract } from "../generated/ERC20Pool/ERC20Pool"
 import { PoolCreated, Token } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
+
+import { ERC20Pool } from "../generated/templates"
 
 import {
   ERC20_FACTORY_ADDRESS,
@@ -42,7 +44,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   factory.txCount   = factory.txCount.plus(ONE_BI)
 
   // instantiate pool contract
-  const poolContract = ERC20Pool.bind(event.params.pool_)
+  const poolContract = ERC20PoolContract.bind(event.params.pool_)
 
   // get pool initial interest rate
   const interestRateResults = poolContract.interestRateInfo()
@@ -79,9 +81,11 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     quoteToken.poolCount = ONE_BI
   }
 
-  // TODO: look into: https://thegraph.com/docs/en/developing/creating-a-subgraph/#data-source-templates-for-dynamically-created-contracts
+  // create entities
+  const pool = new Pool(event.params.pool_) as Pool // create pool entity
+  ERC20Pool.create(event.params.pool_) // create data source template
+
   // record pool information
-  const pool = new Pool(event.params.pool_) as Pool
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
   pool.collateralToken = collateralToken.id

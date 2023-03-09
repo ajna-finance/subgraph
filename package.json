@@ -4,6 +4,7 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
+    "build-and-test": "graph codegen && graph build && graph test",
     "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ ajna",
     "create-local": "graph create --node http://localhost:8020/ ajna",
     "remove-local": "graph remove --node http://localhost:8020/ ajna",
