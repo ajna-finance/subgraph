@@ -3,79 +3,6 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: ERC20Pool
-    network: goerli
-    source:
-      address: "0xbf332da94b818ac7972484997100c8cbb400b991"
-      abi: ERC20Pool
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      entities:
-        - AddCollateral
-        - AddQuoteToken
-        - AuctionNFTSettle
-        - AuctionSettle
-        - BucketBankruptcy
-        - BucketTake
-        - BucketTakeLPAwarded
-        - DrawDebt
-        - Kick
-        - MoveQuoteToken
-        - RemoveCollateral
-        - RemoveQuoteToken
-        - RepayDebt
-        - ReserveAuction
-        - Settle
-        - Take
-        - TransferLPTokens
-        - UpdateInterestRate
-      abis:
-        - name: ERC20Pool
-          file: ./abis/ERC20Pool.json
-        - name: PoolInfoUtils
-          file: ./abis/PoolInfoUtils.json          
-      eventHandlers:
-        - event: AddCollateral(indexed address,indexed uint256,uint256,uint256)
-          handler: handleAddCollateral
-        - event: AddQuoteToken(indexed address,indexed uint256,uint256,uint256,uint256)
-          handler: handleAddQuoteToken
-        - event: AuctionNFTSettle(indexed address,uint256,uint256,uint256)
-          handler: handleAuctionNFTSettle
-        - event: AuctionSettle(indexed address,uint256)
-          handler: handleAuctionSettle
-        - event: BucketBankruptcy(indexed uint256,uint256)
-          handler: handleBucketBankruptcy
-        - event: BucketTake(indexed address,uint256,uint256,uint256,uint256,bool)
-          handler: handleBucketTake
-        - event: BucketTakeLPAwarded(indexed address,indexed address,uint256,uint256)
-          handler: handleBucketTakeLPAwarded
-        - event: DrawDebt(indexed address,uint256,uint256,uint256)
-          handler: handleDrawDebt
-        - event: Kick(indexed address,uint256,uint256,uint256)
-          handler: handleKick
-        - event: MoveQuoteToken(indexed address,indexed uint256,indexed
-            uint256,uint256,uint256,uint256,uint256)
-          handler: handleMoveQuoteToken
-        - event: RemoveCollateral(indexed address,indexed uint256,uint256,uint256)
-          handler: handleRemoveCollateral
-        - event: RemoveQuoteToken(indexed address,indexed uint256,uint256,uint256,uint256)
-          handler: handleRemoveQuoteToken
-        - event: RepayDebt(indexed address,uint256,uint256,uint256)
-          handler: handleRepayDebt
-        - event: ReserveAuction(uint256,uint256)
-          handler: handleReserveAuction
-        - event: Settle(indexed address,uint256)
-          handler: handleSettle
-        - event: Take(indexed address,uint256,uint256,uint256,bool)
-          handler: handleTake
-        - event: TransferLPTokens(address,address,uint256[],uint256)
-          handler: handleTransferLPTokens
-        - event: UpdateInterestRate(uint256,uint256)
-          handler: handleUpdateInterestRate
-      file: ./src/erc-20-pool.ts
-  - kind: ethereum
     name: PositionManager
     network: goerli
     source:
@@ -186,3 +113,76 @@ dataSources:
         - event: ERC721PoolFactoryPoolCreated(address)
           handler: handleERC721PoolFactoryPoolCreated
       file: ./src/erc-721-pool-factory.ts
+templates:
+  - kind: ethereum
+    name: ERC20Pool
+    network: goerli
+    source:
+      abi: ERC20Pool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AddCollateral
+        - AddQuoteToken
+        - AuctionNFTSettle
+        - AuctionSettle
+        - BucketBankruptcy
+        - BucketTake
+        - BucketTakeLPAwarded
+        - DrawDebt
+        - Kick
+        - MoveQuoteToken
+        - RemoveCollateral
+        - RemoveQuoteToken
+        - RepayDebt
+        - ReserveAuction
+        - Settle
+        - Take
+        - TransferLPTokens
+        - UpdateInterestRate
+      abis:
+        - name: ERC20Pool
+          file: ./abis/ERC20Pool.json
+        - name: PoolInfoUtils
+          file: ./abis/PoolInfoUtils.json
+      eventHandlers:
+        - event: AddCollateral(indexed address,indexed uint256,uint256,uint256)
+          handler: handleAddCollateral
+        - event: AddQuoteToken(indexed address,indexed uint256,uint256,uint256,uint256)
+          handler: handleAddQuoteToken
+        - event: AuctionNFTSettle(indexed address,uint256,uint256,uint256)
+          handler: handleAuctionNFTSettle
+        - event: AuctionSettle(indexed address,uint256)
+          handler: handleAuctionSettle
+        - event: BucketBankruptcy(indexed uint256,uint256)
+          handler: handleBucketBankruptcy
+        - event: BucketTake(indexed address,uint256,uint256,uint256,uint256,bool)
+          handler: handleBucketTake
+        - event: BucketTakeLPAwarded(indexed address,indexed address,uint256,uint256)
+          handler: handleBucketTakeLPAwarded
+        - event: DrawDebt(indexed address,uint256,uint256,uint256)
+          handler: handleDrawDebt
+        - event: Kick(indexed address,uint256,uint256,uint256)
+          handler: handleKick
+        - event: MoveQuoteToken(indexed address,indexed uint256,indexed
+            uint256,uint256,uint256,uint256,uint256)
+          handler: handleMoveQuoteToken
+        - event: RemoveCollateral(indexed address,indexed uint256,uint256,uint256)
+          handler: handleRemoveCollateral
+        - event: RemoveQuoteToken(indexed address,indexed uint256,uint256,uint256,uint256)
+          handler: handleRemoveQuoteToken
+        - event: RepayDebt(indexed address,uint256,uint256,uint256)
+          handler: handleRepayDebt
+        - event: ReserveAuction(uint256,uint256)
+          handler: handleReserveAuction
+        - event: Settle(indexed address,uint256)
+          handler: handleSettle
+        - event: Take(indexed address,uint256,uint256,uint256,bool)
+          handler: handleTake
+        - event: TransferLPTokens(address,address,uint256[],uint256)
+          handler: handleTransferLPTokens
+        - event: UpdateInterestRate(uint256,uint256)
+          handler: handleUpdateInterestRate
+      file: ./src/erc-20-pool.ts

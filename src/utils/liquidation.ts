@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 
 import { LiquidationAuction, Kick, Loan, Pool } from "../../generated/schema"
-import { ERC20Pool } from '../../generated/ERC20Pool/ERC20Pool'
+import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 
 import { wadToDecimal } from "./convert"
 import { ONE_BI, ZERO_BD } from "./constants"

@@ -1,8 +1,8 @@
 import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
 
-import { PoolInfoUtils } from '../../generated/ERC20Pool/PoolInfoUtils'
 import { LiquidationAuction, Pool } from "../../generated/schema"
-import { ERC20Pool } from '../../generated/ERC20Pool/ERC20Pool'
+import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
+import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
 import { poolInfoUtilsNetworkLookUpTable, ONE_BI } from "./constants"
 import { wadToDecimal } from './convert'
