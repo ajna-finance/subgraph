@@ -17,7 +17,7 @@ import {
   ReserveAuction as ReserveAuctionEvent,
   Settle as SettleEvent,
   Take as TakeEvent,
-  TransferLPTokens as TransferLPTokensEvent,
+  TransferLPs as TransferLPsEvent,
   UpdateInterestRate as UpdateInterestRateEvent
 } from "../generated/templates/ERC20Pool/ERC20Pool"
 import {
@@ -39,7 +39,7 @@ import {
   ReserveAuction,
   Settle,
   Take,
-  TransferLPTokens,
+  TransferLPs,
   UpdateInterestRate
 } from "../generated/schema"
 
@@ -60,7 +60,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   addCollateral.actor = event.params.actor
-  addCollateral.price = event.params.price
+  addCollateral.index = event.params.index
   addCollateral.amount = event.params.amount
   addCollateral.lpAwarded = event.params.lpAwarded
 
@@ -79,8 +79,8 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     incrementTokenTxCount(pool)
 
     // update bucket state
-    const bucketId   = getBucketId(pool.id, event.params.price)
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.price)
+    const bucketId   = getBucketId(pool.id, event.params.index)
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index)
     const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
     bucket.collateral   = wadToDecimal(bucketInfo.collateral)
     bucket.quoteTokens  = wadToDecimal(bucketInfo.quoteTokens)
@@ -120,7 +120,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   addQuoteToken.lender = event.params.lender
-  addQuoteToken.price = event.params.price
+  addQuoteToken.index = event.params.index
   addQuoteToken.amount = event.params.amount
   addQuoteToken.lpAwarded = event.params.lpAwarded
   addQuoteToken.lup = event.params.lup
@@ -140,8 +140,8 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     incrementTokenTxCount(pool)
 
     // update bucket state
-    const bucketId   = getBucketId(pool.id, event.params.price)
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.price)
+    const bucketId   = getBucketId(pool.id, event.params.index)
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index)
     const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
     bucket.collateral   = wadToDecimal(bucketInfo.collateral)
     bucket.quoteTokens  = wadToDecimal(bucketInfo.quoteTokens)
@@ -629,7 +629,7 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.claimer = event.params.claimer
-  entity.price = event.params.price
+  entity.index = event.params.index
   entity.amount = event.params.amount
   entity.lpRedeemed = event.params.lpRedeemed
 
@@ -645,7 +645,7 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.lender = event.params.lender
-  entity.price = event.params.price
+  entity.index = event.params.index
   entity.amount = event.params.amount
   entity.lpRedeemed = event.params.lpRedeemed
   entity.lup = event.params.lup
@@ -716,6 +716,7 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
   )
   reserveAuction.claimableReservesRemaining = event.params.claimableReservesRemaining
   reserveAuction.auctionPrice = event.params.auctionPrice
+  reserveAuction.currentBurnEpoch = event.params.currentBurnEpoch
 
   reserveAuction.blockNumber = event.block.number
   reserveAuction.blockTimestamp = event.block.timestamp
@@ -935,8 +936,8 @@ export function handleTake(event: TakeEvent): void {
   take.save()
 }
 
-export function handleTransferLPTokens(event: TransferLPTokensEvent): void {
-  let entity = new TransferLPTokens(
+export function handleTransferLPs(event: TransferLPsEvent): void {
+  let entity = new TransferLPs(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.owner = event.params.owner

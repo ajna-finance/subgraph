@@ -458,6 +458,7 @@ export class PoolMockParams {
     reserves: BigInt
     claimableReserves: BigInt
     claimableReservesRemaining: BigInt
+    currentBurnEpoch: BigInt
     reserveAuctionPrice: BigInt
     reserveAuctionTimeRemaining: BigInt
     // utilization info mock params

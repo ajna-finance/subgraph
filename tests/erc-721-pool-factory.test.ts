@@ -7,7 +7,7 @@ import {
   afterAll
 } from "matchstick-as/assembly/index"
 import { Address } from "@graphprotocol/graph-ts"
-import { handleERC721PoolFactoryPoolCreated } from "../src/erc-721-pool-factory"
+import { handlePoolCreated } from "../src/erc-721-pool-factory"
 import { createERC721PoolFactoryPoolCreatedEvent } from "./utils/erc-721-pool-factory-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
@@ -19,7 +19,7 @@ describe("Describe entity assertions", () => {
     let newERC721PoolFactoryPoolCreatedEvent = createERC721PoolFactoryPoolCreatedEvent(
       pool_
     )
-    handleERC721PoolFactoryPoolCreated(newERC721PoolFactoryPoolCreatedEvent)
+    handlePoolCreated(newERC721PoolFactoryPoolCreatedEvent)
   })
 
   afterAll(() => {

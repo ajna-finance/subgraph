@@ -99,6 +99,7 @@ describe("Describe entity assertions", () => {
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
       reserveAuctionPrice: ZERO_BI,
+      currentBurnEpoch: BigInt.fromI32(9998102),
       reserveAuctionTimeRemaining: ZERO_BI,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -199,6 +200,7 @@ describe("Describe entity assertions", () => {
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
       reserveAuctionPrice: ZERO_BI,
+      currentBurnEpoch: BigInt.fromI32(9998103),
       reserveAuctionTimeRemaining: ZERO_BI,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -1188,6 +1190,7 @@ describe("Describe entity assertions", () => {
       claimableReserves: claimableReservesRemaining,
       claimableReservesRemaining: claimableReservesRemaining,
       reserveAuctionPrice: auctionPrice,
+      currentBurnEpoch: BigInt.fromI32(9998101),
       reserveAuctionTimeRemaining: seventyTwoHours,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -1210,7 +1213,8 @@ describe("Describe entity assertions", () => {
       kicker,
       poolAddress,
       claimableReservesRemaining,
-      auctionPrice
+      auctionPrice,
+      expectedBurnEpoch,
     )
     handleReserveAuction(newReserveAuctionEvent)
 
@@ -1278,6 +1282,7 @@ describe("Describe entity assertions", () => {
       claimableReserves: claimableReservesRemainingAfterTake,
       claimableReservesRemaining: claimableReservesRemainingAfterTake,
       reserveAuctionPrice: auctionPrice,
+      currentBurnEpoch: BigInt.fromI32(9998104),
       reserveAuctionTimeRemaining: seventyHours,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -1298,7 +1303,8 @@ describe("Describe entity assertions", () => {
       taker,
       poolAddress,
       claimableReservesRemainingAfterTake,
-      auctionPrice
+      auctionPrice,
+      timestamp,
     )
     handleReserveAuction(newReserveAuctionEvent)
 

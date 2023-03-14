@@ -17,7 +17,7 @@ import {
   ReserveAuction,
   Settle,
   Take,
-  TransferLPTokens,
+  TransferLPs,
   UpdateInterestRate
 } from "../../generated/templates/ERC20Pool/ERC20Pool"
 
@@ -469,7 +469,8 @@ export function createReserveAuctionEvent(
   operator: Address,
   pool: Address,
   claimableReservesRemaining: BigInt,
-  auctionPrice: BigInt
+  auctionPrice: BigInt,
+  currentBurnEpoch: BigInt,
 ): ReserveAuction {
   let reserveAuctionEvent = changetype<ReserveAuction>(newMockEvent())
 
@@ -485,6 +486,12 @@ export function createReserveAuctionEvent(
     new ethereum.EventParam(
       "auctionPrice",
       ethereum.Value.fromUnsignedBigInt(auctionPrice)
+    )
+  )
+  reserveAuctionEvent.parameters.push(
+    new ethereum.EventParam(
+      "currentBurnEpoch",
+      ethereum.Value.fromUnsignedBigInt(currentBurnEpoch)
     )
   )
 
@@ -564,13 +571,13 @@ export function createTakeEvent(
   return takeEvent
 }
 
-export function createTransferLPTokensEvent(
+export function createTransferLPsEvent(
   owner: Address,
   newOwner: Address,
   indexes: Array<BigInt>,
   lpTokens: BigInt
-): TransferLPTokens {
-  let transferLpTokensEvent = changetype<TransferLPTokens>(newMockEvent())
+): TransferLPs {
+  let transferLpTokensEvent = changetype<TransferLPs>(newMockEvent())
 
   transferLpTokensEvent.parameters = new Array()
 
