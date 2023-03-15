@@ -29,12 +29,12 @@ describe("Describe entity assertions", () => {
   // For more test scenarios, see:
   // https://thegraph.com/docs/en/developer/matchstick/#write-a-unit-test
 
-  test("ERC721PoolFactoryPoolCreated created and stored", () => {
-    assert.entityCount("ERC721PoolFactoryPoolCreated", 1)
+  test("PoolCreated created and stored", () => {
+    assert.entityCount("PoolCreated", 1)
 
     // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
     assert.fieldEquals(
-      "ERC721PoolFactoryPoolCreated",
+      "PoolCreated",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "pool_",
       "0x0000000000000000000000000000000000000001"
