@@ -1,1226 +1,994 @@
 [
-  { "inputs": [], "name": "AlreadyInitialized", "type": "error" },
-  { "inputs": [], "name": "AmountLTMinDebt", "type": "error" },
-  { "inputs": [], "name": "AuctionActive", "type": "error" },
-  { "inputs": [], "name": "AuctionNotClearable", "type": "error" },
-  { "inputs": [], "name": "AuctionNotCleared", "type": "error" },
-  { "inputs": [], "name": "AuctionNotCleared", "type": "error" },
-  { "inputs": [], "name": "AuctionPriceGtBucketPrice", "type": "error" },
-  { "inputs": [], "name": "BorrowerNotSender", "type": "error" },
-  { "inputs": [], "name": "BorrowerOk", "type": "error" },
-  { "inputs": [], "name": "BorrowerUnderCollateralized", "type": "error" },
-  { "inputs": [], "name": "BucketBankruptcyBlock", "type": "error" },
-  { "inputs": [], "name": "BucketIndexOutOfBounds", "type": "error" },
-  { "inputs": [], "name": "CannotMergeToHigherPrice", "type": "error" },
-  { "inputs": [], "name": "DustAmountNotExceeded", "type": "error" },
-  { "inputs": [], "name": "FlashloanCallbackFailed", "type": "error" },
-  { "inputs": [], "name": "FlashloanUnavailableForToken", "type": "error" },
-  { "inputs": [], "name": "InsufficientCollateral", "type": "error" },
-  { "inputs": [], "name": "InsufficientLPs", "type": "error" },
-  { "inputs": [], "name": "InsufficientLiquidity", "type": "error" },
-  { "inputs": [], "name": "InvalidIndex", "type": "error" },
-  { "inputs": [], "name": "LUPBelowHTP", "type": "error" },
-  { "inputs": [], "name": "LUPGreaterThanTP", "type": "error" },
-  { "inputs": [], "name": "LimitIndexReached", "type": "error" },
-  { "inputs": [], "name": "MoveToSamePrice", "type": "error" },
-  { "inputs": [], "name": "NoAllowance", "type": "error" },
-  { "inputs": [], "name": "NoAuction", "type": "error" },
-  { "inputs": [], "name": "NoClaim", "type": "error" },
-  { "inputs": [], "name": "NoDebt", "type": "error" },
-  { "inputs": [], "name": "NoReserves", "type": "error" },
-  { "inputs": [], "name": "NoReservesAuction", "type": "error" },
+  { "type": "error", "name": "AllowanceAlreadySet", "inputs": [] },
+  { "type": "error", "name": "AlreadyInitialized", "inputs": [] },
+  { "type": "error", "name": "AmountLTMinDebt", "inputs": [] },
+  { "type": "error", "name": "AuctionActive", "inputs": [] },
+  { "type": "error", "name": "AuctionNotClearable", "inputs": [] },
+  { "type": "error", "name": "AuctionNotCleared", "inputs": [] },
+  { "type": "error", "name": "AuctionNotCleared", "inputs": [] },
+  { "type": "error", "name": "AuctionPriceGtBucketPrice", "inputs": [] },
+  { "type": "error", "name": "BorrowerNotSender", "inputs": [] },
+  { "type": "error", "name": "BorrowerOk", "inputs": [] },
+  { "type": "error", "name": "BorrowerUnderCollateralized", "inputs": [] },
+  { "type": "error", "name": "BucketBankruptcyBlock", "inputs": [] },
+  { "type": "error", "name": "BucketIndexOutOfBounds", "inputs": [] },
+  { "type": "error", "name": "CannotMergeToHigherPrice", "inputs": [] },
+  { "type": "error", "name": "DustAmountNotExceeded", "inputs": [] },
+  { "type": "error", "name": "FlashloanCallbackFailed", "inputs": [] },
+  { "type": "error", "name": "FlashloanIncorrectBalance", "inputs": [] },
+  { "type": "error", "name": "FlashloanUnavailableForToken", "inputs": [] },
+  { "type": "error", "name": "InsufficientCollateral", "inputs": [] },
+  { "type": "error", "name": "InsufficientLPs", "inputs": [] },
+  { "type": "error", "name": "InsufficientLiquidity", "inputs": [] },
+  { "type": "error", "name": "InvalidAmount", "inputs": [] },
+  { "type": "error", "name": "InvalidIndex", "inputs": [] },
+  { "type": "error", "name": "LUPBelowHTP", "inputs": [] },
+  { "type": "error", "name": "LUPGreaterThanTP", "inputs": [] },
+  { "type": "error", "name": "LimitIndexExceeded", "inputs": [] },
+  { "type": "error", "name": "MoveToSameIndex", "inputs": [] },
+  { "type": "error", "name": "NoAllowance", "inputs": [] },
+  { "type": "error", "name": "NoAuction", "inputs": [] },
+  { "type": "error", "name": "NoClaim", "inputs": [] },
+  { "type": "error", "name": "NoDebt", "inputs": [] },
+  { "type": "error", "name": "NoReserves", "inputs": [] },
+  { "type": "error", "name": "NoReservesAuction", "inputs": [] },
+  { "type": "error", "name": "PRBMathSD59x18__DivInputTooSmall", "inputs": [] },
   {
-    "inputs": [{ "internalType": "int256", "name": "x", "type": "int256" }],
-    "name": "PRBMathSD59x18__ConvertOverflow",
-    "type": "error"
-  },
-  {
-    "inputs": [{ "internalType": "int256", "name": "x", "type": "int256" }],
-    "name": "PRBMathSD59x18__ConvertUnderflow",
-    "type": "error"
-  },
-  { "inputs": [], "name": "PRBMathSD59x18__DivInputTooSmall", "type": "error" },
-  {
-    "inputs": [
-      { "internalType": "SD59x18", "name": "x", "type": "int256" },
-      { "internalType": "SD59x18", "name": "y", "type": "int256" }
-    ],
+    "type": "error",
     "name": "PRBMathSD59x18__DivOverflow",
-    "type": "error"
+    "inputs": [{ "type": "uint256", "name": "rAbs" }]
   },
   {
-    "inputs": [{ "internalType": "SD59x18", "name": "x", "type": "int256" }],
+    "type": "error",
     "name": "PRBMathSD59x18__Exp2InputTooBig",
-    "type": "error"
+    "inputs": [{ "type": "int256", "name": "x" }]
   },
   {
-    "inputs": [{ "internalType": "SD59x18", "name": "x", "type": "int256" }],
+    "type": "error",
+    "name": "PRBMathSD59x18__FromIntOverflow",
+    "inputs": [{ "type": "int256", "name": "x" }]
+  },
+  {
+    "type": "error",
+    "name": "PRBMathSD59x18__FromIntUnderflow",
+    "inputs": [{ "type": "int256", "name": "x" }]
+  },
+  {
+    "type": "error",
     "name": "PRBMathSD59x18__LogInputTooSmall",
-    "type": "error"
+    "inputs": [{ "type": "int256", "name": "x" }]
   },
-  { "inputs": [], "name": "PRBMathSD59x18__MulInputTooSmall", "type": "error" },
+  { "type": "error", "name": "PRBMathSD59x18__MulInputTooSmall", "inputs": [] },
   {
-    "inputs": [
-      { "internalType": "SD59x18", "name": "x", "type": "int256" },
-      { "internalType": "SD59x18", "name": "y", "type": "int256" }
-    ],
+    "type": "error",
     "name": "PRBMathSD59x18__MulOverflow",
-    "type": "error"
+    "inputs": [{ "type": "uint256", "name": "rAbs" }]
   },
   {
-    "inputs": [{ "internalType": "SD59x18", "name": "x", "type": "int256" }],
+    "type": "error",
     "name": "PRBMathSD59x18__SqrtNegativeInput",
-    "type": "error"
+    "inputs": [{ "type": "int256", "name": "x" }]
   },
   {
-    "inputs": [{ "internalType": "SD59x18", "name": "x", "type": "int256" }],
+    "type": "error",
     "name": "PRBMathSD59x18__SqrtOverflow",
-    "type": "error"
+    "inputs": [{ "type": "int256", "name": "x" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "x", "type": "uint256" },
-      { "internalType": "uint256", "name": "y", "type": "uint256" }
-    ],
-    "name": "PRBMath__MulDiv18Overflow",
-    "type": "error"
+    "type": "error",
+    "name": "PRBMath__MulDivFixedPointOverflow",
+    "inputs": [{ "type": "uint256", "name": "prod1" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "x", "type": "uint256" },
-      { "internalType": "uint256", "name": "y", "type": "uint256" },
-      { "internalType": "uint256", "name": "denominator", "type": "uint256" }
-    ],
+    "type": "error",
     "name": "PRBMath__MulDivOverflow",
-    "type": "error"
-  },
-  { "inputs": [], "name": "PoolUnderCollateralized", "type": "error" },
-  { "inputs": [], "name": "PriceBelowLUP", "type": "error" },
-  { "inputs": [], "name": "RemoveDepositLockedByAuctionDebt", "type": "error" },
-  { "inputs": [], "name": "RemoveDepositLockedByAuctionDebt", "type": "error" },
-  { "inputs": [], "name": "ReserveAuctionTooSoon", "type": "error" },
-  { "inputs": [], "name": "TakeNotPastCooldown", "type": "error" },
-  { "inputs": [], "name": "ZeroThresholdPrice", "type": "error" },
-  {
-    "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "actor",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpAwarded",
-        "type": "uint256"
-      }
-    ],
+      { "type": "uint256", "name": "prod1" },
+      { "type": "uint256", "name": "denominator" }
+    ]
+  },
+  { "type": "error", "name": "PoolUnderCollateralized", "inputs": [] },
+  { "type": "error", "name": "PriceBelowLUP", "inputs": [] },
+  { "type": "error", "name": "RemoveDepositLockedByAuctionDebt", "inputs": [] },
+  { "type": "error", "name": "RemoveDepositLockedByAuctionDebt", "inputs": [] },
+  { "type": "error", "name": "ReserveAuctionTooSoon", "inputs": [] },
+  { "type": "error", "name": "TakeNotPastCooldown", "inputs": [] },
+  { "type": "error", "name": "TransactionExpired", "inputs": [] },
+  { "type": "error", "name": "TransactionExpired", "inputs": [] },
+  { "type": "error", "name": "TransferToSameOwner", "inputs": [] },
+  { "type": "error", "name": "TransferorNotApproved", "inputs": [] },
+  { "type": "error", "name": "ZeroThresholdPrice", "inputs": [] },
+  {
+    "type": "event",
+    "anonymous": false,
     "name": "AddCollateral",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "actor", "indexed": true },
+      { "type": "uint256", "name": "index", "indexed": true },
+      { "type": "uint256", "name": "amount", "indexed": false },
+      { "type": "uint256", "name": "lpAwarded", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "lender",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpAwarded",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lup",
-        "type": "uint256"
-      }
-    ],
     "name": "AddQuoteToken",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "lender", "indexed": true },
+      { "type": "uint256", "name": "index", "indexed": true },
+      { "type": "uint256", "name": "amount", "indexed": false },
+      { "type": "uint256", "name": "lpAwarded", "indexed": false },
+      { "type": "uint256", "name": "lup", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
+    "name": "ApproveLpTransferors",
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "borrower",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateral",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lps",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
-      }
-    ],
+      { "type": "address", "name": "lender", "indexed": true },
+      { "type": "address[]", "name": "transferors", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
     "name": "AuctionNFTSettle",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "borrower", "indexed": true },
+      { "type": "uint256", "name": "collateral", "indexed": false },
+      { "type": "uint256", "name": "lps", "indexed": false },
+      { "type": "uint256", "name": "index", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "borrower",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateral",
-        "type": "uint256"
-      }
-    ],
     "name": "AuctionSettle",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "borrower", "indexed": true },
+      { "type": "uint256", "name": "collateral", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
+    "name": "BondWithdrawn",
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpForfeited",
-        "type": "uint256"
-      }
-    ],
+      { "type": "address", "name": "kicker", "indexed": true },
+      { "type": "address", "name": "reciever", "indexed": true },
+      { "type": "uint256", "name": "amount", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
     "name": "BucketBankruptcy",
-    "type": "event"
+    "inputs": [
+      { "type": "uint256", "name": "index", "indexed": true },
+      { "type": "uint256", "name": "lpForfeited", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "borrower",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateral",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "bondChange",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "isReward",
-        "type": "bool"
-      }
-    ],
     "name": "BucketTake",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "borrower", "indexed": true },
+      { "type": "uint256", "name": "index", "indexed": false },
+      { "type": "uint256", "name": "amount", "indexed": false },
+      { "type": "uint256", "name": "collateral", "indexed": false },
+      { "type": "uint256", "name": "bondChange", "indexed": false },
+      { "type": "bool", "name": "isReward", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "taker",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "kicker",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpAwardedTaker",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpAwardedKicker",
-        "type": "uint256"
-      }
-    ],
     "name": "BucketTakeLPAwarded",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "taker", "indexed": true },
+      { "type": "address", "name": "kicker", "indexed": true },
+      { "type": "uint256", "name": "lpAwardedTaker", "indexed": false },
+      { "type": "uint256", "name": "lpAwardedKicker", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "borrower",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amountBorrowed",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateralPledged",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lup",
-        "type": "uint256"
-      }
-    ],
     "name": "DrawDebt",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "borrower", "indexed": true },
+      { "type": "uint256", "name": "amountBorrowed", "indexed": false },
+      { "type": "uint256", "name": "collateralPledged", "indexed": false },
+      { "type": "uint256", "name": "lup", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "borrower",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "debt",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateral",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "bond",
-        "type": "uint256"
-      }
-    ],
     "name": "Kick",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "borrower", "indexed": true },
+      { "type": "uint256", "name": "debt", "indexed": false },
+      { "type": "uint256", "name": "collateral", "indexed": false },
+      { "type": "uint256", "name": "bond", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "lender",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "from",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "to",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpRedeemedFrom",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpAwardedTo",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lup",
-        "type": "uint256"
-      }
-    ],
+    "name": "LoanStamped",
+    "inputs": [{ "type": "address", "name": "borrower", "indexed": true }]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
     "name": "MoveQuoteToken",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "lender", "indexed": true },
+      { "type": "uint256", "name": "from", "indexed": true },
+      { "type": "uint256", "name": "to", "indexed": true },
+      { "type": "uint256", "name": "amount", "indexed": false },
+      { "type": "uint256", "name": "lpRedeemedFrom", "indexed": false },
+      { "type": "uint256", "name": "lpAwardedTo", "indexed": false },
+      { "type": "uint256", "name": "lup", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "claimer",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpRedeemed",
-        "type": "uint256"
-      }
-    ],
     "name": "RemoveCollateral",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "claimer", "indexed": true },
+      { "type": "uint256", "name": "index", "indexed": true },
+      { "type": "uint256", "name": "amount", "indexed": false },
+      { "type": "uint256", "name": "lpRedeemed", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "lender",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpRedeemed",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lup",
-        "type": "uint256"
-      }
-    ],
     "name": "RemoveQuoteToken",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "lender", "indexed": true },
+      { "type": "uint256", "name": "index", "indexed": true },
+      { "type": "uint256", "name": "amount", "indexed": false },
+      { "type": "uint256", "name": "lpRedeemed", "indexed": false },
+      { "type": "uint256", "name": "lup", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "borrower",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "quoteRepaid",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateralPulled",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lup",
-        "type": "uint256"
-      }
-    ],
     "name": "RepayDebt",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "borrower", "indexed": true },
+      { "type": "uint256", "name": "quoteRepaid", "indexed": false },
+      { "type": "uint256", "name": "collateralPulled", "indexed": false },
+      { "type": "uint256", "name": "lup", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "claimableReservesRemaining",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "auctionPrice",
-        "type": "uint256"
-      }
-    ],
     "name": "ReserveAuction",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "borrower",
-        "type": "address"
+        "type": "uint256",
+        "name": "claimableReservesRemaining",
+        "indexed": false
       },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "settledDebt",
-        "type": "uint256"
-      }
-    ],
+      { "type": "uint256", "name": "auctionPrice", "indexed": false },
+      { "type": "uint256", "name": "currentBurnEpoch", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "RevokeLpAllowance",
+    "inputs": [
+      { "type": "address", "name": "spender", "indexed": true },
+      { "type": "uint256[]", "name": "indexes", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "RevokeLpTransferors",
+    "inputs": [
+      { "type": "address", "name": "lender", "indexed": true },
+      { "type": "address[]", "name": "transferors", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "SetLpAllowance",
+    "inputs": [
+      { "type": "address", "name": "spender", "indexed": true },
+      { "type": "uint256[]", "name": "indexes", "indexed": false },
+      { "type": "uint256[]", "name": "amounts", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
     "name": "Settle",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "borrower", "indexed": true },
+      { "type": "uint256", "name": "settledDebt", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "borrower",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateral",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "bondChange",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "isReward",
-        "type": "bool"
-      }
-    ],
     "name": "Take",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "borrower", "indexed": true },
+      { "type": "uint256", "name": "amount", "indexed": false },
+      { "type": "uint256", "name": "collateral", "indexed": false },
+      { "type": "uint256", "name": "bondChange", "indexed": false },
+      { "type": "bool", "name": "isReward", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
+    "name": "TransferLPs",
     "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "indexes",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lpTokens",
-        "type": "uint256"
-      }
-    ],
-    "name": "TransferLPTokens",
-    "type": "event"
+      { "type": "address", "name": "owner", "indexed": false },
+      { "type": "address", "name": "newOwner", "indexed": false },
+      { "type": "uint256[]", "name": "indexes", "indexed": false },
+      { "type": "uint256", "name": "lps", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldRate",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newRate",
-        "type": "uint256"
-      }
-    ],
     "name": "UpdateInterestRate",
-    "type": "event"
+    "inputs": [
+      { "type": "uint256", "name": "oldRate", "indexed": false },
+      { "type": "uint256", "name": "newRate", "indexed": false }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "amountToAdd_", "type": "uint256" },
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "addCollateral",
-    "outputs": [
-      { "internalType": "uint256", "name": "bucketLPs_", "type": "uint256" }
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "amountToAdd_" },
+      { "type": "uint256", "name": "index_" },
+      { "type": "uint256", "name": "expiry_" }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "outputs": [{ "type": "uint256", "name": "bucketLPs_" }]
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "quoteTokenAmountToAdd_",
-        "type": "uint256"
-      },
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "addQuoteToken",
-    "outputs": [
-      { "internalType": "uint256", "name": "bucketLPs_", "type": "uint256" }
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "quoteTokenAmountToAdd_" },
+      { "type": "uint256", "name": "index_" },
+      { "type": "uint256", "name": "expiry_" }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "outputs": [{ "type": "uint256", "name": "bucketLPs_" }]
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "allowedNewOwner_",
-        "type": "address"
-      },
-      { "internalType": "uint256", "name": "index_", "type": "uint256" },
-      {
-        "internalType": "uint256",
-        "name": "lpsAmountToApprove_",
-        "type": "uint256"
-      }
-    ],
-    "name": "approveLpOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "type": "function",
+    "name": "approveLpTransferors",
+    "constant": false,
+    "payable": false,
+    "inputs": [{ "type": "address[]", "name": "transferors_" }],
+    "outputs": []
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "borrower_", "type": "address" }
-    ],
+    "type": "function",
+    "name": "approvedTransferors",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [{ "type": "address" }, { "type": "address" }],
+    "outputs": [{ "type": "bool" }]
+  },
+  {
+    "type": "function",
     "name": "auctionInfo",
-    "outputs": [
-      { "internalType": "address", "name": "kicker", "type": "address" },
-      { "internalType": "uint256", "name": "bondFactor", "type": "uint256" },
-      { "internalType": "uint256", "name": "bondSize", "type": "uint256" },
-      { "internalType": "uint256", "name": "kickTime", "type": "uint256" },
-      { "internalType": "uint256", "name": "kickMomp", "type": "uint256" },
-      { "internalType": "uint256", "name": "neutralPrice", "type": "uint256" },
-      { "internalType": "address", "name": "head", "type": "address" },
-      { "internalType": "address", "name": "next", "type": "address" },
-      { "internalType": "address", "name": "prev", "type": "address" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "borrower_" }],
+    "outputs": [
+      { "type": "address", "name": "kicker" },
+      { "type": "uint256", "name": "bondFactor" },
+      { "type": "uint256", "name": "bondSize" },
+      { "type": "uint256", "name": "kickTime" },
+      { "type": "uint256", "name": "kickMomp" },
+      { "type": "uint256", "name": "neutralPrice" },
+      { "type": "address", "name": "head" },
+      { "type": "address", "name": "next" },
+      { "type": "address", "name": "prev" },
+      { "type": "bool", "name": "alreadyTaken" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "borrower_", "type": "address" }
-    ],
+    "type": "function",
     "name": "borrowerInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "borrower_" }],
+    "outputs": [
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "bucketIndex", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "bucketCollateralDust",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "pure",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "bucketIndex" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "bucketExchangeRate",
-    "outputs": [
-      { "internalType": "uint256", "name": "exchangeRate_", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "index_" }],
+    "outputs": [{ "type": "uint256", "name": "exchangeRate_" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "bucketInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "index_" }],
+    "outputs": [
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" }
+    ]
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "borrowerAddress_",
-        "type": "address"
-      },
-      { "internalType": "bool", "name": "depositTake_", "type": "bool" },
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "bucketTake",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "borrowerAddress_" },
+      { "type": "bool", "name": "depositTake_" },
+      { "type": "uint256", "name": "index_" }
+    ],
+    "outputs": []
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "burnEventEpoch_",
-        "type": "uint256"
-      }
-    ],
+    "type": "function",
     "name": "burnInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "burnEventEpoch_" }],
+    "outputs": [
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" }
+    ]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "collateralAddress",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "constant": true,
     "stateMutability": "pure",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "address" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "collateralScale",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "pure",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "currentBurnEpoch",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "debtInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" }
+    ]
   },
   {
+    "type": "function",
+    "name": "decreaseLPAllowance",
+    "constant": false,
+    "payable": false,
     "inputs": [
-      { "internalType": "uint256", "name": "debt_", "type": "uint256" }
+      { "type": "address", "name": "spender_" },
+      { "type": "uint256[]", "name": "indexes_" },
+      { "type": "uint256[]", "name": "amounts_" }
     ],
+    "outputs": []
+  },
+  {
+    "type": "function",
     "name": "depositIndex",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "debt_" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "depositSize",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "debt_", "type": "uint256" },
-      { "internalType": "uint256", "name": "collateral_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "depositUtilization",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "borrowerAddress_",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amountToBorrow_",
-        "type": "uint256"
-      },
-      { "internalType": "uint256", "name": "limitIndex_", "type": "uint256" },
-      {
-        "internalType": "uint256",
-        "name": "collateralToPledge_",
-        "type": "uint256"
-      }
-    ],
+    "type": "function",
     "name": "drawDebt",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "borrowerAddress_" },
+      { "type": "uint256", "name": "amountToBorrow_" },
+      { "type": "uint256", "name": "limitIndex_" },
+      { "type": "uint256", "name": "collateralToPledge_" }
+    ],
+    "outputs": []
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "emasInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "token_", "type": "address" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "flashFee",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "pure",
-    "type": "function"
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "token_" }, { "type": "uint256" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      {
-        "internalType": "contract IERC3156FlashBorrower",
-        "name": "receiver_",
-        "type": "address"
-      },
-      { "internalType": "address", "name": "token_", "type": "address" },
-      { "internalType": "uint256", "name": "amount_", "type": "uint256" },
-      { "internalType": "bytes", "name": "data_", "type": "bytes" }
-    ],
+    "type": "function",
     "name": "flashLoan",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "receiver_" },
+      { "type": "address", "name": "token_" },
+      { "type": "uint256", "name": "amount_" },
+      { "type": "bytes", "name": "data_" }
+    ],
+    "outputs": [{ "type": "bool", "name": "success_" }]
   },
   {
-    "inputs": [],
+    "type": "function",
+    "name": "increaseLPAllowance",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "spender_" },
+      { "type": "uint256[]", "name": "indexes_" },
+      { "type": "uint256[]", "name": "amounts_" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
     "name": "inflatorInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }, { "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "rate_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "initialize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "rate_" }],
+    "outputs": []
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "interestRateInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }, { "type": "uint256" }]
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "borrowerAddress_",
-        "type": "address"
-      }
-    ],
+    "type": "function",
     "name": "kick",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "borrowerAddress_" },
+      { "type": "uint256", "name": "limitIndex_" }
+    ],
+    "outputs": []
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "kickWithDeposit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "index_" },
+      { "type": "uint256", "name": "limitIndex_" }
+    ],
+    "outputs": []
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "kicker_", "type": "address" }
-    ],
+    "type": "function",
     "name": "kickerInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "kicker_" }],
+    "outputs": [{ "type": "uint256" }, { "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "index_", "type": "uint256" },
-      { "internalType": "address", "name": "lender_", "type": "address" }
-    ],
+    "type": "function",
     "name": "lenderInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "lpBalance_", "type": "uint256" },
-      { "internalType": "uint256", "name": "depositTime_", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "index_" },
+      { "type": "address", "name": "lender_" }
+    ],
+    "outputs": [
+      { "type": "uint256", "name": "lpBalance_" },
+      { "type": "uint256", "name": "depositTime_" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "loanId_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "loanInfo",
-    "outputs": [
-      { "internalType": "address", "name": "", "type": "address" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "loanId_" }],
+    "outputs": [{ "type": "address" }, { "type": "uint256" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "loansInfo",
-    "outputs": [
-      { "internalType": "address", "name": "", "type": "address" },
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [
+      { "type": "address" },
+      { "type": "uint256" },
+      { "type": "uint256" }
+    ]
   },
   {
+    "type": "function",
+    "name": "lpAllowance",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
     "inputs": [
-      { "internalType": "address", "name": "token_", "type": "address" }
+      { "type": "uint256", "name": "index_" },
+      { "type": "address", "name": "spender_" },
+      { "type": "address", "name": "owner_" }
     ],
+    "outputs": [{ "type": "uint256", "name": "allowance_" }]
+  },
+  {
+    "type": "function",
     "name": "maxFlashLoan",
-    "outputs": [
-      { "internalType": "uint256", "name": "maxLoan_", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "token_" }],
+    "outputs": [{ "type": "uint256", "name": "maxLoan_" }]
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "maxAmountToMove_",
-        "type": "uint256"
-      },
-      { "internalType": "uint256", "name": "fromIndex_", "type": "uint256" },
-      { "internalType": "uint256", "name": "toIndex_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "moveQuoteToken",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "fromBucketLPs_",
-        "type": "uint256"
-      },
-      { "internalType": "uint256", "name": "toBucketLPs_", "type": "uint256" }
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "maxAmountToMove_" },
+      { "type": "uint256", "name": "fromIndex_" },
+      { "type": "uint256", "name": "toIndex_" },
+      { "type": "uint256", "name": "expiry_" }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "outputs": [
+      { "type": "uint256", "name": "fromBucketLPs_" },
+      { "type": "uint256", "name": "toBucketLPs_" },
+      { "type": "uint256", "name": "movedAmount_" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "bytes[]", "name": "data", "type": "bytes[]" }
-    ],
+    "type": "function",
     "name": "multicall",
-    "outputs": [
-      { "internalType": "bytes[]", "name": "results", "type": "bytes[]" }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [{ "type": "bytes[]", "name": "data" }],
+    "outputs": [{ "type": "bytes[]", "name": "results" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "pledgedCollateral",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "poolType",
-    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "constant": true,
     "stateMutability": "pure",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint8" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "quoteTokenAddress",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "constant": true,
     "stateMutability": "pure",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "address" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "quoteTokenDust",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "pure",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "quoteTokenScale",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "pure",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "maxAmount_", "type": "uint256" },
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "removeCollateral",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "collateralAmount_",
-        "type": "uint256"
-      },
-      { "internalType": "uint256", "name": "lpAmount_", "type": "uint256" }
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "maxAmount_" },
+      { "type": "uint256", "name": "index_" }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "outputs": [
+      { "type": "uint256", "name": "collateralAmount_" },
+      { "type": "uint256", "name": "lpAmount_" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "maxAmount_", "type": "uint256" },
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "removeQuoteToken",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "removedAmount_",
-        "type": "uint256"
-      },
-      { "internalType": "uint256", "name": "redeemedLPs_", "type": "uint256" }
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "maxAmount_" },
+      { "type": "uint256", "name": "index_" }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "outputs": [
+      { "type": "uint256", "name": "removedAmount_" },
+      { "type": "uint256", "name": "redeemedLPs_" }
+    ]
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "borrowerAddress_",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxQuoteTokenAmountToRepay_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "collateralAmountToPull_",
-        "type": "uint256"
-      }
-    ],
+    "type": "function",
     "name": "repayDebt",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "borrowerAddress_" },
+      { "type": "uint256", "name": "maxQuoteTokenAmountToRepay_" },
+      { "type": "uint256", "name": "collateralAmountToPull_" },
+      { "type": "address", "name": "collateralReceiver_" },
+      { "type": "uint256", "name": "limitIndex_" }
+    ],
+    "outputs": []
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "reservesInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "borrowerAddress_",
-        "type": "address"
-      },
-      { "internalType": "uint256", "name": "maxDepth_", "type": "uint256" }
-    ],
-    "name": "settle",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
+    "payable": false,
     "inputs": [],
-    "name": "startClaimableReserveAuction",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "borrowerAddress_",
-        "type": "address"
-      },
-      { "internalType": "uint256", "name": "collateral_", "type": "uint256" },
-      { "internalType": "address", "name": "callee_", "type": "address" },
-      { "internalType": "bytes", "name": "data_", "type": "bytes" }
-    ],
-    "name": "take",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "maxAmount_", "type": "uint256" }
-    ],
-    "name": "takeReserves",
     "outputs": [
-      { "internalType": "uint256", "name": "amount_", "type": "uint256" }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" },
+      { "type": "uint256" }
+    ]
   },
   {
+    "type": "function",
+    "name": "revokeLPAllowance",
+    "constant": false,
+    "payable": false,
     "inputs": [
-      { "internalType": "address", "name": "owner_", "type": "address" },
-      { "internalType": "address", "name": "newOwner_", "type": "address" },
-      { "internalType": "uint256[]", "name": "indexes_", "type": "uint256[]" }
+      { "type": "address", "name": "spender_" },
+      { "type": "uint256[]", "name": "indexes_" }
     ],
-    "name": "transferLPTokens",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "outputs": []
   },
   {
+    "type": "function",
+    "name": "revokeLpTransferors",
+    "constant": false,
+    "payable": false,
+    "inputs": [{ "type": "address[]", "name": "transferors_" }],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "settle",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "borrowerAddress_" },
+      { "type": "uint256", "name": "maxDepth_" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "stampLoan",
+    "constant": false,
+    "payable": false,
     "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "startClaimableReserveAuction",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "take",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "borrowerAddress_" },
+      { "type": "uint256", "name": "collateral_" },
+      { "type": "address", "name": "callee_" },
+      { "type": "bytes", "name": "data_" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "takeReserves",
+    "constant": false,
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "maxAmount_" }],
+    "outputs": [{ "type": "uint256", "name": "amount_" }]
+  },
+  {
+    "type": "function",
+    "name": "totalAuctionsInPool",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "totalT0Debt",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "totalT0DebtInAuction",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "transferLPs",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "owner_" },
+      { "type": "address", "name": "newOwner_" },
+      { "type": "uint256[]", "name": "indexes_" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "updateInterest",
+    "constant": false,
+    "payable": false,
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
     "name": "withdrawBonds",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "recipient_" },
+      { "type": "uint256", "name": "maxAmount_" }
+    ],
+    "outputs": []
   }
 ]

@@ -11,6 +11,7 @@ type Token @entity {
   # token decimals
   decimals: BigInt!
   # flag for whether the token is an ERC721
+  # TODO: make this a string, enabling new pool types (such as ERC1155)
   isERC721: Boolean!
   # number of pools including this token
   poolCount: BigInt!
@@ -31,7 +32,6 @@ type ERC20PoolFactory @entity {
   txCount: BigInt!
 }
 
-# TODO: add momp
 type Pool @entity {
   # pool address
   id: Bytes!
@@ -73,7 +73,8 @@ type Pool @entity {
   htp: BigDecimal! # current highest threshold price
   htpIndex: BigInt! # current highest threshold price index
   lup: BigDecimal! # current lowest utilized price
-  lupIndex: BigInt! # current lowest utilized price index
+  lupIndex: BigInt! # current lowest utilized price index  
+  momp: BigDecimal! # most optimistic matching price
 
   # RESERVES INFORMATION
   # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
@@ -157,9 +158,10 @@ type Loan @entity {
   # boolean indicating whether the loan is in liquidations
   inLiquidation: Boolean!
   # collateral tokens deposited in a pool by the borrower
-  collateralDeposited: BigDecimal!
+  collateralDeposited: BigDecimal! # TODO: rename collateralPledged
   # collateralization of the borrow position in the pool
   collateralization: BigDecimal!
+  # TODO: add principal (initial debt drawn from the pool, excluding origination fee)
   # total quote drawn from the pool in the loan
   debt: BigDecimal!
   # borrowers threshold price
@@ -202,6 +204,7 @@ type LiquidationAuction @entity {
   kickTime: BigInt! # block timestamp at which the kick was executed
   bondSize: BigDecimal! # bond provided by kicker to initate auction
   bondFactor: BigDecimal! # bond factor determining the reward or penalty for the kicker
+  # TODO: add kickPrice
   neutralPrice: BigDecimal! # price at which the auction is neutral
   settled: Boolean! # boolean indicating whether the auction has been settled
   next: LiquidationAuction! # id of the next auction in the queue
@@ -232,7 +235,7 @@ type AddCollateral @entity(immutable: true) {
   pool: Pool! # Pool whose bucket was modified
   bucket: Bucket! # Bucket to which collateral was added
   actor: Bytes! # address
-  price: BigInt! # uint256
+  index: BigInt! # uint256
   amount: BigInt! # uint256
   lpAwarded: BigInt! # uint256
   blockNumber: BigInt!
@@ -245,7 +248,7 @@ type AddQuoteToken @entity {
   bucket: Bucket!    # Bucket to which quote was added
   pool: Pool!        # Pool to which quote was added
   lender: Bytes!     # address
-  price: BigInt!     # uint256
+  index: BigInt!     # uint256
   amount: BigInt!    # uint256
   lpAwarded: BigInt! # uint256
   lup: BigInt!       # uint256
@@ -364,7 +367,7 @@ type MoveQuoteToken @entity(immutable: true) {
 type RemoveCollateral @entity(immutable: true) {
   id: Bytes!
   claimer: Bytes! # address
-  price: BigInt! # uint256
+  index: BigInt! # uint256
   amount: BigInt! # uint256
   lpRedeemed: BigInt! # uint256
   blockNumber: BigInt!
@@ -375,7 +378,7 @@ type RemoveCollateral @entity(immutable: true) {
 type RemoveQuoteToken @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
-  price: BigInt! # uint256
+  index: BigInt! # uint256
   amount: BigInt! # uint256
   lpRedeemed: BigInt! # uint256
   lup: BigInt! # uint256
@@ -405,6 +408,7 @@ type ReserveAuction @entity(immutable: true) {
   claimableReservesRemaining: BigInt! # uint256 remaining amount of claimable reserves in the auction
   auctionPrice: BigInt! # uint256 auction price at time of event emit
   incrementalAjnaBurned: BigDecimal! # amount of ajna burned in this take
+  currentBurnEpoch: BigInt! # current burn epoch
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -438,12 +442,12 @@ type Take @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type TransferLPTokens @entity(immutable: true) {
+type TransferLPs @entity(immutable: true) {
   id: Bytes!
   owner: Bytes! # address
   newOwner: Bytes! # address
   indexes: [BigInt!]! # uint256[]
-  lpTokens: BigInt! # uint256
+  lps: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -533,6 +537,7 @@ type Transfer @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
 type PoolCreated @entity(immutable: true) {
   id: Bytes!
   pool_: Bytes! # address
@@ -540,6 +545,7 @@ type PoolCreated @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
 type ClaimRewards @entity(immutable: true) {
   id: Bytes!
   owner: Bytes! # address
@@ -578,13 +584,6 @@ type UpdateExchangeRates @entity(immutable: true) {
   ajnaPool: Bytes! # address
   indexesUpdated: [BigInt!]! # uint256[]
   rewardsClaimed: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-type ERC721PoolFactoryPoolCreated @entity(immutable: true) {
-  id: Bytes!
-  pool_: Bytes! # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

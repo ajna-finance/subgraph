@@ -66,22 +66,22 @@ describe("Describe entity assertions", () => {
     // mock parameters
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const actor = Address.fromString("0x0000000000000000000000000000000000000001")
-    const price = BigInt.fromI32(234)
+    const index = BigInt.fromI32(234)
     const collateralAmount = BigInt.fromI32(234)
     const lpAwarded = BigInt.fromI32(234)
     
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      price,
+      index,
       ZERO_BI,
       collateralAmount,
       lpAwarded,
       ZERO_BI,
       ONE_RAY_BI
     )
-    mockGetBucketInfo(poolAddress, price, expectedBucketInfo)
+    mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
 
-    mockGetLPBValueInQuote(poolAddress, lpAwarded, price, lpAwarded)
+    mockGetLPBValueInQuote(poolAddress, lpAwarded, index, lpAwarded)
 
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: ZERO_BI,
@@ -90,15 +90,17 @@ describe("Describe entity assertions", () => {
       pendingInflator: ONE_WAD_BI,
       pendingInterestFactor: ZERO_BI,
       hpb: ZERO_BI, //TODO: indexToPrice(price)
-      hpbIndex: price,
+      hpbIndex: index,
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
       lupIndex: MAX_PRICE_INDEX,
+      momp: BigInt.fromI32(623804),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
       reserveAuctionPrice: ZERO_BI,
+      currentBurnEpoch: BigInt.fromI32(9998102),
       reserveAuctionTimeRemaining: ZERO_BI,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -110,7 +112,7 @@ describe("Describe entity assertions", () => {
     const newAddCollateralEvent = createAddCollateralEvent(
       poolAddress,
       actor,
-      price,
+      index,
       collateralAmount,
       lpAwarded
     )
@@ -128,7 +130,7 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "AddCollateral",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
-      "price",
+      "index",
       "234"
     )
     assert.fieldEquals(
@@ -145,7 +147,7 @@ describe("Describe entity assertions", () => {
     )
 
     // check bucket attributes updated
-    const bucketId = getBucketId(addressToBytes(poolAddress), price)
+    const bucketId = getBucketId(addressToBytes(poolAddress), index)
     assert.fieldEquals(
       "Bucket",
       `${bucketId.toHexString()}`,
@@ -164,24 +166,24 @@ describe("Describe entity assertions", () => {
     // mock parameters
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000002")
-    const price = BigInt.fromI32(234)
+    const index = BigInt.fromI32(234)
     const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const lpAwarded = BigInt.fromI32(567)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      price,
+      index,
       amount,
       ZERO_BI,
       lpAwarded,
       ZERO_BI,
       ONE_RAY_BI
     )
-    mockGetBucketInfo(poolAddress, price, expectedBucketInfo)
+    mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
     
     const expectedLPBValueInQuote = lpAwarded
-    mockGetLPBValueInQuote(poolAddress, lpAwarded, price, expectedLPBValueInQuote)
+    mockGetLPBValueInQuote(poolAddress, lpAwarded, index, expectedLPBValueInQuote)
 
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: amount,
@@ -190,15 +192,17 @@ describe("Describe entity assertions", () => {
       pendingInflator: ONE_WAD_BI,
       pendingInterestFactor: ZERO_BI,
       hpb: ZERO_BI, //TODO: indexToPrice(price)
-      hpbIndex: price,
+      hpbIndex: index,
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
       lup: lup,
       lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      momp: BigInt.fromI32(623803),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
       reserveAuctionPrice: ZERO_BI,
+      currentBurnEpoch: BigInt.fromI32(9998103),
       reserveAuctionTimeRemaining: ZERO_BI,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -210,7 +214,7 @@ describe("Describe entity assertions", () => {
     const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
       poolAddress,
       lender,
-      price,
+      index,
       amount,
       lpAwarded,
       lup
@@ -229,7 +233,7 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "AddQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
-      "price",
+      "index",
       "234"
     )
     assert.fieldEquals(
@@ -252,13 +256,13 @@ describe("Describe entity assertions", () => {
     )
 
     // check bucket attributes updated
-    const bucketId = getBucketId(addressToBytes(poolAddress), price)
+    const bucketId = getBucketId(addressToBytes(poolAddress), index)
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,
       quoteTokens: amount,
       exchangeRate: ONE_RAY_BI,
-      bucketIndex: price,
+      bucketIndex: index,
       lpb: lpAwarded
     })
 
@@ -274,7 +278,7 @@ describe("Describe entity assertions", () => {
       currentDebt: ZERO_BI,
       pledgedCollateral: ZERO_BI,
       hpb: ZERO_BI,
-      hpbIndex: price,
+      hpbIndex: index,
       htp: ZERO_BI,
       htpIndex: ZERO_BI,
       lup: lup,
@@ -612,6 +616,7 @@ describe("Describe entity assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
+    const alreadyTaken = false
     const expectedAuctionInfo = new AuctionInfo(
       kicker,
       bondFactor,
@@ -621,7 +626,8 @@ describe("Describe entity assertions", () => {
       neutralPrice,
       head,
       next,
-      prev
+      prev,
+      alreadyTaken
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
 
@@ -785,6 +791,7 @@ describe("Describe entity assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
+    const alreadyTaken = false
     let expectedAuctionInfo = new AuctionInfo(
       kicker,
       bondFactor,
@@ -794,7 +801,8 @@ describe("Describe entity assertions", () => {
       neutralPrice,
       head,
       next,
-      prev
+      prev,
+      false
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
 
@@ -823,7 +831,8 @@ describe("Describe entity assertions", () => {
       neutralPrice,
       head,
       next,
-      prev
+      prev,
+      alreadyTaken
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
 
@@ -950,6 +959,7 @@ describe("Describe entity assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
+    const alreadyTaken = false
     let expectedAuctionInfo = new AuctionInfo(
       kicker,
       bondFactor,
@@ -959,7 +969,8 @@ describe("Describe entity assertions", () => {
       neutralPrice,
       head,
       next,
-      prev
+      prev,
+      alreadyTaken
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
 
@@ -988,7 +999,8 @@ describe("Describe entity assertions", () => {
       neutralPrice,
       head,
       next,
-      prev
+      prev,
+      alreadyTaken
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
 
@@ -1129,6 +1141,7 @@ describe("Describe entity assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
+    const alreadyTaken = false
     let expectedAuctionInfo = new AuctionInfo(
       kicker,
       bondFactor,
@@ -1138,7 +1151,8 @@ describe("Describe entity assertions", () => {
       neutralPrice,
       head,
       next,
-      prev
+      prev,
+      alreadyTaken
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
 
@@ -1184,10 +1198,12 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
       lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      momp: BigInt.fromI32(623801),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemaining,
       claimableReservesRemaining: claimableReservesRemaining,
       reserveAuctionPrice: auctionPrice,
+      currentBurnEpoch: BigInt.fromI32(9998101),
       reserveAuctionTimeRemaining: seventyTwoHours,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -1210,7 +1226,8 @@ describe("Describe entity assertions", () => {
       kicker,
       poolAddress,
       claimableReservesRemaining,
-      auctionPrice
+      auctionPrice,
+      expectedBurnEpoch,
     )
     handleReserveAuction(newReserveAuctionEvent)
 
@@ -1274,10 +1291,12 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
       lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      momp: BigInt.fromI32(623802),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemainingAfterTake,
       claimableReservesRemaining: claimableReservesRemainingAfterTake,
       reserveAuctionPrice: auctionPrice,
+      currentBurnEpoch: BigInt.fromI32(9998104),
       reserveAuctionTimeRemaining: seventyHours,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -1298,7 +1317,8 @@ describe("Describe entity assertions", () => {
       taker,
       poolAddress,
       claimableReservesRemainingAfterTake,
-      auctionPrice
+      auctionPrice,
+      timestamp,
     )
     handleReserveAuction(newReserveAuctionEvent)
 

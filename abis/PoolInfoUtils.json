@@ -1,309 +1,274 @@
 [
-  { "inputs": [], "name": "BucketIndexOutOfBounds", "type": "error" },
-  { "inputs": [], "name": "BucketPriceOutOfBounds", "type": "error" },
+  { "type": "error", "name": "BucketIndexOutOfBounds", "inputs": [] },
+  { "type": "error", "name": "BucketPriceOutOfBounds", "inputs": [] },
   {
-    "inputs": [{ "internalType": "int256", "name": "x", "type": "int256" }],
+    "type": "error",
     "name": "PRBMathSD59x18__CeilOverflow",
-    "type": "error"
+    "inputs": [{ "type": "int256", "name": "x" }]
   },
-  { "inputs": [], "name": "PRBMathSD59x18__DivInputTooSmall", "type": "error" },
+  { "type": "error", "name": "PRBMathSD59x18__DivInputTooSmall", "inputs": [] },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "rAbs", "type": "uint256" }
-    ],
+    "type": "error",
     "name": "PRBMathSD59x18__DivOverflow",
-    "type": "error"
+    "inputs": [{ "type": "uint256", "name": "rAbs" }]
   },
   {
-    "inputs": [{ "internalType": "int256", "name": "x", "type": "int256" }],
+    "type": "error",
     "name": "PRBMathSD59x18__Exp2InputTooBig",
-    "type": "error"
+    "inputs": [{ "type": "int256", "name": "x" }]
   },
   {
-    "inputs": [{ "internalType": "int256", "name": "x", "type": "int256" }],
+    "type": "error",
     "name": "PRBMathSD59x18__FromIntOverflow",
-    "type": "error"
+    "inputs": [{ "type": "int256", "name": "x" }]
   },
   {
-    "inputs": [{ "internalType": "int256", "name": "x", "type": "int256" }],
+    "type": "error",
     "name": "PRBMathSD59x18__FromIntUnderflow",
-    "type": "error"
+    "inputs": [{ "type": "int256", "name": "x" }]
   },
   {
-    "inputs": [{ "internalType": "int256", "name": "x", "type": "int256" }],
+    "type": "error",
     "name": "PRBMathSD59x18__LogInputTooSmall",
-    "type": "error"
+    "inputs": [{ "type": "int256", "name": "x" }]
   },
-  { "inputs": [], "name": "PRBMathSD59x18__MulInputTooSmall", "type": "error" },
+  { "type": "error", "name": "PRBMathSD59x18__MulInputTooSmall", "inputs": [] },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "rAbs", "type": "uint256" }
-    ],
+    "type": "error",
     "name": "PRBMathSD59x18__MulOverflow",
-    "type": "error"
+    "inputs": [{ "type": "uint256", "name": "rAbs" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "prod1", "type": "uint256" }
-    ],
+    "type": "error",
     "name": "PRBMath__MulDivFixedPointOverflow",
-    "type": "error"
+    "inputs": [{ "type": "uint256", "name": "prod1" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "prod1", "type": "uint256" },
-      { "internalType": "uint256", "name": "denominator", "type": "uint256" }
-    ],
+    "type": "error",
     "name": "PRBMath__MulDivOverflow",
-    "type": "error"
+    "inputs": [
+      { "type": "uint256", "name": "prod1" },
+      { "type": "uint256", "name": "denominator" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" },
-      { "internalType": "address", "name": "borrower_", "type": "address" }
-    ],
+    "type": "function",
+    "name": "borrowFeeRate",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [{ "type": "uint256" }]
+  },
+  {
+    "type": "function",
     "name": "borrowerInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "debt_", "type": "uint256" },
-      { "internalType": "uint256", "name": "collateral_", "type": "uint256" },
-      { "internalType": "uint256", "name": "t0Np_", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "ajnaPool_" },
+      { "type": "address", "name": "borrower_" }
+    ],
+    "outputs": [
+      { "type": "uint256", "name": "debt_" },
+      { "type": "uint256", "name": "collateral_" },
+      { "type": "uint256", "name": "t0Np_" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" },
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "bucketInfo",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "ajnaPool_" },
+      { "type": "uint256", "name": "index_" }
+    ],
     "outputs": [
-      { "internalType": "uint256", "name": "price_", "type": "uint256" },
-      { "internalType": "uint256", "name": "quoteTokens_", "type": "uint256" },
-      { "internalType": "uint256", "name": "collateral_", "type": "uint256" },
-      { "internalType": "uint256", "name": "bucketLPs_", "type": "uint256" },
-      { "internalType": "uint256", "name": "scale_", "type": "uint256" },
-      { "internalType": "uint256", "name": "exchangeRate_", "type": "uint256" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+      { "type": "uint256", "name": "price_" },
+      { "type": "uint256", "name": "quoteTokens_" },
+      { "type": "uint256", "name": "collateral_" },
+      { "type": "uint256", "name": "bucketLPs_" },
+      { "type": "uint256", "name": "scale_" },
+      { "type": "uint256", "name": "exchangeRate_" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
-    "name": "feeRate",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "hpb",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "hpbIndex",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "htp",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "indexToPrice",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "pure",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "index_" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "lenderInterestMargin",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "lenderInterestMargin_",
-        "type": "uint256"
-      }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [{ "type": "uint256", "name": "lenderInterestMargin_" }]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" },
-      { "internalType": "uint256", "name": "lpTokens_", "type": "uint256" },
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "lpsToCollateral",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "collateralAmount_",
-        "type": "uint256"
-      }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "ajnaPool_" },
+      { "type": "uint256", "name": "lps_" },
+      { "type": "uint256", "name": "index_" }
+    ],
+    "outputs": [{ "type": "uint256", "name": "collateralAmount_" }]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" },
-      { "internalType": "uint256", "name": "lpTokens_", "type": "uint256" },
-      { "internalType": "uint256", "name": "index_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "lpsToQuoteTokens",
-    "outputs": [
-      { "internalType": "uint256", "name": "quoteAmount_", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "ajnaPool_" },
+      { "type": "uint256", "name": "lps_" },
+      { "type": "uint256", "name": "index_" }
+    ],
+    "outputs": [{ "type": "uint256", "name": "quoteAmount_" }]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "lup",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "lupIndex",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "momp",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "poolLoansInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "poolSize_", "type": "uint256" },
-      { "internalType": "uint256", "name": "loansCount_", "type": "uint256" },
-      { "internalType": "address", "name": "maxBorrower_", "type": "address" },
-      {
-        "internalType": "uint256",
-        "name": "pendingInflator_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "pendingInterestFactor_",
-        "type": "uint256"
-      }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [
+      { "type": "uint256", "name": "poolSize_" },
+      { "type": "uint256", "name": "loansCount_" },
+      { "type": "address", "name": "maxBorrower_" },
+      { "type": "uint256", "name": "pendingInflator_" },
+      { "type": "uint256", "name": "pendingInterestFactor_" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "poolPricesInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "hpb_", "type": "uint256" },
-      { "internalType": "uint256", "name": "hpbIndex_", "type": "uint256" },
-      { "internalType": "uint256", "name": "htp_", "type": "uint256" },
-      { "internalType": "uint256", "name": "htpIndex_", "type": "uint256" },
-      { "internalType": "uint256", "name": "lup_", "type": "uint256" },
-      { "internalType": "uint256", "name": "lupIndex_", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [
+      { "type": "uint256", "name": "hpb_" },
+      { "type": "uint256", "name": "hpbIndex_" },
+      { "type": "uint256", "name": "htp_" },
+      { "type": "uint256", "name": "htpIndex_" },
+      { "type": "uint256", "name": "lup_" },
+      { "type": "uint256", "name": "lupIndex_" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "poolReservesInfo",
-    "outputs": [
-      { "internalType": "uint256", "name": "reserves_", "type": "uint256" },
-      {
-        "internalType": "uint256",
-        "name": "claimableReserves_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "claimableReservesRemaining_",
-        "type": "uint256"
-      },
-      { "internalType": "uint256", "name": "auctionPrice_", "type": "uint256" },
-      { "internalType": "uint256", "name": "timeRemaining_", "type": "uint256" }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [
+      { "type": "uint256", "name": "reserves_" },
+      { "type": "uint256", "name": "claimableReserves_" },
+      { "type": "uint256", "name": "claimableReservesRemaining_" },
+      { "type": "uint256", "name": "auctionPrice_" },
+      { "type": "uint256", "name": "timeRemaining_" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "ajnaPool_", "type": "address" }
-    ],
+    "type": "function",
     "name": "poolUtilizationInfo",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "poolMinDebtAmount_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "poolCollateralization_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "poolActualUtilization_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "poolTargetUtilization_",
-        "type": "uint256"
-      }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [
+      { "type": "uint256", "name": "poolMinDebtAmount_" },
+      { "type": "uint256", "name": "poolCollateralization_" },
+      { "type": "uint256", "name": "poolActualUtilization_" },
+      { "type": "uint256", "name": "poolTargetUtilization_" }
+    ]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "price_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "priceToIndex",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "pure",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "price_" }],
+    "outputs": [{ "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "unutilizedDepositFeeRate",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [{ "type": "address", "name": "ajnaPool_" }],
+    "outputs": [{ "type": "uint256" }]
   }
 ]

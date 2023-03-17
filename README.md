@@ -55,3 +55,14 @@ Below are some examples of queries that can be made to the Ajna Subgraph.
     }
 }
 ```
+
+## Maintenance
+
+To update for new release candidates:
+1. Copy ABIs from an `sdk` checkout from the appropriate branch.
+   ```
+   rsync -avz --existing ../sdk/packages/sdk-api/src/abis abis
+   ```
+2. Update addresses in `constants.ts` and `subgraph.yaml`.
+3. Run `npm run codegen` to find and resolve errors in code generation.
+4. Review contract changes, adjusting subgraph and schema accordingly.  Update handlers and unit tests.  Run `npm run test` to find and resolve issues.

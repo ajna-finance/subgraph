@@ -11,14 +11,14 @@ export function getBucketId(pool: Bytes, index: BigInt): Bytes {
 }
 
 export class BucketInfo {
-    price: BigInt
+    index: BigInt
     quoteTokens: BigInt // deposit + interest
     collateral: BigInt
     lpb: BigInt
     scale: BigInt
     exchangeRate: BigInt
-    constructor(price: BigInt, quoteTokens: BigInt, collateral: BigInt, lpb: BigInt, scale: BigInt, exchangeRate: BigInt) {
-        this.price = price
+    constructor(index: BigInt, quoteTokens: BigInt, collateral: BigInt, lpb: BigInt, scale: BigInt, exchangeRate: BigInt) {
+        this.index = index
         this.quoteTokens = quoteTokens
         this.collateral = collateral
         this.lpb = lpb
@@ -26,11 +26,11 @@ export class BucketInfo {
         this.exchangeRate = exchangeRate
     }
 }
-export function getBucketInfo(pool: Bytes, bucketIndex: BigInt): BucketInfo {
+export function getBucketInfo(pool: Bytes, index: BigInt): BucketInfo {
     const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
     const poolAddress = Address.fromBytes(pool)
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress) // TODO: what should this bind to?
-    const bucketInfoResult = poolInfoUtilsContract.bucketInfo(poolAddress, bucketIndex)
+    const bucketInfoResult = poolInfoUtilsContract.bucketInfo(poolAddress, index)
 
     const bucketInfo = new BucketInfo(
         bucketInfoResult.value0,

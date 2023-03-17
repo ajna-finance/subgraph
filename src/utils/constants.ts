@@ -3,7 +3,7 @@ import { BigInt, Address, BigDecimal, TypedMap } from '@graphprotocol/graph-ts'
 import { bigDecimalExp18, bigDecimalExp27, wadToDecimal } from './convert'
 
 // address of the factory deployed to Goerli
-export const ERC20_FACTORY_ADDRESS = Address.fromString('0xbF332da94B818AC7972484997100c8cBB400b991')
+export const ERC20_FACTORY_ADDRESS = Address.fromString('0x9684b8eC942985b23d343cB82D2F30EdA8fD7179')
 
 export const ZERO_ADDRESS = Address.fromString('0x0000000000000000000000000000000000000000')
 
@@ -28,4 +28,4 @@ export const MAX_PRICE_BI = BigInt.fromString('1004968987606512354182109771')
 
 // poolInfoUtils contract address per network
 export const poolInfoUtilsNetworkLookUpTable = new TypedMap<string, Address>()
-poolInfoUtilsNetworkLookUpTable.set('goerli', Address.fromString('0x32DA971821E6d88FCcD9861EbaCF8590553A2aA8'))
+poolInfoUtilsNetworkLookUpTable.set('goerli', Address.fromString('0xEa36b2a4703182d07df9DdEe46BF97f9979F0cCf'))

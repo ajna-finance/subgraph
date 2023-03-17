@@ -322,7 +322,7 @@ export function mockGetBucketInfo(pool: Address, bucketIndex: BigInt, expectedIn
     createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'bucketInfo', 'bucketInfo(address,uint256):(uint256,uint256,uint256,uint256,uint256,uint256)')
         .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
         .returns([
-            ethereum.Value.fromUnsignedBigInt(expectedInfo.price),
+            ethereum.Value.fromUnsignedBigInt(expectedInfo.index),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.quoteTokens),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.lpb),
@@ -365,6 +365,15 @@ export function mockGetPoolPricesInfo(pool: Address, expectedInfo: PoolPricesInf
         ])
 }
 
+// mock getMomp contract calls
+export function mockGetPoolMomp(pool: Address, expectedInfo: BigInt): void {
+    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'momp', 'momp(address):(uint256)')
+        .withArgs([ethereum.Value.fromAddress(pool)])
+        .returns([
+          ethereum.Value.fromUnsignedBigInt(expectedInfo)
+        ])
+}
+
 // mock getPoolReserves contract calls
 export function mockGetPoolReserves(pool: Address, expectedInfo: ReservesInfo): void {
     createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'poolReservesInfo', 'poolReservesInfo(address):(uint256,uint256,uint256,uint256,uint256)')
@@ -392,7 +401,7 @@ export function mockGetPoolUtilizationInfo(pool: Address, expectedInfo: PoolUtil
 
 // mock auctionInfo contract calls
 export function mockGetAuctionInfoERC20Pool(borrower: Address, pool: Address, expectedInfo: AuctionInfo): void {
-    createMockedFunction(pool, 'auctionInfo', 'auctionInfo(address):(address,uint256,uint256,uint256,uint256,uint256,address,address,address)')
+    createMockedFunction(pool, 'auctionInfo', 'auctionInfo(address):(address,uint256,uint256,uint256,uint256,uint256,address,address,address,bool)')
         .withArgs([ethereum.Value.fromAddress(borrower)])
         .returns([
             ethereum.Value.fromAddress(expectedInfo.kicker),
@@ -403,7 +412,8 @@ export function mockGetAuctionInfoERC20Pool(borrower: Address, pool: Address, ex
             ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice),
             ethereum.Value.fromAddress(expectedInfo.head),
             ethereum.Value.fromAddress(expectedInfo.next),
-            ethereum.Value.fromAddress(expectedInfo.prev)
+            ethereum.Value.fromAddress(expectedInfo.prev),
+            ethereum.Value.fromBoolean(expectedInfo.alreadyTaken)
         ])
 }
 
@@ -454,10 +464,12 @@ export class PoolMockParams {
     htpIndex: BigInt
     lup: BigInt
     lupIndex: BigInt
+    momp: BigInt
     // reserves info mock params
     reserves: BigInt
     claimableReserves: BigInt
     claimableReservesRemaining: BigInt
+    currentBurnEpoch: BigInt
     reserveAuctionPrice: BigInt
     reserveAuctionTimeRemaining: BigInt
     // utilization info mock params
@@ -486,6 +498,8 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.lupIndex
     )
     mockGetPoolPricesInfo(pool, expectedPoolPricesInfo)
+
+    mockGetPoolMomp(pool, params.momp)
 
     const expectedPoolReservesInfo = new ReservesInfo(
         params.reserves,

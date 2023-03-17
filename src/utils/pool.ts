@@ -81,6 +81,12 @@ export function getPoolPricesInfo(pool: Pool): PoolPricesInfo {
     return pricesInfo
 }
 
+export function getPoolMomp(pool: Pool): BigInt {
+    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
+    return poolInfoUtilsContract.momp(Address.fromBytes(pool.id));
+}
+
 export class ReservesInfo {
     reserves: BigInt
     claimableReserves: BigInt
@@ -154,6 +160,7 @@ export function updatePool(pool: Pool): void {
     pool.htpIndex = poolPricesInfo.htpIndex
     pool.lup = wadToDecimal(poolPricesInfo.lup)
     pool.lupIndex = poolPricesInfo.lupIndex
+    pool.momp = wadToDecimal(getPoolMomp(pool))
 
     // update reserve auction information
     const poolReservesInfo = getPoolReservesInfo(pool)
