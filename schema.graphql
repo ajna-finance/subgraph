@@ -158,9 +158,10 @@ type Loan @entity {
   # boolean indicating whether the loan is in liquidations
   inLiquidation: Boolean!
   # collateral tokens deposited in a pool by the borrower
-  collateralDeposited: BigDecimal!
+  collateralDeposited: BigDecimal! # TODO: rename collateralPledged
   # collateralization of the borrow position in the pool
   collateralization: BigDecimal!
+  # TODO: add principal (initial debt drawn from the pool, excluding origination fee)
   # total quote drawn from the pool in the loan
   debt: BigDecimal!
   # borrowers threshold price
@@ -203,6 +204,7 @@ type LiquidationAuction @entity {
   kickTime: BigInt! # block timestamp at which the kick was executed
   bondSize: BigDecimal! # bond provided by kicker to initate auction
   bondFactor: BigDecimal! # bond factor determining the reward or penalty for the kicker
+  # TODO: add kickPrice
   neutralPrice: BigDecimal! # price at which the auction is neutral
   settled: Boolean! # boolean indicating whether the auction has been settled
   next: LiquidationAuction! # id of the next auction in the queue
@@ -445,7 +447,7 @@ type TransferLPs @entity(immutable: true) {
   owner: Bytes! # address
   newOwner: Bytes! # address
   indexes: [BigInt!]! # uint256[]
-  lpTokens: BigInt! # uint256
+  lps: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

@@ -575,7 +575,7 @@ export function createTransferLPsEvent(
   owner: Address,
   newOwner: Address,
   indexes: Array<BigInt>,
-  lpTokens: BigInt
+  lps: BigInt
 ): TransferLPs {
   let transferLpTokensEvent = changetype<TransferLPs>(newMockEvent())
 
@@ -595,8 +595,8 @@ export function createTransferLPsEvent(
   )
   transferLpTokensEvent.parameters.push(
     new ethereum.EventParam(
-      "lpTokens",
-      ethereum.Value.fromUnsignedBigInt(lpTokens)
+      "lps",
+      ethereum.Value.fromUnsignedBigInt(lps)
     )
   )
 

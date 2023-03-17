@@ -943,7 +943,7 @@ export function handleTransferLPs(event: TransferLPsEvent): void {
   entity.owner = event.params.owner
   entity.newOwner = event.params.newOwner
   entity.indexes = event.params.indexes
-  entity.lpTokens = event.params.lpTokens
+  entity.lps = event.params.lps
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
