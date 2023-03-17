@@ -365,6 +365,15 @@ export function mockGetPoolPricesInfo(pool: Address, expectedInfo: PoolPricesInf
         ])
 }
 
+// mock getMomp contract calls
+export function mockGetPoolMomp(pool: Address, expectedInfo: BigInt): void {
+    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'momp', 'momp(address):(uint256)')
+        .withArgs([ethereum.Value.fromAddress(pool)])
+        .returns([
+          ethereum.Value.fromUnsignedBigInt(expectedInfo)
+        ])
+}
+
 // mock getPoolReserves contract calls
 export function mockGetPoolReserves(pool: Address, expectedInfo: ReservesInfo): void {
     createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'poolReservesInfo', 'poolReservesInfo(address):(uint256,uint256,uint256,uint256,uint256)')
@@ -455,6 +464,7 @@ export class PoolMockParams {
     htpIndex: BigInt
     lup: BigInt
     lupIndex: BigInt
+    momp: BigInt
     // reserves info mock params
     reserves: BigInt
     claimableReserves: BigInt
@@ -488,6 +498,8 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.lupIndex
     )
     mockGetPoolPricesInfo(pool, expectedPoolPricesInfo)
+
+    mockGetPoolMomp(pool, params.momp)
 
     const expectedPoolReservesInfo = new ReservesInfo(
         params.reserves,

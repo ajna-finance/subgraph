@@ -112,6 +112,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.htpIndex = ZERO_BI
   pool.lup = MAX_PRICE
   pool.lupIndex = MAX_PRICE_INDEX
+  pool.momp = ZERO_BD
 
   // reserve auction information
   pool.reserves = ZERO_BD

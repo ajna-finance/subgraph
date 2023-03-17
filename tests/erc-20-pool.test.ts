@@ -95,6 +95,7 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
       lupIndex: MAX_PRICE_INDEX,
+      momp: BigInt.fromI32(623804),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -196,6 +197,7 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: lup,
       lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      momp: BigInt.fromI32(623803),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -1196,6 +1198,7 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
       lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      momp: BigInt.fromI32(623801),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemaining,
       claimableReservesRemaining: claimableReservesRemaining,
@@ -1288,6 +1291,7 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
       lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      momp: BigInt.fromI32(623802),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemainingAfterTake,
       claimableReservesRemaining: claimableReservesRemainingAfterTake,

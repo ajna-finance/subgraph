@@ -11,6 +11,7 @@ type Token @entity {
   # token decimals
   decimals: BigInt!
   # flag for whether the token is an ERC721
+  # TODO: make this a string, enabling new pool types (such as ERC1155)
   isERC721: Boolean!
   # number of pools including this token
   poolCount: BigInt!
@@ -31,7 +32,6 @@ type ERC20PoolFactory @entity {
   txCount: BigInt!
 }
 
-# TODO: add momp
 type Pool @entity {
   # pool address
   id: Bytes!
@@ -73,7 +73,8 @@ type Pool @entity {
   htp: BigDecimal! # current highest threshold price
   htpIndex: BigInt! # current highest threshold price index
   lup: BigDecimal! # current lowest utilized price
-  lupIndex: BigInt! # current lowest utilized price index
+  lupIndex: BigInt! # current lowest utilized price index  
+  momp: BigDecimal! # most optimistic matching price
 
   # RESERVES INFORMATION
   # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
