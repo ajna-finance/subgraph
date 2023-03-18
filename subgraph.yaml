@@ -31,13 +31,13 @@ dataSources:
           handler: handleApprovalForAll
         - event: Burn(indexed address,indexed uint256)
           handler: handleBurn
-        - event: MemorializePosition(indexed address,uint256)
+        - event: MemorializePosition(indexed address,uint256,uint256[])
           handler: handleMemorializePosition
         - event: Mint(indexed address,indexed address,uint256)
           handler: handleMint
-        - event: MoveLiquidity(indexed address,uint256)
+        - event: MoveLiquidity(indexed address,uint256,uint256,uint256)
           handler: handleMoveLiquidity
-        - event: RedeemPosition(indexed address,uint256)
+        - event: RedeemPosition(indexed address,uint256,uint256[])
           handler: handleRedeemPosition
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer

@@ -495,6 +495,7 @@ type MemorializePosition @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
   tokenId: BigInt! # uint256
+  indexes: [BigInt!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -514,6 +515,8 @@ type MoveLiquidity @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
   tokenId: BigInt! # uint256
+  fromIndex: BigInt! # uint256
+  toIndex: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -523,6 +526,7 @@ type RedeemPosition @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
   tokenId: BigInt! # uint256
+  indexesRedeemed: [BigInt!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

@@ -71,6 +71,7 @@ export function handleMemorializePosition(
   )
   entity.lender = event.params.lender
   entity.tokenId = event.params.tokenId
+  entity.indexes = event.params.indexes
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -100,6 +101,8 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   )
   entity.lender = event.params.lender
   entity.tokenId = event.params.tokenId
+  entity.fromIndex = event.params.fromIndex
+  entity.toIndex = event.params.toIndex
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -114,6 +117,7 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   )
   entity.lender = event.params.lender
   entity.tokenId = event.params.tokenId
+  entity.indexesRedeemed = event.params.indexes
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp

@@ -5,7 +5,7 @@ import { handlePoolCreated } from "../../src/erc-20-pool-factory"
 import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
 import { BucketInfo, getBucketId } from "../../src/utils/bucket"
-import { addressToBytes, rayToDecimal, wadToDecimal } from "../../src/utils/convert"
+import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
 import { poolInfoUtilsNetworkLookUpTable } from "../../src/utils/constants"
 import { BurnInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo } from "../../src/utils/liquidation"
@@ -39,13 +39,13 @@ export function assertBucketUpdate(params: BucketUpdatedParams): void {
         "Bucket",
         `${params.id.toHexString()}`,
         "exchangeRate",
-        `${rayToDecimal(params.exchangeRate)}`
+        `${wadToDecimal(params.exchangeRate)}`
     )
     assert.fieldEquals(
         "Bucket",
         `${params.id.toHexString()}`,
         "lpb",
-        `${rayToDecimal(params.lpb)}`
+        `${wadToDecimal(params.lpb)}`
     )
 }
 
@@ -72,7 +72,7 @@ export function assertLendUpdate(params: LendUpdatedParams): void {
         "Lend",
         `${params.id.toHexString()}`,
         "lpb",
-        `${rayToDecimal(params.lpb)}`
+        `${wadToDecimal(params.lpb)}`
     )
     assert.fieldEquals(
         "Lend",

@@ -1,264 +1,197 @@
 [
   {
+    "type": "constructor",
+    "payable": false,
     "inputs": [
-      { "internalType": "address", "name": "ajnaToken_", "type": "address" },
-      {
-        "internalType": "contract IPositionManager",
-        "name": "positionManager_",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
+      { "type": "address", "name": "ajnaToken_" },
+      { "type": "address", "name": "positionManager_" }
+    ]
   },
-  { "inputs": [], "name": "AlreadyClaimed", "type": "error" },
-  { "inputs": [], "name": "ExchangeRateUpdateTooLate", "type": "error" },
-  { "inputs": [], "name": "NotOwnerOfDeposit", "type": "error" },
+  { "type": "error", "name": "AlreadyClaimed", "inputs": [] },
+  { "type": "error", "name": "EpochNotAvailable", "inputs": [] },
+  { "type": "error", "name": "ExchangeRateUpdateTooLate", "inputs": [] },
+  { "type": "error", "name": "MoveStakedLiquidityInvalid", "inputs": [] },
+  { "type": "error", "name": "NotOwnerOfDeposit", "inputs": [] },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "ajnaPool",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "epochsClaimed",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
     "name": "ClaimRewards",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "owner", "indexed": true },
+      { "type": "address", "name": "ajnaPool", "indexed": true },
+      { "type": "uint256", "name": "tokenId", "indexed": true },
+      { "type": "uint256[]", "name": "epochsClaimed", "indexed": false },
+      { "type": "uint256", "name": "amount", "indexed": false }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
+    "name": "MoveStakedLiquidity",
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "ajnaPool",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      }
-    ],
+      { "type": "uint256", "name": "tokenId", "indexed": false },
+      { "type": "uint256[]", "name": "fromIndexes", "indexed": false },
+      { "type": "uint256[]", "name": "toIndexes", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
     "name": "Stake",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "owner", "indexed": true },
+      { "type": "address", "name": "ajnaPool", "indexed": true },
+      { "type": "uint256", "name": "tokenId", "indexed": true }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "ajnaPool",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      }
-    ],
     "name": "Unstake",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "owner", "indexed": true },
+      { "type": "address", "name": "ajnaPool", "indexed": true },
+      { "type": "uint256", "name": "tokenId", "indexed": true }
+    ]
   },
   {
+    "type": "event",
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "ajnaPool",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "indexesUpdated",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rewardsClaimed",
-        "type": "uint256"
-      }
-    ],
     "name": "UpdateExchangeRates",
-    "type": "event"
+    "inputs": [
+      { "type": "address", "name": "caller", "indexed": true },
+      { "type": "address", "name": "ajnaPool", "indexed": true },
+      { "type": "uint256[]", "name": "indexesUpdated", "indexed": false },
+      { "type": "uint256", "name": "rewardsClaimed", "indexed": false }
+    ]
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "ajnaToken",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "tokenId_", "type": "uint256" },
-      {
-        "internalType": "uint256",
-        "name": "burnEpochToStartClaim_",
-        "type": "uint256"
-      }
-    ],
-    "name": "calculateRewards",
-    "outputs": [
-      { "internalType": "uint256", "name": "rewards_", "type": "uint256" }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "tokenId_", "type": "uint256" },
-      {
-        "internalType": "uint256",
-        "name": "burnEpochToStartClaim_",
-        "type": "uint256"
-      }
-    ],
-    "name": "claimRewards",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "tokenId_", "type": "uint256" }
-    ],
-    "name": "getStakeInfo",
-    "outputs": [
-      { "internalType": "address", "name": "", "type": "address" },
-      { "internalType": "address", "name": "", "type": "address" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
-    "name": "isEpochClaimed",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "", "type": "address" },
-      { "internalType": "address", "name": "", "type": "address" },
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "bytes", "name": "", "type": "bytes" }
-    ],
-    "name": "onERC721Received",
-    "outputs": [{ "internalType": "bytes4", "name": "", "type": "bytes4" }],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
+    "payable": false,
     "inputs": [],
+    "outputs": [{ "type": "address" }]
+  },
+  {
+    "type": "function",
+    "name": "calculateRewards",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "tokenId_" },
+      { "type": "uint256", "name": "epochToClaim_" }
+    ],
+    "outputs": [{ "type": "uint256", "name": "rewards_" }]
+  },
+  {
+    "type": "function",
+    "name": "claimRewards",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "tokenId_" },
+      { "type": "uint256", "name": "epochToClaim_" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "getBucketStateStakeInfo",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "tokenId_" },
+      { "type": "uint256", "name": "bucketId_" }
+    ],
+    "outputs": [{ "type": "uint256" }, { "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "getStakeInfo",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "tokenId_" }],
+    "outputs": [{ "type": "address" }, { "type": "address" }, { "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "isEpochClaimed",
+    "constant": true,
+    "stateMutability": "view",
+    "payable": false,
+    "inputs": [{ "type": "uint256" }, { "type": "uint256" }],
+    "outputs": [{ "type": "bool" }]
+  },
+  {
+    "type": "function",
+    "name": "moveStakedLiquidity",
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "uint256", "name": "tokenId_" },
+      { "type": "uint256[]", "name": "fromBuckets_" },
+      { "type": "uint256[]", "name": "toBuckets_" },
+      { "type": "uint256", "name": "expiry_" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
     "name": "positionManager",
-    "outputs": [
-      {
-        "internalType": "contract IPositionManager",
-        "name": "",
-        "type": "address"
-      }
-    ],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [],
+    "outputs": [{ "type": "address" }]
   },
   {
-    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "type": "function",
     "name": "rewardsClaimed",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256" }],
+    "outputs": [{ "type": "uint256" }]
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "tokenId_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "stake",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "tokenId_" }],
+    "outputs": []
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "tokenId_", "type": "uint256" }
-    ],
+    "type": "function",
     "name": "unstake",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "constant": false,
+    "payable": false,
+    "inputs": [{ "type": "uint256", "name": "tokenId_" }],
+    "outputs": []
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "pool_", "type": "address" },
-      { "internalType": "uint256[]", "name": "indexes_", "type": "uint256[]" }
-    ],
+    "type": "function",
     "name": "updateBucketExchangeRatesAndClaim",
-    "outputs": [
-      { "internalType": "uint256", "name": "updateReward", "type": "uint256" }
+    "constant": false,
+    "payable": false,
+    "inputs": [
+      { "type": "address", "name": "pool_" },
+      { "type": "uint256[]", "name": "indexes_" }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "outputs": [{ "type": "uint256", "name": "updateReward" }]
   },
   {
-    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "type": "function",
     "name": "updateRewardsClaimed",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "constant": true,
     "stateMutability": "view",
-    "type": "function"
+    "payable": false,
+    "inputs": [{ "type": "uint256" }],
+    "outputs": [{ "type": "uint256" }]
   }
 ]
