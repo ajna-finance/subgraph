@@ -42,7 +42,6 @@ npm run build
 
 This subgraph can be run locally using provided docker containers. To start, set the environment variable *ETH_RPC_URL* in your .env file. Then, run `docker-compose up`. Once the node is running, deploy the subgraph with:
 ```
-npm run build
 npm run create-local
 npm run deploy-local
 ```

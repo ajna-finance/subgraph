@@ -1,9 +1,5 @@
 [
-  {
-    "type": "constructor",
-    "payable": false,
-    "inputs": [{ "type": "address", "name": "ajna_" }]
-  },
+  { "type": "constructor", "payable": false, "inputs": [{ "type": "address", "name": "ajna_" }] },
   { "type": "error", "name": "CreateFail", "inputs": [] },
   { "type": "error", "name": "DeployWithZeroAddress", "inputs": [] },
   { "type": "error", "name": "NFTNotSupported", "inputs": [] },
@@ -71,11 +67,7 @@
     "constant": true,
     "stateMutability": "view",
     "payable": false,
-    "inputs": [
-      { "type": "bytes32" },
-      { "type": "address" },
-      { "type": "address" }
-    ],
+    "inputs": [{ "type": "bytes32" }, { "type": "address" }, { "type": "address" }],
     "outputs": [{ "type": "address" }]
   },
   {

@@ -274,11 +274,7 @@
     "anonymous": false,
     "name": "ReserveAuction",
     "inputs": [
-      {
-        "type": "uint256",
-        "name": "claimableReservesRemaining",
-        "indexed": false
-      },
+      { "type": "uint256", "name": "claimableReservesRemaining", "indexed": false },
       { "type": "uint256", "name": "auctionPrice", "indexed": false },
       { "type": "uint256", "name": "currentBurnEpoch", "indexed": false }
     ]
@@ -420,11 +416,7 @@
     "stateMutability": "view",
     "payable": false,
     "inputs": [{ "type": "address", "name": "borrower_" }],
-    "outputs": [
-      { "type": "uint256" },
-      { "type": "uint256" },
-      { "type": "uint256" }
-    ]
+    "outputs": [{ "type": "uint256" }, { "type": "uint256" }, { "type": "uint256" }]
   },
   {
     "type": "function",
@@ -478,11 +470,7 @@
     "stateMutability": "view",
     "payable": false,
     "inputs": [{ "type": "uint256", "name": "burnEventEpoch_" }],
-    "outputs": [
-      { "type": "uint256" },
-      { "type": "uint256" },
-      { "type": "uint256" }
-    ]
+    "outputs": [{ "type": "uint256" }, { "type": "uint256" }, { "type": "uint256" }]
   },
   {
     "type": "function",
@@ -518,11 +506,7 @@
     "stateMutability": "view",
     "payable": false,
     "inputs": [],
-    "outputs": [
-      { "type": "uint256" },
-      { "type": "uint256" },
-      { "type": "uint256" }
-    ]
+    "outputs": [{ "type": "uint256" }, { "type": "uint256" }, { "type": "uint256" }]
   },
   {
     "type": "function",
@@ -712,11 +696,7 @@
     "stateMutability": "view",
     "payable": false,
     "inputs": [],
-    "outputs": [
-      { "type": "address" },
-      { "type": "uint256" },
-      { "type": "uint256" }
-    ]
+    "outputs": [{ "type": "address" }, { "type": "uint256" }, { "type": "uint256" }]
   },
   {
     "type": "function",
