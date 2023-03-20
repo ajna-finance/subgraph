@@ -1,22 +1,19 @@
 {
   "goerli": {
-    "ERC20Pool": {
-      "address": "0x0bde5e31af1a88113158fb577cb3c61df9843afe"
-    },
     "PositionManager": {
-      "address": "0x235162AF9407e485DeB9E2f65CDC621B087B540C"
+      "address": "0x31BcbE14Ad30B2f7E1E4A14caB2C16849B73Dac3"
     },
     "PoolInfoUtils": {
-      "address": "0x32DA971821E6d88FCcD9861EbaCF8590553A2aA8"
+      "address": "0xEa36b2a4703182d07df9DdEe46BF97f9979F0cCf"
     },
     "ERC20PoolFactory": {
-      "address": "0xbF332da94B818AC7972484997100c8cBB400b991"
+      "address": "0x9684b8eC942985b23d343cB82D2F30EdA8fD7179"
     },
     "RewardsManager": {
-      "address": "0x6757ccD59eCD0088f01c5F2d4992258CB12cC376"
+      "address": "0xEd6890d748e62ddbb3f80e7256Deeb2fBb853476"
     },
     "ERC721PoolFactory": {
-      "address": "0x0bBd35022094a75b5A58A2E6Fa6F1989A0F682F5"
+      "address": "0x7DB5ba7cB6dAD74b45AAB027A7E7388eF18656DF"
     }
   }
 }
