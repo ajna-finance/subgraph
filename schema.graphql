@@ -526,7 +526,7 @@ type RedeemPosition @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
   tokenId: BigInt! # uint256
-  indexesRedeemed: [BigInt!]! # uint256[]
+  indexes: [BigInt!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
