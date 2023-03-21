@@ -10,6 +10,7 @@ import {
   BucketTakeLPAwarded as BucketTakeLPAwardedEvent,
   DrawDebt as DrawDebtEvent,
   Kick as KickEvent,
+  LoanStamped as LoanStampedEvent,
   MoveQuoteToken as MoveQuoteTokenEvent,
   RemoveCollateral as RemoveCollateralEvent,
   RemoveQuoteToken as RemoveQuoteTokenEvent,
@@ -31,6 +32,7 @@ import {
   DrawDebt,
   Kick,
   LiquidationAuction,
+  LoanStamped,
   MoveQuoteToken,
   Pool,
   RemoveCollateral,
@@ -543,6 +545,17 @@ export function handleKick(event: KickEvent): void {
   }
 
   kick.save()
+}
+
+export function handleLoanStamped(event: LoanStampedEvent): void {
+  const entity = new LoanStamped(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  entity.borrower = event.params.borrower
+
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
 }
 
 export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {

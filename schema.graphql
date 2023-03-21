@@ -349,6 +349,14 @@ type Kick @entity {
   transactionHash: Bytes!
 }
 
+type LoanStamped @entity(immutable: true) {
+  id: Bytes!
+  borrower: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type MoveQuoteToken @entity(immutable: true) {
   id: Bytes!
   pool: Pool! # Pool in which quote tokens were moved
@@ -517,6 +525,16 @@ type MoveLiquidity @entity(immutable: true) {
   tokenId: BigInt! # uint256
   fromIndex: BigInt! # uint256
   toIndex: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MoveStakedLiquidity @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  fromIndexes: [BigInt!]! # uint256
+  toIndexes: [BigInt!]! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

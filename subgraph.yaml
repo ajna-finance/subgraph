@@ -76,6 +76,7 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - ClaimRewards
+        - MoveStakedLiquidity
         - Stake
         - Unstake
         - UpdateExchangeRates
@@ -85,6 +86,8 @@ dataSources:
       eventHandlers:
         - event: ClaimRewards(indexed address,indexed address,indexed uint256,uint256[],uint256)
           handler: handleClaimRewards
+        - event: MoveStakedLiquidity(uint256,uint256[],uint256[])
+          handler: handleMoveStakedLiquidity
         - event: Stake(indexed address,indexed address,indexed uint256)
           handler: handleStake
         - event: Unstake(indexed address,indexed address,indexed uint256)
@@ -108,7 +111,7 @@ dataSources:
         - name: ERC721PoolFactory
           file: ./abis/ERC721PoolFactory.json
         - name: ERC20
-          file: ./abis/ERC20.json          
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: PoolCreated(address)
           handler: handlePoolCreated
@@ -166,8 +169,9 @@ templates:
           handler: handleDrawDebt
         - event: Kick(indexed address,uint256,uint256,uint256)
           handler: handleKick
-        - event: MoveQuoteToken(indexed address,indexed uint256,indexed
-            uint256,uint256,uint256,uint256,uint256)
+        - event: LoanStamped(indexed address)
+          handler: handleLoanStamped
+        - event: MoveQuoteToken(indexed address,indexed uint256,indexed uint256,uint256,uint256,uint256,uint256)
           handler: handleMoveQuoteToken
         - event: RemoveCollateral(indexed address,indexed uint256,uint256,uint256)
           handler: handleRemoveCollateral
