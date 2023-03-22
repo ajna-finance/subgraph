@@ -279,6 +279,16 @@ type AuctionSettle @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type BondWithdrawn @entity(immutable: true) {
+  id: Bytes!
+  kicker: Bytes! # address
+  reciever: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type BucketBankruptcy @entity(immutable: true) {
   id: Bytes!
   bucket: Bucket! # Bucket which was bankrupted

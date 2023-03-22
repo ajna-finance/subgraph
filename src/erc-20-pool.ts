@@ -5,6 +5,7 @@ import {
   AddQuoteToken as AddQuoteTokenEvent,
   AuctionNFTSettle as AuctionNFTSettleEvent,
   AuctionSettle as AuctionSettleEvent,
+  BondWithdrawn as BondWithdrawnEvent,
   BucketBankruptcy as BucketBankruptcyEvent,
   BucketTake as BucketTakeEvent,
   BucketTakeLPAwarded as BucketTakeLPAwardedEvent,
@@ -26,6 +27,7 @@ import {
   AddQuoteToken,
   AuctionNFTSettle,
   AuctionSettle,
+  BondWithdrawn,
   BucketBankruptcy,
   BucketTake,
   BucketTakeLPAwarded,
@@ -232,6 +234,21 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
   }
 
   auctionSettle.save()
+}
+
+export function handleBondWithdrawn(event: BondWithdrawnEvent): void {
+  let entity = new BondWithdrawn(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  entity.kicker = event.params.kicker
+  entity.reciever = event.params.reciever
+  entity.amount = event.params.amount
+
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+
+  entity.save()
 }
 
 export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
