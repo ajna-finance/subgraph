@@ -129,6 +129,7 @@ templates:
       entities:
         - AddCollateral
         - AddQuoteToken
+        - ApproveLpTransferors
         - AuctionNFTSettle
         - AuctionSettle
         - BondWithdrawn
@@ -143,6 +144,9 @@ templates:
         - RemoveQuoteToken
         - RepayDebt
         - ReserveAuction
+        - RevokeLpAllowance
+        - RevokeLpTransferors
+        - SetLpAllowance
         - Settle
         - Take
         - TransferLPs
@@ -157,6 +161,8 @@ templates:
           handler: handleAddCollateral
         - event: AddQuoteToken(indexed address,indexed uint256,uint256,uint256,uint256)
           handler: handleAddQuoteToken
+        - event: ApproveLpTransferors(indexed address,address[])
+          handler: handleApproveLpTransferors
         - event: AuctionNFTSettle(indexed address,uint256,uint256,uint256)
           handler: handleAuctionNFTSettle
         - event: AuctionSettle(indexed address,uint256)
@@ -175,7 +181,8 @@ templates:
           handler: handleKick
         - event: LoanStamped(indexed address)
           handler: handleLoanStamped
-        - event: MoveQuoteToken(indexed address,indexed uint256,indexed uint256,uint256,uint256,uint256,uint256)
+        - event: MoveQuoteToken(indexed address,indexed uint256,indexed
+            uint256,uint256,uint256,uint256,uint256)
           handler: handleMoveQuoteToken
         - event: RemoveCollateral(indexed address,indexed uint256,uint256,uint256)
           handler: handleRemoveCollateral
@@ -185,6 +192,12 @@ templates:
           handler: handleRepayDebt
         - event: ReserveAuction(uint256,uint256,uint256)
           handler: handleReserveAuction
+        - event: RevokeLpAllowance(indexed address,uint256[])
+          handler: handleRevokeLpAllowance
+        - event: RevokeLpTransferors(indexed address,address[])
+          handler: handleRevokeLpTransferors
+        - event: SetLpAllowance(indexed address,uint256[],uint256[])
+          handler: handleSetLpAllowance
         - event: Settle(indexed address,uint256)
           handler: handleSettle
         - event: Take(indexed address,uint256,uint256,uint256,bool)

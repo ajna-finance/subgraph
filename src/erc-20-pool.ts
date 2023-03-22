@@ -3,6 +3,7 @@ import { Bytes } from "@graphprotocol/graph-ts"
 import {
   AddCollateral as AddCollateralEvent,
   AddQuoteToken as AddQuoteTokenEvent,
+  ApproveLpTransferors as ApproveLpTransferorsEvent,
   AuctionNFTSettle as AuctionNFTSettleEvent,
   AuctionSettle as AuctionSettleEvent,
   BondWithdrawn as BondWithdrawnEvent,
@@ -17,6 +18,9 @@ import {
   RemoveQuoteToken as RemoveQuoteTokenEvent,
   RepayDebt as RepayDebtEvent,
   ReserveAuction as ReserveAuctionEvent,
+  RevokeLpAllowance as RevokeLpAllowanceEvent,
+  RevokeLpTransferors as RevokeLpTransferorsEvent,
+  SetLpAllowance as SetLpAllowanceEvent,
   Settle as SettleEvent,
   Take as TakeEvent,
   TransferLPs as TransferLPsEvent,
@@ -35,6 +39,9 @@ import {
   Kick,
   LiquidationAuction,
   LoanStamped,
+  LPAllowance,
+  LPAllowances,
+  LPTransferors,
   MoveQuoteToken,
   Pool,
   RemoveCollateral,
@@ -58,6 +65,8 @@ import { getBurnInfo, getCurrentBurnEpoch, updatePool, updatePoolLiquidationAuct
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 import { getReserveAuctionId, loadOrCreateReserveAuctionProcess, reserveAuctionKickerReward } from "./utils/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token"
+import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/lp-transferors"
+import { loadOrCreateAllowances, revokeAllowances, setAllowances } from "./utils/lp-allowances"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   let addCollateral = new AddCollateral(
@@ -179,6 +188,44 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   }
 
   addQuoteToken.save()
+}
+
+export function handleApproveLpTransferors(
+  event: ApproveLpTransferorsEvent
+): void {
+  const poolId = addressToBytes(event.transaction.to!)
+  const entity = loadOrCreateTransferors(poolId, event.params.lender)
+  approveTransferors(entity, event.params.transferors)
+
+  entity.save()
+}
+
+export function handleRevokeLpTransferors(
+  event: RevokeLpTransferorsEvent
+): void {
+  const poolId = addressToBytes(event.transaction.to!)
+  const entity = loadOrCreateTransferors(poolId, event.params.lender)
+  revokeTransferors(entity, event.params.transferors)
+
+  entity.save()
+}
+
+export function handleSetLpAllowance(event: SetLpAllowanceEvent): void {
+  const poolId = addressToBytes(event.transaction.to!)
+  const lender = event.transaction.from
+  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  setAllowances(entity, event.params.indexes, event.params.amounts)
+
+  entity.save()
+}
+
+export function handleRevokeLpAllowance(event: RevokeLpAllowanceEvent): void {
+  const poolId = addressToBytes(event.transaction.to!)
+  const lender = event.transaction.from
+  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  revokeAllowances(entity, event.params.indexes)
+
+  entity.save()
 }
 
 // ERC721Pool only
