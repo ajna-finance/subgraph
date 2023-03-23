@@ -1,106 +1,214 @@
 [
-  { "type": "constructor", "payable": false, "inputs": [{ "type": "address", "name": "ajna_" }] },
-  { "type": "error", "name": "CreateFail", "inputs": [] },
-  { "type": "error", "name": "DeployWithZeroAddress", "inputs": [] },
-  { "type": "error", "name": "PoolAlreadyExists", "inputs": [] },
-  { "type": "error", "name": "PoolInterestRateInvalid", "inputs": [] },
   {
-    "type": "event",
-    "anonymous": false,
-    "name": "PoolCreated",
-    "inputs": [{ "type": "address", "name": "pool_", "indexed": false }]
-  },
-  {
-    "type": "function",
-    "name": "ERC20_NON_SUBSET_HASH",
-    "constant": true,
-    "stateMutability": "view",
-    "payable": false,
-    "inputs": [],
-    "outputs": [{ "type": "bytes32" }]
-  },
-  {
-    "type": "function",
-    "name": "MAX_RATE",
-    "constant": true,
-    "stateMutability": "view",
-    "payable": false,
-    "inputs": [],
-    "outputs": [{ "type": "uint256" }]
-  },
-  {
-    "type": "function",
-    "name": "MIN_RATE",
-    "constant": true,
-    "stateMutability": "view",
-    "payable": false,
-    "inputs": [],
-    "outputs": [{ "type": "uint256" }]
-  },
-  {
-    "type": "function",
-    "name": "ajna",
-    "constant": true,
-    "stateMutability": "view",
-    "payable": false,
-    "inputs": [],
-    "outputs": [{ "type": "address" }]
-  },
-  {
-    "type": "function",
-    "name": "deployPool",
-    "constant": false,
-    "payable": false,
     "inputs": [
-      { "type": "address", "name": "collateral_" },
-      { "type": "address", "name": "quote_" },
-      { "type": "uint256", "name": "interestRate_" }
+      {
+        "internalType": "address",
+        "name": "ajna_",
+        "type": "address"
+      }
     ],
-    "outputs": [{ "type": "address", "name": "pool_" }]
+    "stateMutability": "nonpayable",
+    "type": "constructor"
   },
   {
-    "type": "function",
+    "inputs": [],
+    "name": "CreateFail",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "DeployWithZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PoolAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PoolInterestRateInvalid",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "pool_",
+        "type": "address"
+      }
+    ],
+    "name": "PoolCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "ERC20_NON_SUBSET_HASH",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_RATE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MIN_RATE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ajna",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "collateral_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "quote_",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "interestRate_",
+        "type": "uint256"
+      }
+    ],
+    "name": "deployPool",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "pool_",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "name": "deployedPools",
-    "constant": true,
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "stateMutability": "view",
-    "payable": false,
-    "inputs": [{ "type": "bytes32" }, { "type": "address" }, { "type": "address" }],
-    "outputs": [{ "type": "address" }]
+    "type": "function"
   },
   {
-    "type": "function",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "name": "deployedPoolsList",
-    "constant": true,
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "stateMutability": "view",
-    "payable": false,
-    "inputs": [{ "type": "uint256" }],
-    "outputs": [{ "type": "address" }]
+    "type": "function"
   },
   {
-    "type": "function",
+    "inputs": [],
     "name": "getDeployedPoolsList",
-    "constant": true,
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
     "stateMutability": "view",
-    "payable": false,
-    "inputs": [],
-    "outputs": [{ "type": "address[]" }]
+    "type": "function"
   },
   {
-    "type": "function",
+    "inputs": [],
     "name": "getNumberOfDeployedPools",
-    "constant": true,
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
-    "payable": false,
-    "inputs": [],
-    "outputs": [{ "type": "uint256" }]
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "implementation",
-    "constant": true,
-    "stateMutability": "view",
-    "payable": false,
     "inputs": [],
-    "outputs": [{ "type": "address" }]
+    "name": "implementation",
+    "outputs": [
+      {
+        "internalType": "contract ERC20Pool",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   }
 ]
