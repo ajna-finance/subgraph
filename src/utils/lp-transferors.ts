@@ -18,13 +18,20 @@ export function loadOrCreateTransferors(poolId: Bytes, lenderId: Bytes): LPTrans
 }
 
 export function approveTransferors(entity: LPTransferors, transferorsApproved: Address[]): void {
-  // TODO: iterate through, pushing each transfer if not already there
-  // entity.transferors = entity.transferors.concat(transferorsApproved);
+  // iterate through newly-approved transferors, pushing each transfer if not already there
+  for (var i=0; i<transferorsApproved.length; ++i) {
+    const approved = transferorsApproved[i]
+    if (entity.transferors.indexOf(approved) == -1)
+      entity.transferors.push(approved)
+  }
 }
 
 export function revokeTransferors(entity: LPTransferors, transferorsRevoked: Address[]): void {
-  // TODO: iterate through, removing each transferor
-  // const index = entity.transferors.indexOf(transferor)
-  // if (index != -1)
-  //   entity.transferors = entity.transferors.slice(index, 1)
+  // iterate through, removing each revoked transferor
+  for (var i=0; i<transferorsRevoked.length; ++i) {
+    const revoked = transferorsRevoked[i]
+    const indexToRemove = entity.transferors.indexOf(revoked)
+    if (indexToRemove != -1)
+      entity.transferors.splice(indexToRemove, 1)
+  }
 }
