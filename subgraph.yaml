@@ -8,6 +8,7 @@ dataSources:
     source:
       address: "0x31BcbE14Ad30B2f7E1E4A14caB2C16849B73Dac3"
       abi: PositionManager
+      startBlock: 8613513
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -48,6 +49,7 @@ dataSources:
     source:
       address: "0x9684b8eC942985b23d343cB82D2F30EdA8fD7179"
       abi: ERC20PoolFactory
+      startBlock: 8613513
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -57,7 +59,9 @@ dataSources:
       abis:
         - name: ERC20PoolFactory
           file: ./abis/ERC20PoolFactory.json
-          # add token ABI to each respective factory type for querying token contracts
+          # add pool and token ABIs to each respective factory type for querying token contracts
+        - name: ERC20Pool
+          file: ./abis/ERC20Pool.json
         - name: ERC20
           file: ./abis/ERC20.json
       eventHandlers:
@@ -70,6 +74,7 @@ dataSources:
     source:
       address: "0xEd6890d748e62ddbb3f80e7256Deeb2fBb853476"
       abi: RewardsManager
+      startBlock: 8613513
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -101,6 +106,7 @@ dataSources:
     source:
       address: "0x7DB5ba7cB6dAD74b45AAB027A7E7388eF18656DF"
       abi: ERC721PoolFactory
+      startBlock: 8613513
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
