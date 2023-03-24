@@ -4,7 +4,7 @@ import { Bucket } from "../../generated/schema"
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
 import { poolInfoUtilsNetworkLookUpTable, ONE_BD, ONE_BI, ONE_RAY_BD, ZERO_BD, ZERO_BI } from "./constants"
-import { rayToDecimal, wadToDecimal } from "./convert"
+import { wadToDecimal } from "./convert"
 
 export function getBucketId(pool: Bytes, index: BigInt): Bytes {
     return pool.concat(Bytes.fromUTF8('#' + index.toString()))
@@ -63,6 +63,6 @@ export function loadOrCreateBucket(poolId: Bytes, bucketId: Bytes, index: BigInt
 export function updateBucket(bucket: Bucket, bucketInfo: BucketInfo): void {
     bucket.collateral   = wadToDecimal(bucketInfo.collateral)
     bucket.quoteTokens  = wadToDecimal(bucketInfo.quoteTokens)
-    bucket.lpb          = rayToDecimal(bucketInfo.lpb)
-    bucket.exchangeRate = rayToDecimal(bucketInfo.exchangeRate)
+    bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+    bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
 }

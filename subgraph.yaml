@@ -31,13 +31,13 @@ dataSources:
           handler: handleApprovalForAll
         - event: Burn(indexed address,indexed uint256)
           handler: handleBurn
-        - event: MemorializePosition(indexed address,uint256)
+        - event: MemorializePosition(indexed address,uint256,uint256[])
           handler: handleMemorializePosition
         - event: Mint(indexed address,indexed address,uint256)
           handler: handleMint
-        - event: MoveLiquidity(indexed address,uint256)
+        - event: MoveLiquidity(indexed address,uint256,uint256,uint256)
           handler: handleMoveLiquidity
-        - event: RedeemPosition(indexed address,uint256)
+        - event: RedeemPosition(indexed address,uint256,uint256[])
           handler: handleRedeemPosition
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
@@ -76,6 +76,7 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - ClaimRewards
+        - MoveStakedLiquidity
         - Stake
         - Unstake
         - UpdateExchangeRates
@@ -85,6 +86,8 @@ dataSources:
       eventHandlers:
         - event: ClaimRewards(indexed address,indexed address,indexed uint256,uint256[],uint256)
           handler: handleClaimRewards
+        - event: MoveStakedLiquidity(uint256,uint256[],uint256[])
+          handler: handleMoveStakedLiquidity
         - event: Stake(indexed address,indexed address,indexed uint256)
           handler: handleStake
         - event: Unstake(indexed address,indexed address,indexed uint256)
@@ -108,7 +111,7 @@ dataSources:
         - name: ERC721PoolFactory
           file: ./abis/ERC721PoolFactory.json
         - name: ERC20
-          file: ./abis/ERC20.json          
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: PoolCreated(address)
           handler: handlePoolCreated
@@ -126,18 +129,24 @@ templates:
       entities:
         - AddCollateral
         - AddQuoteToken
+        - ApproveLpTransferors
         - AuctionNFTSettle
         - AuctionSettle
+        - BondWithdrawn
         - BucketBankruptcy
         - BucketTake
         - BucketTakeLPAwarded
         - DrawDebt
         - Kick
+        - LoanStamped
         - MoveQuoteToken
         - RemoveCollateral
         - RemoveQuoteToken
         - RepayDebt
         - ReserveAuction
+        - RevokeLpAllowance
+        - RevokeLpTransferors
+        - SetLpAllowance
         - Settle
         - Take
         - TransferLPs
@@ -152,10 +161,14 @@ templates:
           handler: handleAddCollateral
         - event: AddQuoteToken(indexed address,indexed uint256,uint256,uint256,uint256)
           handler: handleAddQuoteToken
+        - event: ApproveLpTransferors(indexed address,address[])
+          handler: handleApproveLpTransferors
         - event: AuctionNFTSettle(indexed address,uint256,uint256,uint256)
           handler: handleAuctionNFTSettle
         - event: AuctionSettle(indexed address,uint256)
           handler: handleAuctionSettle
+        - event: BondWithdrawn(indexed address,indexed address,uint256)
+          handler: handleBondWithdrawn
         - event: BucketBankruptcy(indexed uint256,uint256)
           handler: handleBucketBankruptcy
         - event: BucketTake(indexed address,uint256,uint256,uint256,uint256,bool)
@@ -166,6 +179,8 @@ templates:
           handler: handleDrawDebt
         - event: Kick(indexed address,uint256,uint256,uint256)
           handler: handleKick
+        - event: LoanStamped(indexed address)
+          handler: handleLoanStamped
         - event: MoveQuoteToken(indexed address,indexed uint256,indexed
             uint256,uint256,uint256,uint256,uint256)
           handler: handleMoveQuoteToken
@@ -177,6 +192,12 @@ templates:
           handler: handleRepayDebt
         - event: ReserveAuction(uint256,uint256,uint256)
           handler: handleReserveAuction
+        - event: RevokeLpAllowance(indexed address,uint256[])
+          handler: handleRevokeLpAllowance
+        - event: RevokeLpTransferors(indexed address,address[])
+          handler: handleRevokeLpTransferors
+        - event: SetLpAllowance(indexed address,uint256[],uint256[])
+          handler: handleSetLpAllowance
         - event: Settle(indexed address,uint256)
           handler: handleSettle
         - event: Take(indexed address,uint256,uint256,uint256,bool)

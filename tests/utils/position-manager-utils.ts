@@ -78,7 +78,8 @@ export function createBurnEvent(lender: Address, tokenId: BigInt): Burn {
 
 export function createMemorializePositionEvent(
   lender: Address,
-  tokenId: BigInt
+  tokenId: BigInt,
+  indexes: Array<BigInt>
 ): MemorializePosition {
   let memorializePositionEvent = changetype<MemorializePosition>(newMockEvent())
 
@@ -91,6 +92,12 @@ export function createMemorializePositionEvent(
     new ethereum.EventParam(
       "tokenId",
       ethereum.Value.fromUnsignedBigInt(tokenId)
+    )
+  )
+  memorializePositionEvent.parameters.push(
+    new ethereum.EventParam(
+      "indexes",
+      ethereum.Value.fromUnsignedBigIntArray(indexes)
     )
   )
 
@@ -113,10 +120,7 @@ export function createMintEvent(
     new ethereum.EventParam("pool", ethereum.Value.fromAddress(pool))
   )
   mintEvent.parameters.push(
-    new ethereum.EventParam(
-      "tokenId",
-      ethereum.Value.fromUnsignedBigInt(tokenId)
-    )
+    new ethereum.EventParam("tokenId", ethereum.Value.fromUnsignedBigInt(tokenId))
   )
 
   return mintEvent
@@ -124,7 +128,9 @@ export function createMintEvent(
 
 export function createMoveLiquidityEvent(
   lender: Address,
-  tokenId: BigInt
+  tokenId: BigInt,
+  fromIndex: BigInt,
+  toIndex: BigInt
 ): MoveLiquidity {
   let moveLiquidityEvent = changetype<MoveLiquidity>(newMockEvent())
 
@@ -139,13 +145,21 @@ export function createMoveLiquidityEvent(
       ethereum.Value.fromUnsignedBigInt(tokenId)
     )
   )
+  moveLiquidityEvent.parameters.push(
+    new ethereum.EventParam("fromIndex", ethereum.Value.fromUnsignedBigInt(fromIndex))
+  )
+  moveLiquidityEvent.parameters.push(
+    new ethereum.EventParam("toIndex", ethereum.Value.fromUnsignedBigInt(toIndex))
+  )
+
 
   return moveLiquidityEvent
 }
 
 export function createRedeemPositionEvent(
   lender: Address,
-  tokenId: BigInt
+  tokenId: BigInt,
+  indexes: Array<BigInt>
 ): RedeemPosition {
   let redeemPositionEvent = changetype<RedeemPosition>(newMockEvent())
 
@@ -155,10 +169,10 @@ export function createRedeemPositionEvent(
     new ethereum.EventParam("lender", ethereum.Value.fromAddress(lender))
   )
   redeemPositionEvent.parameters.push(
-    new ethereum.EventParam(
-      "tokenId",
-      ethereum.Value.fromUnsignedBigInt(tokenId)
-    )
+    new ethereum.EventParam("tokenId", ethereum.Value.fromUnsignedBigInt(tokenId))
+  )
+  redeemPositionEvent.parameters.push(
+    new ethereum.EventParam("indexes", ethereum.Value.fromUnsignedBigIntArray(indexes))
   )
 
   return redeemPositionEvent
@@ -180,10 +194,7 @@ export function createTransferEvent(
     new ethereum.EventParam("to", ethereum.Value.fromAddress(to))
   )
   transferEvent.parameters.push(
-    new ethereum.EventParam(
-      "tokenId",
-      ethereum.Value.fromUnsignedBigInt(tokenId)
-    )
+    new ethereum.EventParam("tokenId", ethereum.Value.fromUnsignedBigInt(tokenId))
   )
 
   return transferEvent

@@ -192,7 +192,7 @@ type Account @entity {
 
 # TODO: determine if it's worth adding borrowerDebt field updated in kick mapping
 type LiquidationAuction @entity {
-  id: Bytes! # $poolAddress + '|' + $loanId
+  id: Bytes! # $poolAddress + '|' + $loanId  // FIXME: collides with Loan entity's ID field
   pool: Pool! # pool in which the liquidation occurred
   borrower: Bytes! # address of the borrower being liquidated
   # borrowerDebt: BigDecimal! # total debt of the borrower at kickTime
@@ -224,6 +224,30 @@ type ReserveAuctionProcess @entity {
   burnEpoch: BigInt! # uint256 burn epoch at which the reserve auction was started
   reserveAuctionTakes: [ReserveAuction!]! # list of reserve auction takes that occured during this auction process
   ajnaBurnedAcrossAllTakes: BigDecimal! # total amount of ajna burned across all takes in the reserve auction
+}
+
+# updated upon ApproveLpTransferors and RevokeLpTransferors
+type LPTransferors @entity {
+  id: Bytes! # $poolAddress + '|' + $lender
+  pool: Pool! # pool in which these transferors have been approved
+  lender: Bytes! # address of the lender who has approved transferors
+  transferors: [Bytes!]! # addresses of approved transferors
+}
+
+# represents a LP allowance for a single bucket
+type LPAllowance @entity {
+  id: Bytes! # LPAllowances.id + '|' + $index
+  index: BigInt! # bucket index where an allowance has been granted
+  amount: BigInt! # size of the allowance (measured in LP)
+}
+
+# updated upon SetLpAllowance and RevokeLpAllowance
+type LPAllowances @entity {
+  id: Bytes! # $poolAddress + '|' + $lender + '|' + $spender
+  pool: Pool! # pool in which LP allowances have been granted
+  lender: Bytes! # address of the lender who has granted an allowance
+  spender: Bytes! # address who has been granted an allowance
+  allowances: [LPAllowance!]! # list of LP allowances
 }
 
   # # # # # #
@@ -274,6 +298,16 @@ type AuctionSettle @entity(immutable: true) {
   loan: Loan! # Loan which was settled
   borrower: Bytes! # address
   collateral: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BondWithdrawn @entity(immutable: true) {
+  id: Bytes!
+  kicker: Bytes! # address
+  reciever: Bytes! # address
+  amount: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -344,6 +378,14 @@ type Kick @entity {
   debt: BigInt! # uint256
   collateral: BigInt! # uint256
   bond: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type LoanStamped @entity(immutable: true) {
+  id: Bytes!
+  borrower: Bytes! # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -495,6 +537,7 @@ type MemorializePosition @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
   tokenId: BigInt! # uint256
+  indexes: [BigInt!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -514,6 +557,18 @@ type MoveLiquidity @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
   tokenId: BigInt! # uint256
+  fromIndex: BigInt! # uint256
+  toIndex: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MoveStakedLiquidity @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  fromIndexes: [BigInt!]! # uint256
+  toIndexes: [BigInt!]! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -523,6 +578,7 @@ type RedeemPosition @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
   tokenId: BigInt! # uint256
+  indexes: [BigInt!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

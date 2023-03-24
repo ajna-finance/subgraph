@@ -1,11 +1,13 @@
 import {
   ClaimRewards as ClaimRewardsEvent,
+  MoveStakedLiquidity as MoveStakedLiquidityEvent,
   Stake as StakeEvent,
   Unstake as UnstakeEvent,
   UpdateExchangeRates as UpdateExchangeRatesEvent
 } from "../generated/RewardsManager/RewardsManager"
 import {
   ClaimRewards,
+  MoveStakedLiquidity,
   Stake,
   Unstake,
   UpdateExchangeRates
@@ -20,6 +22,20 @@ export function handleClaimRewards(event: ClaimRewardsEvent): void {
   entity.tokenId = event.params.tokenId
   entity.epochsClaimed = event.params.epochsClaimed
   entity.amount = event.params.amount
+
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+
+  entity.save()
+}
+
+export function handleMoveStakedLiquidity(event: MoveStakedLiquidityEvent): void {
+  let entity = new MoveStakedLiquidity(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  entity.fromIndexes = event.params.fromIndexes
+  entity.toIndexes = event.params.toIndexes
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp

@@ -25,7 +25,7 @@ import {
   mockPoolInfoUtilsPoolUpdateCalls
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
-import { addressToBytes, bigDecimalExp18, rayToDecimal, wadToDecimal } from "../src/utils/convert"
+import { addressToBytes, bigDecimalExp18, wadToDecimal } from "../src/utils/convert"
 import { FIVE_PERCENT_BD, FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan, ReserveAuction } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
