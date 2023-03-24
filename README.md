@@ -17,38 +17,88 @@ Configure `ETH_RPC_URL` for your target network in `.env`.
 
 If you will change ABIs, please install `jq`.
 
-## Querying
 
-Below are some examples of queries that can be made to the Ajna Subgraph.
-
-```
-{
-    pools {
-        id
-        createdAtBlockNumber
-        createdAtTimestamp
-        txCount
-    }
-}
-```
-
-## Development
+## Development and Deployment
 
 Commands for adding new data sources to the subgraph are listed in the [add-commands.txt](./add-commands.txt) file.
 
 Once data sources have been added, entites can be modified in the [schema.graphql](./schema.graphql) file. After any update, the following commands must be run to ensure the new types are available for the event handlers:
 ```
-npm run codegen
-npm run build
+yarn codegen
+yarn build
 ```
 
-This subgraph can be run locally using provided docker containers. To start, set the environment variable *ETH_RPC_URL* in your .env file. Then, run `docker-compose up`. Once the node is running, deploy the subgraph with:
+After building, this subgraph can be run locally using provided docker container. To start, set the environment variable *ETH_RPC_URL* in your .env file. Then, run `docker-compose up`. Once the node is running, deploy the subgraph with:
 ```
-npm run create-local
-npm run deploy-local
+yarn create-local
+yarn deploy-local
 ```
 
 Instructions on creating your own deployment are available in the [Graph Protocols Documentation](https://thegraph.com/docs/en/cookbook/quick-start/).
+
+
+## Querying
+
+The dockerized deployment offers a query UI at http://localhost:8000/subgraphs/name/ajna/graphql.
+
+Below are some examples of queries that can be made to the Ajna Subgraph.
+
+List pools showing their tokens and how many transactions have been performed on them:
+```
+{
+  pools {
+    id
+    txCount
+    quoteToken {
+      id
+      symbol
+    }
+    collateralToken {
+      id
+      symbol
+    }
+  }
+}
+```
+
+List lender positions across all pools:
+```
+{
+  accounts {
+    id
+    lends {
+      lpb
+      bucket {
+        bucketIndex
+        quoteTokens
+        collateral
+      }
+      pool {
+        id
+        actualUtilization
+        currentDebt
+        htp
+        hpb
+        lup
+        maxBorrower
+        poolSize
+        reserves
+        targetUtilization
+        totalAjnaBurned
+        totalInterestEarned
+        quoteToken {
+          symbol
+        }
+        collateralToken {
+          symbol
+        }
+      }
+    }
+  }
+}
+```
+
+
 
 ## Tests
 
@@ -56,7 +106,7 @@ Tests are written using the [Matchstick unit testing framework](https://github.c
 
 Run the Matchstick tests by executing: 
 ```
-npm run test
+yarn test
 ```
 
 ## Maintenance

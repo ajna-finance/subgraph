@@ -15,9 +15,13 @@ export function getPoolAddress(poolId: Bytes): Address {
 export function getMomp(poolId: Bytes): BigDecimal {
     const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
-    const momp = poolInfoUtilsContract.momp(Address.fromBytes(poolId))
-
-    return wadToDecimal(momp)
+    const pool = Pool.load(poolId)
+    // HACK: work around bug https://github.com/ajna-finance/contracts/issues/702
+    if (pool == null || pool.loansCount == BigInt.zero()) {
+      return BigDecimal.zero()  // TODO: should probably return MAX_PRICE
+    } else {
+      return wadToDecimal(poolInfoUtilsContract.momp(Address.fromBytes(poolId)))
+    }
 }
 
 export class LoansInfo {
@@ -79,12 +83,6 @@ export function getPoolPricesInfo(pool: Pool): PoolPricesInfo {
         pricesInfoResult.value5
     )
     return pricesInfo
-}
-
-export function getPoolMomp(pool: Pool): BigInt {
-    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
-    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
-    return poolInfoUtilsContract.momp(Address.fromBytes(pool.id));
 }
 
 export class ReservesInfo {
@@ -160,7 +158,7 @@ export function updatePool(pool: Pool): void {
     pool.htpIndex = poolPricesInfo.htpIndex
     pool.lup = wadToDecimal(poolPricesInfo.lup)
     pool.lupIndex = poolPricesInfo.lupIndex
-    pool.momp = wadToDecimal(getPoolMomp(pool))
+    pool.momp = getMomp(pool.id)
 
     // update reserve auction information
     const poolReservesInfo = getPoolReservesInfo(pool)
