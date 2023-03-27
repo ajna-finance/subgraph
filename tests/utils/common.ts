@@ -17,7 +17,7 @@ import { AuctionInfo } from "../../src/utils/liquidation"
 export class BucketUpdatedParams {
     id: Bytes
     collateral: BigInt
-    quoteTokens: BigInt
+    deposit: BigInt
     exchangeRate: BigInt
     bucketIndex: BigInt
     lpb: BigInt
@@ -32,8 +32,8 @@ export function assertBucketUpdate(params: BucketUpdatedParams): void {
     assert.fieldEquals(
         "Bucket",
         `${params.id.toHexString()}`,
-        "quoteTokens",
-        `${wadToDecimal(params.quoteTokens)}`
+        "deposit",
+        `${wadToDecimal(params.deposit)}`
     )
     assert.fieldEquals(
         "Bucket",
@@ -57,17 +57,10 @@ export class LendUpdatedParams {
     id: Bytes
     bucketId: Bytes
     poolAddress: String
-    deposit: BigInt
     lpb: BigInt
     lpbValueInQuote: BigInt
 }
 export function assertLendUpdate(params: LendUpdatedParams): void {
-    assert.fieldEquals(
-        "Lend",
-        `${params.id.toHexString()}`,
-        "deposit",
-        `${wadToDecimal(params.deposit)}`
-    )
     assert.fieldEquals(
         "Lend",
         `${params.id.toHexString()}`,

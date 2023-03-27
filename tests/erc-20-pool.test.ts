@@ -26,7 +26,7 @@ import {
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, bigDecimalExp18, wadToDecimal } from "../src/utils/convert"
-import { FIVE_PERCENT_BD, FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
+import { FIVE_PERCENT_BD, FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan, ReserveAuction } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
@@ -77,7 +77,7 @@ describe("Describe entity assertions", () => {
       collateralAmount,
       lpAwarded,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
 
@@ -178,7 +178,7 @@ describe("Describe entity assertions", () => {
       ZERO_BI,
       lpAwarded,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
     
@@ -260,8 +260,8 @@ describe("Describe entity assertions", () => {
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,
-      quoteTokens: amount,
-      exchangeRate: ONE_RAY_BI,
+      deposit: amount,
+      exchangeRate: ONE_WAD_BI,
       bucketIndex: index,
       lpb: lpAwarded
     })
@@ -316,7 +316,6 @@ describe("Describe entity assertions", () => {
       id: lendId,
       bucketId: bucketId,
       poolAddress: poolAddress.toHexString(),
-      deposit: amount,
       lpb: lpAwarded,
       lpbValueInQuote: lpAwarded
     })
@@ -329,8 +328,8 @@ describe("Describe entity assertions", () => {
     const fromBucketIndex = BigInt.fromI32(234)
     const toBucketIndex = BigInt.fromI32(567)
     const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
-    const lpRedeemedFrom = BigInt.fromI32(567).times(ONE_RAY_BI)
-    const lpAwardedTo = BigInt.fromI32(567).times(ONE_RAY_BI)
+    const lpRedeemedFrom = BigInt.fromI32(567).times(ONE_WAD_BI)
+    const lpAwardedTo = BigInt.fromI32(567).times(ONE_WAD_BI)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
 
     /***********************/
@@ -344,7 +343,7 @@ describe("Describe entity assertions", () => {
       ZERO_BI,
       lpRedeemedFrom,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, fromBucketIndex, expectedBucketInfo)
 
@@ -373,7 +372,7 @@ describe("Describe entity assertions", () => {
       ZERO_BI,
       lpRedeemedFrom,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, fromBucketIndex, expectedFromBucketInfo)
     const expectedToBucketInfo = new BucketInfo(
@@ -382,7 +381,7 @@ describe("Describe entity assertions", () => {
       ZERO_BI,
       lpAwardedTo,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, toBucketIndex, expectedToBucketInfo)
 
@@ -1024,7 +1023,7 @@ describe("Describe entity assertions", () => {
       ZERO_BI,
       lpAwardedKicker.plus(lpAwardedTaker),
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, takeIndex, expectedBucketInfo)
 
@@ -1488,7 +1487,7 @@ describe("Describe entity assertions", () => {
       ZERO_BI,
       lpAwarded,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
 
@@ -1508,8 +1507,8 @@ describe("Describe entity assertions", () => {
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,
-      quoteTokens: amount,
-      exchangeRate: ONE_RAY_BI,
+      deposit: amount,
+      exchangeRate: ONE_WAD_BI,
       bucketIndex: index,
       lpb: lpAwarded
     })
@@ -1529,7 +1528,7 @@ describe("Describe entity assertions", () => {
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,
-      quoteTokens: ZERO_BI,
+      deposit: ZERO_BI,
       exchangeRate: ZERO_BI,
       bucketIndex: index,
       lpb: ZERO_BI

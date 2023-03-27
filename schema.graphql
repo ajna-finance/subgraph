@@ -120,7 +120,7 @@ type Bucket @entity {
   # total collateral available in the bucket
   collateral: BigDecimal!
   # total quote tokens deposited in the bucket, inclusive of interest
-  quoteTokens: BigDecimal!
+  deposit: BigDecimal!
   # total LP for all lenders in the bucket
   lpb: BigDecimal!
 }
@@ -137,12 +137,11 @@ type Lend @entity {
   lender: Bytes!
   # pool pointer
   pool: Pool!
-  # quote token deposited in the bucket by the lender
-  deposit: BigDecimal! # TODO: remove this in favor of just using lpbValueInQuote
-  # LPB in the bucket accrued to lender
+  # amount of LPB lender has in the bucket
   lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket
   lpbValueInQuote: BigDecimal!
+  # TODO: lpbValueInCollateral?
 }
 
 # each borrower has only one loan with a pool
