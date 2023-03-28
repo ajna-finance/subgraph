@@ -89,8 +89,8 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     incrementTokenTxCount(pool)
 
     // update bucket state
-    const bucketId   = getBucketId(pool.id, event.params.index)
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index)
+    const bucketId   = getBucketId(pool.id, event.params.index.toU32())
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
     const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
     bucket.collateral   = wadToDecimal(bucketInfo.collateral)
     bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
@@ -118,8 +118,8 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     lend.save()
     pool.save()
 
+    addCollateral.bucket = bucket.id
     addCollateral.pool = pool.id
-    addCollateral.bucket = bucketId
   }
 
   addCollateral.save()
@@ -150,8 +150,8 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     incrementTokenTxCount(pool)
 
     // update bucket state
-    const bucketId   = getBucketId(pool.id, event.params.index)
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index)
+    const bucketId   = getBucketId(pool.id, event.params.index.toU32())
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
     const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
     bucket.collateral   = wadToDecimal(bucketInfo.collateral)
     bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
@@ -174,10 +174,10 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     updateAccountLends(account, lend)
 
     // save entities to store
-    pool.save()
-    bucket.save()
     account.save()
+    bucket.save()
     lend.save()
+    pool.save()
 
     addQuoteToken.bucket = bucket.id
     addQuoteToken.pool = pool.id
@@ -312,8 +312,8 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
     updatePool(pool)
 
     // update bucket state to zero out bucket contents
-    const bucketId      = getBucketId(pool.id, event.params.index)
-    const bucket        = loadOrCreateBucket(pool.id, bucketId, event.params.index)
+    const bucketId      = getBucketId(pool.id, event.params.index.toU32())
+    const bucket        = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
     bucket.collateral   = ZERO_BD
     bucket.deposit      = ZERO_BD
     bucket.lpb          = ZERO_BD
@@ -442,8 +442,8 @@ export function handleBucketTakeLPAwarded(
     const bucketTake = BucketTake.load(bucketTakeId)!
 
     // update bucket state
-    const bucketId   = getBucketId(pool.id, bucketTake.index)
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, bucketTake.index)
+    const bucketId   = getBucketId(pool.id, bucketTake.index.toU32())
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, bucketTake.index.toU32())
     const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
     bucket.collateral   = wadToDecimal(bucketInfo.collateral)
     bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
@@ -633,6 +633,8 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
   moveQuoteToken.transactionHash = event.transaction.hash
 
   // update entities
+  const fromIndex = event.params.from.toU32()
+  const toIndex = event.params.to.toU32()
   const pool = Pool.load(addressToBytes(event.transaction.to!))
   if (pool != null) {
     // update pool state
@@ -643,18 +645,18 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
     incrementTokenTxCount(pool)
 
     // update from bucket state
-    const fromBucketId = getBucketId(pool.id, event.params.from)
-    const fromBucket = loadOrCreateBucket(pool.id, fromBucketId, event.params.from)
-    const fromBucketInfo = getBucketInfo(pool.id, event.params.from)
+    const fromBucketId = getBucketId(pool.id, event.params.from.toU32())
+    const fromBucket = loadOrCreateBucket(pool.id, fromBucketId, fromIndex)
+    const fromBucketInfo = getBucketInfo(pool.id, fromIndex)
     fromBucket.collateral   = wadToDecimal(fromBucketInfo.collateral)
     fromBucket.deposit      = wadToDecimal(fromBucketInfo.quoteTokens)
     fromBucket.lpb          = wadToDecimal(fromBucketInfo.lpb)
     fromBucket.exchangeRate = wadToDecimal(fromBucketInfo.exchangeRate)
 
     // update to bucket state
-    const toBucketId = getBucketId(pool.id, event.params.to)
-    const toBucket = loadOrCreateBucket(pool.id, toBucketId, event.params.to)
-    const toBucketInfo = getBucketInfo(pool.id, event.params.to)
+    const toBucketId = getBucketId(pool.id, event.params.to.toU32())
+    const toBucket = loadOrCreateBucket(pool.id, toBucketId, toIndex)
+    const toBucketInfo = getBucketInfo(pool.id, toIndex)
     toBucket.collateral   = wadToDecimal(toBucketInfo.collateral)
     toBucket.deposit      = wadToDecimal(toBucketInfo.quoteTokens)
     toBucket.lpb          = wadToDecimal(toBucketInfo.lpb)

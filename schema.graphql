@@ -112,7 +112,7 @@ type Bucket @entity {
   # bucket id: $poolAddress + '#' + $bucketIndex
   id: Bytes!
   # bucket index
-  bucketIndex: BigInt!
+  bucketIndex: Int!
   # current exchange rate of the bucket
   exchangeRate: BigDecimal!
   # pool address

@@ -9,7 +9,7 @@ import {
   beforeAll,
   dataSourceMock
 } from "matchstick-as/assembly/index"
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuction, handleTake, handleUpdateInterestRate } from "../src/erc-20-pool"
 import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketBankruptcyEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionEvent, createTakeEvent, createUpdateInterestRateEvent } from "./utils/erc-20-pool-utils"
 import {
@@ -67,12 +67,14 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const actor = Address.fromString("0x0000000000000000000000000000000000000001")
     const index = BigInt.fromI32(234)
+    const price = BigDecimal.fromString("312819781990957000000000000")
     const collateralAmount = BigInt.fromI32(234)
     const lpAwarded = BigInt.fromI32(234)
     
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      index,
+      index.toU32(),
+      price,
       ZERO_BI,
       collateralAmount,
       lpAwarded,
@@ -95,7 +97,7 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
       lupIndex: MAX_PRICE_INDEX,
-      momp: BigInt.fromI32(623804),
+      momp: BigInt.fromU32(623804),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -147,7 +149,7 @@ describe("Describe entity assertions", () => {
     )
 
     // check bucket attributes updated
-    const bucketId = getBucketId(addressToBytes(poolAddress), index)
+    const bucketId = getBucketId(addressToBytes(poolAddress), index.toU32())
     assert.fieldEquals(
       "Bucket",
       `${bucketId.toHexString()}`,
@@ -167,13 +169,15 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000002")
     const index = BigInt.fromI32(234)
+    const price = BigDecimal.fromString("312819781990957000000000000")
     const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const lpAwarded = BigInt.fromI32(567)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      index,
+      index.toU32(),
+      price,
       amount,
       ZERO_BI,
       lpAwarded,
@@ -256,7 +260,7 @@ describe("Describe entity assertions", () => {
     )
 
     // check bucket attributes updated
-    const bucketId = getBucketId(addressToBytes(poolAddress), index)
+    const bucketId = getBucketId(addressToBytes(poolAddress), index.toU32())
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,
@@ -326,7 +330,9 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000025")
     const fromBucketIndex = BigInt.fromI32(234)
+    const fromPrice = BigDecimal.fromString("312819781990957000000000000")
     const toBucketIndex = BigInt.fromI32(567)
+    const toPrice = BigDecimal.fromString("59428619800395500000000000")
     const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const lpRedeemedFrom = BigInt.fromI32(567).times(ONE_WAD_BI)
     const lpAwardedTo = BigInt.fromI32(567).times(ONE_WAD_BI)
@@ -338,7 +344,8 @@ describe("Describe entity assertions", () => {
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      fromBucketIndex,
+      fromBucketIndex.toU32(),
+      fromPrice,
       amount,
       ZERO_BI,
       lpRedeemedFrom,
@@ -367,7 +374,8 @@ describe("Describe entity assertions", () => {
 
     // mock required contract calls
     const expectedFromBucketInfo = new BucketInfo(
-      fromBucketIndex,
+      fromBucketIndex.toU32(),
+      fromPrice,
       amount,
       ZERO_BI,
       lpRedeemedFrom,
@@ -376,7 +384,8 @@ describe("Describe entity assertions", () => {
     )
     mockGetBucketInfo(poolAddress, fromBucketIndex, expectedFromBucketInfo)
     const expectedToBucketInfo = new BucketInfo(
-      toBucketIndex,
+      toBucketIndex.toU32(),
+      toPrice,
       amount,
       ZERO_BI,
       lpAwardedTo,
@@ -421,13 +430,13 @@ describe("Describe entity assertions", () => {
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "from",
-      `${getBucketId(addressToBytes(poolAddress), fromBucketIndex).toHexString()}`
+      `${getBucketId(addressToBytes(poolAddress), fromBucketIndex.toU32()).toHexString()}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "to",
-      `${getBucketId(addressToBytes(poolAddress), toBucketIndex).toHexString()}`
+      `${getBucketId(addressToBytes(poolAddress), toBucketIndex.toU32()).toHexString()}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
@@ -935,6 +944,7 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const taker = Address.fromString("0x0000000000000000000000000000000000000009")
     const takeIndex = BigInt.fromI32(123)
+    const takePrice = BigDecimal.fromString("544160563095425000000000000")
     const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
     const amountToTake = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const collateral = BigInt.fromString("1067529276179422528643") // 1067.529276179422528643 * 1e18
@@ -1018,7 +1028,8 @@ describe("Describe entity assertions", () => {
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      takeIndex,
+      takeIndex.toU32(),
+      takePrice,
       debt,
       ZERO_BI,
       lpAwardedKicker.plus(lpAwardedTaker),
@@ -1472,6 +1483,7 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000002")
     const index = BigInt.fromI32(234)
+    const price = BigDecimal.fromString("312819781990957000000000000") // 312819781.990957 * 1e18
     const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const lpAwarded = BigInt.fromI32(567)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
@@ -1482,7 +1494,8 @@ describe("Describe entity assertions", () => {
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      index,
+      index.toU32(),
+      price,
       amount,
       ZERO_BI,
       lpAwarded,
@@ -1503,7 +1516,7 @@ describe("Describe entity assertions", () => {
     handleAddQuoteToken(newAddQuoteTokenEvent)
 
     // check bucket attributes updated
-    const bucketId = getBucketId(addressToBytes(poolAddress), index)
+    const bucketId = getBucketId(addressToBytes(poolAddress), index.toU32())
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,

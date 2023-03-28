@@ -24,7 +24,7 @@ import {
 export function createAddCollateralEvent(
   pool: Address,
   actor: Address,
-  price: BigInt,
+  index: BigInt,
   amount: BigInt,
   lpAwarded: BigInt
 ): AddCollateral {
@@ -36,7 +36,7 @@ export function createAddCollateralEvent(
     new ethereum.EventParam("actor", ethereum.Value.fromAddress(actor))
   )
   addCollateralEvent.parameters.push(
-    new ethereum.EventParam("price", ethereum.Value.fromUnsignedBigInt(price))
+    new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
   )
   addCollateralEvent.parameters.push(
     new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
@@ -57,7 +57,7 @@ export function createAddCollateralEvent(
 export function createAddQuoteTokenEvent(
   pool: Address,
   lender: Address,
-  price: BigInt,
+  index: BigInt,
   amount: BigInt,
   lpAwarded: BigInt,
   lup: BigInt
@@ -70,7 +70,7 @@ export function createAddQuoteTokenEvent(
     new ethereum.EventParam("lender", ethereum.Value.fromAddress(lender))
   )
   addQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("price", ethereum.Value.fromUnsignedBigInt(price))
+    new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
   )
   addQuoteTokenEvent.parameters.push(
     new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))

@@ -6,19 +6,21 @@ import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils
 import { poolInfoUtilsNetworkLookUpTable, ONE_BD, ONE_BI, ZERO_BD, ZERO_BI, ONE_WAD_BD } from "./constants"
 import { wadToDecimal } from "./convert"
 
-export function getBucketId(pool: Bytes, index: BigInt): Bytes {
+export function getBucketId(pool: Bytes, index: u32): Bytes {
     return pool.concat(Bytes.fromUTF8('#' + index.toString()))
 }
 
 export class BucketInfo {
-    index: BigInt
+    index: u32
+    price: BigDecimal
     quoteTokens: BigInt // deposit + interest
     collateral: BigInt
     lpb: BigInt
     scale: BigInt
     exchangeRate: BigInt
-    constructor(index: BigInt, quoteTokens: BigInt, collateral: BigInt, lpb: BigInt, scale: BigInt, exchangeRate: BigInt) {
+    constructor(index: u32, price: BigDecimal, quoteTokens: BigInt, collateral: BigInt, lpb: BigInt, scale: BigInt, exchangeRate: BigInt) {
         this.index = index
+        this.price = price
         this.quoteTokens = quoteTokens
         this.collateral = collateral
         this.lpb = lpb
@@ -26,14 +28,15 @@ export class BucketInfo {
         this.exchangeRate = exchangeRate
     }
 }
-export function getBucketInfo(pool: Bytes, index: BigInt): BucketInfo {
+export function getBucketInfo(pool: Bytes, index: u32): BucketInfo {
     const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
     const poolAddress = Address.fromBytes(pool)
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress) // TODO: what should this bind to?
-    const bucketInfoResult = poolInfoUtilsContract.bucketInfo(poolAddress, index)
+    const bucketInfoResult = poolInfoUtilsContract.bucketInfo(poolAddress, BigInt.fromU32(index))
 
     const bucketInfo = new BucketInfo(
-        bucketInfoResult.value0,
+        index,
+        bucketInfoResult.value0.toBigDecimal(),
         bucketInfoResult.value1,
         bucketInfoResult.value2,
         bucketInfoResult.value3,
@@ -44,7 +47,7 @@ export function getBucketInfo(pool: Bytes, index: BigInt): BucketInfo {
     return bucketInfo
 }
 
-export function loadOrCreateBucket(poolId: Bytes, bucketId: Bytes, index: BigInt): Bucket {
+export function loadOrCreateBucket(poolId: Bytes, bucketId: Bytes, index: u32): Bucket {
     let bucket = Bucket.load(bucketId)
     if (bucket == null) {
       // create new bucket if bucket hasn't already been loaded
