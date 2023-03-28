@@ -264,7 +264,7 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
     const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
     const loan = loadOrCreateLoan(loanId, pool.id, addressToBytes(event.params.borrower))
     loan.debt = ZERO_BD
-    loan.collateralDeposited = wadToDecimal(auctionSettle.collateral)
+    loan.collateralPledged = wadToDecimal(auctionSettle.collateral)
     loan.inLiquidation = false
     loan.collateralization = ZERO_BD
     loan.tp = ZERO_BD
@@ -366,10 +366,10 @@ export function handleBucketTake(event: BucketTakeEvent): void {
     const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
     const loan = loadOrCreateLoan(loanId, pool.id, addressToBytes(event.params.borrower))
     loan.debt = loan.debt.minus(wadToDecimal(event.params.amount))
-    loan.collateralDeposited = loan.collateralDeposited.minus(wadToDecimal(event.params.collateral))
-    if (loan.debt.notEqual(ZERO_BD) && loan.collateralDeposited.notEqual(ZERO_BD)) {
-      loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
-      loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
+    loan.collateralPledged = loan.collateralPledged.minus(wadToDecimal(event.params.collateral))
+    if (loan.debt.notEqual(ZERO_BD) && loan.collateralPledged.notEqual(ZERO_BD)) {
+      loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
+      loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
     }
     else {
       // set collateralization and tp to zero if loan is fully repaid
@@ -515,10 +515,10 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
     // update loan state
     const loanId = getLoanId(pool.id, accountId)
     const loan = loadOrCreateLoan(loanId, pool.id, drawDebt.borrower)
-    loan.collateralDeposited = loan.collateralDeposited.plus(wadToDecimal(event.params.collateralPledged))
-    loan.debt                = loan.debt.plus(wadToDecimal(event.params.amountBorrowed))
-    loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
-    loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
+    loan.collateralPledged = loan.collateralPledged.plus(wadToDecimal(event.params.collateralPledged))
+    loan.debt              = loan.debt.plus(wadToDecimal(event.params.amountBorrowed))
+    loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
+    loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
 
     // update account's list of pools and loans if necessary
     updateAccountPools(account, pool)
@@ -572,11 +572,11 @@ export function handleKick(event: KickEvent): void {
     // update loan state
     const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
     const loan = loadOrCreateLoan(loanId, pool.id, kick.borrower)
-    loan.inLiquidation       = true
-    loan.collateralDeposited = wadToDecimal(kick.collateral)
-    loan.debt                = wadToDecimal(kick.debt) // update loan debt to account for kick penalty
-    loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
-    loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
+    loan.inLiquidation     = true
+    loan.collateralPledged = wadToDecimal(kick.collateral)
+    loan.debt              = wadToDecimal(kick.debt) // update loan debt to account for kick penalty
+    loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
+    loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
 
     // retrieve auction information on the kicked loan
     const auctionInfo = getAuctionInfoERC20Pool(kick.borrower, pool)
@@ -763,10 +763,10 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     // update loan state
     const loanId = getLoanId(pool.id, accountId)
     const loan = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
-    loan.collateralDeposited = loan.collateralDeposited.minus(wadToDecimal(event.params.collateralPulled))
-    loan.debt                = loan.debt.minus(wadToDecimal(event.params.quoteRepaid))
-    loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
-    loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
+    loan.collateralPledged = loan.collateralPledged.minus(wadToDecimal(event.params.collateralPulled))
+    loan.debt              = loan.debt.minus(wadToDecimal(event.params.quoteRepaid))
+    loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
+    loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
 
     // update account loans if necessary
     updateAccountLoans(account, loan)
@@ -958,10 +958,10 @@ export function handleTake(event: TakeEvent): void {
     const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
     const loan = loadOrCreateLoan(loanId, pool.id, take.borrower)
     loan.debt = loan.debt.minus(wadToDecimal(event.params.amount))
-    loan.collateralDeposited = loan.collateralDeposited.minus(wadToDecimal(event.params.collateral))
-    if (loan.debt.notEqual(ZERO_BD) && loan.collateralDeposited.notEqual(ZERO_BD)) {
-      loan.collateralization   = collateralizationAtLup(loan.debt, loan.collateralDeposited, pool.lup)
-      loan.tp                  = thresholdPrice(loan.debt, loan.collateralDeposited)
+    loan.collateralPledged = loan.collateralPledged.minus(wadToDecimal(event.params.collateral))
+    if (loan.debt.notEqual(ZERO_BD) && loan.collateralPledged.notEqual(ZERO_BD)) {
+      loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
+      loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
     }
     else {
       // set collateralization and tp to zero if loan is fully repaid

@@ -157,7 +157,7 @@ type Loan @entity {
   # boolean indicating whether the loan is in liquidations
   inLiquidation: Boolean!
   # collateral tokens deposited in a pool by the borrower
-  collateralDeposited: BigDecimal! # TODO: rename collateralPledged
+  collateralPledged: BigDecimal!
   # collateralization of the borrow position in the pool
   collateralization: BigDecimal!
   # TODO: add principal (initial debt drawn from the pool, excluding origination fee)

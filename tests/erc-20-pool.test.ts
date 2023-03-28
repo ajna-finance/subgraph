@@ -550,7 +550,7 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "Loan",
       `${loanId.toHexString()}`,
-      "collateralDeposited",
+      "collateralPledged",
       `${wadToDecimal(collateralPledged)}`
     )
     assert.fieldEquals(
