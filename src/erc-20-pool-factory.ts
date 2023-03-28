@@ -107,9 +107,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // pool prices information
   pool.hpb = ZERO_BD
-  pool.hpbIndex = ZERO_BI
+  pool.hpbIndex = 0
   pool.htp = ZERO_BD
-  pool.htpIndex = ZERO_BI
+  pool.htpIndex = 0
   pool.lup = MAX_PRICE
   pool.lupIndex = MAX_PRICE_INDEX
   pool.momp = ZERO_BD

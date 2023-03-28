@@ -96,7 +96,7 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
-      lupIndex: MAX_PRICE_INDEX,
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
       momp: BigInt.fromU32(623804),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
@@ -200,7 +200,7 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
       lup: lup,
-      lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
       momp: BigInt.fromI32(623803),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
@@ -286,7 +286,7 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI,
       htpIndex: ZERO_BI,
       lup: lup,
-      lupIndex: MAX_PRICE_INDEX,
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -1206,8 +1206,8 @@ describe("Describe entity assertions", () => {
       hpbIndex: ZERO_BI,
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
-      lup: MAX_PRICE_BI,
-      lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      lup: MAX_PRICE_BI, //TODO: indexToPrice(lup)
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
       momp: BigInt.fromI32(623801),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemaining,
@@ -1300,7 +1300,7 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
-      lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
       momp: BigInt.fromI32(623802),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemainingAfterTake,
@@ -1461,7 +1461,7 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI,
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
-      lupIndex: MAX_PRICE_INDEX,
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemainingAfterTake,
       claimableReservesRemaining: claimableReservesRemainingAfterTake,

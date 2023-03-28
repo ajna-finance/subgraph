@@ -153,11 +153,11 @@ export function updatePool(pool: Pool): void {
     // update pool prices information
     const poolPricesInfo = getPoolPricesInfo(pool)
     pool.hpb = wadToDecimal(poolPricesInfo.hpb)
-    pool.hpbIndex = poolPricesInfo.hpbIndex
+    pool.hpbIndex = poolPricesInfo.hpbIndex.toU32()
     pool.htp = wadToDecimal(poolPricesInfo.htp)
-    pool.htpIndex = poolPricesInfo.htpIndex
+    pool.htpIndex = poolPricesInfo.htpIndex.toU32()
     pool.lup = wadToDecimal(poolPricesInfo.lup)
-    pool.lupIndex = poolPricesInfo.lupIndex
+    pool.lupIndex = poolPricesInfo.lupIndex.toU32()
     pool.momp = getMomp(pool.id)
 
     // update reserve auction information

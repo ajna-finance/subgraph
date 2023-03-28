@@ -69,11 +69,11 @@ type Pool @entity {
 
   # PRICES INFORMATION
   hpb: BigDecimal! # current highest price bucket
-  hpbIndex: BigInt! # current highest price bucket index
+  hpbIndex: Int! # current highest price bucket index
   htp: BigDecimal! # current highest threshold price
-  htpIndex: BigInt! # current highest threshold price index
+  htpIndex: Int! # current highest threshold price index
   lup: BigDecimal! # current lowest utilized price
-  lupIndex: BigInt! # current lowest utilized price index  
+  lupIndex: Int! # current lowest utilized price index  
   momp: BigDecimal! # most optimistic matching price
 
   # RESERVES INFORMATION
