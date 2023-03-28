@@ -177,12 +177,20 @@ export function updatePool(pool: Pool): void {
 }
 
 // update the list of loans initiated by an account, if it hasn't been added already
-export function updatePoolLiquidationAuctions(pool: Pool, liquidationAuction: LiquidationAuction): void {
+export function addLiquidationToPool(pool: Pool, liquidationAuction: LiquidationAuction): void {
     const liquidationAuctions = pool.liquidationAuctions
     // get current index of pool in account's list of pools
     const index = liquidationAuctions.indexOf(liquidationAuction.id)
     if (index == -1) {
         pool.liquidationAuctions = pool.liquidationAuctions.concat([liquidationAuction.id])
+    }
+}
+
+// if present, remove a settled liquidation from the pool's collection of active liquidations
+export function removeLiquidationFromPool(pool: Pool, liquidationAuction: LiquidationAuction): void {
+    const index = pool.liquidationAuctions.indexOf(liquidationAuction.id)
+    if (index != -1) {
+        pool.liquidationAuctions.slice(index, 1)
     }
 }
 

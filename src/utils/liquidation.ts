@@ -49,10 +49,6 @@ export function updateLiquidationAuction(liquidationAuction: LiquidationAuction,
     liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)
     liquidationAuction.bondFactor   = wadToDecimal(auctionInfo.bondFactor)
     liquidationAuction.neutralPrice = wadToDecimal(auctionInfo.neutralPrice)
-
-    // update liquidation auction queue pointers
-    liquidationAuction.next = getLiquidationAuctionId(poolId, getLoanId(poolId, auctionInfo.next))
-    liquidationAuction.prev = getLiquidationAuctionId(poolId, getLoanId(poolId, auctionInfo.prev))
 }
 
 export class AuctionInfo {

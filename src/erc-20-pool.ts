@@ -58,7 +58,7 @@ import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getBucketTakeIdFromBucketTakeLPAwarded, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction } from "./utils/liquidation"
-import { getBurnInfo, getCurrentBurnEpoch, updatePool, updatePoolLiquidationAuctions } from "./utils/pool"
+import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, removeLiquidationFromPool } from "./utils/pool"
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 import { getReserveAuctionId, loadOrCreateReserveAuctionProcess, reserveAuctionKickerReward } from "./utils/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token"
@@ -387,9 +387,6 @@ export function handleBucketTake(event: BucketTakeEvent): void {
     liquidationAuction.debtRepaid = liquidationAuction.debtRepaid.plus(wadToDecimal(event.params.amount))
     liquidationAuction.collateralAuctioned = liquidationAuction.collateralAuctioned.plus(wadToDecimal(event.params.collateral))
 
-    // update pool pointer to head of liquidation auctions linked list
-    pool.liquidationAuctionsHead = getLiquidationAuctionId(pool.id, getLoanId(pool.id, auctionInfo.head))
-
     // update kick and pool for the change in bond as a result of the take
     const kick = Kick.load(liquidationAuction.kick)!
     if (bucketTake.isReward) {
@@ -586,16 +583,13 @@ export function handleKick(event: KickEvent): void {
     const liquidationAuction = loadOrCreateLiquidationAuction(pool.id, liquidationAuctionId, kick, loan)
     updateLiquidationAuction(liquidationAuction, auctionInfo, pool.id)
 
-    // update pool pointer to head of liquidation auctions linked list
-    pool.liquidationAuctionsHead = getLiquidationAuctionId(pool.id, getLoanId(pool.id, auctionInfo.head))
-
     kick.kickMomp = wadToDecimal(auctionInfo.kickMomp)
     kick.pool = pool.id
     kick.loan = loan.id
     kick.liquidationAuction = liquidationAuctionId
 
     // track new liquidation auction at the pool level
-    updatePoolLiquidationAuctions(pool, liquidationAuction)
+    addLiquidationToPool(pool, liquidationAuction)
 
     // save entities to store
     account.save()
@@ -905,13 +899,13 @@ export function handleSettle(event: SettleEvent): void {
     updateLiquidationAuction(liquidationAuction, auctionInfo, pool.id)
     liquidationAuction.settled = true
 
-    // update pool pointer to head of liquidation auctions linked list
-    pool.liquidationAuctionsHead = getLiquidationAuctionId(pool.id, getLoanId(pool.id, auctionInfo.head))
-
     // update settle pointers
     settle.pool = pool.id
     settle.liquidationAuction = liquidationAuctionId
     settle.loan = loanId
+
+    // remove the settled liquidation from the pool's list of active liquidations
+    removeLiquidationFromPool(pool, liquidationAuction)
 
     // save entities to the store
     account.save()
@@ -978,9 +972,6 @@ export function handleTake(event: TakeEvent): void {
     updateLiquidationAuction(liquidationAuction, auctionInfo, pool.id)
     liquidationAuction.debtRepaid = liquidationAuction.debtRepaid.plus(wadToDecimal(event.params.amount))
     liquidationAuction.collateralAuctioned = liquidationAuction.collateralAuctioned.plus(wadToDecimal(event.params.collateral))
-
-    // update pool pointer to head of liquidation auctions linked list
-    pool.liquidationAuctionsHead = getLiquidationAuctionId(pool.id, getLoanId(pool.id, auctionInfo.head))
 
     // update kick and pool for the change in bond as a result of the take
     const kick = Kick.load(liquidationAuction.kick)!
