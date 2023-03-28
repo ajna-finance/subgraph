@@ -236,7 +236,7 @@ type LPTransferors @entity {
 # represents a LP allowance for a single bucket
 type LPAllowance @entity {
   id: Bytes! # LPAllowances.id + '|' + $index
-  index: BigInt! # bucket index where an allowance has been granted
+  index: Int! # bucket index where an allowance has been granted
   amount: BigInt! # size of the allowance (measured in LP)
 }
 
@@ -255,11 +255,11 @@ type LPAllowances @entity {
 
 type AddCollateral @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool whose bucket was modified
-  bucket: Bucket! # Bucket to which collateral was added
-  actor: Bytes! # address
-  index: BigInt! # uint256
-  amount: BigInt! # uint256
+  pool: Pool!        # Pool whose bucket was modified
+  bucket: Bucket!    # Bucket to which collateral was added
+  actor: Bytes!      # address
+  index: Int!        # uint256
+  amount: BigInt!    # uint256
   lpAwarded: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -271,10 +271,10 @@ type AddQuoteToken @entity {
   bucket: Bucket!    # Bucket to which quote was added
   pool: Pool!        # Pool to which quote was added
   lender: Bytes!     # address
-  index: BigInt!     # uint256
+  index: Int!        # uint256
   amount: BigInt!    # uint256
   lpAwarded: BigInt! # uint256
-  lup: BigInt!       # uint256
+  lup: BigInt!       # TODO: should be BigDecimal
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -282,10 +282,10 @@ type AddQuoteToken @entity {
 
 type AuctionNFTSettle @entity(immutable: true) {
   id: Bytes!
-  borrower: Bytes! # address
+  borrower: Bytes!    # address
   collateral: BigInt! # uint256
-  lps: BigInt! # uint256
-  index: BigInt! # uint256
+  lps: BigInt!        # uint256
+  index: Int!         # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -314,9 +314,9 @@ type BondWithdrawn @entity(immutable: true) {
 
 type BucketBankruptcy @entity(immutable: true) {
   id: Bytes!
-  bucket: Bucket! # Bucket which was bankrupted
-  index: BigInt! # uint256
-  pool: Pool! # Pool whose bucket was bankrupted
+  bucket: Bucket!      # Bucket which was bankrupted
+  index: Int!          # uint256
+  pool: Pool!          # Pool whose bucket was bankrupted
   lpForfeited: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -325,16 +325,16 @@ type BucketBankruptcy @entity(immutable: true) {
 
 type BucketTake @entity(immutable: true) {
   id: Bytes!
-  taker: Bytes! # address of the taker
+  taker: Bytes!       # address of the taker
   liquidationAuction: LiquidationAuction! # liquidation auction in which the take is occuring
-  loan: Loan! # loan which was taken
-  pool: Pool! # pool in which the take is occuring
-  borrower: Bytes! # address
-  index: BigInt! # uint256
-  amount: BigInt! # uint256
+  loan: Loan!         # loan which was taken
+  pool: Pool!         # pool in which the take is occuring
+  borrower: Bytes!    # address
+  index: Int!         # uint256
+  amount: BigInt!     # uint256
   collateral: BigInt! # uint256
   bondChange: BigInt! # uint256
-  isReward: Boolean! # bool
+  isReward: Boolean!  # bool
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -358,7 +358,7 @@ type DrawDebt @entity(immutable: true) {
   borrower: Bytes! # address
   amountBorrowed: BigInt! # uint256
   collateralPledged: BigInt! # uint256
-  lup: BigInt! # uint256
+  lup: BigInt! # TODO: should be BigDecimal
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -399,7 +399,7 @@ type MoveQuoteToken @entity(immutable: true) {
   amount: BigInt! # uint256
   lpRedeemedFrom: BigInt! # uint256
   lpAwardedTo: BigInt! # uint256
-  lup: BigInt! # uint256
+  lup: BigInt! # TODO: should be BigDecimal
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -407,9 +407,9 @@ type MoveQuoteToken @entity(immutable: true) {
 
 type RemoveCollateral @entity(immutable: true) {
   id: Bytes!
-  claimer: Bytes! # address
-  index: BigInt! # uint256
-  amount: BigInt! # uint256
+  claimer: Bytes!     # address
+  index: Int!         # uint256
+  amount: BigInt!     # uint256
   lpRedeemed: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -418,11 +418,11 @@ type RemoveCollateral @entity(immutable: true) {
 
 type RemoveQuoteToken @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes! # address
-  index: BigInt! # uint256
-  amount: BigInt! # uint256
+  lender: Bytes!      # address
+  index: Int!         # uint256
+  amount: BigInt!     # uint256
   lpRedeemed: BigInt! # uint256
-  lup: BigInt! # uint256
+  lup: BigInt!        # TODO: should be BigDecimal
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -434,7 +434,7 @@ type RepayDebt @entity(immutable: true) {
   borrower: Bytes! # address
   quoteRepaid: BigInt! # uint256
   collateralPulled: BigInt! # uint256
-  lup: BigInt! # uint256
+  lup: BigInt! # TODO: should be BigDecimal
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -485,10 +485,10 @@ type Take @entity(immutable: true) {
 
 type TransferLPs @entity(immutable: true) {
   id: Bytes!
-  owner: Bytes! # address
+  owner: Bytes!    # address
   newOwner: Bytes! # address
-  indexes: [BigInt!]! # uint256[]
-  lps: BigInt! # uint256
+  indexes: [Int!]! # uint256[]
+  lps: BigInt!     # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -534,9 +534,9 @@ type Burn @entity(immutable: true) {
 
 type MemorializePosition @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes! # address
+  lender: Bytes!   # address
   tokenId: BigInt! # uint256
-  indexes: [BigInt!]! # uint256[]
+  indexes: [Int!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -554,10 +554,10 @@ type Mint @entity(immutable: true) {
 
 type MoveLiquidity @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes! # address
+  lender: Bytes!   # address
   tokenId: BigInt! # uint256
-  fromIndex: BigInt! # uint256
-  toIndex: BigInt! # uint256
+  fromIndex: Int!  # uint256
+  toIndex: Int!    # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -565,9 +565,9 @@ type MoveLiquidity @entity(immutable: true) {
 
 type MoveStakedLiquidity @entity(immutable: true) {
   id: Bytes!
-  tokenId: BigInt! # uint256
-  fromIndexes: [BigInt!]! # uint256
-  toIndexes: [BigInt!]! # uint256
+  tokenId: BigInt!     # uint256
+  fromIndexes: [Int!]! # uint256
+  toIndexes: [Int!]!   # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -575,9 +575,9 @@ type MoveStakedLiquidity @entity(immutable: true) {
 
 type RedeemPosition @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes! # address
+  lender: Bytes!   # address
   tokenId: BigInt! # uint256
-  indexes: [BigInt!]! # uint256[]
+  indexes: [Int!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

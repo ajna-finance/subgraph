@@ -51,6 +51,14 @@ export function addressToBytes(address: Address): Bytes {
     return Bytes.fromHexString(address.toHexString()) as Bytes
 }
 
+export function bigIntArrayToIntArray(indexes: BigInt[]): i32[] {
+  const retval: i32[] = [];
+  for (let i=0; i<indexes.length; ++i) {
+    retval.push(indexes[i].toU32())
+  }
+  return retval
+}
+
 // import prices from '../../prices.json'
 // export function indexToPrice(index: BigInt): BigDecimal {
 //     const bucketIndex = MAX_BUCKET_INDEX - index;

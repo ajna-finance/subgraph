@@ -52,7 +52,7 @@ import {
 } from "../generated/schema"
 
 import { ZERO_BD, ONE_BI } from "./utils/constants"
-import { addressToBytes, wadToDecimal } from "./utils/convert"
+import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
@@ -70,7 +70,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   addCollateral.actor = event.params.actor
-  addCollateral.index = event.params.index
+  addCollateral.index = event.params.index.toU32()
   addCollateral.amount = event.params.amount
   addCollateral.lpAwarded = event.params.lpAwarded
 
@@ -130,7 +130,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   addQuoteToken.lender = event.params.lender
-  addQuoteToken.index = event.params.index
+  addQuoteToken.index = event.params.index.toU32()
   addQuoteToken.amount = event.params.amount
   addQuoteToken.lpAwarded = event.params.lpAwarded
   addQuoteToken.lup = event.params.lup
@@ -232,7 +232,7 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   entity.borrower = event.params.borrower
   entity.collateral = event.params.collateral
   entity.lps = event.params.lps
-  entity.index = event.params.index
+  entity.index = event.params.index.toU32()
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -298,7 +298,7 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
   const bucketBankruptcy = new BucketBankruptcy(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  bucketBankruptcy.index = event.params.index
+  bucketBankruptcy.index = event.params.index.toU32()
   bucketBankruptcy.lpForfeited = event.params.lpForfeited
 
   bucketBankruptcy.blockNumber = event.block.number
@@ -336,7 +336,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   )
   bucketTake.borrower = event.params.borrower
   bucketTake.taker = event.transaction.from
-  bucketTake.index = event.params.index
+  bucketTake.index = event.params.index.toU32()
   bucketTake.amount = event.params.amount
   bucketTake.collateral = event.params.collateral
   bucketTake.bondChange = event.params.bondChange
@@ -442,8 +442,8 @@ export function handleBucketTakeLPAwarded(
     const bucketTake = BucketTake.load(bucketTakeId)!
 
     // update bucket state
-    const bucketId   = getBucketId(pool.id, bucketTake.index.toU32())
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, bucketTake.index.toU32())
+    const bucketId   = getBucketId(pool.id, bucketTake.index)
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, bucketTake.index)
     const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
     bucket.collateral   = wadToDecimal(bucketInfo.collateral)
     bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
@@ -702,7 +702,7 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.claimer = event.params.claimer
-  entity.index = event.params.index
+  entity.index = event.params.index.toU32()
   entity.amount = event.params.amount
   entity.lpRedeemed = event.params.lpRedeemed
 
@@ -718,7 +718,7 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.lender = event.params.lender
-  entity.index = event.params.index
+  entity.index = event.params.index.toU32()
   entity.amount = event.params.amount
   entity.lpRedeemed = event.params.lpRedeemed
   entity.lup = event.params.lup
@@ -1015,7 +1015,7 @@ export function handleTransferLPs(event: TransferLPsEvent): void {
   )
   entity.owner = event.params.owner
   entity.newOwner = event.params.newOwner
-  entity.indexes = event.params.indexes
+  entity.indexes = bigIntArrayToIntArray(event.params.indexes)
   entity.lps = event.params.lps
 
   entity.blockNumber = event.block.number
