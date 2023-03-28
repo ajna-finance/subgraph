@@ -105,7 +105,7 @@ type Pool @entity {
   # LIQUIDATION INFORMATION
   totalBondEscrowed: BigDecimal! # total bond escrowed in the pool
   liquidationAuctions: [LiquidationAuction!]! # list of liquidation auctions in the pool. This array is not resorted, but represents the order of insertion.
-  liquidationAuctionsHead: LiquidationAuction! # head of the liquidation auctions linked list
+  liquidationAuctionsHead: LiquidationAuction! # TODO: remove
 }
 
 type Bucket @entity {
@@ -160,7 +160,6 @@ type Loan @entity {
   collateralPledged: BigDecimal!
   # collateralization of the borrow position in the pool
   collateralization: BigDecimal!
-  # TODO: add principal (initial debt drawn from the pool, excluding origination fee)
   # total quote drawn from the pool in the loan
   debt: BigDecimal!
   # borrowers threshold price
@@ -206,6 +205,7 @@ type LiquidationAuction @entity {
   # TODO: add kickPrice
   neutralPrice: BigDecimal! # price at which the auction is neutral
   settled: Boolean! # boolean indicating whether the auction has been settled
+  # TODO: remove these two pointers; Pool already has an array of liquidations
   next: LiquidationAuction! # id of the next auction in the queue
   prev: LiquidationAuction! # id of the previous auction in the queue
 }
@@ -274,7 +274,7 @@ type AddQuoteToken @entity {
   index: Int!        # uint256
   amount: BigInt!    # uint256
   lpAwarded: BigInt! # uint256
-  lup: BigInt!       # TODO: should be BigDecimal
+  lup: BigDecimal!   # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -354,11 +354,11 @@ type BucketTakeLPAwarded @entity(immutable: true) {
 
 type DrawDebt @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool debt was drawn from
-  borrower: Bytes! # address
-  amountBorrowed: BigInt! # uint256
+  pool: Pool!                # Pool debt was drawn from
+  borrower: Bytes!           # address
+  amountBorrowed: BigInt!    # uint256
   collateralPledged: BigInt! # uint256
-  lup: BigInt! # TODO: should be BigDecimal
+  lup: BigDecimal!           # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -392,14 +392,14 @@ type LoanStamped @entity(immutable: true) {
 
 type MoveQuoteToken @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool in which quote tokens were moved
-  lender: Bytes! # address
-  from: Bucket! # bucket quote token was moved from
-  to: Bucket! # bucket quote token was moved to
-  amount: BigInt! # uint256
+  pool: Pool!             # Pool in which quote tokens were moved
+  lender: Bytes!          # address
+  from: Bucket!           # bucket quote token was moved from
+  to: Bucket!             # bucket quote token was moved to
+  amount: BigInt!         # uint256
   lpRedeemedFrom: BigInt! # uint256
-  lpAwardedTo: BigInt! # uint256
-  lup: BigInt! # TODO: should be BigDecimal
+  lpAwardedTo: BigInt!    # uint256
+  lup: BigDecimal!        # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -422,7 +422,7 @@ type RemoveQuoteToken @entity(immutable: true) {
   index: Int!         # uint256
   amount: BigInt!     # uint256
   lpRedeemed: BigInt! # uint256
-  lup: BigInt!        # TODO: should be BigDecimal
+  lup: BigDecimal!    # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -430,11 +430,11 @@ type RemoveQuoteToken @entity(immutable: true) {
 
 type RepayDebt @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool debt was repaid to
-  borrower: Bytes! # address
-  quoteRepaid: BigInt! # uint256
+  pool: Pool!               # Pool debt was repaid to
+  borrower: Bytes!          # address
+  quoteRepaid: BigInt!      # uint256
   collateralPulled: BigInt! # uint256
-  lup: BigInt! # TODO: should be BigDecimal
+  lup: BigDecimal!          # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

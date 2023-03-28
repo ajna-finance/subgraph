@@ -133,7 +133,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   addQuoteToken.index = event.params.index.toU32()
   addQuoteToken.amount = event.params.amount
   addQuoteToken.lpAwarded = event.params.lpAwarded
-  addQuoteToken.lup = event.params.lup
+  addQuoteToken.lup = event.params.lup.toBigDecimal()
 
   addQuoteToken.blockNumber = event.block.number
   addQuoteToken.blockTimestamp = event.block.timestamp
@@ -489,7 +489,7 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
   drawDebt.borrower = event.params.borrower
   drawDebt.amountBorrowed = event.params.amountBorrowed
   drawDebt.collateralPledged = event.params.collateralPledged
-  drawDebt.lup = event.params.lup
+  drawDebt.lup = event.params.lup.toBigDecimal()
 
   drawDebt.blockNumber = event.block.number
   drawDebt.blockTimestamp = event.block.timestamp
@@ -626,7 +626,7 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
   moveQuoteToken.amount = event.params.amount
   moveQuoteToken.lpRedeemedFrom = event.params.lpRedeemedFrom
   moveQuoteToken.lpAwardedTo = event.params.lpAwardedTo
-  moveQuoteToken.lup = event.params.lup
+  moveQuoteToken.lup = event.params.lup.toBigDecimal()
 
   moveQuoteToken.blockNumber = event.block.number
   moveQuoteToken.blockTimestamp = event.block.timestamp
@@ -721,7 +721,7 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
   entity.index = event.params.index.toU32()
   entity.amount = event.params.amount
   entity.lpRedeemed = event.params.lpRedeemed
-  entity.lup = event.params.lup
+  entity.lup = event.params.lup.toBigDecimal()
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -737,7 +737,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   repayDebt.borrower = event.params.borrower
   repayDebt.quoteRepaid = event.params.quoteRepaid
   repayDebt.collateralPulled = event.params.collateralPulled
-  repayDebt.lup = event.params.lup
+  repayDebt.lup = event.params.lup.toBigDecimal()
 
   repayDebt.blockNumber = event.block.number
   repayDebt.blockTimestamp = event.block.timestamp
