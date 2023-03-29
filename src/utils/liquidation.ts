@@ -5,7 +5,10 @@ import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 
 import { wadToDecimal } from "./convert"
 import { ONE_BI, ZERO_BD } from "./constants"
-import { getLoanId } from "./loan"
+
+export function getLiquidationAuctionId(pool: Bytes, loanId: Bytes, blockNumber: BigInt): Bytes {
+    return pool.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + blockNumber.toString()))
+}
 
 // TODO: if logIndex doesn't work as expected, update the ID generation to use the taker addres as second param
 // return the id of a bucketTake given the transactionHash and logIndex of the BucketTakeLPAwarded event
@@ -17,10 +20,6 @@ import { getLoanId } from "./loan"
 export function getBucketTakeIdFromBucketTakeLPAwarded(transactionHash: Bytes, blockNumber: BigInt): Bytes {
     // assume that the logIndex is always one greater given the order of emitted events
     return transactionHash.concatI32(blockNumber.toI32())
-}
-
-export function getLiquidationAuctionId(pool: Bytes, loanId: Bytes): Bytes {
-    return pool.concat(Bytes.fromUTF8('|' + loanId.toString()))
 }
 
 export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuctionId: Bytes, kick: Kick, loan: Loan): LiquidationAuction {

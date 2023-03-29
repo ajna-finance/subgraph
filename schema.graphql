@@ -189,7 +189,7 @@ type Account @entity {
 
 # TODO: determine if it's worth adding borrowerDebt field updated in kick mapping
 type LiquidationAuction @entity {
-  id: Bytes! # $poolAddress + '|' + $loanId  // FIXME: collides with Loan entity's ID field
+  id: Bytes! # $poolAddress + '|' + $loanId + '|' + blockNumber
   pool: Pool! # pool in which the liquidation occurred
   borrower: Bytes! # address of the borrower being liquidated
   # borrowerDebt: BigDecimal! # total debt of the borrower at kickTime

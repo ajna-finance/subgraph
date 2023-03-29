@@ -381,7 +381,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
     const auctionInfo = getAuctionInfoERC20Pool(bucketTake.borrower, pool)
 
     // update liquidation auction state
-    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
+    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id, bucketTake.blockNumber)
     const liquidationAuction = LiquidationAuction.load(liquidationAuctionId)!
     updateLiquidationAuction(liquidationAuction, auctionInfo, pool.id)
     liquidationAuction.debtRepaid = liquidationAuction.debtRepaid.plus(wadToDecimal(event.params.amount))
@@ -579,7 +579,7 @@ export function handleKick(event: KickEvent): void {
     const auctionInfo = getAuctionInfoERC20Pool(kick.borrower, pool)
 
     // update liquidation auction state
-    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
+    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id, kick.blockNumber)
     const liquidationAuction = loadOrCreateLiquidationAuction(pool.id, liquidationAuctionId, kick, loan)
     updateLiquidationAuction(liquidationAuction, auctionInfo, pool.id)
 
@@ -894,7 +894,7 @@ export function handleSettle(event: SettleEvent): void {
     const auctionInfo = getAuctionInfoERC20Pool(settle.borrower, pool)
 
     // update liquidation auction state
-    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loanId)
+    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loanId, settle.blockNumber)
     const liquidationAuction = LiquidationAuction.load(liquidationAuctionId)!
     updateLiquidationAuction(liquidationAuction, auctionInfo, pool.id)
     liquidationAuction.settled = true
@@ -967,7 +967,7 @@ export function handleTake(event: TakeEvent): void {
     const auctionInfo = getAuctionInfoERC20Pool(take.borrower, pool)
 
     // update liquidation auction state
-    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id)
+    const liquidationAuctionId = getLiquidationAuctionId(pool.id, loan.id, take.blockNumber)
     const liquidationAuction = LiquidationAuction.load(liquidationAuctionId)!
     updateLiquidationAuction(liquidationAuction, auctionInfo, pool.id)
     liquidationAuction.debtRepaid = liquidationAuction.debtRepaid.plus(wadToDecimal(event.params.amount))

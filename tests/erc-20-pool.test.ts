@@ -684,7 +684,7 @@ describe("Describe entity assertions", () => {
     )
 
     // check LiquidationAuction attributes
-    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId)
+    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId, ONE_BI)
     assert.entityCount("LiquidationAuction", 1)
     assert.fieldEquals(
       "LiquidationAuction",
@@ -917,7 +917,7 @@ describe("Describe entity assertions", () => {
     )
 
     // check LiquidationAuction attributes
-    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId)
+    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId, ONE_BI)
     assert.entityCount("LiquidationAuction", 1)
     assert.fieldEquals(
       "LiquidationAuction",
