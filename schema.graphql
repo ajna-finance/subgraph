@@ -1,6 +1,6 @@
 # TODO: finish expanding this schema -> ERC20 / ERC721?
 # TODO: add pool balances to this
-# this supports both ERC20 and ERC721 tokens, as union type's aren't currently supported
+# this supports both ERC20 and ERC721 tokens, as union types aren't currently supported
 type Token @entity {
   # token address
   id: Bytes!
@@ -87,6 +87,8 @@ type Pool @entity {
   reserveAuctionPrice: BigDecimal!
   # current reserve auction timeRemaining
   reserveAuctionTimeRemaining: BigInt!
+  # claimable reserves which have not been taken in the Claimable Reserve Auction
+  # TODO: reserveAuctionUnclaimed: BigDecimal!
   # current burn epoch
   burnEpoch: BigInt!
   # total ajna burned in the pool
@@ -140,7 +142,6 @@ type Lend @entity {
   lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket
   lpbValueInQuote: BigDecimal!
-  # TODO: lpbValueInCollateral?
 }
 
 # each borrower has only one loan with a pool
@@ -208,6 +209,7 @@ type LiquidationAuction @entity {
 
 # tracks the reserve auction process across multiple takes in a single auction
 # used as start and take events are emitted as ReserveAuction
+# TODO: rename ReserveAuction
 type ReserveAuctionProcess @entity {
   id: Bytes! # $poolAddress + '|' + $burnEpoch
   kicker: Bytes! # address of the kicker
@@ -251,7 +253,7 @@ type LPAllowances @entity {
 
 type AddCollateral @entity(immutable: true) {
   id: Bytes!
-  pool: Pool!            # Pool whose bucket was modified
+  pool: Pool!            # Pool to which collateral was added
   bucket: Bucket!        # Bucket to which collateral was added
   actor: Bytes!          # address
   index: Int!            # uint256
@@ -264,8 +266,8 @@ type AddCollateral @entity(immutable: true) {
 
 type AddQuoteToken @entity {
   id: Bytes!
-  bucket: Bucket!        # Bucket to which quote was added
   pool: Pool!            # Pool to which quote was added
+  bucket: Bucket!        # Bucket to which quote was added
   lender: Bytes!         # address
   index: Int!            # uint256
   amount: BigDecimal!    # uint256
@@ -403,6 +405,8 @@ type MoveQuoteToken @entity(immutable: true) {
 
 type RemoveCollateral @entity(immutable: true) {
   id: Bytes!
+  pool: Pool!             # Pool where collateral was removed
+  bucket: Bucket!         # Bucket where collateral was removed
   claimer: Bytes!         # address
   index: Int!             # uint256
   amount: BigDecimal!     # uint256
@@ -414,6 +418,8 @@ type RemoveCollateral @entity(immutable: true) {
 
 type RemoveQuoteToken @entity(immutable: true) {
   id: Bytes!
+  pool: Pool!             # Pool where deposit was removed
+  bucket: Bucket!         # Bucket where deposit was removed
   lender: Bytes!          # address
   index: Int!             # uint256
   amount: BigDecimal!     # uint256
@@ -437,6 +443,7 @@ type RepayDebt @entity(immutable: true) {
 }
 
 # a reserve auction take or start event
+# TODO: rename this or split events into separate entities
 type ReserveAuction @entity(immutable: true) {
   id: Bytes!                         # transaction.hash + transaction.from
   taker: Bytes                       # address of the taker, null if emitted as start of event
@@ -579,10 +586,12 @@ type RedeemPosition @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# PositionManager ERC-721 transfer event
 type Transfer @entity(immutable: true) {
   id: Bytes!
-  from: Bytes! # address
-  to: Bytes! # address
+  token: Token!    # token which was transferred
+  from: Bytes!     # address
+  to: Bytes!       # address
   tokenId: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -591,7 +600,7 @@ type Transfer @entity(immutable: true) {
 
 type PoolCreated @entity(immutable: true) {
   id: Bytes!
-  pool_: Bytes! # address
+  pool_: Bytes! # address  # TODO: rename ajnaPool or pool for consistency
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -629,6 +638,7 @@ type Unstake @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# FIXME: produces "No value provided" for id error
 type UpdateExchangeRates @entity(immutable: true) {
   id: Bytes!
   caller: Bytes! # address

@@ -32,6 +32,7 @@ export function updateAccountPools(account: Account, pool: Pool): void {
     if (index == -1) {
         account.pools = account.pools.concat([pool.id])
     }
+    // TODO: remove Pool from account if no Lends or Loans
 }
 
 // update the list of lends initiated by an account, if it hasn't been added already
@@ -42,6 +43,7 @@ export function updateAccountLends(account: Account, lend: Lend): void {
     if (index == -1) {
         account.lends = account.lends.concat([lend.id])
     }
+    // TODO: remove Lend from account if no LP in bucket
 }
 
 // update the list of loans initiated by an account, if it hasn't been added already

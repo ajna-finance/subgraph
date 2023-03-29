@@ -1,3 +1,4 @@
+import { Address } from "@graphprotocol/graph-ts"
 import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
@@ -16,9 +17,30 @@ import {
   Mint,
   MoveLiquidity,
   RedeemPosition,
+  Token,
   Transfer
 } from "../generated/schema"
-import { bigIntArrayToIntArray } from "./utils/convert"
+import { ONE_BI, ZERO_BI } from "./utils/constants"
+import { addressToBytes, bigIntArrayToIntArray } from "./utils/convert"
+import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token"
+
+export function loadOrCreateLPToken(tokenAddress: Address): Token {
+  const id = addressToBytes(tokenAddress)
+  let token = Token.load(id)
+  if (token == null) {
+    // create new account if account hasn't already been stored
+    token = new Token(id) as Token
+    token.name        = getTokenName(tokenAddress)
+    token.symbol      = getTokenSymbol(tokenAddress)
+    token.decimals    = getTokenDecimals(tokenAddress)
+    token.totalSupply = getTokenTotalSupply(tokenAddress)
+    token.txCount     = ZERO_BI
+    token.isERC721    = true
+    token.poolCount   = ONE_BI
+  }
+
+  return token
+}
 
 export function handleApproval(event: ApprovalEvent): void {
   let entity = new Approval(
@@ -134,6 +156,8 @@ export function handleTransfer(event: TransferEvent): void {
   entity.from = event.params.from
   entity.to = event.params.to
   entity.tokenId = event.params.tokenId
+
+  entity.token = loadOrCreateLPToken(event.transaction.to!).id
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp

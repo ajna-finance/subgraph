@@ -704,6 +704,50 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
 
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // update pool state
+    updatePool(pool)
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
+
+    // update bucket state
+    const bucketId   = getBucketId(pool.id, event.params.index.toU32())
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
+    const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
+    bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+    bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+    bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+    bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+
+    // update account state
+    const accountId = entity.claimer
+    const account   = loadOrCreateAccount(accountId)
+    account.txCount = account.txCount.plus(ONE_BI)
+
+    // update lend state
+    const lendId = getLendId(bucketId, accountId)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id, entity.claimer)
+    lend.lpb             = lend.lpb.minus(entity.lpRedeemed)
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
+
+    // update account's list of pools and lends if necessary
+    updateAccountPools(account, pool)
+    updateAccountLends(account, lend)
+
+    // save entities to store
+    account.save()
+    bucket.save()
+    lend.save()
+    pool.save()
+
+    entity.bucket = bucket.id
+    entity.pool = pool.id
+  }
+
   entity.save()
 }
 
@@ -720,6 +764,50 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
+
+  // update entities
+  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  if (pool != null) {
+    // update pool state
+    updatePool(pool)
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
+
+    // update bucket state
+    const bucketId   = getBucketId(pool.id, event.params.index.toU32())
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
+    const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
+    bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+    bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+    bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+    bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+
+    // update account state
+    const accountId = entity.lender
+    const account   = loadOrCreateAccount(accountId)
+    account.txCount = account.txCount.plus(ONE_BI)
+
+    // update lend state
+    const lendId = getLendId(bucketId, accountId)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id, entity.lender)
+    lend.lpb             = lend.lpb.minus(entity.lpRedeemed)
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
+
+    // update account's list of pools and lends if necessary
+    updateAccountPools(account, pool)
+    updateAccountLends(account, lend)
+
+    // save entities to store
+    account.save()
+    bucket.save()
+    lend.save()
+    pool.save()
+
+    entity.bucket = bucket.id
+    entity.pool = pool.id
+  }
 
   entity.save()
 }
