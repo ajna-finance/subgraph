@@ -67,9 +67,9 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const actor = Address.fromString("0x0000000000000000000000000000000000000001")
     const index = BigInt.fromI32(234)
-    const price = BigDecimal.fromString("312819781990957000000000000")
-    const collateralAmount = BigInt.fromI32(234)
-    const lpAwarded = BigInt.fromI32(234)
+    const price = BigDecimal.fromString("312819781990957000000000000") // 312819781.990957 * 1e18
+    const collateralAmount = BigInt.fromString("3196720000000")        // 0.00000319672 * 1e18
+    const lpAwarded = BigInt.fromString("3036884000000")               // 0.00000303688 * 1e18
     
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
@@ -139,13 +139,13 @@ describe("Describe entity assertions", () => {
       "AddCollateral",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      "234"
+      `${wadToDecimal(collateralAmount)}`
     )
     assert.fieldEquals(
       "AddCollateral",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwarded",
-      "234"
+      `${wadToDecimal(lpAwarded)}`
     )
 
     // check bucket attributes updated
@@ -170,9 +170,9 @@ describe("Describe entity assertions", () => {
     const lender = Address.fromString("0x0000000000000000000000000000000000000002")
     const index = BigInt.fromI32(234)
     const price = BigDecimal.fromString("312819781990957000000000000")
-    const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
-    const lpAwarded = BigInt.fromI32(567)
-    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+    const amount = BigInt.fromString("567529276179422528643")    // 567.529276179422528643 * 1e18
+    const lpAwarded = BigInt.fromString("533477519608657176924") // 533.477519608657176924 * 1e18
+    const lup = BigInt.fromString("9529276179422528643")         //   9.529276179422528643 * 1e18
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
@@ -244,19 +244,19 @@ describe("Describe entity assertions", () => {
       "AddQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      "567529276179422528643"
+      `${wadToDecimal(amount)}`
     )
     assert.fieldEquals(
       "AddQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwarded",
-      "567"
+      `${wadToDecimal(lpAwarded)}`
     )
     assert.fieldEquals(
       "AddQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
-      "9529276179422528643"
+      `${wadToDecimal(lup)}`
     )
 
     // check bucket attributes updated
@@ -333,10 +333,10 @@ describe("Describe entity assertions", () => {
     const fromPrice = BigDecimal.fromString("312819781990957000000000000")
     const toBucketIndex = BigInt.fromI32(567)
     const toPrice = BigDecimal.fromString("59428619800395500000000000")
-    const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
-    const lpRedeemedFrom = BigInt.fromI32(567).times(ONE_WAD_BI)
-    const lpAwardedTo = BigInt.fromI32(567).times(ONE_WAD_BI)
-    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+    const amount = BigInt.fromString("567529276179422528643")         // 567.529276179422528643 * 1e18
+    const lpRedeemedFrom = BigInt.fromString("527802226846862951638") // 527.802226846862951638 * 1e18
+    const lpAwardedTo = BigInt.fromString("538358271383800210670")    // 538.358271383800210670 * 1e18
+    const lup = BigInt.fromString("9529276179422528643")              //   9.529276179422528643 * 1e18
 
     /***********************/
     /*** Add Quote Token ***/
@@ -442,25 +442,25 @@ describe("Describe entity assertions", () => {
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      `${amount}`
+      `${wadToDecimal(amount)}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpRedeemedFrom",
-      `${lpRedeemedFrom}`
+      `${wadToDecimal(lpRedeemedFrom)}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
-      "lpRedeemedFrom",
-      `${lpAwardedTo}`
+      "lpAwardedTo",
+      `${wadToDecimal(lpAwardedTo)}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
-      `${lup}`
+      `${wadToDecimal(lup)}`
     )
   })
 
@@ -495,19 +495,19 @@ describe("Describe entity assertions", () => {
       "DrawDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amountBorrowed",
-      `${amountBorrowed}`
+      `${wadToDecimal(amountBorrowed)}`
     )
     assert.fieldEquals(
       "DrawDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "collateralPledged",
-      `${collateralPledged}`
+      `${wadToDecimal(collateralPledged)}`
     )
     assert.fieldEquals(
       "DrawDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
-      `${lup}`
+      `${wadToDecimal(lup)}`
     )
 
     // TODO: check bucket attributes updated -> requires handling liquidations
@@ -564,9 +564,9 @@ describe("Describe entity assertions", () => {
   test("RepayDebt", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const borrower = Address.fromString("0x0000000000000000000000000000000000000003")
-    const quoteRepaid = BigInt.fromI32(567)
-    const collateralPulled = BigInt.fromI32(1067)
-    const lup = BigInt.fromI32(234)
+    const quoteRepaid = BigInt.fromString("567111000000000000000")     // 567.111  * 1e18
+    const collateralPulled = BigInt.fromString("13400500000000000000") //  13.4005 * 1e18
+    const lup = BigInt.fromString("63480000000000000000")              //  63.48   * 1e18
 
     const newRepayDebtEvent = createRepayDebtEvent(
       poolAddress,
@@ -590,19 +590,19 @@ describe("Describe entity assertions", () => {
       "RepayDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "quoteRepaid",
-      `${quoteRepaid}`
+      `${wadToDecimal(quoteRepaid)}`
     )
     assert.fieldEquals(
       "RepayDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "collateralPulled",
-      `${collateralPulled}`
+      `${wadToDecimal(collateralPulled)}`
     )
     assert.fieldEquals(
       "RepayDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
-      `${lup}`
+      `${wadToDecimal(lup)}`
     )
   })
 
@@ -610,9 +610,9 @@ describe("Describe entity assertions", () => {
     // mock event params
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
-    const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const debt = BigInt.fromString("567529276179422528643")        //  567.529276179422528643 * 1e18
     const collateral = BigInt.fromString("1067529276179422528643") // 1067.529276179422528643 * 1e18
-    const bond = BigInt.fromString("234000000000000000000")
+    const bond = BigInt.fromString("234000000000000000000")        //  234                    * 1e18
 
     // TODO: how to access timestamp?
     // mock auction info
@@ -660,7 +660,7 @@ describe("Describe entity assertions", () => {
       "Kick",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "bond",
-      `${bond}`
+      `${wadToDecimal(bond)}`
     )
 
     // check Account attributes updated
@@ -872,7 +872,7 @@ describe("Describe entity assertions", () => {
       "Take",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      `${amountToTake}`
+      `${wadToDecimal(amountToTake)}`
     )
 
     // check kick state updated
@@ -1076,13 +1076,13 @@ describe("Describe entity assertions", () => {
       "BucketTake",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      `${amountToTake}`
+      `${wadToDecimal(amountToTake)}`
     )
     assert.fieldEquals(
       "BucketTake",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "collateral",
-      `${collateral}`
+      `${wadToDecimal(collateral)}`
     )
 
     // check BucketTakeLPAwarded attributes
@@ -1109,13 +1109,13 @@ describe("Describe entity assertions", () => {
       "BucketTakeLPAwarded",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwardedTaker",
-      `${lpAwardedTaker}`
+      `${wadToDecimal(lpAwardedTaker)}`
     )
     assert.fieldEquals(
       "BucketTakeLPAwarded",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwardedKicker",
-      `${lpAwardedKicker}`
+      `${wadToDecimal(lpAwardedKicker)}`
     )
 
     // TODO: check lends attributes
@@ -1483,10 +1483,10 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000002")
     const index = BigInt.fromI32(234)
-    const price = BigDecimal.fromString("312819781990957000000000000") // 312819781.990957 * 1e18
-    const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
-    const lpAwarded = BigInt.fromI32(567)
-    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+    const price = BigDecimal.fromString("312819781990957000000000000") // 312819781.990957       * 1e18
+    const amount = BigInt.fromString("567529276179422528643")          // 567.529276179422528643 * 1e18
+    const lpAwarded = BigInt.fromString("544828105132245627497")       // 544.828105132245627497 * 1e18
+    const lup = BigInt.fromString("9529276179422528643")               //   9.529276179422528643 * 1e18
 
     /***********************/
     /*** Add Quote Token ***/
@@ -1513,6 +1513,7 @@ describe("Describe entity assertions", () => {
       lpAwarded,
       lup
     )
+    mockGetLPBValueInQuote(poolAddress, lpAwarded, index, lpAwarded)
     handleAddQuoteToken(newAddQuoteTokenEvent)
 
     // check bucket attributes updated

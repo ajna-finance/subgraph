@@ -71,8 +71,8 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
   )
   addCollateral.actor = event.params.actor
   addCollateral.index = event.params.index.toU32()
-  addCollateral.amount = event.params.amount
-  addCollateral.lpAwarded = event.params.lpAwarded
+  addCollateral.amount = wadToDecimal(event.params.amount)
+  addCollateral.lpAwarded = wadToDecimal(event.params.lpAwarded)
 
   addCollateral.blockNumber = event.block.number
   addCollateral.blockTimestamp = event.block.timestamp
@@ -129,11 +129,11 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   let addQuoteToken = new AddQuoteToken(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  addQuoteToken.lender = event.params.lender
-  addQuoteToken.index = event.params.index.toU32()
-  addQuoteToken.amount = event.params.amount
-  addQuoteToken.lpAwarded = event.params.lpAwarded
-  addQuoteToken.lup = event.params.lup.toBigDecimal()
+  addQuoteToken.lender    = event.params.lender
+  addQuoteToken.index     = event.params.index.toU32()
+  addQuoteToken.amount    = wadToDecimal(event.params.amount)
+  addQuoteToken.lpAwarded = wadToDecimal(event.params.lpAwarded)
+  addQuoteToken.lup       = wadToDecimal(event.params.lup)
 
   addQuoteToken.blockNumber = event.block.number
   addQuoteToken.blockTimestamp = event.block.timestamp
@@ -230,8 +230,8 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.borrower = event.params.borrower
-  entity.collateral = event.params.collateral
-  entity.lps = event.params.lps
+  entity.collateral = wadToDecimal(event.params.collateral)
+  entity.lps = wadToDecimal(event.params.lps)
   entity.index = event.params.index.toU32()
 
   entity.blockNumber = event.block.number
@@ -249,7 +249,7 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   auctionSettle.borrower = event.params.borrower
-  auctionSettle.collateral = event.params.collateral
+  auctionSettle.collateral = wadToDecimal(event.params.collateral)
 
   auctionSettle.blockNumber = event.block.number
   auctionSettle.blockTimestamp = event.block.timestamp
@@ -264,7 +264,7 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
     const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
     const loan = loadOrCreateLoan(loanId, pool.id, addressToBytes(event.params.borrower))
     loan.debt = ZERO_BD
-    loan.collateralPledged = wadToDecimal(auctionSettle.collateral)
+    loan.collateralPledged = auctionSettle.collateral
     loan.inLiquidation = false
     loan.collateralization = ZERO_BD
     loan.tp = ZERO_BD
@@ -285,7 +285,7 @@ export function handleBondWithdrawn(event: BondWithdrawnEvent): void {
   )
   entity.kicker = event.params.kicker
   entity.reciever = event.params.reciever
-  entity.amount = event.params.amount
+  entity.amount = wadToDecimal(event.params.amount)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -299,7 +299,7 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   bucketBankruptcy.index = event.params.index.toU32()
-  bucketBankruptcy.lpForfeited = event.params.lpForfeited
+  bucketBankruptcy.lpForfeited = wadToDecimal(event.params.lpForfeited)
 
   bucketBankruptcy.blockNumber = event.block.number
   bucketBankruptcy.blockTimestamp = event.block.timestamp
@@ -337,9 +337,9 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   bucketTake.borrower = event.params.borrower
   bucketTake.taker = event.transaction.from
   bucketTake.index = event.params.index.toU32()
-  bucketTake.amount = event.params.amount
-  bucketTake.collateral = event.params.collateral
-  bucketTake.bondChange = event.params.bondChange
+  bucketTake.amount = wadToDecimal(event.params.amount)
+  bucketTake.collateral = wadToDecimal(event.params.collateral)
+  bucketTake.bondChange = wadToDecimal(event.params.bondChange)
   bucketTake.isReward = event.params.isReward
 
   bucketTake.blockNumber = event.block.number
@@ -422,8 +422,8 @@ export function handleBucketTakeLPAwarded(
   )
   bucketTakeLpAwarded.taker = event.params.taker
   bucketTakeLpAwarded.kicker = event.params.kicker
-  bucketTakeLpAwarded.lpAwardedTaker = event.params.lpAwardedTaker
-  bucketTakeLpAwarded.lpAwardedKicker = event.params.lpAwardedKicker
+  bucketTakeLpAwarded.lpAwardedTaker = wadToDecimal(event.params.lpAwardedTaker)
+  bucketTakeLpAwarded.lpAwardedKicker = wadToDecimal(event.params.lpAwardedKicker)
 
   bucketTakeLpAwarded.blockNumber = event.block.number
   bucketTakeLpAwarded.blockTimestamp = event.block.timestamp
@@ -450,7 +450,7 @@ export function handleBucketTakeLPAwarded(
     // update lend state for kicker
     const kickerLendId = getLendId(bucketId, bucketTakeLpAwarded.kicker)
     const kickerLend = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucketTakeLpAwarded.kicker)
-    kickerLend.lpb             = kickerLend.lpb.plus(wadToDecimal(bucketTakeLpAwarded.lpAwardedTaker))
+    kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
     kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, kickerLend)
 
     // update kicker account state if they weren't a lender already
@@ -463,7 +463,7 @@ export function handleBucketTakeLPAwarded(
     const takerLend = loadOrCreateLend(bucketId, takerLendId, pool.id, bucketTakeLpAwarded.taker)
     // TODO: determine how to best update lend.deposit -> is it even possible?
     // lend.deposit         = lend.deposit.plus(wadToDecimal(event.params.amount))
-    takerLend.lpb             = takerLend.lpb.plus(wadToDecimal(bucketTakeLpAwarded.lpAwardedTaker))
+    takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
     takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, takerLend)
 
     // save entities to store
@@ -483,10 +483,10 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
   const drawDebt = new DrawDebt(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  drawDebt.borrower = event.params.borrower
-  drawDebt.amountBorrowed = event.params.amountBorrowed
-  drawDebt.collateralPledged = event.params.collateralPledged
-  drawDebt.lup = event.params.lup.toBigDecimal()
+  drawDebt.borrower          = event.params.borrower
+  drawDebt.amountBorrowed    = wadToDecimal(event.params.amountBorrowed)
+  drawDebt.collateralPledged = wadToDecimal(event.params.collateralPledged)
+  drawDebt.lup               = wadToDecimal(event.params.lup)
 
   drawDebt.blockNumber = event.block.number
   drawDebt.blockTimestamp = event.block.timestamp
@@ -536,12 +536,12 @@ export function handleKick(event: KickEvent): void {
   const kick = new Kick(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  kick.borrower = event.params.borrower
-  kick.debt = event.params.debt
-  kick.collateral = event.params.collateral
-  kick.bond = event.params.bond
-  kick.locked = wadToDecimal(kick.bond)
-  kick.claimable = ZERO_BD
+  kick.borrower   = event.params.borrower
+  kick.debt       = wadToDecimal(event.params.debt)
+  kick.collateral = wadToDecimal(event.params.collateral)
+  kick.bond       = wadToDecimal(event.params.bond)
+  kick.locked     = kick.bond
+  kick.claimable  = ZERO_BD
 
   kick.blockNumber = event.block.number
   kick.blockTimestamp = event.block.timestamp
@@ -570,8 +570,8 @@ export function handleKick(event: KickEvent): void {
     const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
     const loan = loadOrCreateLoan(loanId, pool.id, kick.borrower)
     loan.inLiquidation     = true
-    loan.collateralPledged = wadToDecimal(kick.collateral)
-    loan.debt              = wadToDecimal(kick.debt) // update loan debt to account for kick penalty
+    loan.collateralPledged = kick.collateral
+    loan.debt              = kick.debt // update loan debt to account for kick penalty
     loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
     loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
 
@@ -616,11 +616,11 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
   const moveQuoteToken = new MoveQuoteToken(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  moveQuoteToken.lender = event.params.lender
-  moveQuoteToken.amount = event.params.amount
-  moveQuoteToken.lpRedeemedFrom = event.params.lpRedeemedFrom
-  moveQuoteToken.lpAwardedTo = event.params.lpAwardedTo
-  moveQuoteToken.lup = event.params.lup.toBigDecimal()
+  moveQuoteToken.lender         = event.params.lender
+  moveQuoteToken.amount         = wadToDecimal(event.params.amount)
+  moveQuoteToken.lpRedeemedFrom = wadToDecimal(event.params.lpRedeemedFrom)
+  moveQuoteToken.lpAwardedTo    = wadToDecimal(event.params.lpAwardedTo)
+  moveQuoteToken.lup            = wadToDecimal(event.params.lup)
 
   moveQuoteToken.blockNumber = event.block.number
   moveQuoteToken.blockTimestamp = event.block.timestamp
@@ -695,10 +695,10 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   let entity = new RemoveCollateral(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.claimer = event.params.claimer
-  entity.index = event.params.index.toU32()
-  entity.amount = event.params.amount
-  entity.lpRedeemed = event.params.lpRedeemed
+  entity.claimer    = event.params.claimer
+  entity.index      = event.params.index.toU32()
+  entity.amount     = wadToDecimal(event.params.amount)
+  entity.lpRedeemed = wadToDecimal(event.params.lpRedeemed)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -711,11 +711,11 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
   let entity = new RemoveQuoteToken(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.lender = event.params.lender
-  entity.index = event.params.index.toU32()
-  entity.amount = event.params.amount
-  entity.lpRedeemed = event.params.lpRedeemed
-  entity.lup = event.params.lup.toBigDecimal()
+  entity.lender     = event.params.lender
+  entity.index      = event.params.index.toU32()
+  entity.amount     = wadToDecimal(event.params.amount)
+  entity.lpRedeemed = wadToDecimal(event.params.lpRedeemed)
+  entity.lup        = wadToDecimal(event.params.lup)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -728,10 +728,10 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   const repayDebt = new RepayDebt(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  repayDebt.borrower = event.params.borrower
-  repayDebt.quoteRepaid = event.params.quoteRepaid
-  repayDebt.collateralPulled = event.params.collateralPulled
-  repayDebt.lup = event.params.lup.toBigDecimal()
+  repayDebt.borrower         = event.params.borrower
+  repayDebt.quoteRepaid      = wadToDecimal(event.params.quoteRepaid)
+  repayDebt.collateralPulled = wadToDecimal(event.params.collateralPulled)
+  repayDebt.lup              = wadToDecimal(event.params.lup)
 
   repayDebt.blockNumber = event.block.number
   repayDebt.blockTimestamp = event.block.timestamp
@@ -781,9 +781,9 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
   const reserveAuction = new ReserveAuction(
     event.transaction.hash.concat(event.transaction.from)
   )
-  reserveAuction.claimableReservesRemaining = event.params.claimableReservesRemaining
-  reserveAuction.auctionPrice = event.params.auctionPrice
-  reserveAuction.currentBurnEpoch = event.params.currentBurnEpoch
+  reserveAuction.claimableReservesRemaining = wadToDecimal(event.params.claimableReservesRemaining)
+  reserveAuction.auctionPrice               = wadToDecimal(event.params.auctionPrice)
+  reserveAuction.currentBurnEpoch           = event.params.currentBurnEpoch
 
   reserveAuction.blockNumber = event.block.number
   reserveAuction.blockTimestamp = event.block.timestamp
@@ -864,7 +864,7 @@ export function handleSettle(event: SettleEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   settle.borrower = event.params.borrower
-  settle.settledDebt = event.params.settledDebt
+  settle.settledDebt = wadToDecimal(event.params.settledDebt)
 
   settle.blockNumber = event.block.number
   settle.blockTimestamp = event.block.timestamp
@@ -920,12 +920,12 @@ export function handleTake(event: TakeEvent): void {
   const take = new Take(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  take.borrower = event.params.borrower
-  take.taker = event.transaction.from
-  take.amount = event.params.amount
-  take.collateral = event.params.collateral
-  take.bondChange = event.params.bondChange
-  take.isReward = event.params.isReward
+  take.borrower   = event.params.borrower
+  take.taker      = event.transaction.from
+  take.amount     = wadToDecimal(event.params.amount)
+  take.collateral = wadToDecimal(event.params.collateral)
+  take.bondChange = wadToDecimal(event.params.bondChange)
+  take.isReward   = event.params.isReward
 
   take.blockNumber = event.block.number
   take.blockTimestamp = event.block.timestamp
@@ -1004,10 +1004,10 @@ export function handleTransferLPs(event: TransferLPsEvent): void {
   let entity = new TransferLPs(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.owner = event.params.owner
+  entity.owner    = event.params.owner
   entity.newOwner = event.params.newOwner
-  entity.indexes = bigIntArrayToIntArray(event.params.indexes)
-  entity.lps = event.params.lps
+  entity.indexes  = bigIntArrayToIntArray(event.params.indexes)
+  entity.lps      = wadToDecimal(event.params.lps)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -1020,8 +1020,8 @@ export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   const updateInterestRate = new UpdateInterestRate(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  updateInterestRate.oldRate = event.params.oldRate
-  updateInterestRate.newRate = event.params.newRate
+  updateInterestRate.oldRate = wadToDecimal(event.params.oldRate)
+  updateInterestRate.newRate = wadToDecimal(event.params.newRate)
 
   updateInterestRate.blockNumber = event.block.number
   updateInterestRate.blockTimestamp = event.block.timestamp

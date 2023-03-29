@@ -12,7 +12,7 @@ import {
   Unstake,
   UpdateExchangeRates
 } from "../generated/schema"
-import { bigIntArrayToIntArray } from "./utils/convert"
+import { bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 
 export function handleClaimRewards(event: ClaimRewardsEvent): void {
   let entity = new ClaimRewards(
@@ -22,7 +22,7 @@ export function handleClaimRewards(event: ClaimRewardsEvent): void {
   entity.ajnaPool = event.params.ajnaPool
   entity.tokenId = event.params.tokenId
   entity.epochsClaimed = event.params.epochsClaimed
-  entity.amount = event.params.amount
+  entity.amount = wadToDecimal(event.params.amount)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp

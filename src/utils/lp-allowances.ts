@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { LPAllowance, LPAllowances } from "../../generated/schema";
+import { wadToDecimal } from "./convert";
 
 export function getAllowancesId(poolId: Bytes, lenderId: Bytes, spenderId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|' + lenderId.toString() + '|' + spenderId.toString()))
@@ -29,10 +30,10 @@ export function setAllowances(entity: LPAllowances, indexes: Array<BigInt>, amou
     let allowance = LPAllowance.load(aid)
     if (allowance == null) {
       allowance = new LPAllowance(aid)
-      allowance.amount = amounts[i]
+      allowance.amount = wadToDecimal(amounts[i])
       entity.allowances.push(aid)
     } else {
-      allowance.amount = amounts[i]
+      allowance.amount = wadToDecimal(amounts[i])
     }
   }
 }
