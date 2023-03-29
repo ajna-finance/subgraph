@@ -149,7 +149,7 @@ templates:
         - RemoveCollateral
         - RemoveQuoteToken
         - RepayDebt
-        - ReserveAuction
+        - ReserveAuctionKickOrTake
         - RevokeLpAllowance
         - RevokeLpTransferors
         - SetLpAllowance

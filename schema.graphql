@@ -1,5 +1,4 @@
 # TODO: finish expanding this schema -> ERC20 / ERC721?
-# TODO: add pool balances to this
 # this supports both ERC20 and ERC721 tokens, as union types aren't currently supported
 type Token @entity {
   # token address
@@ -87,12 +86,12 @@ type Pool @entity {
   reserveAuctionPrice: BigDecimal!
   # current reserve auction timeRemaining
   reserveAuctionTimeRemaining: BigInt!
-  # claimable reserves which have not been taken in the Claimable Reserve Auction
-  # TODO: reserveAuctionUnclaimed: BigDecimal!
   # current burn epoch
   burnEpoch: BigInt!
   # total ajna burned in the pool
   totalAjnaBurned: BigDecimal!
+  # list of all reserve auctions for this pool
+  reserveAuctions: [ReserveAuction!]! 
 
   # UTILIZATION INFORMATION
   # current pool minimum debt amount for a new borrow
@@ -105,8 +104,10 @@ type Pool @entity {
   targetUtilization: BigDecimal!
 
   # LIQUIDATION INFORMATION
-  totalBondEscrowed: BigDecimal! # total bond escrowed in the pool
-  liquidationAuctions: [LiquidationAuction!]! # list of liquidation auctions in the pool. This array is not resorted, but represents the order of insertion.
+  # liquidation bond currently escrowed in the pool
+  totalBondEscrowed: BigDecimal!
+  # list of active liquidation auctions in the pool, sorted by kick time
+  liquidationAuctions: [LiquidationAuction!]!
 }
 
 type Bucket @entity {
@@ -209,8 +210,7 @@ type LiquidationAuction @entity {
 
 # tracks the reserve auction process across multiple takes in a single auction
 # used as start and take events are emitted as ReserveAuction
-# TODO: rename ReserveAuction
-type ReserveAuctionProcess @entity {
+type ReserveAuction @entity {
   id: Bytes! # $poolAddress + '|' + $burnEpoch
   kicker: Bytes! # address of the kicker
   kickerAward: BigDecimal! # amount of quote rewarded to kicker for starting reserves auction
@@ -219,7 +219,7 @@ type ReserveAuctionProcess @entity {
   claimableReservesRemaining: BigDecimal! # uint256 claimable reserves remaining at start or at latest take
   auctionPrice: BigDecimal! # uint256 price at start or at latest take
   burnEpoch: BigInt! # uint256 burn epoch at which the reserve auction was started
-  reserveAuctionTakes: [ReserveAuction!]! # list of reserve auction takes that occured during this auction process
+  reserveAuctionTakes: [ReserveAuctionKickOrTake!]! # list of reserve auction takes that occured during this auction process
   ajnaBurnedAcrossAllTakes: BigDecimal! # total amount of ajna burned across all takes in the reserve auction
 }
 
@@ -443,11 +443,10 @@ type RepayDebt @entity(immutable: true) {
 }
 
 # a reserve auction take or start event
-# TODO: rename this or split events into separate entities
-type ReserveAuction @entity(immutable: true) {
+type ReserveAuctionKickOrTake @entity(immutable: true) {
   id: Bytes!                         # transaction.hash + transaction.from
   taker: Bytes                       # address of the taker, null if emitted as start of event
-  reserveAuctionProcess: ReserveAuctionProcess! # reserve auction in which the take is occuring
+  reserveAuction: ReserveAuction!    # reserve auction in which the take is occuring
   pool: Pool!                        # pool in which the take is occuring
   claimableReservesRemaining: BigDecimal! # uint256 remaining amount of claimable reserves in the auction
   auctionPrice: BigDecimal!          # uint256 auction price at time of event emit

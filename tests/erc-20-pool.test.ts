@@ -27,7 +27,7 @@ import {
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, bigDecimalExp18, wadToDecimal } from "../src/utils/convert"
 import { FIVE_PERCENT_BD, FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
-import { Account, Lend, Loan, ReserveAuction } from "../generated/schema"
+import { Account, Lend, Loan, ReserveAuctionKickOrTake } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
 import { AuctionInfo, getLiquidationAuctionId } from "../src/utils/liquidation"
@@ -1245,37 +1245,37 @@ describe("Describe entity assertions", () => {
     /*** Assert Reserve Kick State ***/
     /*********************************/
 
-    assert.entityCount("ReserveAuction", 1)
+    assert.entityCount("ReserveAuctionKickOrTake", 1)
 
-    const reserveAuctionProcessId = getReserveAuctionId(addressToBytes(poolAddress), expectedBurnEpoch)
-    assert.entityCount("ReserveAuctionProcess", 1)
+    const reserveAuctionId = getReserveAuctionId(addressToBytes(poolAddress), expectedBurnEpoch)
+    assert.entityCount("ReserveAuction", 1)
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "kicker",
       `${kicker.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "kickerAward",
       `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000"))).div(bigDecimalExp18())}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "burnEpoch",
       `${expectedBurnEpoch}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "ajnaBurnedAcrossAllTakes",
       `${0}`
     )
@@ -1338,26 +1338,26 @@ describe("Describe entity assertions", () => {
 
     const kickReserveAuctionID = Bytes.fromHexString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a").concat(addressToBytes(kicker))
     const takeReserveAuctionID = Bytes.fromHexString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a").concat(addressToBytes(taker))
-    const loadedKickReserveAuction = ReserveAuction.load(kickReserveAuctionID)!
-    const loadedTakeReserveAuction = ReserveAuction.load(takeReserveAuctionID)!
+    const loadedKickReserveAuction = ReserveAuctionKickOrTake.load(kickReserveAuctionID)!
+    const loadedTakeReserveAuction = ReserveAuctionKickOrTake.load(takeReserveAuctionID)!
     const incrementalAjnaBurned = wadToDecimal(totalBurnedAtTake.minus(totalBurnedAtKick))
 
-    assert.entityCount("ReserveAuction", 2)
+    assert.entityCount("ReserveAuctionKickOrTake", 2)
     // assert first kick reserve auction entity
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${kickReserveAuctionID.toHexString()}`,
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${kickReserveAuctionID.toHexString()}`,
-      "reserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`
+      "reserveAuction",
+      `${reserveAuctionId.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${kickReserveAuctionID.toHexString()}`,
       "incrementalAjnaBurned",
       `${0}`
@@ -1366,25 +1366,25 @@ describe("Describe entity assertions", () => {
 
     // assert second take reserve auction entity
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${takeReserveAuctionID.toHexString()}`,
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${takeReserveAuctionID.toHexString()}`,
       "taker",
       `${taker.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${takeReserveAuctionID.toHexString()}`,
-      "reserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`
+      "reserveAuction",
+      `${reserveAuctionId.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${takeReserveAuctionID.toHexString()}`,
       "incrementalAjnaBurned",
       `${incrementalAjnaBurned}`
@@ -1392,40 +1392,40 @@ describe("Describe entity assertions", () => {
     // assert.assertNotNull(loadedTakeReserveAuction.taker) // FIXME: this is failing with a type issue
 
     // assert reserve auction process entity
-    assert.entityCount("ReserveAuctionProcess", 1)
+    assert.entityCount("ReserveAuction", 1)
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "kicker",
       `${kicker.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "kickerAward",
       `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000"))).div(bigDecimalExp18())}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "claimableReservesRemaining",
       `${wadToDecimal(claimableReservesRemainingAfterTake)}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "burnEpoch",
       `${expectedBurnEpoch}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "ajnaBurnedAcrossAllTakes",
       `${incrementalAjnaBurned}`
     )

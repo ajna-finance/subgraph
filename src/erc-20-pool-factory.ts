@@ -122,6 +122,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.reserveAuctionTimeRemaining = ZERO_BI
   pool.burnEpoch = ZERO_BI
   pool.totalAjnaBurned = ZERO_BD
+  pool.reserveAuctions = []
 
   // utilization information
   pool.minDebtAmount = ZERO_BD

@@ -1,6 +1,6 @@
 import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
 
-import { LiquidationAuction, Pool } from "../../generated/schema"
+import { LiquidationAuction, Pool, ReserveAuction } from "../../generated/schema"
 import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
@@ -176,7 +176,7 @@ export function updatePool(pool: Pool): void {
     pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
 }
 
-// update the list of loans initiated by an account, if it hasn't been added already
+// if absent, add a liquidation auction to the pool's collection of active liquidations
 export function addLiquidationToPool(pool: Pool, liquidationAuction: LiquidationAuction): void {
     const liquidationAuctions = pool.liquidationAuctions
     // get current index of pool in account's list of pools
@@ -192,6 +192,16 @@ export function removeLiquidationFromPool(pool: Pool, liquidationAuction: Liquid
     if (index != -1) {
         pool.liquidationAuctions.slice(index, 1)
     }
+}
+
+// add a claimable reserve auction to the pool's list
+export function addReserveAuctionToPool(pool: Pool, reserveAuction: ReserveAuction): void {
+  const reserveAuctions = pool.reserveAuctions
+  // get current index of pool in account's list of pools
+  const index = reserveAuctions.indexOf(reserveAuction.id)
+  if (index == -1) {
+      pool.reserveAuctions.push(reserveAuction.id)
+  }
 }
 
 export function getCurrentBurnEpoch(pool: Pool): BigInt {
