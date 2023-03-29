@@ -1,7 +1,7 @@
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Account, Kick, Lend, Loan, Pool, Settle, Take } from "../../generated/schema"
 
-import { ZERO_BI } from "./constants"
+import { ZERO_BD, ZERO_BI } from "./constants"
 
 
 export function loadOrCreateAccount(accountId: Bytes): Account {
@@ -32,7 +32,8 @@ export function updateAccountPools(account: Account, pool: Pool): void {
     if (index == -1) {
         account.pools = account.pools.concat([pool.id])
     }
-    // TODO: remove Pool from account if no Lends or Loans
+    // TODO: Determine whether account has any Lend or Loan in pool without O(n) iteration.
+    //       Remove pool from account if there are no Lends or Loans.
 }
 
 // update the list of lends initiated by an account, if it hasn't been added already
@@ -40,10 +41,11 @@ export function updateAccountLends(account: Account, lend: Lend): void {
     const lends = account.lends
     // get current index of lend in account's list of lends
     const index = lends.indexOf(lend.id)
-    if (index == -1) {
+    if (lend.lpb != ZERO_BD && index == -1) {
         account.lends = account.lends.concat([lend.id])
+    } else if (lend.lpb == ZERO_BD && index == -1) {
+        account.lends.splice(index, 1)
     }
-    // TODO: remove Lend from account if no LP in bucket
 }
 
 // update the list of loans initiated by an account, if it hasn't been added already
@@ -51,8 +53,10 @@ export function updateAccountLoans(account: Account, loan: Loan): void {
     const loans = account.loans
     // get current index of loan in account's list of loans
     const index = loans.indexOf(loan.id)
-    if (index == -1) {
+    if (loan.debt != ZERO_BD && index == -1) {
         account.loans = account.loans.concat([loan.id])
+    } else if (loan.debt == ZERO_BD && index != -1) {
+        account.loans.splice(index, 1)
     }
 }
 
