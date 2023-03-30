@@ -36,8 +36,11 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
         liquidationAuction.kick = kick.id
 
         // write accumulators
+        liquidationAuction.auctionPrice = ZERO_BD // FIXME: not exposed by contracts
         liquidationAuction.collateralAuctioned = ZERO_BD
+        liquidationAuction.collateralRemaining = kick.collateral
         liquidationAuction.debtRepaid = ZERO_BD
+        liquidationAuction.debtRemaining = kick.debt
         liquidationAuction.settled = false
     }
     return liquidationAuction
