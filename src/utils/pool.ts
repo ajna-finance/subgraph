@@ -149,6 +149,10 @@ export function updatePool(pool: Pool): void {
     pool.maxBorrower           = poolLoansInfo.maxBorrower
     pool.pendingInflator       = wadToDecimal(poolLoansInfo.pendingInflator)
     pool.pendingInterestFactor = wadToDecimal(poolLoansInfo.pendingInterestFactor)
+    
+    // update amount of debt in pool
+    const debtInfo = getDebtInfo(pool)
+    pool.currentDebt = wadToDecimal(debtInfo.pendingDebt)
 
     // update pool prices information
     const poolPricesInfo = getPoolPricesInfo(pool)
@@ -230,4 +234,25 @@ export function getBurnInfo(pool: Pool, burnEpoch: BigInt): BurnInfo {
         burnInfoResult.value2
     )
     return burnInfo
+}
+
+export class DebtInfo {
+    pendingDebt: BigInt
+    accruedDebt: BigInt
+    liquidationDebt: BigInt
+    constructor(pendingDebt: BigInt, accruedDebt: BigInt, liquidationDebt: BigInt) {
+        this.pendingDebt = pendingDebt  
+        this.accruedDebt = accruedDebt  
+        this.liquidationDebt = liquidationDebt  
+    }
+}
+export function getDebtInfo(pool: Pool): DebtInfo {
+  const poolContract = ERC20Pool.bind(Address.fromBytes(pool.id))
+  const debtInfoResult = poolContract.debtInfo()
+
+  return new DebtInfo(
+    debtInfoResult.value0,
+    debtInfoResult.value1,
+    debtInfoResult.value2
+  )
 }

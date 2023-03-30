@@ -21,6 +21,7 @@ import {
   mockGetBucketInfo,
   mockGetBurnInfo,
   mockGetCurrentBurnEpoch,
+  mockGetDebtInfo,
   mockGetLPBValueInQuote,
   mockPoolInfoUtilsPoolUpdateCalls
 } from "./utils/common"
@@ -31,7 +32,7 @@ import { Account, Lend, Loan, ReserveAuctionKickOrTake } from "../generated/sche
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
 import { AuctionInfo, getLiquidationAuctionId } from "../src/utils/liquidation"
-import { BurnInfo } from "../src/utils/pool"
+import { BurnInfo, DebtInfo } from "../src/utils/pool"
 import { getReserveAuctionId } from "../src/utils/reserve-auction"
 
 // Tests structure (matchstick-as >=0.5.0)
@@ -87,6 +88,7 @@ describe("Describe entity assertions", () => {
 
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: ZERO_BI,
+      debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
       pendingInflator: ONE_WAD_BI,
@@ -191,6 +193,7 @@ describe("Describe entity assertions", () => {
 
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: amount,
+      debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
       pendingInflator: ONE_WAD_BI,
@@ -471,6 +474,9 @@ describe("Describe entity assertions", () => {
     const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const collateralPledged = BigInt.fromI32(1067)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+
+    const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI)
+    mockGetDebtInfo(poolAddress, expectedPoolDebtInfo)
 
     // mock drawDebt event
     const newDrawDebtEvent = createDrawDebtEvent(
@@ -1198,6 +1204,7 @@ describe("Describe entity assertions", () => {
     // mock pool info contract calls
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: ONE_WAD_BI,
+      debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
       pendingInflator: ONE_WAD_BI,
@@ -1291,6 +1298,7 @@ describe("Describe entity assertions", () => {
     // mock pool info contract calls
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: ONE_WAD_BI,
+      debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
       pendingInflator: ONE_WAD_BI,

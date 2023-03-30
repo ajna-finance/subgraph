@@ -141,7 +141,7 @@ type Lend @entity {
   pool: Pool!
   # amount of LPB lender has in the bucket
   lpb: BigDecimal!
-  # quote equivalent value of the lend's LPB in the bucket
+  # quote equivalent value of the lend's LPB in the bucket (regardless of available deposit in bucket)
   lpbValueInQuote: BigDecimal!
 }
 
@@ -190,22 +190,26 @@ type Account @entity {
 }
 
 type LiquidationAuction @entity {
-  id: Bytes! # $poolAddress + '|' + $loanId + '|' + blockNumber
-  pool: Pool! # pool in which the liquidation occurred
-  borrower: Bytes! # address of the borrower being liquidated
-  auctionPrice: BigDecimal! # initial price at which auction was kicked # FIXME: not exposed
-  collateralAuctioned: BigDecimal! # collateral that was taken
+  id: Bytes!                       # $poolAddress + '|' + $loanId + '|' + blockNumber
+  pool: Pool!                      # pool in which the liquidation occurred
+  borrower: Bytes!                 # address of the borrower being liquidated
+  auctionPrice: BigDecimal!        # initial price at which auction was kicked # FIXME: not exposed
+  collateral: BigDecimal!          # initial collateral up for auction
   collateralRemaining: BigDecimal! # collateral which has not been taken
-  debtRepaid: BigDecimal! # debt that was repaid
-  debtRemaining: BigDecimal! # debt which has not been covered
-  loan: Loan! # loan being liquidated
-  kicker: Bytes! # address of the kicker
-  kick: Kick! # kick which triggered the liquidation
-  kickTime: BigInt! # block timestamp at which the kick was executed
-  bondSize: BigDecimal! # bond provided by kicker to initate auction
-  bondFactor: BigDecimal! # bond factor determining the reward or penalty for the kicker
-  neutralPrice: BigDecimal! # price at which the auction is neutral
-  settled: Boolean! # boolean indicating whether the auction has been settled
+  debt: BigDecimal!                # initial debt to be covered by the auction
+  debtRemaining: BigDecimal!       # debt which has not been covered
+  loan: Loan!                      # loan being liquidated
+  kicker: Bytes!                   # address of the kicker
+  kick: Kick!                      # kick which triggered the liquidation
+  kickTime: BigInt!                # block timestamp at which the kick was executed
+  takes: [Take!]!                  # list of takes which occured using outside liquidity
+  bucketTakes: [BucketTake!]!      # list of takes which involved the pool's book
+  settle: AuctionSettle            # used to reconcile the liquidation
+  settleTime: BigInt               # block timestamp at which the liquidation was settled
+  settled: Boolean!                # boolean indicating whether the auction has been settled
+  bondSize: BigDecimal!            # bond provided by kicker to initate auction
+  bondFactor: BigDecimal!          # bond factor determining the reward or penalty for the kicker
+  neutralPrice: BigDecimal!        # price at which kicker will have their bond returned without penalty or reward
 }
 
 # tracks the reserve auction process across multiple takes in a single auction
@@ -289,6 +293,7 @@ type AuctionNFTSettle @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# emitted when auction has been removed from the liquidation queue
 type AuctionSettle @entity(immutable: true) {
   id: Bytes!
   pool: Pool!             # Pool whose debt was settled
@@ -457,6 +462,7 @@ type ReserveAuctionKickOrTake @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# emitted for each settle TX; one to many required before auction is settled
 type Settle @entity(immutable: true) {
   id: Bytes!
   pool: Pool!              # Pool whose debt was settled

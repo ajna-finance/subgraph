@@ -6,8 +6,8 @@ import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 import { wadToDecimal } from "./convert"
 import { ONE_BI, ZERO_BD } from "./constants"
 
-export function getLiquidationAuctionId(pool: Bytes, loanId: Bytes, blockNumber: BigInt): Bytes {
-    return pool.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + blockNumber.toString()))
+export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, blockNumber: BigInt): Bytes {
+    return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + blockNumber.toString()))
 }
 
 // TODO: if logIndex doesn't work as expected, update the ID generation to use the taker addres as second param
@@ -29,19 +29,23 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
         liquidationAuction = new LiquidationAuction(liquidationAuctionId) as LiquidationAuction
 
         // write constant pointers
-        liquidationAuction.pool = poolId
+        liquidationAuction.pool     = poolId
         liquidationAuction.borrower = loan.borrower
-        liquidationAuction.loan = loan.id
-        liquidationAuction.kicker = kick.kicker
-        liquidationAuction.kick = kick.id
+        liquidationAuction.loan     = loan.id
+        liquidationAuction.kicker   = kick.kicker
+        liquidationAuction.kick     = kick.id
 
         // write accumulators
-        liquidationAuction.auctionPrice = ZERO_BD // FIXME: not exposed by contracts
-        liquidationAuction.collateralAuctioned = ZERO_BD
+        liquidationAuction.auctionPrice        = ZERO_BD // FIXME: not exposed by contracts
+        liquidationAuction.collateral          = kick.collateral
         liquidationAuction.collateralRemaining = kick.collateral
-        liquidationAuction.debtRepaid = ZERO_BD
-        liquidationAuction.debtRemaining = kick.debt
-        liquidationAuction.settled = false
+        liquidationAuction.debt                = kick.debt
+        liquidationAuction.debtRemaining       = kick.debt
+        liquidationAuction.settled             = false
+
+        // collections
+        liquidationAuction.takes = []
+        liquidationAuction.bucketTakes = []
     }
     return liquidationAuction
 }

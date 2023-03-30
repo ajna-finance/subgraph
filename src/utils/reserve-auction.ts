@@ -31,6 +31,6 @@ export function reserveAuctionKickerReward(pool: Pool): BigDecimal {
     // kicker award = claimableReserves * 0.01 * 1e18
     // stored as a decimal converted from wad
     return BigDecimal.fromString(`${pool.claimableReserves}`)
-        .times(BigDecimal.fromString("10000000000000000"))
+        .times(BigDecimal.fromString("10000000000000000"))  // 1%
         .div(bigDecimalExp18())
 }

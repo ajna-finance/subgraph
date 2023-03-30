@@ -6,8 +6,8 @@ import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
 import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
-import { poolInfoUtilsNetworkLookUpTable } from "../../src/utils/constants"
-import { BurnInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
+import { poolInfoUtilsNetworkLookUpTable, ZERO_BI } from "../../src/utils/constants"
+import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo } from "../../src/utils/liquidation"
 
 /*************************/
@@ -325,6 +325,15 @@ export function mockGetBucketInfo(pool: Address, bucketIndex: BigInt, expectedIn
         ])
 }
 
+export function mockGetDebtInfo(pool: Address, expectInfo: DebtInfo): void {
+    createMockedFunction(pool, 'debtInfo', 'debtInfo():(uint256,uint256,uint256)')
+        .returns([
+          ethereum.Value.fromUnsignedBigInt(expectInfo.pendingDebt),
+          ethereum.Value.fromUnsignedBigInt(expectInfo.accruedDebt),
+          ethereum.Value.fromUnsignedBigInt(expectInfo.liquidationDebt),
+        ])
+}
+
 // mock getLPBValueInQuote contract calls
 export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, bucketIndex: BigInt, expectedValue: BigInt): void {
     createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lpsToQuoteTokens', 'lpsToQuoteTokens(address,uint256,uint256):(uint256)')
@@ -447,6 +456,7 @@ export function mockGetTokenInfo(token: Address, expectedName: string, expectedS
 export class PoolMockParams {
     // loans info mock params
     poolSize: BigInt
+    debt: BigInt
     loansCount: BigInt
     maxBorrower: Address
     pendingInflator: BigInt
@@ -482,6 +492,9 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.pendingInterestFactor
     )
     mockGetPoolLoansInfo(pool, expectedPoolLoansInfo)
+
+    const expectedPoolDebtInfo = new DebtInfo(params.debt, ZERO_BI, ZERO_BI)
+    mockGetDebtInfo(pool, expectedPoolDebtInfo)
 
     const expectedPoolPricesInfo = new PoolPricesInfo(
         params.hpb,
