@@ -26,7 +26,7 @@ export function loadOrCreateReserveAuction(poolId: Bytes, reserveAuctionId: Byte
     return reserveAuction
 }
 
-// TODO: check conversion of pool claimable reserves to decimal
+// TODO: check calculation of pool claimable reserves
 export function reserveAuctionKickerReward(pool: Pool): BigDecimal {
     // kicker award = claimableReserves * 0.01 * 1e18
     // stored as a decimal converted from wad

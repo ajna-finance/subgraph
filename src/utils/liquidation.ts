@@ -10,16 +10,10 @@ export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, blockNumbe
     return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + blockNumber.toString()))
 }
 
-// TODO: if logIndex doesn't work as expected, update the ID generation to use the taker addres as second param
-// return the id of a bucketTake given the transactionHash and logIndex of the BucketTakeLPAwarded event
-// export function getBucketTakeIdFromBucketTakeLPAwarded(transactionHash: Bytes, logIndex: BigInt): Bytes {
-//     // assume that the logIndex is always one greater given the order of emitted events
-//     return transactionHash.concatI32(logIndex.plus(ONE_BI).toI32())
-// }
-
-export function getBucketTakeIdFromBucketTakeLPAwarded(transactionHash: Bytes, blockNumber: BigInt): Bytes {
+export function getBucketTakeLPAwardedId(transactionHash: Bytes, logIndex: BigInt): Bytes {
     // assume that the logIndex is always one greater given the order of emitted events
-    return transactionHash.concatI32(blockNumber.toI32())
+    // should handle case where multiple BucketTakes are performed in a single multicall TX
+    return transactionHash.concatI32(logIndex.toI32())
 }
 
 export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuctionId: Bytes, kick: Kick, loan: Loan): LiquidationAuction {

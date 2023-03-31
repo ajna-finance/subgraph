@@ -315,7 +315,6 @@ export function mockGetBucketInfo(pool: Address, bucketIndex: BigInt, expectedIn
     createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'bucketInfo', 'bucketInfo(address,uint256):(uint256,uint256,uint256,uint256,uint256,uint256)')
         .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
         .returns([
-            // ethereum.Value.fromUnsignedBigInt(BigInt.fromString(expectedInfo.price.toString())),
             ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(123456789)),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.quoteTokens),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),

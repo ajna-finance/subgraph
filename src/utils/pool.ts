@@ -11,6 +11,24 @@ export function getPoolAddress(poolId: Bytes): Address {
     return Address.fromBytes(poolId)
 }
 
+export class LenderInfo {
+  lpBalance: BigInt
+  depositTime: BigInt
+  constructor(lpBalance: BigInt, depositTime: BigInt) {
+    this.lpBalance = lpBalance
+    this.depositTime = depositTime
+  }
+}
+export function getLenderInfo(pool: Pool, bucketIndex: BigInt, lender: Address): LenderInfo {
+  const poolContract = ERC20Pool.bind(Address.fromBytes(pool.id))
+    const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
+
+    return new LenderInfo(
+      lenderInfoResult.value0,
+      lenderInfoResult.value1
+    )
+}
+
 // retrieve the current pool MOMP by calling PoolInfoUtils.momp()
 export function getMomp(poolId: Bytes): BigDecimal {
     const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
@@ -194,7 +212,7 @@ export function addLiquidationToPool(pool: Pool, liquidationAuction: Liquidation
 export function removeLiquidationFromPool(pool: Pool, liquidationAuction: LiquidationAuction): void {
     const index = pool.liquidationAuctions.indexOf(liquidationAuction.id)
     if (index != -1) {
-        pool.liquidationAuctions.slice(index, 1)
+        pool.liquidationAuctions.splice(index, 1)
     }
 }
 

@@ -16,6 +16,9 @@ export function lpbValueInQuote(pool: Bytes, bucket: Bucket, lend: Lend): BigDec
       bigDecimalWadToBigInt(lend.lpb), 
       BigInt.fromU32(bucket.bucketIndex)
     )
+    // TODO: Odd that we pass in the Lend to this method, but the caller is responsible for 
+    // mutating.  We should either take in an LP amount instead of a Lend, or just handle 
+    // the mutatation by setting lpbValueInQuote here.
     return wadToDecimal(quoteTokenAmount)
 }
 
