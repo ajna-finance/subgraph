@@ -1,6 +1,6 @@
 # TODO: finish expanding this schema -> ERC20 / ERC721?
-# TODO: add pool balances to this
-# this supports both ERC20 and ERC721 tokens, as union type's aren't currently supported
+# TODO: track token liquidity across all Ajna pools
+# this supports both ERC20 and ERC721 tokens, as union types aren't currently supported
 type Token @entity {
   # token address
   id: Bytes!
@@ -69,11 +69,11 @@ type Pool @entity {
 
   # PRICES INFORMATION
   hpb: BigDecimal! # current highest price bucket
-  hpbIndex: BigInt! # current highest price bucket index
+  hpbIndex: Int! # current highest price bucket index
   htp: BigDecimal! # current highest threshold price
-  htpIndex: BigInt! # current highest threshold price index
+  htpIndex: Int! # current highest threshold price index
   lup: BigDecimal! # current lowest utilized price
-  lupIndex: BigInt! # current lowest utilized price index  
+  lupIndex: Int! # current lowest utilized price index  
   momp: BigDecimal! # most optimistic matching price
 
   # RESERVES INFORMATION
@@ -91,6 +91,8 @@ type Pool @entity {
   burnEpoch: BigInt!
   # total ajna burned in the pool
   totalAjnaBurned: BigDecimal!
+  # list of all reserve auctions for this pool
+  reserveAuctions: [ReserveAuction!]! 
 
   # UTILIZATION INFORMATION
   # current pool minimum debt amount for a new borrow
@@ -103,16 +105,17 @@ type Pool @entity {
   targetUtilization: BigDecimal!
 
   # LIQUIDATION INFORMATION
-  totalBondEscrowed: BigDecimal! # total bond escrowed in the pool
-  liquidationAuctions: [LiquidationAuction!]! # list of liquidation auctions in the pool. This array is not resorted, but represents the order of insertion.
-  liquidationAuctionsHead: LiquidationAuction! # head of the liquidation auctions linked list
+  # liquidation bond currently escrowed in the pool
+  totalBondEscrowed: BigDecimal!
+  # list of active liquidation auctions in the pool, sorted by kick time
+  liquidationAuctions: [LiquidationAuction!]!
 }
 
 type Bucket @entity {
   # bucket id: $poolAddress + '#' + $bucketIndex
   id: Bytes!
   # bucket index
-  bucketIndex: BigInt!
+  bucketIndex: Int!
   # current exchange rate of the bucket
   exchangeRate: BigDecimal!
   # pool address
@@ -120,7 +123,7 @@ type Bucket @entity {
   # total collateral available in the bucket
   collateral: BigDecimal!
   # total quote tokens deposited in the bucket, inclusive of interest
-  quoteTokens: BigDecimal!
+  deposit: BigDecimal!
   # total LP for all lenders in the bucket
   lpb: BigDecimal!
 }
@@ -137,11 +140,9 @@ type Lend @entity {
   lender: Bytes!
   # pool pointer
   pool: Pool!
-  # quote token deposited in the bucket by the lender
-  deposit: BigDecimal! # TODO: remove this in favor of just using lpbValueInQuote
-  # LPB in the bucket accrued to lender
+  # amount of LPB lender has in the bucket
   lpb: BigDecimal!
-  # quote equivalent value of the lend's LPB in the bucket
+  # quote equivalent value of the lend's LPB in the bucket (regardless of available deposit in bucket)
   lpbValueInQuote: BigDecimal!
 }
 
@@ -158,10 +159,9 @@ type Loan @entity {
   # boolean indicating whether the loan is in liquidations
   inLiquidation: Boolean!
   # collateral tokens deposited in a pool by the borrower
-  collateralDeposited: BigDecimal! # TODO: rename collateralPledged
+  collateralPledged: BigDecimal!
   # collateralization of the borrow position in the pool
   collateralization: BigDecimal!
-  # TODO: add principal (initial debt drawn from the pool, excluding origination fee)
   # total quote drawn from the pool in the loan
   debt: BigDecimal!
   # borrowers threshold price
@@ -190,30 +190,32 @@ type Account @entity {
   txCount: BigInt!
 }
 
-# TODO: determine if it's worth adding borrowerDebt field updated in kick mapping
 type LiquidationAuction @entity {
-  id: Bytes! # $poolAddress + '|' + $loanId  // FIXME: collides with Loan entity's ID field
-  pool: Pool! # pool in which the liquidation occurred
-  borrower: Bytes! # address of the borrower being liquidated
-  # borrowerDebt: BigDecimal! # total debt of the borrower at kickTime
-  collateralAuctioned: BigDecimal! # collateral that was auctioned off
-  debtRepaid: BigDecimal! # debt that was repaid
-  loan: Loan! # loan being liquidated
-  kicker: Bytes! # address of the kicker
-  kick: Kick! # kick which triggered the liquidation
-  kickTime: BigInt! # block timestamp at which the kick was executed
-  bondSize: BigDecimal! # bond provided by kicker to initate auction
-  bondFactor: BigDecimal! # bond factor determining the reward or penalty for the kicker
-  # TODO: add kickPrice
-  neutralPrice: BigDecimal! # price at which the auction is neutral
-  settled: Boolean! # boolean indicating whether the auction has been settled
-  next: LiquidationAuction! # id of the next auction in the queue
-  prev: LiquidationAuction! # id of the previous auction in the queue
+  id: Bytes!                       # $poolAddress + '|' + $loanId + '|' + blockNumber
+  pool: Pool!                      # pool in which the liquidation occurred
+  borrower: Bytes!                 # address of the borrower being liquidated
+  auctionPrice: BigDecimal!        # initial price at which auction was kicked # FIXME: not exposed
+  collateral: BigDecimal!          # initial collateral up for auction
+  collateralRemaining: BigDecimal! # collateral which has not been taken
+  debt: BigDecimal!                # initial debt to be covered by the auction
+  debtRemaining: BigDecimal!       # debt which has not been covered
+  loan: Loan!                      # loan being liquidated
+  kicker: Bytes!                   # address of the kicker
+  kick: Kick!                      # kick which triggered the liquidation
+  kickTime: BigInt!                # block timestamp at which the kick was executed
+  takes: [Take!]!                  # list of takes which occured using outside liquidity
+  bucketTakes: [BucketTake!]!      # list of takes which involved the pool's book
+  settle: AuctionSettle            # used to reconcile the liquidation
+  settleTime: BigInt               # block timestamp at which the liquidation was settled
+  settled: Boolean!                # boolean indicating whether the auction has been settled
+  bondSize: BigDecimal!            # bond provided by kicker to initate auction
+  bondFactor: BigDecimal!          # bond factor determining the reward or penalty for the kicker
+  neutralPrice: BigDecimal!        # price at which kicker will have their bond returned without penalty or reward
 }
 
 # tracks the reserve auction process across multiple takes in a single auction
 # used as start and take events are emitted as ReserveAuction
-type ReserveAuctionProcess @entity {
+type ReserveAuction @entity {
   id: Bytes! # $poolAddress + '|' + $burnEpoch
   kicker: Bytes! # address of the kicker
   kickerAward: BigDecimal! # amount of quote rewarded to kicker for starting reserves auction
@@ -222,7 +224,7 @@ type ReserveAuctionProcess @entity {
   claimableReservesRemaining: BigDecimal! # uint256 claimable reserves remaining at start or at latest take
   auctionPrice: BigDecimal! # uint256 price at start or at latest take
   burnEpoch: BigInt! # uint256 burn epoch at which the reserve auction was started
-  reserveAuctionTakes: [ReserveAuction!]! # list of reserve auction takes that occured during this auction process
+  reserveAuctionTakes: [ReserveAuctionKickOrTake!]! # list of reserve auction takes that occured during this auction process
   ajnaBurnedAcrossAllTakes: BigDecimal! # total amount of ajna burned across all takes in the reserve auction
 }
 
@@ -236,9 +238,9 @@ type LPTransferors @entity {
 
 # represents a LP allowance for a single bucket
 type LPAllowance @entity {
-  id: Bytes! # LPAllowances.id + '|' + $index
-  index: BigInt! # bucket index where an allowance has been granted
-  amount: BigInt! # size of the allowance (measured in LP)
+  id: Bytes!          # LPAllowances.id + '|' + $index
+  index: Int!         # bucket index where an allowance has been granted
+  amount: BigDecimal! # size of the allowance (measured in LP)
 }
 
 # updated upon SetLpAllowance and RevokeLpAllowance
@@ -256,12 +258,12 @@ type LPAllowances @entity {
 
 type AddCollateral @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool whose bucket was modified
-  bucket: Bucket! # Bucket to which collateral was added
-  actor: Bytes! # address
-  index: BigInt! # uint256
-  amount: BigInt! # uint256
-  lpAwarded: BigInt! # uint256
+  pool: Pool!            # Pool to which collateral was added
+  bucket: Bucket!        # Bucket to which collateral was added
+  actor: Bytes!          # address
+  index: Int!            # uint256
+  amount: BigDecimal!    # uint256
+  lpAwarded: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -269,13 +271,13 @@ type AddCollateral @entity(immutable: true) {
 
 type AddQuoteToken @entity {
   id: Bytes!
-  bucket: Bucket!    # Bucket to which quote was added
-  pool: Pool!        # Pool to which quote was added
-  lender: Bytes!     # address
-  index: BigInt!     # uint256
-  amount: BigInt!    # uint256
-  lpAwarded: BigInt! # uint256
-  lup: BigInt!       # uint256
+  pool: Pool!            # Pool to which quote was added
+  bucket: Bucket!        # Bucket to which quote was added
+  lender: Bytes!         # address
+  index: Int!            # uint256
+  amount: BigDecimal!    # uint256
+  lpAwarded: BigDecimal! # uint256
+  lup: BigDecimal!       # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -283,21 +285,22 @@ type AddQuoteToken @entity {
 
 type AuctionNFTSettle @entity(immutable: true) {
   id: Bytes!
-  borrower: Bytes! # address
-  collateral: BigInt! # uint256
-  lps: BigInt! # uint256
-  index: BigInt! # uint256
+  borrower: Bytes!        # address
+  collateral: BigDecimal! # uint256
+  lps: BigDecimal!        # uint256
+  index: Int!             # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
 
+# emitted when auction has been removed from the liquidation queue
 type AuctionSettle @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool whose debt was settled
-  loan: Loan! # Loan which was settled
-  borrower: Bytes! # address
-  collateral: BigInt! # uint256
+  pool: Pool!             # Pool whose debt was settled
+  loan: Loan!             # Loan which was settled
+  borrower: Bytes!        # address
+  collateral: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -305,9 +308,9 @@ type AuctionSettle @entity(immutable: true) {
 
 type BondWithdrawn @entity(immutable: true) {
   id: Bytes!
-  kicker: Bytes! # address
-  reciever: Bytes! # address
-  amount: BigInt! # uint256
+  kicker: Bytes!      # address
+  reciever: Bytes!    # address
+  amount: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -315,10 +318,10 @@ type BondWithdrawn @entity(immutable: true) {
 
 type BucketBankruptcy @entity(immutable: true) {
   id: Bytes!
-  bucket: Bucket! # Bucket which was bankrupted
-  index: BigInt! # uint256
-  pool: Pool! # Pool whose bucket was bankrupted
-  lpForfeited: BigInt! # uint256
+  bucket: Bucket!          # Bucket which was bankrupted
+  index: Int!              # uint256
+  pool: Pool!              # Pool whose bucket was bankrupted
+  lpForfeited: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -326,16 +329,16 @@ type BucketBankruptcy @entity(immutable: true) {
 
 type BucketTake @entity(immutable: true) {
   id: Bytes!
-  taker: Bytes! # address of the taker
+  taker: Bytes!           # address of the taker
   liquidationAuction: LiquidationAuction! # liquidation auction in which the take is occuring
-  loan: Loan! # loan which was taken
-  pool: Pool! # pool in which the take is occuring
-  borrower: Bytes! # address
-  index: BigInt! # uint256
-  amount: BigInt! # uint256
-  collateral: BigInt! # uint256
-  bondChange: BigInt! # uint256
-  isReward: Boolean! # bool
+  loan: Loan!             # loan which was taken
+  pool: Pool!             # pool in which the take is occuring
+  borrower: Bytes!        # address
+  index: Int!             # uint256
+  amount: BigDecimal!     # uint256
+  collateral: BigDecimal! # uint256
+  bondChange: BigDecimal! # uint256
+  isReward: Boolean!      # bool
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -343,11 +346,11 @@ type BucketTake @entity(immutable: true) {
 
 type BucketTakeLPAwarded @entity(immutable: true) {
   id: Bytes!
-  taker: Bytes! # address
-  pool: Pool! # Pool in which the take occurred
-  kicker: Bytes! # address
-  lpAwardedTaker: BigInt! # uint256
-  lpAwardedKicker: BigInt! # uint256
+  taker: Bytes!                # address
+  pool: Pool!                  # Pool in which the take occurred
+  kicker: Bytes!               # address
+  lpAwardedTaker: BigDecimal!  # uint256
+  lpAwardedKicker: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -355,11 +358,11 @@ type BucketTakeLPAwarded @entity(immutable: true) {
 
 type DrawDebt @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool debt was drawn from
-  borrower: Bytes! # address
-  amountBorrowed: BigInt! # uint256
-  collateralPledged: BigInt! # uint256
-  lup: BigInt! # uint256
+  pool: Pool!                    # Pool debt was drawn from
+  borrower: Bytes!               # address
+  amountBorrowed: BigDecimal!    # uint256
+  collateralPledged: BigDecimal! # uint256
+  lup: BigDecimal!               # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -367,17 +370,17 @@ type DrawDebt @entity(immutable: true) {
 
 type Kick @entity {
   id: Bytes!
-  kicker: Bytes! # address of the kicker
-  kickMomp: BigDecimal! # pool MOMP at the time of kicking
-  pool: Pool! # Pool in which a kick occurred
-  loan: Loan! # Loan which was kicked
-  locked: BigDecimal! # amount of quote from the bond locked in the kick (updated on take)
-  claimable: BigDecimal! # amount of quote from the bond claimable by the kicker (updated on settle)
+  kicker: Bytes!          # address of the kicker
+  kickMomp: BigDecimal!   # pool MOMP at the time of kicking
+  pool: Pool!             # Pool in which a kick occurred
+  loan: Loan!             # Loan which was kicked
+  locked: BigDecimal!     # amount of quote from the bond locked in the kick (updated on take)
+  claimable: BigDecimal!  # amount of quote from the bond claimable by the kicker (updated on settle)
   liquidationAuction: LiquidationAuction! # Liquidation auction which was initiated
-  borrower: Bytes! # address of the borrower being liquidated
-  debt: BigInt! # uint256
-  collateral: BigInt! # uint256
-  bond: BigInt! # uint256
+  borrower: Bytes!        # address of the borrower being liquidated
+  debt: BigDecimal!       # uint256
+  collateral: BigDecimal! # uint256
+  bond: BigDecimal!       # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -393,14 +396,14 @@ type LoanStamped @entity(immutable: true) {
 
 type MoveQuoteToken @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool in which quote tokens were moved
-  lender: Bytes! # address
-  from: Bucket! # bucket quote token was moved from
-  to: Bucket! # bucket quote token was moved to
-  amount: BigInt! # uint256
-  lpRedeemedFrom: BigInt! # uint256
-  lpAwardedTo: BigInt! # uint256
-  lup: BigInt! # uint256
+  pool: Pool!                 # Pool in which quote tokens were moved
+  lender: Bytes!              # address
+  from: Bucket!               # bucket quote token was moved from
+  to: Bucket!                 # bucket quote token was moved to
+  amount: BigDecimal!         # uint256
+  lpRedeemedFrom: BigDecimal! # uint256
+  lpAwardedTo: BigDecimal!    # uint256
+  lup: BigDecimal!            # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -408,10 +411,12 @@ type MoveQuoteToken @entity(immutable: true) {
 
 type RemoveCollateral @entity(immutable: true) {
   id: Bytes!
-  claimer: Bytes! # address
-  index: BigInt! # uint256
-  amount: BigInt! # uint256
-  lpRedeemed: BigInt! # uint256
+  pool: Pool!             # Pool where collateral was removed
+  bucket: Bucket!         # Bucket where collateral was removed
+  claimer: Bytes!         # address
+  index: Int!             # uint256
+  amount: BigDecimal!     # uint256
+  lpRedeemed: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -419,11 +424,13 @@ type RemoveCollateral @entity(immutable: true) {
 
 type RemoveQuoteToken @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes! # address
-  index: BigInt! # uint256
-  amount: BigInt! # uint256
-  lpRedeemed: BigInt! # uint256
-  lup: BigInt! # uint256
+  pool: Pool!             # Pool where deposit was removed
+  bucket: Bucket!         # Bucket where deposit was removed
+  lender: Bytes!          # address
+  index: Int!             # uint256
+  amount: BigDecimal!     # uint256
+  lpRedeemed: BigDecimal! # uint256
+  lup: BigDecimal!        # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -431,38 +438,39 @@ type RemoveQuoteToken @entity(immutable: true) {
 
 type RepayDebt @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool debt was repaid to
-  borrower: Bytes! # address
-  quoteRepaid: BigInt! # uint256
-  collateralPulled: BigInt! # uint256
-  lup: BigInt! # uint256
+  pool: Pool!                   # Pool debt was repaid to
+  borrower: Bytes!              # address
+  quoteRepaid: BigDecimal!      # uint256
+  collateralPulled: BigDecimal! # uint256
+  lup: BigDecimal!              # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
 
 # a reserve auction take or start event
-type ReserveAuction @entity(immutable: true) {
-  id: Bytes! # transaction.hash + transaction.from
-  taker: Bytes # address of the taker, null if emitted as start of event
-  reserveAuctionProcess: ReserveAuctionProcess! # reserve auction in which the take is occuring
-  pool: Pool! # pool in which the take is occuring
-  claimableReservesRemaining: BigInt! # uint256 remaining amount of claimable reserves in the auction
-  auctionPrice: BigInt! # uint256 auction price at time of event emit
+type ReserveAuctionKickOrTake @entity(immutable: true) {
+  id: Bytes!                         # transaction.hash + transaction.from
+  taker: Bytes                       # address of the taker, null if emitted as start of event
+  reserveAuction: ReserveAuction!    # reserve auction in which the take is occuring
+  pool: Pool!                        # pool in which the take is occuring
+  claimableReservesRemaining: BigDecimal! # uint256 remaining amount of claimable reserves in the auction
+  auctionPrice: BigDecimal!          # uint256 auction price at time of event emit
   incrementalAjnaBurned: BigDecimal! # amount of ajna burned in this take
-  currentBurnEpoch: BigInt! # current burn epoch
+  currentBurnEpoch: BigInt!          # current burn epoch
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
 
+# emitted for each settle TX; one to many required before auction is settled
 type Settle @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool whose debt was settled
+  pool: Pool!              # Pool whose debt was settled
   liquidationAuction: LiquidationAuction! # Liquidation auction which was settled
-  loan: Loan! # Loan which was settled
-  borrower: Bytes! # address
-  settledDebt: BigInt! # uint256
+  loan: Loan!              # Loan which was settled
+  borrower: Bytes!         # address
+  settledDebt: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -470,14 +478,14 @@ type Settle @entity(immutable: true) {
 
 type Take @entity(immutable: true) {
   id: Bytes!
-  taker: Bytes! # address of the taker
-  pool: Pool! # Pool in which the take occurred
-  borrower: Bytes! # address of the borrower being liquidated
+  taker: Bytes!           # address of the taker
+  pool: Pool!             # Pool in which the take occurred
+  borrower: Bytes!        # address of the borrower being liquidated
   liquidationAuction: LiquidationAuction! # Liquidation auction which was taken
-  loan: Loan! # Loan which was taken
-  amount: BigInt! # uint256
-  collateral: BigInt! # uint256
-  bondChange: BigInt! # uint256
+  loan: Loan!             # Loan which was taken
+  amount: BigDecimal!     # uint256
+  collateral: BigDecimal! # uint256
+  bondChange: BigDecimal! # uint256
   isReward: Boolean! # bool
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -486,10 +494,10 @@ type Take @entity(immutable: true) {
 
 type TransferLPs @entity(immutable: true) {
   id: Bytes!
-  owner: Bytes! # address
+  owner: Bytes!    # address
   newOwner: Bytes! # address
-  indexes: [BigInt!]! # uint256[]
-  lps: BigInt! # uint256
+  indexes: [Int!]! # uint256[]
+  lps: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -497,9 +505,9 @@ type TransferLPs @entity(immutable: true) {
 
 type UpdateInterestRate @entity(immutable: true) {
   id: Bytes!
-  pool: Pool! # Pool whose interest rate was updated
-  oldRate: BigInt! # uint256
-  newRate: BigInt! # uint256
+  pool: Pool!          # Pool whose interest rate was updated
+  oldRate: BigDecimal! # uint256
+  newRate: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -535,9 +543,9 @@ type Burn @entity(immutable: true) {
 
 type MemorializePosition @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes! # address
+  lender: Bytes!   # address
   tokenId: BigInt! # uint256
-  indexes: [BigInt!]! # uint256[]
+  indexes: [Int!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -555,10 +563,10 @@ type Mint @entity(immutable: true) {
 
 type MoveLiquidity @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes! # address
+  lender: Bytes!   # address
   tokenId: BigInt! # uint256
-  fromIndex: BigInt! # uint256
-  toIndex: BigInt! # uint256
+  fromIndex: Int!  # uint256
+  toIndex: Int!    # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -566,9 +574,9 @@ type MoveLiquidity @entity(immutable: true) {
 
 type MoveStakedLiquidity @entity(immutable: true) {
   id: Bytes!
-  tokenId: BigInt! # uint256
-  fromIndexes: [BigInt!]! # uint256
-  toIndexes: [BigInt!]! # uint256
+  tokenId: BigInt!     # uint256
+  fromIndexes: [Int!]! # uint256
+  toIndexes: [Int!]!   # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -576,18 +584,20 @@ type MoveStakedLiquidity @entity(immutable: true) {
 
 type RedeemPosition @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes! # address
+  lender: Bytes!   # address
   tokenId: BigInt! # uint256
-  indexes: [BigInt!]! # uint256[]
+  indexes: [Int!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
 
+# PositionManager ERC-721 transfer event
 type Transfer @entity(immutable: true) {
   id: Bytes!
-  from: Bytes! # address
-  to: Bytes! # address
+  token: Token!    # token which was transferred
+  from: Bytes!     # address
+  to: Bytes!       # address
   tokenId: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -596,7 +606,7 @@ type Transfer @entity(immutable: true) {
 
 type PoolCreated @entity(immutable: true) {
   id: Bytes!
-  pool_: Bytes! # address
+  ajnaPool: Bytes!        # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -604,11 +614,11 @@ type PoolCreated @entity(immutable: true) {
 
 type ClaimRewards @entity(immutable: true) {
   id: Bytes!
-  owner: Bytes! # address
-  ajnaPool: Bytes! # address
-  tokenId: BigInt! # uint256
+  owner: Bytes!             # address
+  ajnaPool: Bytes!          # address
+  tokenId: BigInt!          # uint256
   epochsClaimed: [BigInt!]! # uint256[]
-  amount: BigInt! # uint256
+  amount: BigDecimal!       # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -634,6 +644,7 @@ type Unstake @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# FIXME: produces "No value provided" for id error
 type UpdateExchangeRates @entity(immutable: true) {
   id: Bytes!
   caller: Bytes! # address

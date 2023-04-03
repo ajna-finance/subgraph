@@ -21,7 +21,7 @@ describe("Describe entity assertions", () => {
     )
     let tokenId = BigInt.fromI32(234)
     let epochsClaimed = [BigInt.fromI32(234)]
-    let amount = BigInt.fromI32(234)
+    let amount = BigInt.fromString("234000000000000000000") // 234 * 1e18
     let newClaimRewardsEvent = createClaimRewardsEvent(
       owner,
       ajnaPool,

@@ -9,7 +9,7 @@ import {
   beforeAll,
   dataSourceMock
 } from "matchstick-as/assembly/index"
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuction, handleTake, handleUpdateInterestRate } from "../src/erc-20-pool"
 import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketBankruptcyEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionEvent, createTakeEvent, createUpdateInterestRateEvent } from "./utils/erc-20-pool-utils"
 import {
@@ -21,17 +21,18 @@ import {
   mockGetBucketInfo,
   mockGetBurnInfo,
   mockGetCurrentBurnEpoch,
+  mockGetDebtInfo,
   mockGetLPBValueInQuote,
   mockPoolInfoUtilsPoolUpdateCalls
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, bigDecimalExp18, wadToDecimal } from "../src/utils/convert"
-import { FIVE_PERCENT_BD, FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_RAY_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
-import { Account, Lend, Loan, ReserveAuction } from "../generated/schema"
+import { FIVE_PERCENT_BD, FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
+import { Account, Lend, Loan, ReserveAuctionKickOrTake } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
 import { AuctionInfo, getLiquidationAuctionId } from "../src/utils/liquidation"
-import { BurnInfo } from "../src/utils/pool"
+import { BurnInfo, DebtInfo } from "../src/utils/pool"
 import { getReserveAuctionId } from "../src/utils/reserve-auction"
 
 // Tests structure (matchstick-as >=0.5.0)
@@ -67,17 +68,19 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const actor = Address.fromString("0x0000000000000000000000000000000000000001")
     const index = BigInt.fromI32(234)
-    const collateralAmount = BigInt.fromI32(234)
-    const lpAwarded = BigInt.fromI32(234)
+    const price = BigDecimal.fromString("312819781990957000000000000") // 312819781.990957 * 1e18
+    const collateralAmount = BigInt.fromString("3196720000000")        // 0.00000319672 * 1e18
+    const lpAwarded = BigInt.fromString("3036884000000")               // 0.00000303688 * 1e18
     
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      index,
+      index.toU32(),
+      price,
       ZERO_BI,
       collateralAmount,
       lpAwarded,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
 
@@ -85,6 +88,7 @@ describe("Describe entity assertions", () => {
 
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: ZERO_BI,
+      debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
       pendingInflator: ONE_WAD_BI,
@@ -94,8 +98,8 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
-      lupIndex: MAX_PRICE_INDEX,
-      momp: BigInt.fromI32(623804),
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
+      momp: BigInt.fromU32(623804),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -137,17 +141,17 @@ describe("Describe entity assertions", () => {
       "AddCollateral",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      "234"
+      `${wadToDecimal(collateralAmount)}`
     )
     assert.fieldEquals(
       "AddCollateral",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwarded",
-      "234"
+      `${wadToDecimal(lpAwarded)}`
     )
 
     // check bucket attributes updated
-    const bucketId = getBucketId(addressToBytes(poolAddress), index)
+    const bucketId = getBucketId(addressToBytes(poolAddress), index.toU32())
     assert.fieldEquals(
       "Bucket",
       `${bucketId.toHexString()}`,
@@ -167,18 +171,20 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000002")
     const index = BigInt.fromI32(234)
-    const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
-    const lpAwarded = BigInt.fromI32(567)
-    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+    const price = BigDecimal.fromString("312819781990957000000000000")
+    const amount = BigInt.fromString("567529276179422528643")    // 567.529276179422528643 * 1e18
+    const lpAwarded = BigInt.fromString("533477519608657176924") // 533.477519608657176924 * 1e18
+    const lup = BigInt.fromString("9529276179422528643")         //   9.529276179422528643 * 1e18
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      index,
+      index.toU32(),
+      price,
       amount,
       ZERO_BI,
       lpAwarded,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
     
@@ -187,6 +193,7 @@ describe("Describe entity assertions", () => {
 
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: amount,
+      debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
       pendingInflator: ONE_WAD_BI,
@@ -196,7 +203,7 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
       lup: lup,
-      lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
       momp: BigInt.fromI32(623803),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
@@ -240,28 +247,28 @@ describe("Describe entity assertions", () => {
       "AddQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      "567529276179422528643"
+      `${wadToDecimal(amount)}`
     )
     assert.fieldEquals(
       "AddQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwarded",
-      "567"
+      `${wadToDecimal(lpAwarded)}`
     )
     assert.fieldEquals(
       "AddQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
-      "9529276179422528643"
+      `${wadToDecimal(lup)}`
     )
 
     // check bucket attributes updated
-    const bucketId = getBucketId(addressToBytes(poolAddress), index)
+    const bucketId = getBucketId(addressToBytes(poolAddress), index.toU32())
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,
-      quoteTokens: amount,
-      exchangeRate: ONE_RAY_BI,
+      deposit: amount,
+      exchangeRate: ONE_WAD_BI,
       bucketIndex: index,
       lpb: lpAwarded
     })
@@ -282,7 +289,7 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI,
       htpIndex: ZERO_BI,
       lup: lup,
-      lupIndex: MAX_PRICE_INDEX,
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -316,7 +323,6 @@ describe("Describe entity assertions", () => {
       id: lendId,
       bucketId: bucketId,
       poolAddress: poolAddress.toHexString(),
-      deposit: amount,
       lpb: lpAwarded,
       lpbValueInQuote: lpAwarded
     })
@@ -327,11 +333,13 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000025")
     const fromBucketIndex = BigInt.fromI32(234)
+    const fromPrice = BigDecimal.fromString("312819781990957000000000000")
     const toBucketIndex = BigInt.fromI32(567)
-    const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
-    const lpRedeemedFrom = BigInt.fromI32(567).times(ONE_RAY_BI)
-    const lpAwardedTo = BigInt.fromI32(567).times(ONE_RAY_BI)
-    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+    const toPrice = BigDecimal.fromString("59428619800395500000000000")
+    const amount = BigInt.fromString("567529276179422528643")         // 567.529276179422528643 * 1e18
+    const lpRedeemedFrom = BigInt.fromString("527802226846862951638") // 527.802226846862951638 * 1e18
+    const lpAwardedTo = BigInt.fromString("538358271383800210670")    // 538.358271383800210670 * 1e18
+    const lup = BigInt.fromString("9529276179422528643")              //   9.529276179422528643 * 1e18
 
     /***********************/
     /*** Add Quote Token ***/
@@ -339,12 +347,13 @@ describe("Describe entity assertions", () => {
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      fromBucketIndex,
+      fromBucketIndex.toU32(),
+      fromPrice,
       amount,
       ZERO_BI,
       lpRedeemedFrom,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, fromBucketIndex, expectedBucketInfo)
 
@@ -368,21 +377,23 @@ describe("Describe entity assertions", () => {
 
     // mock required contract calls
     const expectedFromBucketInfo = new BucketInfo(
-      fromBucketIndex,
+      fromBucketIndex.toU32(),
+      fromPrice,
       amount,
       ZERO_BI,
       lpRedeemedFrom,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, fromBucketIndex, expectedFromBucketInfo)
     const expectedToBucketInfo = new BucketInfo(
-      toBucketIndex,
+      toBucketIndex.toU32(),
+      toPrice,
       amount,
       ZERO_BI,
       lpAwardedTo,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, toBucketIndex, expectedToBucketInfo)
 
@@ -422,37 +433,37 @@ describe("Describe entity assertions", () => {
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "from",
-      `${getBucketId(addressToBytes(poolAddress), fromBucketIndex).toHexString()}`
+      `${getBucketId(addressToBytes(poolAddress), fromBucketIndex.toU32()).toHexString()}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "to",
-      `${getBucketId(addressToBytes(poolAddress), toBucketIndex).toHexString()}`
+      `${getBucketId(addressToBytes(poolAddress), toBucketIndex.toU32()).toHexString()}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      `${amount}`
+      `${wadToDecimal(amount)}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpRedeemedFrom",
-      `${lpRedeemedFrom}`
+      `${wadToDecimal(lpRedeemedFrom)}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
-      "lpRedeemedFrom",
-      `${lpAwardedTo}`
+      "lpAwardedTo",
+      `${wadToDecimal(lpAwardedTo)}`
     )
     assert.fieldEquals(
       "MoveQuoteToken",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
-      `${lup}`
+      `${wadToDecimal(lup)}`
     )
   })
 
@@ -463,6 +474,9 @@ describe("Describe entity assertions", () => {
     const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const collateralPledged = BigInt.fromI32(1067)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+
+    const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI)
+    mockGetDebtInfo(poolAddress, expectedPoolDebtInfo)
 
     // mock drawDebt event
     const newDrawDebtEvent = createDrawDebtEvent(
@@ -487,19 +501,19 @@ describe("Describe entity assertions", () => {
       "DrawDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amountBorrowed",
-      `${amountBorrowed}`
+      `${wadToDecimal(amountBorrowed)}`
     )
     assert.fieldEquals(
       "DrawDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "collateralPledged",
-      `${collateralPledged}`
+      `${wadToDecimal(collateralPledged)}`
     )
     assert.fieldEquals(
       "DrawDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
-      `${lup}`
+      `${wadToDecimal(lup)}`
     )
 
     // TODO: check bucket attributes updated -> requires handling liquidations
@@ -542,7 +556,7 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "Loan",
       `${loanId.toHexString()}`,
-      "collateralDeposited",
+      "collateralPledged",
       `${wadToDecimal(collateralPledged)}`
     )
     assert.fieldEquals(
@@ -556,9 +570,9 @@ describe("Describe entity assertions", () => {
   test("RepayDebt", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const borrower = Address.fromString("0x0000000000000000000000000000000000000003")
-    const quoteRepaid = BigInt.fromI32(567)
-    const collateralPulled = BigInt.fromI32(1067)
-    const lup = BigInt.fromI32(234)
+    const quoteRepaid = BigInt.fromString("567111000000000000000")     // 567.111  * 1e18
+    const collateralPulled = BigInt.fromString("13400500000000000000") //  13.4005 * 1e18
+    const lup = BigInt.fromString("63480000000000000000")              //  63.48   * 1e18
 
     const newRepayDebtEvent = createRepayDebtEvent(
       poolAddress,
@@ -582,19 +596,19 @@ describe("Describe entity assertions", () => {
       "RepayDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "quoteRepaid",
-      `${quoteRepaid}`
+      `${wadToDecimal(quoteRepaid)}`
     )
     assert.fieldEquals(
       "RepayDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "collateralPulled",
-      `${collateralPulled}`
+      `${wadToDecimal(collateralPulled)}`
     )
     assert.fieldEquals(
       "RepayDebt",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lup",
-      `${lup}`
+      `${wadToDecimal(lup)}`
     )
   })
 
@@ -602,9 +616,9 @@ describe("Describe entity assertions", () => {
     // mock event params
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
-    const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const debt = BigInt.fromString("567529276179422528643")        //  567.529276179422528643 * 1e18
     const collateral = BigInt.fromString("1067529276179422528643") // 1067.529276179422528643 * 1e18
-    const bond = BigInt.fromString("234000000000000000000")
+    const bond = BigInt.fromString("234000000000000000000")        //  234                    * 1e18
 
     // TODO: how to access timestamp?
     // mock auction info
@@ -652,7 +666,7 @@ describe("Describe entity assertions", () => {
       "Kick",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "bond",
-      `${bond}`
+      `${wadToDecimal(bond)}`
     )
 
     // check Account attributes updated
@@ -676,7 +690,7 @@ describe("Describe entity assertions", () => {
     )
 
     // check LiquidationAuction attributes
-    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId)
+    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId, ONE_BI)
     assert.entityCount("LiquidationAuction", 1)
     assert.fieldEquals(
       "LiquidationAuction",
@@ -864,7 +878,7 @@ describe("Describe entity assertions", () => {
       "Take",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      `${amountToTake}`
+      `${wadToDecimal(amountToTake)}`
     )
 
     // check kick state updated
@@ -909,7 +923,7 @@ describe("Describe entity assertions", () => {
     )
 
     // check LiquidationAuction attributes
-    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId)
+    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId, ONE_BI)
     assert.entityCount("LiquidationAuction", 1)
     assert.fieldEquals(
       "LiquidationAuction",
@@ -936,6 +950,7 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const taker = Address.fromString("0x0000000000000000000000000000000000000009")
     const takeIndex = BigInt.fromI32(123)
+    const takePrice = BigDecimal.fromString("544160563095425000000000000")
     const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
     const amountToTake = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const collateral = BigInt.fromString("1067529276179422528643") // 1067.529276179422528643 * 1e18
@@ -1019,12 +1034,13 @@ describe("Describe entity assertions", () => {
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      takeIndex,
+      takeIndex.toU32(),
+      takePrice,
       debt,
       ZERO_BI,
       lpAwardedKicker.plus(lpAwardedTaker),
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, takeIndex, expectedBucketInfo)
 
@@ -1066,13 +1082,13 @@ describe("Describe entity assertions", () => {
       "BucketTake",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "amount",
-      `${amountToTake}`
+      `${wadToDecimal(amountToTake)}`
     )
     assert.fieldEquals(
       "BucketTake",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "collateral",
-      `${collateral}`
+      `${wadToDecimal(collateral)}`
     )
 
     // check BucketTakeLPAwarded attributes
@@ -1099,13 +1115,13 @@ describe("Describe entity assertions", () => {
       "BucketTakeLPAwarded",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwardedTaker",
-      `${lpAwardedTaker}`
+      `${wadToDecimal(lpAwardedTaker)}`
     )
     assert.fieldEquals(
       "BucketTakeLPAwarded",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwardedKicker",
-      `${lpAwardedKicker}`
+      `${wadToDecimal(lpAwardedKicker)}`
     )
 
     // TODO: check lends attributes
@@ -1188,6 +1204,7 @@ describe("Describe entity assertions", () => {
     // mock pool info contract calls
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: ONE_WAD_BI,
+      debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
       pendingInflator: ONE_WAD_BI,
@@ -1196,8 +1213,8 @@ describe("Describe entity assertions", () => {
       hpbIndex: ZERO_BI,
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
-      lup: MAX_PRICE_BI,
-      lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      lup: MAX_PRICE_BI, //TODO: indexToPrice(lup)
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
       momp: BigInt.fromI32(623801),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemaining,
@@ -1235,37 +1252,37 @@ describe("Describe entity assertions", () => {
     /*** Assert Reserve Kick State ***/
     /*********************************/
 
-    assert.entityCount("ReserveAuction", 1)
+    assert.entityCount("ReserveAuctionKickOrTake", 1)
 
-    const reserveAuctionProcessId = getReserveAuctionId(addressToBytes(poolAddress), expectedBurnEpoch)
-    assert.entityCount("ReserveAuctionProcess", 1)
+    const reserveAuctionId = getReserveAuctionId(addressToBytes(poolAddress), expectedBurnEpoch)
+    assert.entityCount("ReserveAuction", 1)
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "kicker",
       `${kicker.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "kickerAward",
       `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000"))).div(bigDecimalExp18())}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "burnEpoch",
       `${expectedBurnEpoch}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "ajnaBurnedAcrossAllTakes",
       `${0}`
     )
@@ -1281,6 +1298,7 @@ describe("Describe entity assertions", () => {
     // mock pool info contract calls
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: ONE_WAD_BI,
+      debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
       pendingInflator: ONE_WAD_BI,
@@ -1290,7 +1308,7 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI, //TODO: indexToPrice(price)
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
-      lupIndex: MAX_PRICE_INDEX, //TODO: indexToPrice(lup)
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
       momp: BigInt.fromI32(623802),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemainingAfterTake,
@@ -1328,26 +1346,26 @@ describe("Describe entity assertions", () => {
 
     const kickReserveAuctionID = Bytes.fromHexString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a").concat(addressToBytes(kicker))
     const takeReserveAuctionID = Bytes.fromHexString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a").concat(addressToBytes(taker))
-    const loadedKickReserveAuction = ReserveAuction.load(kickReserveAuctionID)!
-    const loadedTakeReserveAuction = ReserveAuction.load(takeReserveAuctionID)!
+    const loadedKickReserveAuction = ReserveAuctionKickOrTake.load(kickReserveAuctionID)!
+    const loadedTakeReserveAuction = ReserveAuctionKickOrTake.load(takeReserveAuctionID)!
     const incrementalAjnaBurned = wadToDecimal(totalBurnedAtTake.minus(totalBurnedAtKick))
 
-    assert.entityCount("ReserveAuction", 2)
+    assert.entityCount("ReserveAuctionKickOrTake", 2)
     // assert first kick reserve auction entity
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${kickReserveAuctionID.toHexString()}`,
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${kickReserveAuctionID.toHexString()}`,
-      "reserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`
+      "reserveAuction",
+      `${reserveAuctionId.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${kickReserveAuctionID.toHexString()}`,
       "incrementalAjnaBurned",
       `${0}`
@@ -1356,25 +1374,25 @@ describe("Describe entity assertions", () => {
 
     // assert second take reserve auction entity
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${takeReserveAuctionID.toHexString()}`,
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${takeReserveAuctionID.toHexString()}`,
       "taker",
       `${taker.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${takeReserveAuctionID.toHexString()}`,
-      "reserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`
+      "reserveAuction",
+      `${reserveAuctionId.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
+      "ReserveAuctionKickOrTake",
       `${takeReserveAuctionID.toHexString()}`,
       "incrementalAjnaBurned",
       `${incrementalAjnaBurned}`
@@ -1382,40 +1400,40 @@ describe("Describe entity assertions", () => {
     // assert.assertNotNull(loadedTakeReserveAuction.taker) // FIXME: this is failing with a type issue
 
     // assert reserve auction process entity
-    assert.entityCount("ReserveAuctionProcess", 1)
+    assert.entityCount("ReserveAuction", 1)
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "kicker",
       `${kicker.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "kickerAward",
       `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000"))).div(bigDecimalExp18())}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "claimableReservesRemaining",
       `${wadToDecimal(claimableReservesRemainingAfterTake)}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "burnEpoch",
       `${expectedBurnEpoch}`
     )
     assert.fieldEquals(
-      "ReserveAuctionProcess",
-      `${reserveAuctionProcessId.toHexString()}`,
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
       "ajnaBurnedAcrossAllTakes",
       `${incrementalAjnaBurned}`
     )
@@ -1451,7 +1469,7 @@ describe("Describe entity assertions", () => {
       htp: ZERO_BI,
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
-      lupIndex: MAX_PRICE_INDEX,
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
       reserves: ZERO_BI,
       claimableReserves: claimableReservesRemainingAfterTake,
       claimableReservesRemaining: claimableReservesRemainingAfterTake,
@@ -1473,9 +1491,10 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const lender = Address.fromString("0x0000000000000000000000000000000000000002")
     const index = BigInt.fromI32(234)
-    const amount = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
-    const lpAwarded = BigInt.fromI32(567)
-    const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
+    const price = BigDecimal.fromString("312819781990957000000000000") // 312819781.990957       * 1e18
+    const amount = BigInt.fromString("567529276179422528643")          // 567.529276179422528643 * 1e18
+    const lpAwarded = BigInt.fromString("544828105132245627497")       // 544.828105132245627497 * 1e18
+    const lup = BigInt.fromString("9529276179422528643")               //   9.529276179422528643 * 1e18
 
     /***********************/
     /*** Add Quote Token ***/
@@ -1483,12 +1502,13 @@ describe("Describe entity assertions", () => {
 
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
-      index,
+      index.toU32(),
+      price,
       amount,
       ZERO_BI,
       lpAwarded,
       ZERO_BI,
-      ONE_RAY_BI
+      ONE_WAD_BI
     )
     mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
 
@@ -1501,15 +1521,16 @@ describe("Describe entity assertions", () => {
       lpAwarded,
       lup
     )
+    mockGetLPBValueInQuote(poolAddress, lpAwarded, index, lpAwarded)
     handleAddQuoteToken(newAddQuoteTokenEvent)
 
     // check bucket attributes updated
-    const bucketId = getBucketId(addressToBytes(poolAddress), index)
+    const bucketId = getBucketId(addressToBytes(poolAddress), index.toU32())
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,
-      quoteTokens: amount,
-      exchangeRate: ONE_RAY_BI,
+      deposit: amount,
+      exchangeRate: ONE_WAD_BI,
       bucketIndex: index,
       lpb: lpAwarded
     })
@@ -1529,7 +1550,7 @@ describe("Describe entity assertions", () => {
     assertBucketUpdate({
       id: bucketId,
       collateral: ZERO_BI,
-      quoteTokens: ZERO_BI,
+      deposit: ZERO_BI,
       exchangeRate: ZERO_BI,
       bucketIndex: index,
       lpb: ZERO_BI

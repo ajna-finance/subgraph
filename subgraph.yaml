@@ -118,6 +118,8 @@ dataSources:
           file: ./abis/ERC721PoolFactory.json
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: ERC721
+          file: ./abis/ERC721.json
       eventHandlers:
         - event: PoolCreated(address)
           handler: handlePoolCreated
@@ -149,7 +151,7 @@ templates:
         - RemoveCollateral
         - RemoveQuoteToken
         - RepayDebt
-        - ReserveAuction
+        - ReserveAuctionKickOrTake
         - RevokeLpAllowance
         - RevokeLpTransferors
         - SetLpAllowance

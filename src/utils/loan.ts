@@ -17,7 +17,7 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
       loan.borrower            = borrower
       loan.pool                = poolId
       loan.poolAddress         = poolId.toHexString()
-      loan.collateralDeposited = ZERO_BD
+      loan.collateralPledged   = ZERO_BD
       loan.collateralization   = ZERO_BD
       loan.debt                = ZERO_BD
       loan.tp                  = ZERO_BD

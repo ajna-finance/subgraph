@@ -18,7 +18,6 @@ export function loadOrCreateLend(bucketId: Bytes, lendId: Bytes, poolId: Bytes, 
         lend.lender          = lender
         lend.pool            = poolId
         lend.poolAddress     = poolId.toHexString()
-        lend.deposit         = ZERO_BD
         lend.lpb             = ZERO_BD
         lend.lpbValueInQuote = ZERO_BD
     }

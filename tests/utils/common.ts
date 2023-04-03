@@ -6,8 +6,8 @@ import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
 import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
-import { poolInfoUtilsNetworkLookUpTable } from "../../src/utils/constants"
-import { BurnInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
+import { poolInfoUtilsNetworkLookUpTable, ZERO_BI } from "../../src/utils/constants"
+import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo } from "../../src/utils/liquidation"
 
 /*************************/
@@ -17,7 +17,7 @@ import { AuctionInfo } from "../../src/utils/liquidation"
 export class BucketUpdatedParams {
     id: Bytes
     collateral: BigInt
-    quoteTokens: BigInt
+    deposit: BigInt
     exchangeRate: BigInt
     bucketIndex: BigInt
     lpb: BigInt
@@ -32,8 +32,8 @@ export function assertBucketUpdate(params: BucketUpdatedParams): void {
     assert.fieldEquals(
         "Bucket",
         `${params.id.toHexString()}`,
-        "quoteTokens",
-        `${wadToDecimal(params.quoteTokens)}`
+        "deposit",
+        `${wadToDecimal(params.deposit)}`
     )
     assert.fieldEquals(
         "Bucket",
@@ -57,17 +57,10 @@ export class LendUpdatedParams {
     id: Bytes
     bucketId: Bytes
     poolAddress: String
-    deposit: BigInt
     lpb: BigInt
     lpbValueInQuote: BigInt
 }
 export function assertLendUpdate(params: LendUpdatedParams): void {
-    assert.fieldEquals(
-        "Lend",
-        `${params.id.toHexString()}`,
-        "deposit",
-        `${wadToDecimal(params.deposit)}`
-    )
     assert.fieldEquals(
         "Lend",
         `${params.id.toHexString()}`,
@@ -322,12 +315,21 @@ export function mockGetBucketInfo(pool: Address, bucketIndex: BigInt, expectedIn
     createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'bucketInfo', 'bucketInfo(address,uint256):(uint256,uint256,uint256,uint256,uint256,uint256)')
         .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
         .returns([
-            ethereum.Value.fromUnsignedBigInt(expectedInfo.index),
+            ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(123456789)),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.quoteTokens),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.lpb),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.scale),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.exchangeRate)
+        ])
+}
+
+export function mockGetDebtInfo(pool: Address, expectInfo: DebtInfo): void {
+    createMockedFunction(pool, 'debtInfo', 'debtInfo():(uint256,uint256,uint256)')
+        .returns([
+          ethereum.Value.fromUnsignedBigInt(expectInfo.pendingDebt),
+          ethereum.Value.fromUnsignedBigInt(expectInfo.accruedDebt),
+          ethereum.Value.fromUnsignedBigInt(expectInfo.liquidationDebt),
         ])
 }
 
@@ -453,6 +455,7 @@ export function mockGetTokenInfo(token: Address, expectedName: string, expectedS
 export class PoolMockParams {
     // loans info mock params
     poolSize: BigInt
+    debt: BigInt
     loansCount: BigInt
     maxBorrower: Address
     pendingInflator: BigInt
@@ -488,6 +491,9 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.pendingInterestFactor
     )
     mockGetPoolLoansInfo(pool, expectedPoolLoansInfo)
+
+    const expectedPoolDebtInfo = new DebtInfo(params.debt, ZERO_BI, ZERO_BI)
+    mockGetDebtInfo(pool, expectedPoolDebtInfo)
 
     const expectedPoolPricesInfo = new PoolPricesInfo(
         params.hpb,

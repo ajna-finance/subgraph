@@ -16,13 +16,13 @@ import {
   ONE_BD
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
-import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token"
+import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  poolCreated.pool_ = event.params.pool_
+  poolCreated.ajnaPool = event.params.pool_
 
   poolCreated.blockNumber = event.block.number
   poolCreated.blockTimestamp = event.block.timestamp
@@ -107,9 +107,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // pool prices information
   pool.hpb = ZERO_BD
-  pool.hpbIndex = ZERO_BI
+  pool.hpbIndex = 0
   pool.htp = ZERO_BD
-  pool.htpIndex = ZERO_BI
+  pool.htpIndex = 0
   pool.lup = MAX_PRICE
   pool.lupIndex = MAX_PRICE_INDEX
   pool.momp = ZERO_BD
@@ -122,6 +122,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.reserveAuctionTimeRemaining = ZERO_BI
   pool.burnEpoch = ZERO_BI
   pool.totalAjnaBurned = ZERO_BD
+  pool.reserveAuctions = []
 
   // utilization information
   pool.minDebtAmount = ZERO_BD
@@ -132,7 +133,6 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // liquidation information
   pool.totalBondEscrowed = ZERO_BD
   pool.liquidationAuctions = []
-  pool.liquidationAuctionsHead = addressToBytes(ZERO_ADDRESS)
 
   // add pool reference to factories' list of pools
   factory.pools = factory.pools.concat([pool.id])

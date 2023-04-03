@@ -1,7 +1,7 @@
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Account, Kick, Lend, Loan, Pool, Settle, Take } from "../../generated/schema"
 
-import { ZERO_BI } from "./constants"
+import { ZERO_BD, ZERO_BI } from "./constants"
 
 
 export function loadOrCreateAccount(accountId: Bytes): Account {
@@ -39,8 +39,10 @@ export function updateAccountLends(account: Account, lend: Lend): void {
     const lends = account.lends
     // get current index of lend in account's list of lends
     const index = lends.indexOf(lend.id)
-    if (index == -1) {
+    if (lend.lpb != ZERO_BD && index == -1) {
         account.lends = account.lends.concat([lend.id])
+    } else if (lend.lpb == ZERO_BD && index == -1) {
+        account.lends.splice(index, 1)
     }
 }
 
@@ -49,8 +51,10 @@ export function updateAccountLoans(account: Account, loan: Loan): void {
     const loans = account.loans
     // get current index of loan in account's list of loans
     const index = loans.indexOf(loan.id)
-    if (index == -1) {
+    if (loan.debt != ZERO_BD && index == -1) {
         account.loans = account.loans.concat([loan.id])
+    } else if (loan.collateralPledged == ZERO_BD && loan.debt == ZERO_BD && index != -1) {
+        account.loans.splice(index, 1)
     }
 }
 

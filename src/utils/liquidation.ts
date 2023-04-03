@@ -5,22 +5,15 @@ import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 
 import { wadToDecimal } from "./convert"
 import { ONE_BI, ZERO_BD } from "./constants"
-import { getLoanId } from "./loan"
 
-// TODO: if logIndex doesn't work as expected, update the ID generation to use the taker addres as second param
-// return the id of a bucketTake given the transactionHash and logIndex of the BucketTakeLPAwarded event
-// export function getBucketTakeIdFromBucketTakeLPAwarded(transactionHash: Bytes, logIndex: BigInt): Bytes {
-//     // assume that the logIndex is always one greater given the order of emitted events
-//     return transactionHash.concatI32(logIndex.plus(ONE_BI).toI32())
-// }
-
-export function getBucketTakeIdFromBucketTakeLPAwarded(transactionHash: Bytes, blockNumber: BigInt): Bytes {
-    // assume that the logIndex is always one greater given the order of emitted events
-    return transactionHash.concatI32(blockNumber.toI32())
+export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, blockNumber: BigInt): Bytes {
+    return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + blockNumber.toString()))
 }
 
-export function getLiquidationAuctionId(pool: Bytes, loanId: Bytes): Bytes {
-    return pool.concat(Bytes.fromUTF8('|' + loanId.toString()))
+export function getBucketTakeLPAwardedId(transactionHash: Bytes, logIndex: BigInt): Bytes {
+    // assume that the logIndex is always one greater given the order of emitted events
+    // should handle case where multiple BucketTakes are performed in a single multicall TX
+    return transactionHash.concatI32(logIndex.toI32())
 }
 
 export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuctionId: Bytes, kick: Kick, loan: Loan): LiquidationAuction {
@@ -30,16 +23,23 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
         liquidationAuction = new LiquidationAuction(liquidationAuctionId) as LiquidationAuction
 
         // write constant pointers
-        liquidationAuction.pool = poolId
+        liquidationAuction.pool     = poolId
         liquidationAuction.borrower = loan.borrower
-        liquidationAuction.loan = loan.id
-        liquidationAuction.kicker = kick.kicker
-        liquidationAuction.kick = kick.id
+        liquidationAuction.loan     = loan.id
+        liquidationAuction.kicker   = kick.kicker
+        liquidationAuction.kick     = kick.id
 
         // write accumulators
-        liquidationAuction.collateralAuctioned = ZERO_BD
-        liquidationAuction.debtRepaid = ZERO_BD
-        liquidationAuction.settled = false
+        liquidationAuction.auctionPrice        = ZERO_BD // FIXME: not exposed by contracts
+        liquidationAuction.collateral          = kick.collateral
+        liquidationAuction.collateralRemaining = kick.collateral
+        liquidationAuction.debt                = kick.debt
+        liquidationAuction.debtRemaining       = kick.debt
+        liquidationAuction.settled             = false
+
+        // collections
+        liquidationAuction.takes = []
+        liquidationAuction.bucketTakes = []
     }
     return liquidationAuction
 }
@@ -49,10 +49,6 @@ export function updateLiquidationAuction(liquidationAuction: LiquidationAuction,
     liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)
     liquidationAuction.bondFactor   = wadToDecimal(auctionInfo.bondFactor)
     liquidationAuction.neutralPrice = wadToDecimal(auctionInfo.neutralPrice)
-
-    // update liquidation auction queue pointers
-    liquidationAuction.next = getLiquidationAuctionId(poolId, getLoanId(poolId, auctionInfo.next))
-    liquidationAuction.prev = getLiquidationAuctionId(poolId, getLoanId(poolId, auctionInfo.prev))
 }
 
 export class AuctionInfo {

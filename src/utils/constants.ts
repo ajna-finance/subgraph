@@ -23,7 +23,7 @@ export const FIVE_PERCENT_BD = BigDecimal.fromString("50000000000000000") // 0.0
 
 // max price of the pool is 1_004_968_987.606512354182109771 * 1e18
 export const MAX_PRICE = BigDecimal.fromString(`${1_004_968_987.606512354182109771}`)
-export const MAX_PRICE_INDEX = BigInt.fromI32(4156)
+export const MAX_PRICE_INDEX = 0
 export const MAX_PRICE_BI = BigInt.fromString('1004968987606512354182109771')
 
 // poolInfoUtils contract address per network

@@ -18,6 +18,8 @@ import {
   RedeemPosition,
   Transfer
 } from "../generated/schema"
+import { bigIntArrayToIntArray } from "./utils/convert"
+import { loadOrCreateLPToken } from "./utils/position"
 
 export function handleApproval(event: ApprovalEvent): void {
   let entity = new Approval(
@@ -71,7 +73,7 @@ export function handleMemorializePosition(
   )
   entity.lender = event.params.lender
   entity.tokenId = event.params.tokenId
-  entity.indexes = event.params.indexes
+  entity.indexes = bigIntArrayToIntArray(event.params.indexes)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -101,8 +103,8 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   )
   entity.lender = event.params.lender
   entity.tokenId = event.params.tokenId
-  entity.fromIndex = event.params.fromIndex
-  entity.toIndex = event.params.toIndex
+  entity.fromIndex = event.params.fromIndex.toU32()
+  entity.toIndex = event.params.toIndex.toU32()
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -117,7 +119,7 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   )
   entity.lender = event.params.lender
   entity.tokenId = event.params.tokenId
-  entity.indexes = event.params.indexes
+  entity.indexes = bigIntArrayToIntArray(event.params.indexes)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -133,6 +135,8 @@ export function handleTransfer(event: TransferEvent): void {
   entity.from = event.params.from
   entity.to = event.params.to
   entity.tokenId = event.params.tokenId
+
+  entity.token = loadOrCreateLPToken(event.transaction.to!).id
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp

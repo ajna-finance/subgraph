@@ -1,6 +1,6 @@
 import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
 
-import { LiquidationAuction, Pool } from "../../generated/schema"
+import { LiquidationAuction, Pool, ReserveAuction } from "../../generated/schema"
 import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
@@ -9,6 +9,24 @@ import { wadToDecimal } from './convert'
 
 export function getPoolAddress(poolId: Bytes): Address {
     return Address.fromBytes(poolId)
+}
+
+export class LenderInfo {
+  lpBalance: BigInt
+  depositTime: BigInt
+  constructor(lpBalance: BigInt, depositTime: BigInt) {
+    this.lpBalance = lpBalance
+    this.depositTime = depositTime
+  }
+}
+export function getLenderInfo(pool: Pool, bucketIndex: BigInt, lender: Address): LenderInfo {
+  const poolContract = ERC20Pool.bind(Address.fromBytes(pool.id))
+    const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
+
+    return new LenderInfo(
+      lenderInfoResult.value0,
+      lenderInfoResult.value1
+    )
 }
 
 // retrieve the current pool MOMP by calling PoolInfoUtils.momp()
@@ -149,15 +167,19 @@ export function updatePool(pool: Pool): void {
     pool.maxBorrower           = poolLoansInfo.maxBorrower
     pool.pendingInflator       = wadToDecimal(poolLoansInfo.pendingInflator)
     pool.pendingInterestFactor = wadToDecimal(poolLoansInfo.pendingInterestFactor)
+    
+    // update amount of debt in pool
+    const debtInfo = getDebtInfo(pool)
+    pool.currentDebt = wadToDecimal(debtInfo.pendingDebt)
 
     // update pool prices information
     const poolPricesInfo = getPoolPricesInfo(pool)
     pool.hpb = wadToDecimal(poolPricesInfo.hpb)
-    pool.hpbIndex = poolPricesInfo.hpbIndex
+    pool.hpbIndex = poolPricesInfo.hpbIndex.toU32()
     pool.htp = wadToDecimal(poolPricesInfo.htp)
-    pool.htpIndex = poolPricesInfo.htpIndex
+    pool.htpIndex = poolPricesInfo.htpIndex.toU32()
     pool.lup = wadToDecimal(poolPricesInfo.lup)
-    pool.lupIndex = poolPricesInfo.lupIndex
+    pool.lupIndex = poolPricesInfo.lupIndex.toU32()
     pool.momp = getMomp(pool.id)
 
     // update reserve auction information
@@ -176,14 +198,32 @@ export function updatePool(pool: Pool): void {
     pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
 }
 
-// update the list of loans initiated by an account, if it hasn't been added already
-export function updatePoolLiquidationAuctions(pool: Pool, liquidationAuction: LiquidationAuction): void {
+// if absent, add a liquidation auction to the pool's collection of active liquidations
+export function addLiquidationToPool(pool: Pool, liquidationAuction: LiquidationAuction): void {
     const liquidationAuctions = pool.liquidationAuctions
     // get current index of pool in account's list of pools
     const index = liquidationAuctions.indexOf(liquidationAuction.id)
     if (index == -1) {
         pool.liquidationAuctions = pool.liquidationAuctions.concat([liquidationAuction.id])
     }
+}
+
+// if present, remove a settled liquidation from the pool's collection of active liquidations
+export function removeLiquidationFromPool(pool: Pool, liquidationAuction: LiquidationAuction): void {
+    const index = pool.liquidationAuctions.indexOf(liquidationAuction.id)
+    if (index != -1) {
+        pool.liquidationAuctions.splice(index, 1)
+    }
+}
+
+// add a claimable reserve auction to the pool's list
+export function addReserveAuctionToPool(pool: Pool, reserveAuction: ReserveAuction): void {
+  const reserveAuctions = pool.reserveAuctions
+  // get current index of pool in account's list of pools
+  const index = reserveAuctions.indexOf(reserveAuction.id)
+  if (index == -1) {
+      pool.reserveAuctions.push(reserveAuction.id)
+  }
 }
 
 export function getCurrentBurnEpoch(pool: Pool): BigInt {
@@ -212,4 +252,25 @@ export function getBurnInfo(pool: Pool, burnEpoch: BigInt): BurnInfo {
         burnInfoResult.value2
     )
     return burnInfo
+}
+
+export class DebtInfo {
+    pendingDebt: BigInt
+    accruedDebt: BigInt
+    liquidationDebt: BigInt
+    constructor(pendingDebt: BigInt, accruedDebt: BigInt, liquidationDebt: BigInt) {
+        this.pendingDebt = pendingDebt  
+        this.accruedDebt = accruedDebt  
+        this.liquidationDebt = liquidationDebt  
+    }
+}
+export function getDebtInfo(pool: Pool): DebtInfo {
+  const poolContract = ERC20Pool.bind(Address.fromBytes(pool.id))
+  const debtInfoResult = poolContract.debtInfo()
+
+  return new DebtInfo(
+    debtInfoResult.value0,
+    debtInfoResult.value1,
+    debtInfoResult.value2
+  )
 }
