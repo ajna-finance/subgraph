@@ -62,7 +62,7 @@ import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getBucketTakeLPAwardedId, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction } from "./utils/liquidation"
-import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, removeLiquidationFromPool, addReserveAuctionToPool, getLenderInfo } from "./utils/pool"
+import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo } from "./utils/pool"
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 import { getReserveAuctionId, loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token-erc20"
@@ -1104,9 +1104,6 @@ export function handleSettle(event: SettleEvent): void {
     settle.pool = pool.id
     settle.liquidationAuction = liquidationAuctionId
     settle.loan = loanId
-
-    // remove the settled liquidation from the pool's list of active liquidations
-    removeLiquidationFromPool(pool, liquidationAuction)
 
     // save entities to the store
     account.save()

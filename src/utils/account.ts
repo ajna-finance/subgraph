@@ -32,8 +32,6 @@ export function updateAccountPools(account: Account, pool: Pool): void {
     if (index == -1) {
         account.pools = account.pools.concat([pool.id])
     }
-    // TODO: Determine whether account has any Lend or Loan in pool without O(n) iteration.
-    //       Remove pool from account if there are no Lends or Loans.
 }
 
 // update the list of lends initiated by an account, if it hasn't been added already
@@ -55,7 +53,7 @@ export function updateAccountLoans(account: Account, loan: Loan): void {
     const index = loans.indexOf(loan.id)
     if (loan.debt != ZERO_BD && index == -1) {
         account.loans = account.loans.concat([loan.id])
-    } else if (loan.debt == ZERO_BD && index != -1) {
+    } else if (loan.collateralPledged == ZERO_BD && loan.debt == ZERO_BD && index != -1) {
         account.loans.splice(index, 1)
     }
 }
