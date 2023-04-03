@@ -2,9 +2,7 @@
 
 [Ajna](https://www.ajna.finance/) is a non-custodial, peer-to-peer, permissionless lending, borrowing and trading system that requires no governance or external price feeds to function.
 
-This Subgraph ingests the core Pool contracts used by the Ajna Protocol. These contracts can be found [here](https://github.com/ajna-finance/contracts).
-
-This repository doesn't index the GrantFund contract found [here](https://github.com/ajna-finance/ecosystem-coordination). That indexing will be handled in a separate repository. The PoolInfoUtils contract is also not indexed here, as no events are emitted that can be indexed.
+This Subgraph ingests contracts used by the Ajna Protocol. Core contracts can be found [here](https://github.com/ajna-finance/contracts).
 
 
 ## Installation
