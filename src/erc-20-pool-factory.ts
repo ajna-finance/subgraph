@@ -16,7 +16,7 @@ import {
   ONE_BD
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
-import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token"
+import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(

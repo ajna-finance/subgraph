@@ -65,7 +65,7 @@ import { getBucketTakeLPAwardedId, getLiquidationAuctionId, getAuctionInfoERC20P
 import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, removeLiquidationFromPool, addReserveAuctionToPool, getLenderInfo } from "./utils/pool"
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 import { getReserveAuctionId, loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/reserve-auction"
-import { incrementTokenTxCount } from "./utils/token"
+import { incrementTokenTxCount } from "./utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/lp-transferors"
 import { loadOrCreateAllowances, revokeAllowances, setAllowances } from "./utils/lp-allowances"
 

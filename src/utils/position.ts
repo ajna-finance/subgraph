@@ -3,7 +3,7 @@ import { Address } from "@graphprotocol/graph-ts"
 import { Token } from "../../generated/schema"
 import { ONE_BI, ZERO_BI } from "../utils/constants"
 import { addressToBytes } from "../utils/convert"
-import { getTokenName, getTokenSymbol } from "../utils/token"
+import { getTokenName, getTokenSymbol } from "./token-erc721"
 
 export function loadOrCreateLPToken(tokenAddress: Address): Token {
   const id = addressToBytes(tokenAddress)
