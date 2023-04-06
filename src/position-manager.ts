@@ -136,7 +136,7 @@ export function handleTransfer(event: TransferEvent): void {
   entity.to = event.params.to
   entity.tokenId = event.params.tokenId
 
-  entity.token = loadOrCreateLPToken(event.transaction.to!).id
+  entity.token = loadOrCreateLPToken(event.address).id
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp

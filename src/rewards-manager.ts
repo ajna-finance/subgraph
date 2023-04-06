@@ -35,6 +35,7 @@ export function handleMoveStakedLiquidity(event: MoveStakedLiquidityEvent): void
   let entity = new MoveStakedLiquidity(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
+  entity.tokenId     = event.params.tokenId
   entity.fromIndexes = bigIntArrayToIntArray(event.params.fromIndexes)
   entity.toIndexes   = bigIntArrayToIntArray(event.params.toIndexes)
 

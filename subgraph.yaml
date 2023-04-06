@@ -25,6 +25,10 @@ dataSources:
       abis:
         - name: PositionManager
           file: ./abis/PositionManager.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC721
+          file: ./abis/ERC721.json
       eventHandlers:
         - event: Approval(indexed address,indexed address,indexed uint256)
           handler: handleApproval
