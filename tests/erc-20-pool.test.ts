@@ -63,7 +63,7 @@ describe("Describe entity assertions", () => {
   // For more test scenarios, see:
   // https://thegraph.com/docs/en/developer/matchstick/#write-a-unit-test
 
-  test("AddCollateral created and stored", () => {
+  test("AddCollateral", () => {
     // mock parameters
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const actor = Address.fromString("0x0000000000000000000000000000000000000001")
