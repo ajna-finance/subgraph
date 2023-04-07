@@ -13,6 +13,7 @@ import {
   UpdateExchangeRates
 } from "../generated/schema"
 import { bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
+import { getPoolForToken } from "./utils/position"
 
 export function handleClaimRewards(event: ClaimRewardsEvent): void {
   let entity = new ClaimRewards(
@@ -36,6 +37,7 @@ export function handleMoveStakedLiquidity(event: MoveStakedLiquidityEvent): void
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.tokenId     = event.params.tokenId
+  entity.pool        = getPoolForToken(entity.tokenId)
   entity.fromIndexes = bigIntArrayToIntArray(event.params.fromIndexes)
   entity.toIndexes   = bigIntArrayToIntArray(event.params.toIndexes)
 

@@ -92,6 +92,8 @@ dataSources:
       abis:
         - name: RewardsManager
           file: ./abis/RewardsManager.json
+        - name: PositionManager
+          file: ./abis/PositionManager.json
       eventHandlers:
         - event: ClaimRewards(indexed address,indexed address,indexed uint256,uint256[],uint256)
           handler: handleClaimRewards

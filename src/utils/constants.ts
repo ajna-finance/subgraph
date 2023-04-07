@@ -29,3 +29,6 @@ export const MAX_PRICE_BI = BigInt.fromString('1004968987606512354182109771')
 // poolInfoUtils contract address per network
 export const poolInfoUtilsNetworkLookUpTable = new TypedMap<string, Address>()
 poolInfoUtilsNetworkLookUpTable.set('goerli', Address.fromString('0xEa36b2a4703182d07df9DdEe46BF97f9979F0cCf'))
+
+export const positionManagerNetworkLookUpTable = new TypedMap<string, Address>()
+positionManagerNetworkLookUpTable.set('goerli', Address.fromString('0x31BcbE14Ad30B2f7E1E4A14caB2C16849B73Dac3'))

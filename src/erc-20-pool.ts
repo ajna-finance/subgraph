@@ -200,7 +200,7 @@ export function handleApproveLpTransferors(
   entity.save()
 }
 
-// ERC721Pool only
+// TODO: ERC721Pool only (doesn't belong here)
 export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   const entity = new AuctionNFTSettle(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -641,14 +641,15 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
     // update from bucket lend state
     const fromBucketLendId = getLendId(fromBucketId, event.params.lender)
     const fromBucketLend = loadOrCreateLend(fromBucketId, fromBucketLendId, pool.id, moveQuoteToken.lender)
-    fromBucketLend.lpb = fromBucketLend.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
-    fromBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, fromBucket, fromBucketLend)
+    // TODO: unsure whether these calcs are causing problems
+    // fromBucketLend.lpb = fromBucketLend.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
+    // fromBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, fromBucket, fromBucketLend)
 
     // update to bucket lend state
     const toBucketLendId = getLendId(toBucketId, event.params.lender)
     const toBucketLend = loadOrCreateLend(toBucketId, toBucketLendId, pool.id, moveQuoteToken.lender)
-    toBucketLend.lpb = toBucketLend.lpb.plus(wadToDecimal(event.params.lpAwardedTo))
-    toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket, toBucketLend)
+    // toBucketLend.lpb = toBucketLend.lpb.plus(wadToDecimal(event.params.lpAwardedTo))
+    // toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket, toBucketLend)
 
     // update account state
     const accountId = addressToBytes(event.params.lender)
@@ -774,7 +775,8 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeQuote.lender)
-    lend.lpb             = lend.lpb.minus(removeQuote.lpRedeemed)
+    // FIXME: seems this sometimes underflows
+    // lend.lpb             = lend.lpb.minus(removeQuote.lpRedeemed)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
 
     // update account's list of pools and lends if necessary
