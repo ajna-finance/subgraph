@@ -386,9 +386,9 @@ type Kick @entity {
   transactionHash: Bytes!
 }
 
-# TODO: identify pool
 type LoanStamped @entity(immutable: true) {
   id: Bytes!
+  pool: Pool!
   borrower: Bytes! # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -611,7 +611,7 @@ type Transfer @entity(immutable: true) {
 
 type PoolCreated @entity(immutable: true) {
   id: Bytes!
-  ajnaPool: Bytes!        # address
+  pool: Bytes!        # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -620,7 +620,7 @@ type PoolCreated @entity(immutable: true) {
 type ClaimRewards @entity(immutable: true) {
   id: Bytes!
   owner: Bytes!             # address
-  ajnaPool: Bytes!          # address  # TODO: rename pool
+  pool: Bytes!              # address
   tokenId: BigInt!          # uint256
   epochsClaimed: [BigInt!]! # uint256[]
   amount: BigDecimal!       # uint256
@@ -631,8 +631,8 @@ type ClaimRewards @entity(immutable: true) {
 
 type Stake @entity(immutable: true) {
   id: Bytes!
-  owner: Bytes! # address
-  ajnaPool: Bytes! # address  # TODO: rename pool
+  owner: Bytes!    # address
+  pool: Bytes!     # address
   tokenId: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -641,8 +641,8 @@ type Stake @entity(immutable: true) {
 
 type Unstake @entity(immutable: true) {
   id: Bytes!
-  owner: Bytes! # address
-  ajnaPool: Bytes! # address  # TODO: rename pool
+  owner: Bytes!    # address
+  pool: Bytes!     # address
   tokenId: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -651,10 +651,10 @@ type Unstake @entity(immutable: true) {
 
 type UpdateExchangeRates @entity(immutable: true) {
   id: Bytes!
-  caller: Bytes! # address
-  ajnaPool: Bytes! # address  # TODO: rename pool
+  caller: Bytes!             # address
+  pool: Bytes!               # address
   indexesUpdated: [BigInt!]! # uint256[]
-  rewardsClaimed: BigInt! # uint256
+  rewardsClaimed: BigInt!    # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

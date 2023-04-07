@@ -588,6 +588,7 @@ export function handleLoanStamped(event: LoanStampedEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.borrower = event.params.borrower
+  entity.pool = addressToBytes(event.address)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
