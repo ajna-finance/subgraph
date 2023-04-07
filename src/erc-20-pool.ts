@@ -83,7 +83,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
   addCollateral.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -144,7 +144,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   addQuoteToken.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -193,7 +193,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
 export function handleApproveLpTransferors(
   event: ApproveLpTransferorsEvent
 ): void {
-  const poolId = addressToBytes(event.transaction.to!)
+  const poolId = addressToBytes(event.address)
   const entity = loadOrCreateTransferors(poolId, event.params.lender)
   approveTransferors(entity, event.params.transferors)
 
@@ -231,7 +231,7 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
   auctionSettle.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // pool doesn't need to be updated here as it was already updated in the concurrent Settle event
 
@@ -288,7 +288,7 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
   bucketBankruptcy.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -329,7 +329,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   bucketTake.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -414,7 +414,7 @@ export function handleBucketTakeLPAwarded(
   bucketTakeLpAwarded.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // pool doesn't need to be updated as it was already updated in the concurrent BucketTake event
 
@@ -475,7 +475,7 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
   drawDebt.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     pool.currentDebt       = pool.currentDebt.plus(wadToDecimal(event.params.amountBorrowed))
@@ -532,7 +532,7 @@ export function handleKick(event: KickEvent): void {
   kick.kicker = event.transaction.from
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -611,7 +611,7 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
   // update entities
   const fromIndex = event.params.from.toU32()
   const toIndex = event.params.to.toU32()
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -687,7 +687,7 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   removeCollateral.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -748,7 +748,7 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
   removeQuote.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -808,7 +808,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   repayDebt.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     pool.currentDebt       = pool.currentDebt.minus(wadToDecimal(event.params.quoteRepaid))
@@ -860,7 +860,7 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
   reserveAuctionEvent.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -931,7 +931,7 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
 }
 
 export function handleRevokeLpAllowance(event: RevokeLpAllowanceEvent): void {
-  const poolId = addressToBytes(event.transaction.to!)
+  const poolId = addressToBytes(event.address)
   const lender = event.transaction.from
   const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
   revokeAllowances(entity, event.params.indexes)
@@ -948,7 +948,7 @@ export function handleRevokeLpAllowance(event: RevokeLpAllowanceEvent): void {
 export function handleRevokeLpTransferors(
   event: RevokeLpTransferorsEvent
 ): void {
-  const poolId = addressToBytes(event.transaction.to!)
+  const poolId = addressToBytes(event.address)
   const entity = loadOrCreateTransferors(poolId, event.params.lender)
   revokeTransferors(entity, event.params.transferors)
 
@@ -962,7 +962,7 @@ export function handleRevokeLpTransferors(
 }
 
 export function handleSetLpAllowance(event: SetLpAllowanceEvent): void {
-  const poolId = addressToBytes(event.transaction.to!)
+  const poolId = addressToBytes(event.address)
   const lender = event.transaction.from
   const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
   setAllowances(entity, event.params.indexes, event.params.amounts)
@@ -992,7 +992,7 @@ export function handleTake(event: TakeEvent): void {
   take.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -1074,7 +1074,7 @@ export function handleSettle(event: SettleEvent): void {
   settle.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)
@@ -1128,7 +1128,7 @@ export function handleTransferLPs(event: TransferLPsEvent): void {
   entity.transactionHash = event.transaction.hash
 
   // update Lends for old and new owners, creating entities where necessary
-  const poolId = addressToBytes(event.transaction.to!)
+  const poolId = addressToBytes(event.address)
   const pool = Pool.load(poolId)!
   const oldOwnerAccount = Account.load(entity.owner)!
   const newOwnerAccount = loadOrCreateAccount(entity.newOwner)
@@ -1177,7 +1177,7 @@ export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   updateInterestRate.blockTimestamp = event.block.timestamp
   updateInterestRate.transactionHash = event.transaction.hash
 
-  const pool = Pool.load(addressToBytes(event.transaction.to!))
+  const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
     updatePool(pool)

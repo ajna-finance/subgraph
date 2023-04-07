@@ -49,7 +49,7 @@ export function createAddCollateralEvent(
   )
 
   // update transaction target to the expected pool address
-  addCollateralEvent.transaction.to = pool
+  addCollateralEvent.address = pool
 
   return addCollateralEvent
 }
@@ -86,7 +86,7 @@ export function createAddQuoteTokenEvent(
   )
 
   // update transaction target to the expected pool address
-  addQuoteTokenEvent.transaction.to = pool
+  addQuoteTokenEvent.address = pool
 
   return addQuoteTokenEvent
 }
@@ -161,7 +161,7 @@ export function createBucketBankruptcyEvent(
   )
 
   // update transaction target to the expected pool address
-  bucketBankruptcyEvent.transaction.to = pool
+  bucketBankruptcyEvent.address = pool
 
   return bucketBankruptcyEvent
 }
@@ -207,7 +207,7 @@ export function createBucketTakeEvent(
 
   // update transaction targets to the expected pool address and taker
   bucketTakeEvent.transaction.from = taker
-  bucketTakeEvent.transaction.to = pool
+  bucketTakeEvent.address = pool
 
   return bucketTakeEvent
 }
@@ -243,7 +243,7 @@ export function createBucketTakeLPAwardedEvent(
   )
 
   // update transaction targets to the expected pool address
-  bucketTakeLpAwardedEvent.transaction.to = pool
+  bucketTakeLpAwardedEvent.address = pool
 
   return bucketTakeLpAwardedEvent
 }
@@ -279,7 +279,7 @@ export function createDrawDebtEvent(
   )
 
   // update transaction target to the expected pool address
-  drawDebtEvent.transaction.to = pool
+  drawDebtEvent.address = pool
 
   return drawDebtEvent
 }
@@ -314,7 +314,7 @@ export function createKickEvent(
 
   // update transaction target to the expected pool address and kicker
   kickEvent.transaction.from = kicker
-  kickEvent.transaction.to = pool
+  kickEvent.address = pool
 
   return kickEvent
 }
@@ -362,7 +362,7 @@ export function createMoveQuoteTokenEvent(
   )
 
   // update transaction target to the expected pool address
-  moveQuoteTokenEvent.transaction.to = pool
+  moveQuoteTokenEvent.address = pool
 
   return moveQuoteTokenEvent
 }
@@ -460,7 +460,7 @@ export function createRepayDebtEvent(
   )
 
   // update transaction target to the expected pool address
-  repayDebtEvent.transaction.to = pool
+  repayDebtEvent.address = pool
 
   return repayDebtEvent
 }
@@ -497,7 +497,7 @@ export function createReserveAuctionEvent(
 
   // update transaction target to the expected pool address
   reserveAuctionEvent.transaction.from = operator
-  reserveAuctionEvent.transaction.to = pool
+  reserveAuctionEvent.address = pool
 
   return reserveAuctionEvent
 }
@@ -524,7 +524,7 @@ export function createSettleEvent(
 
   // update transaction targets to the expected pool address and taker
   settleEvent.transaction.from = settler
-  settleEvent.transaction.to = pool
+  settleEvent.address = pool
 
   return settleEvent
 }
@@ -566,7 +566,7 @@ export function createTakeEvent(
 
   // update transaction targets to the expected pool address and taker
   takeEvent.transaction.from = taker
-  takeEvent.transaction.to = pool
+  takeEvent.address = pool
 
   return takeEvent
 }
@@ -626,7 +626,7 @@ export function createUpdateInterestRateEvent(
   )
 
   // update transaction target to the expected pool address
-  updateInterestRateEvent.transaction.to = pool
+  updateInterestRateEvent.address = pool
 
   return updateInterestRateEvent
 }
