@@ -19,8 +19,8 @@ export class LenderInfo {
     this.depositTime = depositTime
   }
 }
-export function getLenderInfo(pool: Pool, bucketIndex: BigInt, lender: Address): LenderInfo {
-  const poolContract = ERC20Pool.bind(Address.fromBytes(pool.id))
+export function getLenderInfo(poolId: Bytes, bucketIndex: BigInt, lender: Address): LenderInfo {
+  const poolContract = ERC20Pool.bind(Address.fromBytes(poolId))
     const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
 
     return new LenderInfo(
@@ -159,6 +159,7 @@ export function getPoolUtilizationInfo(pool: Pool): PoolUtilizationInfo {
 }
 
 // TODO: investigate multicall for faster rpc
+// TODO: investigate checking blockHeight to avoid duplicate calls on same block
 export function updatePool(pool: Pool): void {
     // update pool loan information
     const poolLoansInfo = getPoolLoansInfo(pool)

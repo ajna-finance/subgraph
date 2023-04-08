@@ -111,10 +111,12 @@ yarn create-local
 yarn deploy-local
 ```
 
+For rough estimates, it takes ~15 minutes to index a month worth of data from an empty container.  Redeployment to an existing container takes 2-3 minutes to sync up.
+
 Instructions on creating your own deployment are available in the [Graph Protocols Documentation](https://thegraph.com/docs/en/cookbook/quick-start/).
 
 ### Tests
-Tests are written using the [Matchstick unit testing framework](https://github.com/LimeChain/matchstick/blob/main/README.md).
+Unit tests are written using the [Matchstick unit testing framework](https://github.com/LimeChain/matchstick/blob/main/README.md).  Unit tests do not guarantee your subgraph is deployable or functional.
 
 Run the Matchstick tests by executing: 
 ```
