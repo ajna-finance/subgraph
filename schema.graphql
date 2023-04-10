@@ -555,7 +555,7 @@ type MemorializePosition @entity(immutable: true) {
 type Mint @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
-  pool: Bytes! # address
+  pool: Pool!
   tokenId: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -566,7 +566,7 @@ type MoveLiquidity @entity(immutable: true) {
   id: Bytes!
   lender: Bytes!   # address
   tokenId: BigInt! # uint256
-  pool: Bytes!     # address
+  pool: Pool!
   fromIndex: Int!  # uint256
   toIndex: Int!    # uint256
   blockNumber: BigInt!
@@ -577,7 +577,7 @@ type MoveLiquidity @entity(immutable: true) {
 type MoveStakedLiquidity @entity(immutable: true) {
   id: Bytes!
   tokenId: BigInt!     # uint256
-  pool: Bytes!         # address
+  pool: Pool!
   fromIndexes: [Int!]! # uint256
   toIndexes: [Int!]!   # uint256
   blockNumber: BigInt!
@@ -589,7 +589,7 @@ type RedeemPosition @entity(immutable: true) {
   id: Bytes!
   lender: Bytes!   # address
   tokenId: BigInt! # uint256
-  pool: Bytes!     # address
+  pool: Pool!
   indexes: [Int!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -600,7 +600,7 @@ type RedeemPosition @entity(immutable: true) {
 type Transfer @entity(immutable: true) {
   id: Bytes!
   token: Token!    # token which was transferred
-  pool: Bytes!     # address
+  pool: Pool!
   from: Bytes!     # address
   to: Bytes!       # address
   tokenId: BigInt! # uint256
@@ -620,7 +620,7 @@ type PoolCreated @entity(immutable: true) {
 type ClaimRewards @entity(immutable: true) {
   id: Bytes!
   owner: Bytes!             # address
-  pool: Bytes!              # address
+  pool: Pool!
   tokenId: BigInt!          # uint256
   epochsClaimed: [BigInt!]! # uint256[]
   amount: BigDecimal!       # uint256
@@ -632,7 +632,7 @@ type ClaimRewards @entity(immutable: true) {
 type Stake @entity(immutable: true) {
   id: Bytes!
   owner: Bytes!    # address
-  pool: Bytes!     # address
+  pool: Pool!
   tokenId: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -642,7 +642,7 @@ type Stake @entity(immutable: true) {
 type Unstake @entity(immutable: true) {
   id: Bytes!
   owner: Bytes!    # address
-  pool: Bytes!     # address
+  pool: Pool!
   tokenId: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -652,7 +652,7 @@ type Unstake @entity(immutable: true) {
 type UpdateExchangeRates @entity(immutable: true) {
   id: Bytes!
   caller: Bytes!             # address
-  pool: Bytes!               # address
+  pool: Pool!
   indexesUpdated: [BigInt!]! # uint256[]
   rewardsClaimed: BigInt!    # uint256
   blockNumber: BigInt!

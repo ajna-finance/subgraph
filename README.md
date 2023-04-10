@@ -77,6 +77,11 @@ List lender positions across all pools:
 }
 ```
 
+## Known issues
+- LP amounts on entities are not properly maintained when moving or removing liquidity.  This will be resolved in RC4.
+- Support for ERC-721 collateral pools has not been implemented.
+- Integration testing has not been completed.
+
 
 ## Design
 ### Types

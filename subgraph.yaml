@@ -25,8 +25,6 @@ dataSources:
       abis:
         - name: PositionManager
           file: ./abis/PositionManager.json
-        - name: ERC20
-          file: ./abis/ERC20.json
         - name: ERC721
           file: ./abis/ERC721.json
         - name: PoolInfoUtils
