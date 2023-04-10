@@ -3,22 +3,20 @@ import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphproto
 import { Bucket, Lend } from "../../generated/schema"
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsNetworkLookUpTable } from "./constants"
+import { ZERO_BD, poolInfoUtilsNetworkLookUpTable } from "./constants"
 import { bigDecimalWadToBigInt, wadToDecimal } from "./convert"
 
-export function lpbValueInQuote(pool: Bytes, bucket: Bucket, lend: Lend): BigDecimal {
+export function lpbValueInQuote(pool: Bytes, bucketIndex: u32, lpAmount: BigDecimal): BigDecimal {
     const poolAddress = Address.fromBytes(pool)
     const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
 
     const quoteTokenAmount = poolInfoUtilsContract.lpsToQuoteTokens(
       poolAddress, 
-      bigDecimalWadToBigInt(lend.lpb), 
-      BigInt.fromU32(bucket.bucketIndex)
+      bigDecimalWadToBigInt(lpAmount), 
+      BigInt.fromU32(bucketIndex)
     )
-    // TODO: Odd that we pass in the Lend to this method, but the caller is responsible for 
-    // mutating.  We should either take in an LP amount instead of a Lend, or just handle 
-    // the mutatation by setting lpbValueInQuote here.
+
     return wadToDecimal(quoteTokenAmount)
 }
 

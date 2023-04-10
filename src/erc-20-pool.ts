@@ -110,7 +110,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, addCollateral.actor)
     lend.lpb             = lend.lpb.plus(wadToDecimal(event.params.lpAwarded))
-    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
@@ -171,7 +171,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
     lend.lpb             = lend.lpb.plus(wadToDecimal(event.params.lpAwarded))
-    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
@@ -200,7 +200,7 @@ export function handleApproveLpTransferors(
   entity.save()
 }
 
-// ERC721Pool only
+// TODO: ERC721Pool only (doesn't belong here)
 export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   const entity = new AuctionNFTSettle(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -435,7 +435,7 @@ export function handleBucketTakeLPAwarded(
     const kickerLendId = getLendId(bucketId, bucketTakeLpAwarded.kicker)
     const kickerLend = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucketTakeLpAwarded.kicker)
     kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
-    kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, kickerLend)
+    kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
 
     // update kicker account state if they weren't a lender already
     const kickerAccountId = bucketTakeLpAwarded.kicker
@@ -446,7 +446,7 @@ export function handleBucketTakeLPAwarded(
     const takerLendId = getLendId(bucketId, bucketTakeLpAwarded.taker)
     const takerLend = loadOrCreateLend(bucketId, takerLendId, pool.id, bucketTakeLpAwarded.taker)
     takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
-    takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, takerLend)
+    takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, takerLend.lpb)
 
     // save entities to store
     bucket.save()
@@ -588,6 +588,7 @@ export function handleLoanStamped(event: LoanStampedEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.borrower = event.params.borrower
+  entity.pool = addressToBytes(event.address)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -642,13 +643,13 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
     const fromBucketLendId = getLendId(fromBucketId, event.params.lender)
     const fromBucketLend = loadOrCreateLend(fromBucketId, fromBucketLendId, pool.id, moveQuoteToken.lender)
     fromBucketLend.lpb = fromBucketLend.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
-    fromBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, fromBucket, fromBucketLend)
+    fromBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, fromBucket.bucketIndex, fromBucketLend.lpb)
 
     // update to bucket lend state
     const toBucketLendId = getLendId(toBucketId, event.params.lender)
     const toBucketLend = loadOrCreateLend(toBucketId, toBucketLendId, pool.id, moveQuoteToken.lender)
     toBucketLend.lpb = toBucketLend.lpb.plus(wadToDecimal(event.params.lpAwardedTo))
-    toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket, toBucketLend)
+    toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket.bucketIndex, toBucketLend.lpb)
 
     // update account state
     const accountId = addressToBytes(event.params.lender)
@@ -714,7 +715,7 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeCollateral.claimer)
     lend.lpb             = lend.lpb.minus(removeCollateral.lpRedeemed)
-    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
@@ -774,8 +775,12 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeQuote.lender)
-    lend.lpb             = lend.lpb.minus(removeQuote.lpRedeemed)
-    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket, lend)
+
+    // FIXME: seems this sometimes underflows
+    // if (removeQuote.lpRedeemed >= lend.lpb) {
+    //   lend.lpb = lend.lpb.minus(removeQuote.lpRedeemed)
+    //   lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+    // }
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
@@ -1142,14 +1147,14 @@ export function handleTransferLPs(event: TransferLPsEvent): void {
     // event does not reveal LP amounts transferred for each bucket, so query the pool and update
     // remove old lend
     const oldLend = loadOrCreateLend(bucketId, oldLendId, poolId, entity.owner)
-    oldLend.lpb = wadToDecimal(getLenderInfo(pool, bucketIndex, event.params.owner).lpBalance)
-    oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket, oldLend)
+    oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
+    oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
     updateAccountLends(oldOwnerAccount, Lend.load(oldLendId)!)
     oldLend.save()
     // add new lend
     const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
-    newLend.lpb = wadToDecimal(getLenderInfo(pool, bucketIndex, event.params.newOwner).lpBalance)
-    newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket, newLend)
+    newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.newOwner).lpBalance)
+    newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
     updateAccountLends(newOwnerAccount, newLend)
     newLend.save()
   }

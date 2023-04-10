@@ -22,7 +22,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  poolCreated.ajnaPool = event.params.pool_
+  poolCreated.pool = event.params.pool_
 
   poolCreated.blockNumber = event.block.number
   poolCreated.blockTimestamp = event.block.timestamp

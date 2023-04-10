@@ -13,13 +13,14 @@ import {
   UpdateExchangeRates
 } from "../generated/schema"
 import { bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
+import { getPoolForToken } from "./utils/position"
 
 export function handleClaimRewards(event: ClaimRewardsEvent): void {
   let entity = new ClaimRewards(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.owner = event.params.owner
-  entity.ajnaPool = event.params.ajnaPool
+  entity.pool = event.params.ajnaPool
   entity.tokenId = event.params.tokenId
   entity.epochsClaimed = event.params.epochsClaimed
   entity.amount = wadToDecimal(event.params.amount)
@@ -36,6 +37,7 @@ export function handleMoveStakedLiquidity(event: MoveStakedLiquidityEvent): void
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.tokenId     = event.params.tokenId
+  entity.pool        = getPoolForToken(entity.tokenId)
   entity.fromIndexes = bigIntArrayToIntArray(event.params.fromIndexes)
   entity.toIndexes   = bigIntArrayToIntArray(event.params.toIndexes)
 
@@ -51,7 +53,7 @@ export function handleStake(event: StakeEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.owner = event.params.owner
-  entity.ajnaPool = event.params.ajnaPool
+  entity.pool = event.params.ajnaPool
   entity.tokenId = event.params.tokenId
 
   entity.blockNumber = event.block.number
@@ -66,7 +68,7 @@ export function handleUnstake(event: UnstakeEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.owner = event.params.owner
-  entity.ajnaPool = event.params.ajnaPool
+  entity.pool = event.params.ajnaPool
   entity.tokenId = event.params.tokenId
 
   entity.blockNumber = event.block.number
@@ -83,7 +85,7 @@ export function handleUpdateExchangeRates(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.caller = event.params.caller
-  entity.ajnaPool = event.params.ajnaPool
+  entity.pool = event.params.ajnaPool
   entity.indexesUpdated = event.params.indexesUpdated
   entity.rewardsClaimed = event.params.rewardsClaimed
 
