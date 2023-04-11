@@ -40,31 +40,19 @@ List pools showing their tokens and how many transactions have been performed on
 }
 ```
 
-List lender positions across all pools:
+Positions for a specific lender across all pools:
 ```
 {
-  accounts {
+  accounts(where: {id:"0x31bcbe14ad30b2f7e1e4a14cab2c16849b73dac3"}) {
     id
     lends {
-      lpb
       bucket {
         bucketIndex
-        quoteTokens
+        deposit
         collateral
       }
       pool {
         id
-        actualUtilization
-        currentDebt
-        htp
-        hpb
-        lup
-        maxBorrower
-        poolSize
-        reserves
-        targetUtilization
-        totalAjnaBurned
-        totalInterestEarned
         quoteToken {
           symbol
         }
@@ -76,6 +64,33 @@ List lender positions across all pools:
   }
 }
 ```
+
+Details for a specific pool:
+```
+{
+  pool(id: "0xe1200aefd60559d494d4419e17419571ef8fc1eb") {
+    id
+    actualUtilization
+    currentDebt
+    htp
+    hpb
+    lup
+    maxBorrower
+    poolSize
+    reserves
+    targetUtilization
+    totalAjnaBurned
+    totalInterestEarned
+    quoteToken {
+      symbol
+    }
+    collateralToken {
+      symbol
+    }
+  }
+}
+```
+
 
 ## Known issues
 - LP amounts on entities are not properly maintained when moving or removing liquidity.  This will be resolved in RC4.
