@@ -674,17 +674,18 @@ type DistributionPeriod @entity {
   endBlock: BigInt! # block number the distribution period ends
   topSlate: FundedSlate! # The current top FundedSlate
   delegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed
-  fundingVotesCast: BigInt! # number of funding votes cast
+  fundingVotesCast: BigDecimal! # number of funding votes cast
   fundingVotePowerUsed: BigDecimal! # Total funding vote power used
-  screeningVotesCast: BigInt! # number of screening votes cast
+  screeningVotesCast: BigDecimal! # number of screening votes cast
   proposals: [Proposal!]! # List of proposals submitted in the distribution period
+  totalTokensRequested: BigDecimal! # Total ajna tokens requested by all proposals in the distribution period
 }
 
 # TODO: split into standard and extraordinary?
 type Proposal @entity {
   id: Bytes! # proposal id converted to Bytes from uint
   description: String! # proposal description hashed as part of proposalId
-  distributionId: BigInt! # uint256
+  distribution: DistributionPeriod! # uint256
   isStandard: Boolean! # bool
   isExtraordinary: Boolean! # bool
   executed: Boolean! # bool

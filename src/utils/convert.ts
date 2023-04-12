@@ -67,6 +67,14 @@ export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
   return retval
 }
 
+export function bytesToBigInt(bytes: Bytes): BigInt {
+    return BigInt.fromUnsignedBytes(bytes)
+}
+
+export function bigIntToBytes(bi: BigInt): Bytes {
+    return Bytes.fromUTF8(bi.toString())
+}
+
 // import prices from '../../prices.json'
 // export function indexToPrice(index: BigInt): BigDecimal {
 //     const bucketIndex = MAX_BUCKET_INDEX - index;
