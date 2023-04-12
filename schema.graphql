@@ -269,7 +269,7 @@ type AddCollateral @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type AddQuoteToken @entity {
+type AddQuoteToken @entity(immutable: true) {
   id: Bytes!
   pool: Pool!            # Pool to which quote was added
   bucket: Bucket!        # Bucket to which quote was added
@@ -655,6 +655,84 @@ type UpdateExchangeRates @entity(immutable: true) {
   pool: Pool!
   indexesUpdated: [BigInt!]! # uint256[]
   rewardsClaimed: BigInt!    # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+  # # # # # # # #
+  # GRANT FUND  #
+  # # # # # # # #
+
+type DelegateRewardClaimed @entity(immutable: true) {
+  id: Bytes!
+  delegateeAddress_: Bytes! # address
+  distributionId_: BigInt! # uint256
+  rewardClaimed_: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FundTreasury @entity(immutable: true) {
+  id: Bytes!
+  amount: BigInt! # uint256
+  treasuryBalance: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FundedSlateUpdated @entity(immutable: true) {
+  id: Bytes!
+  distributionId_: BigInt! # uint256
+  fundedSlateHash_: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalCreated @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt! # uint256
+  proposer: Bytes! # address
+  targets: [Bytes!]! # address[]
+  values: [BigInt!]! # uint256[]
+  signatures: [String!]! # string[]
+  calldatas: [Bytes!]! # bytes[]
+  startBlock: BigInt! # uint256
+  endBlock: BigInt! # uint256
+  description: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalExecuted @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QuarterlyDistributionStarted @entity(immutable: true) {
+  id: Bytes!
+  distributionId_: BigInt! # uint256
+  startBlock_: BigInt! # uint256
+  endBlock_: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoteCast @entity(immutable: true) {
+  id: Bytes!
+  voter: Bytes! # address
+  proposalId: BigInt! # uint256
+  support: Int! # uint8
+  weight: BigInt! # uint256
+  reason: String! # string
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

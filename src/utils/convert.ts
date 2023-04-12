@@ -59,6 +59,14 @@ export function bigIntArrayToIntArray(indexes: BigInt[]): i32[] {
   return retval
 }
 
+export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
+  const retval: Bytes[] = [];
+  for (let i=0; i<addresses.length; ++i) {
+    retval.push(addressToBytes(addresses[i]))
+  }
+  return retval
+}
+
 // import prices from '../../prices.json'
 // export function indexToPrice(index: BigInt): BigDecimal {
 //     const bucketIndex = MAX_BUCKET_INDEX - index;
