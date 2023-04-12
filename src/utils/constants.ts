@@ -32,3 +32,6 @@ poolInfoUtilsNetworkLookUpTable.set('goerli', Address.fromString('0xEa36b2a47031
 
 export const positionManagerNetworkLookUpTable = new TypedMap<string, Address>()
 positionManagerNetworkLookUpTable.set('goerli', Address.fromString('0x31BcbE14Ad30B2f7E1E4A14caB2C16849B73Dac3'))
+
+export const grantFundNetworkLookUpTable = new TypedMap<string, Address>()
+grantFundNetworkLookUpTable.set('goerli', Address.fromString('0xaeB91e664A49829FaBf06BE35d4447938d83A271'))
