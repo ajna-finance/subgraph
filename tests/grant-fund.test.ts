@@ -72,8 +72,9 @@ describe("Grant Fund assertions", () => {
       "234"
     )
 
-    // More assert options:
-    // https://thegraph.com/docs/en/developer/matchstick/#asserts
+    // assert custom entities
+    assert.entityCount("GrantFund", 1)
+    assert.entityCount("DistributionPeriod", 1)
   })
 
   test("startNewDistributionPeriod", () => {
@@ -188,6 +189,7 @@ describe("Grant Fund assertions", () => {
   })
 
   test("ProposalExecuted", () => {
+
     /***********************/
     /*** Submit Proposal ***/
     /***********************/

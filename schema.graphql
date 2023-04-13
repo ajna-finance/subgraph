@@ -772,7 +772,7 @@ type FundedSlate @entity {
 }
 
 # TODO: add stage specific entities?
-# type ScreeningStage @entity { }
+# type ScreeningStage @entity {}
 
   # # # # # # # # # # #
   # GRANT FUND EVENTS #

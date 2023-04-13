@@ -45,12 +45,24 @@ export function handleDelegateRewardClaimed(
   delegateRewardClaimed.blockTimestamp  = event.block.timestamp
   delegateRewardClaimed.transactionHash = event.transaction.hash
 
+  const rewardsClaimed = wadToDecimal(event.params.rewardClaimed_)
+
+  // update DistributionPeriod entity
   const distributionId = bigIntToBytes(getCurrentDistributionId())
-  // const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
+  const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
+  distributionPeriod.delegationRewardsClaimed = distributionPeriod.delegationRewardsClaimed.plus(rewardsClaimed)
+
+  // update GrantFund entity
+  const grantFund = loadOrCreateGrantFund(event.address)
+  grantFund.treasury = grantFund.treasury.minus(rewardsClaimed)
+  grantFund.totalDelegationRewardsClaimed = grantFund.totalDelegationRewardsClaimed.plus(rewardsClaimed)
 
   delegateRewardClaimed.distribution = distributionId
 
+  // save entities to the store
+  grantFund.save()
   delegateRewardClaimed.save()
+  distributionPeriod.save()
 }
 
 export function handleFundTreasury(event: FundTreasuryEvent): void {
@@ -75,17 +87,17 @@ export function handleFundTreasury(event: FundTreasuryEvent): void {
 }
 
 export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
-  let entity = new FundedSlateUpdated(
+  const fundedSlateUpdated = new FundedSlateUpdated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.distributionId_ = event.params.distributionId_
-  entity.fundedSlateHash_ = event.params.fundedSlateHash_
+  fundedSlateUpdated.distributionId_ = event.params.distributionId_
+  fundedSlateUpdated.fundedSlateHash_ = event.params.fundedSlateHash_
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  fundedSlateUpdated.blockNumber = event.block.number
+  fundedSlateUpdated.blockTimestamp = event.block.timestamp
+  fundedSlateUpdated.transactionHash = event.transaction.hash
 
-  entity.save()
+  fundedSlateUpdated.save()
 }
 
 export function handleProposalCreated(event: ProposalCreatedEvent): void {
