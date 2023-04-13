@@ -15,6 +15,7 @@ import {
   DistributionPeriodVote,
   FundTreasury,
   FundedSlateUpdated,
+  FundingVote,
   Proposal,
   ProposalCreated,
   ProposalExecuted,
@@ -28,7 +29,7 @@ import { ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToAddress, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getMechanismOfProposal, getProposalParamsId } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage } from './utils/grants/distribution'
-import { getDistributionPeriodVoteId, getScreeningStageVotingPower, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
+import { getDistributionPeriodVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
 
 export function handleDelegateRewardClaimed(
   event: DelegateRewardClaimedEvent
@@ -215,6 +216,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
 
   if (proposal.isStandard) {
 
+    // TODO: need to be able to access the distributionId at that block height....
     // load distribution entity
     const distributionId = bigIntToBytes(getCurrentDistributionId())
     const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
@@ -229,28 +231,42 @@ export function handleVoteCast(event: VoteCastEvent): void {
     const stage = getCurrentStage(voteCast.blockNumber, distributionPeriod)
 
     // proposal is in screening stage
-    if (stage == "SCREENING") {
+    if (stage === "SCREENING") {
       const screeningVotesCast = wadToDecimal(event.params.weight)
       proposal.screeningVotesReceived = proposal.screeningVotesReceived.plus(screeningVotesCast)
       distributionPeriod.screeningVotesCast = distributionPeriod.screeningVotesCast.plus(event.params.weight.toBigDecimal())
 
       // create ScreeningVote entity
-      const screeningVote = new ScreeningVote(voteCast.id) as ScreeningVote
+      const screeningVote = new ScreeningVote(getScreeningVoteId(proposalId, voter.id)) as ScreeningVote
       screeningVote.distribution = distributionId
       screeningVote.voter = voter.id
       screeningVote.proposal = proposalId
       screeningVote.votesCast = screeningVotesCast
+      screeningVote.blockNumber = voteCast.blockNumber
 
       // update voter's distributionPeriodVote entity if it hasn't been recorded yet
       if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-        distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(bytesToBigInt(distributionId).toI32(), bytesToAddress(voter.id))
+        distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(bytesToBigInt(distributionId), bytesToAddress(voter.id))
       }
 
       // add additional screening votes to voter's distributionPeriodVote entity
       distributionPeriodVote.screeningVotes.push(screeningVote.id)
+
+      // save screeningVote to the store
+      screeningVote.save()
     }
+    else if (stage === "FUNDING") {
+      // create FundingVote entity
+      const fundingVote = new FundingVote(getFundingVoteId(proposalId, voter.id)) as FundingVote
 
+      // update voter's distributionPeriodVote entity if it hasn't been recorded yet
+      if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
+        distributionPeriodVote.fundingStageVotingPower = getFundingStageVotingPower(bytesToBigInt(distributionId), bytesToAddress(voter.id))
+      }
 
+      // save fundingVote to the store
+      fundingVote.save()
+    }
 
     // save entities to the store
     distributionPeriod.save()
@@ -259,7 +275,13 @@ export function handleVoteCast(event: VoteCastEvent): void {
     voter.save()
   }
 
-
-
   voteCast.save()
+}
+
+function handleVoteStandard(): void {
+
+}
+
+function handleVoteExtraordinary(): void {
+
 }

@@ -10,6 +10,14 @@ export function getDistributionPeriodVoteId(distributionPeriodId: Bytes, voterId
     return voterId.concat(Bytes.fromUTF8('|').concat(distributionPeriodId))
 }
 
+export function getFundingVoteId(proposalId: Bytes, voterId: Bytes): Bytes {
+    return proposalId.concat(Bytes.fromUTF8('funding').concat(voterId))
+}
+
+export function getScreeningVoteId(proposalId: Bytes, voterId: Bytes): Bytes {
+    return proposalId.concat(Bytes.fromUTF8('screening').concat(voterId))
+}
+
 export function loadOrCreateVoter(voterId: Bytes): Voter {
     let voter = Voter.load(voterId)
     if (voter == null) {
@@ -39,10 +47,18 @@ export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, 
 /*** Contract Calls ***/
 /**********************/
 
-export function getScreeningStageVotingPower(distributionId: number, voter: Address): BigDecimal {
+export function getFundingStageVotingPower(distributionId: BigInt, voter: Address): BigDecimal {
     const grantFundAddress  = grantFundNetworkLookUpTable.get(dataSource.network())!
     const grantFundContract = GrantFund.bind(grantFundAddress)
-    const votingPower = grantFundContract.getVotesScreening(distributionId, voter)
+    const votingPower = grantFundContract.getVotesFunding(distributionId.toI32(), voter)
+
+    return wadToDecimal(votingPower)
+}
+
+export function getScreeningStageVotingPower(distributionId: BigInt, voter: Address): BigDecimal {
+    const grantFundAddress  = grantFundNetworkLookUpTable.get(dataSource.network())!
+    const grantFundContract = GrantFund.bind(grantFundAddress)
+    const votingPower = grantFundContract.getVotesScreening(distributionId.toI32(), voter)
 
     return wadToDecimal(votingPower)
 }

@@ -725,6 +725,7 @@ type DistributionPeriodVote @entity {
   fundingVotes: [FundingVote!]! # FundingVote[]
 }
 
+# TODO: fix id collision from voting multiple times on the same proposal...
 type ScreeningVote @entity {
   id: Bytes! # $proposalId + 'screening' + $Voter.id
   distribution: DistributionPeriod! # distribution period the vote was cast in
@@ -734,6 +735,7 @@ type ScreeningVote @entity {
   blockNumber: BigInt! # block number the vote was cast
 }
 
+# TODO: fix id collision from voting multiple times on the same proposal...
 type FundingVote @entity {
   id: Bytes! # $proposalId + 'funding' + $Voter.id
   distribution: DistributionPeriod! # distribution period the vote was cast in
