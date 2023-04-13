@@ -5,8 +5,10 @@ import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 import { ZERO_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI, grantFundNetworkLookUpTable } from "../constants"
 import { bytesToBigInt } from "../convert"
 
-export function getProposalParamsId(proposalId: Bytes, paramIndex: number, distributionId: BigInt): Bytes {
-    return proposalId.concat(Bytes.fromUTF8(paramIndex.toString() + distributionId.toString()))
+export function getProposalParamsId(proposalId: Bytes, paramIndex: number): Bytes {
+    return proposalId
+        .concat(Bytes.fromUTF8('|'))
+        .concat(Bytes.fromUTF8(paramIndex.toString()))
 }
 
 export function getMechanismOfProposal(proposalId: Bytes): BigInt {

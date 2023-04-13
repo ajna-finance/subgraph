@@ -30,6 +30,7 @@ import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToAddress
 import { getMechanismOfProposal, getProposalParamsId } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage } from './utils/grants/distribution'
 import { getDistributionPeriodVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
+import { loadOrCreateGrantFund } from './utils/grants/fund'
 
 export function handleDelegateRewardClaimed(
   event: DelegateRewardClaimedEvent
@@ -49,17 +50,24 @@ export function handleDelegateRewardClaimed(
 }
 
 export function handleFundTreasury(event: FundTreasuryEvent): void {
-  let entity = new FundTreasury(
+  const fundTreasury = new FundTreasury(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.amount = event.params.amount
-  entity.treasuryBalance = event.params.treasuryBalance
+  fundTreasury.amount = event.params.amount
+  fundTreasury.treasuryBalance = event.params.treasuryBalance
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  fundTreasury.blockNumber = event.block.number
+  fundTreasury.blockTimestamp = event.block.timestamp
+  fundTreasury.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update GrantFund entity
+  const grantFund = loadOrCreateGrantFund(event.address)
+  // TODO: simply set this to treasuryBalance?
+  grantFund.treasury = grantFund.treasury.plus(wadToDecimal(event.params.amount))
+
+  // save entities to the store
+  grantFund.save()
+  fundTreasury.save()
 }
 
 export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
@@ -94,31 +102,20 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   proposalCreated.blockTimestamp  = event.block.timestamp
   proposalCreated.transactionHash = event.transaction.hash
 
-  const distributionId = getCurrentDistributionId()
-
-  // update distribution entity
-  const distributionPeriod = DistributionPeriod.load(bigIntToBytes(distributionId)) as DistributionPeriod
-
-  // create Proposal entities
+  // create Proposal entity
   const proposalId = bigIntToBytes(event.params.proposalId)
   const proposal = new Proposal(proposalId) as Proposal
   proposal.description  = event.params.description
-  proposal.distribution = distributionPeriod.id
   proposal.executed     = false
   proposal.successful   = false
   proposal.screeningVotesReceived = ZERO_BD
   proposal.fundingVotesReceived = ZERO_BD
 
-  // set proposal funding mechanism
-  const proposalFundingMechanism = getMechanismOfProposal(proposalId)
-  proposal.isStandard = proposalFundingMechanism == BigInt.fromI32(0)
-  proposal.isExtraordinary = proposalFundingMechanism == BigInt.fromI32(1)
-
   let totalTokensRequested = ZERO_BD
 
   // create ProposalParams entities for each separate proposal param
   for (let i = 0; i < event.params.targets.length; i++) {
-    const proposalParamsId = getProposalParamsId(proposalId, i, distributionId)
+    const proposalParamsId = getProposalParamsId(proposalId, i)
     const proposalParams = new ProposalParams(proposalParamsId) as ProposalParams
     proposalParams.target = event.params.targets[i]
     proposalParams.value = event.params.values[i]
@@ -142,11 +139,36 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
     proposalParams.save()
   }
 
-  // add proposal to distribution period
-  distributionPeriod.proposals.push(proposal.id)
-  distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
+  // load GrantFund entity
+  const grantFund = loadOrCreateGrantFund(event.address)
 
-  // save entities to store
+  // set proposal funding mechanism
+  const proposalFundingMechanism = getMechanismOfProposal(proposalId)
+  proposal.isStandard = proposalFundingMechanism == BigInt.fromI32(0)
+  proposal.isExtraordinary = proposalFundingMechanism == BigInt.fromI32(1)
+
+  if (proposal.isStandard) {
+    const distributionId = getCurrentDistributionId()
+
+    // update distribution entity
+    const distributionPeriod = DistributionPeriod.load(bigIntToBytes(distributionId)) as DistributionPeriod
+    distributionPeriod.proposals.push(proposal.id)
+    distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
+    distributionPeriod.save()
+
+    // record proposals distributionId
+    proposal.distribution = distributionPeriod.id
+
+    // record proposal in GrantFund entity
+    grantFund.standardProposals.push(proposal.id)
+  }
+  else {
+    // record proposal in GrantFund entity
+    grantFund.extraordinaryProposals.push(proposal.id)
+  }
+
+  // save entities to the store
+  grantFund.save()
   proposalCreated.save()
   proposal.save()
 }
@@ -283,11 +305,6 @@ export function handleVoteCast(event: VoteCastEvent): void {
 
   voteCast.save()
 }
-
-function handleVoteStandard(): void {
-
-}
-
-function handleVoteExtraordinary(): void {
-
-}
+// TODO: use these to streamline logic in handleVoteCast()
+function handleVoteStandard(): void {}
+function handleVoteExtraordinary(): void {}

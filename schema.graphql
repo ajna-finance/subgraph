@@ -696,7 +696,7 @@ type DistributionPeriod @entity {
 type Proposal @entity {
   id: Bytes! # proposal id converted to Bytes from uint
   description: String! # proposal description hashed as part of proposalId
-  distribution: DistributionPeriod! # uint256
+  distribution: DistributionPeriod # distributionPeriod in which the proposal was submitted if Standard, null otherwise
   isStandard: Boolean! # bool
   isExtraordinary: Boolean! # bool
   executed: Boolean! # bool
@@ -708,7 +708,7 @@ type Proposal @entity {
 }
 
 type ProposalParams @entity {
-  id: Bytes! # $proposalId + index in proposal params array + $distributionId
+  id: Bytes! # $proposalId + '|' + $paramIndex
   target: Bytes! # address
   value: BigInt! # uint256
   calldata: Bytes! # bytes
