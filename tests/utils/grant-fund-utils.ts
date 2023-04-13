@@ -8,7 +8,7 @@ import {
   ProposalExecuted,
   QuarterlyDistributionStarted,
   VoteCast
-} from "../generated/GrantFund/GrantFund"
+} from "../../generated/GrantFund/GrantFund"
 
 export function createDelegateRewardClaimedEvent(
   delegateeAddress_: Address,

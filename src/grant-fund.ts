@@ -12,6 +12,7 @@ import {
 import {
   DelegateRewardClaimed,
   DistributionPeriod,
+  DistributionPeriodVote,
   FundTreasury,
   FundedSlateUpdated,
   Proposal,
@@ -19,14 +20,15 @@ import {
   ProposalExecuted,
   ProposalParams,
   QuarterlyDistributionStarted,
+  ScreeningVote,
   VoteCast
 } from "../generated/schema"
 
 import { ZERO_BD } from './utils/constants'
-import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, wadToDecimal } from "./utils/convert"
+import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToAddress, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getMechanismOfProposal, getProposalParamsId } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage } from './utils/grants/distribution'
-import { loadOrCreateVoter } from './utils/grants/voter'
+import { getDistributionPeriodVoteId, getScreeningStageVotingPower, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
 
 export function handleDelegateRewardClaimed(
   event: DelegateRewardClaimedEvent
@@ -214,12 +216,14 @@ export function handleVoteCast(event: VoteCastEvent): void {
   if (proposal.isStandard) {
 
     // load distribution entity
-    const distributionId = getCurrentDistributionId()
-    const distributionPeriod = DistributionPeriod.load(bigIntToBytes(distributionId)) as DistributionPeriod
+    const distributionId = bigIntToBytes(getCurrentDistributionId())
+    const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
 
     // load voter entity
     const voter = loadOrCreateVoter(addressToBytes(event.params.voter))
 
+    // load voter's distributionPeriodVotes
+    const distributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.id, voter.id)
 
     // check stage of proposal
     const stage = getCurrentStage(voteCast.blockNumber, distributionPeriod)
@@ -229,10 +233,28 @@ export function handleVoteCast(event: VoteCastEvent): void {
       const screeningVotesCast = wadToDecimal(event.params.weight)
       proposal.screeningVotesReceived = proposal.screeningVotesReceived.plus(screeningVotesCast)
       distributionPeriod.screeningVotesCast = distributionPeriod.screeningVotesCast.plus(event.params.weight.toBigDecimal())
+
+      // create ScreeningVote entity
+      const screeningVote = new ScreeningVote(voteCast.id) as ScreeningVote
+      screeningVote.distribution = distributionId
+      screeningVote.voter = voter.id
+      screeningVote.proposal = proposalId
+      screeningVote.votesCast = screeningVotesCast
+
+      // update voter's distributionPeriodVote entity if it hasn't been recorded yet
+      if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
+        distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(bytesToBigInt(distributionId).toI32(), bytesToAddress(voter.id))
+      }
+
+      // add additional screening votes to voter's distributionPeriodVote entity
+      distributionPeriodVote.screeningVotes.push(screeningVote.id)
     }
 
-    // save entities to store
+
+
+    // save entities to the store
     distributionPeriod.save()
+    distributionPeriodVote.save()
     proposal.save()
     voter.save()
   }

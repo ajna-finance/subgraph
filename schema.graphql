@@ -673,6 +673,7 @@ type DistributionPeriod @entity {
   startBlock: BigInt! # block number the distribution period starts
   endBlock: BigInt! # block number the distribution period ends
   topSlate: FundedSlate! # The current top FundedSlate
+  slatesSubmitted: [FundedSlate!]! # FundedSlate[] slates submitted in the distribution period
   delegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed
   fundingVotesCast: BigDecimal! # number of funding votes cast
   fundingVotePowerUsed: BigDecimal! # Total funding vote power used
@@ -710,11 +711,12 @@ type Voter @entity {
   id: Bytes! # voter address
   proposalsCreated: [Proposal!]! # Proposal[]
   proposalsExecuted: [Proposal!]! # Proposal[]
-  distributionPeriodVotes: [DistributionPeriodVotes!]! # DistributionPeriodVotes[]
+  distributionPeriodVotes: [DistributionPeriodVote!]! # DistributionPeriodVote[]
   extraordinaryVotes: [ExtraordinaryVote!]! # ExtraordinaryVote[]
 }
 
-type DistributionPeriodVotes @entity {
+# TODO: record voting power used?
+type DistributionPeriodVote @entity {
   id: Bytes! # $voterId + '|'' + $distributionId
   distribution: DistributionPeriod! # uint256
   screeningStageVotingPower: BigDecimal! # uint256
@@ -725,7 +727,7 @@ type DistributionPeriodVotes @entity {
 
 type ScreeningVote @entity {
   id: Bytes! # $proposalId + 'screening' + $Voter.id
-  distributionId: BigInt! # uint256
+  distribution: DistributionPeriod! # distribution period the vote was cast in
   voter: Voter! # Voter
   proposal: Proposal! # proposal being voted on
   votesCast: BigDecimal! # uint256
@@ -734,7 +736,7 @@ type ScreeningVote @entity {
 
 type FundingVote @entity {
   id: Bytes! # $proposalId + 'funding' + $Voter.id
-  distributionId: BigInt! # uint256
+  distribution: DistributionPeriod! # distribution period the vote was cast in
   voter: Voter! # Voter
   proposal: Proposal! # proposal being voted on
   votesCast: BigDecimal! # uint256 # TODO: can this be negative?
@@ -752,7 +754,7 @@ type ExtraordinaryVote @entity {
 
 type FundedSlate @entity {
   id: Bytes! # bytes32 hash of slate proposalIds
-  distributionId: BigInt! # uint256
+  distribution: DistributionPeriod! # distribution period the vote was cast in
   proposals: [Proposal!]! # uint256[] list of proposalIds
   updateBlock: BigInt! # block number the slate was updated
 }

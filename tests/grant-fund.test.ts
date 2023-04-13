@@ -10,7 +10,7 @@ import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { DelegateRewardClaimed } from "../generated/schema"
 import { DelegateRewardClaimed as DelegateRewardClaimedEvent } from "../generated/GrantFund/GrantFund"
 import { handleDelegateRewardClaimed } from "../src/grant-fund"
-import { createDelegateRewardClaimedEvent } from "./grant-fund-utils"
+import { createDelegateRewardClaimedEvent } from "./utils/grant-fund-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
