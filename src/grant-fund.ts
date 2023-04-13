@@ -23,9 +23,10 @@ import {
 } from "../generated/schema"
 
 import { ZERO_BD } from './utils/constants'
-import { addressArrayToBytesArray, bigIntToBytes } from "./utils/convert"
+import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, wadToDecimal } from "./utils/convert"
 import { getMechanismOfProposal, getProposalParamsId } from './utils/grants/proposal'
-import { getCurrentDistributionId } from './utils/grants/distribution'
+import { getCurrentDistributionId, getCurrentStage } from './utils/grants/distribution'
+import { loadOrCreateVoter } from './utils/grants/voter'
 
 export function handleDelegateRewardClaimed(
   event: DelegateRewardClaimedEvent
@@ -193,18 +194,50 @@ export function handleQuarterlyDistributionStarted(
 }
 
 export function handleVoteCast(event: VoteCastEvent): void {
-  let entity = new VoteCast(
+  const voteCast = new VoteCast(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.voter = event.params.voter
-  entity.proposalId = event.params.proposalId
-  entity.support = event.params.support
-  entity.weight = event.params.weight
-  entity.reason = event.params.reason
+  voteCast.voter = event.params.voter
+  voteCast.proposalId = event.params.proposalId
+  voteCast.support = event.params.support
+  voteCast.weight = event.params.weight
+  voteCast.reason = event.params.reason
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  voteCast.blockNumber = event.block.number
+  voteCast.blockTimestamp = event.block.timestamp
+  voteCast.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update proposal entity
+  const proposalId = bigIntToBytes(event.params.proposalId)
+  const proposal = Proposal.load(proposalId) as Proposal
+
+  if (proposal.isStandard) {
+
+    // load distribution entity
+    const distributionId = getCurrentDistributionId()
+    const distributionPeriod = DistributionPeriod.load(bigIntToBytes(distributionId)) as DistributionPeriod
+
+    // load voter entity
+    const voter = loadOrCreateVoter(addressToBytes(event.params.voter))
+
+
+    // check stage of proposal
+    const stage = getCurrentStage(voteCast.blockNumber, distributionPeriod)
+
+    // proposal is in screening stage
+    if (stage == "SCREENING") {
+      const screeningVotesCast = wadToDecimal(event.params.weight)
+      proposal.screeningVotesReceived = proposal.screeningVotesReceived.plus(screeningVotesCast)
+      distributionPeriod.screeningVotesCast = distributionPeriod.screeningVotesCast.plus(event.params.weight.toBigDecimal())
+    }
+
+    // save entities to store
+    distributionPeriod.save()
+    proposal.save()
+    voter.save()
+  }
+
+
+
+  voteCast.save()
 }

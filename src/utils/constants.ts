@@ -35,3 +35,9 @@ positionManagerNetworkLookUpTable.set('goerli', Address.fromString('0x31BcbE14Ad
 
 export const grantFundNetworkLookUpTable = new TypedMap<string, Address>()
 grantFundNetworkLookUpTable.set('goerli', Address.fromString('0xaeB91e664A49829FaBf06BE35d4447938d83A271'))
+
+// GrantFund constants
+export const CHALLENGE_PERIOD_LENGTH    = BigInt.fromI32(50400)
+export const DISTRIBUTION_PERIOD_LENGTH = BigInt.fromI32(648000)
+export const FUNDING_PERIOD_LENGTH      = BigInt.fromI32(72000)
+export const MAX_EFM_PROPOSAL_LENGTH    = BigInt.fromI32(216000)
