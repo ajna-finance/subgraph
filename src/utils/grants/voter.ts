@@ -7,15 +7,23 @@ import { ZERO_BD, ZERO_BI, grantFundNetworkLookUpTable } from "../constants"
 import { wadToDecimal } from "../convert"
 
 export function getDistributionPeriodVoteId(distributionPeriodId: Bytes, voterId: Bytes): Bytes {
-    return voterId.concat(Bytes.fromUTF8('|').concat(distributionPeriodId))
+    return voterId
+        .concat(Bytes.fromUTF8('|')
+        .concat(distributionPeriodId))
 }
 
-export function getFundingVoteId(proposalId: Bytes, voterId: Bytes): Bytes {
-    return proposalId.concat(Bytes.fromUTF8('funding').concat(voterId))
+export function getFundingVoteId(proposalId: Bytes, voterId: Bytes, logIndex: BigInt): Bytes {
+    return proposalId
+        .concat(Bytes.fromUTF8('funding'))
+        .concat(voterId)
+        .concat(Bytes.fromUTF8(logIndex.toString()))
 }
 
-export function getScreeningVoteId(proposalId: Bytes, voterId: Bytes): Bytes {
-    return proposalId.concat(Bytes.fromUTF8('screening').concat(voterId))
+export function getScreeningVoteId(proposalId: Bytes, voterId: Bytes, logIndex: BigInt): Bytes {
+    return proposalId
+        .concat(Bytes.fromUTF8('screening'))
+        .concat(voterId)
+        .concat(Bytes.fromUTF8(logIndex.toString()))
 }
 
 export function loadOrCreateVoter(voterId: Bytes): Voter {

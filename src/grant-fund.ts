@@ -216,7 +216,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
 
   if (proposal.isStandard) {
 
-    // TODO: need to be able to access the distributionId at that block height....
+    // TODO: need to be able to access the distributionId at that block height or call getDistributionIdAtBlock()?
     // load distribution entity
     const distributionId = bigIntToBytes(getCurrentDistributionId())
     const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
@@ -237,7 +237,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       distributionPeriod.screeningVotesCast = distributionPeriod.screeningVotesCast.plus(event.params.weight.toBigDecimal())
 
       // create ScreeningVote entity
-      const screeningVote = new ScreeningVote(getScreeningVoteId(proposalId, voter.id)) as ScreeningVote
+      const screeningVote = new ScreeningVote(getScreeningVoteId(proposalId, voter.id, event.logIndex)) as ScreeningVote
       screeningVote.distribution = distributionId
       screeningVote.voter = voter.id
       screeningVote.proposal = proposalId
@@ -257,7 +257,13 @@ export function handleVoteCast(event: VoteCastEvent): void {
     }
     else if (stage === "FUNDING") {
       // create FundingVote entity
-      const fundingVote = new FundingVote(getFundingVoteId(proposalId, voter.id)) as FundingVote
+      const fundingVote = new FundingVote(getFundingVoteId(proposalId, voter.id, event.logIndex)) as FundingVote
+      fundingVote.distribution = distributionId
+      fundingVote.voter = voter.id
+      fundingVote.proposal = proposalId
+      fundingVote.votesCast = wadToDecimal(event.params.weight)
+      // fundingVote.votingPowerUsed = ZERO_BD TODO: need to calculate this
+      fundingVote.blockNumber = voteCast.blockNumber
 
       // update voter's distributionPeriodVote entity if it hasn't been recorded yet
       if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {

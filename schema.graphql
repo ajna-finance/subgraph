@@ -668,6 +668,16 @@ type UpdateExchangeRates @entity(immutable: true) {
   # GRANT FUND ENTITIES #
   # # # # # # # # # # # #
 
+type GrantFund @entity {
+  id: Bytes! # address of the grant fund
+  treasury: BigDecimal! # Total ajna tokens in the grant fund treasure
+  standardProposals: [Proposal!]! # List of standard proposals submitted to the grant fund
+  standardProposalsExecuted: [Proposal!]! # List of standard proposals executed by the grant fund
+  extraordinaryProposals: [Proposal!]! # List of extraordinary proposals submitted to the grant fund
+  extraordinaryProposalsExecuted: [Proposal!]! # List of extraordinary proposals executed by the grant fund
+  distributionPeriods: [DistributionPeriod!]! # List of distribution periods
+}
+
 type DistributionPeriod @entity {
   id: Bytes! # distribution period id converted to Bytes from uint
   startBlock: BigInt! # block number the distribution period starts
@@ -725,9 +735,8 @@ type DistributionPeriodVote @entity {
   fundingVotes: [FundingVote!]! # FundingVote[]
 }
 
-# TODO: fix id collision from voting multiple times on the same proposal...
 type ScreeningVote @entity {
-  id: Bytes! # $proposalId + 'screening' + $Voter.id
+  id: Bytes! # $proposalId + 'screening' + $Voter.id + $logIndex
   distribution: DistributionPeriod! # distribution period the vote was cast in
   voter: Voter! # Voter
   proposal: Proposal! # proposal being voted on
@@ -735,9 +744,8 @@ type ScreeningVote @entity {
   blockNumber: BigInt! # block number the vote was cast
 }
 
-# TODO: fix id collision from voting multiple times on the same proposal...
 type FundingVote @entity {
-  id: Bytes! # $proposalId + 'funding' + $Voter.id
+  id: Bytes! # $proposalId + 'funding' + $Voter.id + $logIndex
   distribution: DistributionPeriod! # distribution period the vote was cast in
   voter: Voter! # Voter
   proposal: Proposal! # proposal being voted on

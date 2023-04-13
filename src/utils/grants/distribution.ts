@@ -5,6 +5,17 @@ import { DistributionPeriod } from "../../../generated/schema"
 
 import { FUNDING_PERIOD_LENGTH, ONE_BI, ZERO_BD, ZERO_BI, grantFundNetworkLookUpTable } from "../constants"
 
+export function getDistributionIdAtBlock(blockNumber: BigInt): BigInt {
+    const currentDistributionId = getCurrentDistributionId()
+    for (let i = currentDistributionId.toI32(); i > 0; i--) {
+        const distributionPeriod = DistributionPeriod.load(Bytes.fromI32(i))!
+
+        if (blockNumber > distributionPeriod.startBlock && blockNumber < distributionPeriod.endBlock) {
+            return BigInt.fromI32(i)
+        }
+    }
+}
+
 export function getCurrentDistributionId(): BigInt {
     const grantFundAddress  = grantFundNetworkLookUpTable.get(dataSource.network())!
     const grantFundContract = GrantFund.bind(grantFundAddress)
