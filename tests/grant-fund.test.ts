@@ -8,14 +8,15 @@ import {
   afterEach,
   dataSourceMock,
   logStore,
-  log
+  log,
+  beforeEach
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
 import { handleDelegateRewardClaimed, handleFundTreasury, handleProposalCreated, handleQuarterlyDistributionStarted } from "../src/grant-fund"
 import { createDelegateRewardClaimedEvent, createFundTreasuryEvent, createProposalCreatedEvent, createQuarterlyDistributionStartedEvent } from "./utils/grant-fund-utils"
 import { DISTRIBUTION_PERIOD_LENGTH, ONE_BI, ONE_WAD_BI, ZERO_BD, ZERO_BI, grantFundNetworkLookUpTable } from "../src/utils/constants"
 import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
-import { mockGetDistributionId } from "./utils/common"
+import { mockFindMechanismOfProposal, mockGetDistributionId } from "./utils/common"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -25,6 +26,11 @@ describe("Grant Fund assertions", () => {
     // set dataSource.network() return value to "goerli" so constant mapping for poolInfoUtils can be accessed
     dataSourceMock.setNetwork("goerli")
   })
+
+  // beforeEach(() => {
+  //   // set dataSource.network() return value to "goerli" so constant mapping for poolInfoUtils can be accessed
+  //   dataSourceMock.setNetwork("goerli")
+  // })
 
   afterEach(() => {
     clearStore()
@@ -153,7 +159,16 @@ describe("Grant Fund assertions", () => {
     const startBlock = ONE_BI
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH)
     const description = "test proposal"
+    const grantFundAddress = grantFundNetworkLookUpTable.get(dataSource.network())!
 
+    // mock GrantFund contract calls
+    const expectedMechanism = BigInt.fromI32(0) // standard proposal
+    mockFindMechanismOfProposal(proposalId, expectedMechanism)
+
+    const distributionId = BigInt.fromI32(234)
+    mockGetDistributionId(grantFundAddress, distributionId)
+
+    // create mock event
     const newProposalCreatedEvent = createProposalCreatedEvent(
       proposalId,
       proposer,
@@ -169,6 +184,12 @@ describe("Grant Fund assertions", () => {
 
     // check Proposal attributes
     assert.entityCount("Proposal", 1)
+
+    // check DistributionPeriod attributes
+    assert.entityCount("DistributionPeriod", 1)
+
+    // check DistributionPeriod attributes
+    assert.entityCount("GrantFund", 1)
   })
 
 })

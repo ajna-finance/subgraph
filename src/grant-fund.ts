@@ -1,4 +1,4 @@
-import { BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts'
+import { BigInt, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,
@@ -25,10 +25,10 @@ import {
   VoteCast
 } from "../generated/schema"
 
-import { ZERO_BD } from './utils/constants'
+import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToAddress, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getMechanismOfProposal, getProposalParamsId } from './utils/grants/proposal'
-import { getCurrentDistributionId, getCurrentStage } from './utils/grants/distribution'
+import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
 import { getDistributionPeriodVoteId, getExtraordinaryVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
 import { loadOrCreateGrantFund } from './utils/grants/fund'
 
@@ -110,11 +110,13 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   const proposalId = bigIntToBytes(event.params.proposalId)
   const proposal = new Proposal(proposalId) as Proposal
   proposal.description  = event.params.description
+  proposal.distribution = Bytes.empty()
   proposal.executed     = false
   proposal.successful   = false
   proposal.screeningVotesReceived = ZERO_BD
   proposal.fundingVotesReceived = ZERO_BD
   proposal.extraordinaryVotesReceived = ZERO_BD
+  proposal.params = []
 
   let totalTokensRequested = ZERO_BD
 
@@ -134,6 +136,10 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
       const tokensRequested = decoded.toTuple()[1].toBigInt().toBigDecimal()
       proposalParams.tokensRequested = tokensRequested
       totalTokensRequested = totalTokensRequested.plus(tokensRequested)
+    }
+    else {
+      proposalParams.recipient = ZERO_ADDRESS
+      proposalParams.tokensRequested = ZERO_BD
     }
 
     // add proposalParams information to proposal
@@ -155,7 +161,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   if (proposal.isStandard) {
     // update distribution entity
     const distributionId = getCurrentDistributionId()
-    const distributionPeriod = DistributionPeriod.load(bigIntToBytes(distributionId)) as DistributionPeriod
+    const distributionPeriod = loadOrCreateDistributionPeriod(bigIntToBytes(distributionId))
     if (distributionPeriod != null) {
       distributionPeriod.proposals.push(proposal.id)
       distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)

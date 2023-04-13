@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 import { Proposal, ProposalParams } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
@@ -14,7 +14,7 @@ export function getProposalParamsId(proposalId: Bytes, paramIndex: number): Byte
 export function getMechanismOfProposal(proposalId: Bytes): BigInt {
     const grantFundAddress  = grantFundNetworkLookUpTable.get(dataSource.network())!
     const grantFundContract = GrantFund.bind(grantFundAddress)
-    const distributionIdResult = grantFundContract.findMechanismOfProposal(bytesToBigInt(proposalId))
+    const findMechanismOfProposalResult = grantFundContract.findMechanismOfProposal(bytesToBigInt(proposalId))
 
-    return BigInt.fromI32(distributionIdResult)
+    return BigInt.fromI32(findMechanismOfProposalResult)
 }

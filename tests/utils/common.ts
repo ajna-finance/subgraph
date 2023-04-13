@@ -6,7 +6,7 @@ import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
 import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
-import { poolInfoUtilsNetworkLookUpTable, ZERO_BI } from "../../src/utils/constants"
+import { grantFundNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo } from "../../src/utils/liquidation"
 
@@ -279,9 +279,35 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
     )    
 }
 
-/**********************/
-/*** Mock Functions ***/
-/**********************/
+/*********************************/
+/*** Grant Fund Mock Functions ***/
+/*********************************/
+
+// Mocks a contract function call to findMechanismOfProposal for testing purposes
+// @param proposalId: The ID of the proposal
+// @param expectedMechanism: The expected mechanism of the proposal
+export function mockFindMechanismOfProposal(proposalId: BigInt, expectedMechanism: BigInt): void {
+    createMockedFunction(
+      grantFundNetworkLookUpTable.get(dataSource.network())!,
+      'findMechanismOfProposal',
+      'findMechanismOfProposal(uint256):(uint8)'
+    )
+    .withArgs([ethereum.Value.fromUnsignedBigInt(proposalId)])
+    .returns([ethereum.Value.fromUnsignedBigInt(expectedMechanism)]);
+  }
+
+// mock burnInfo contract calls
+export function mockGetDistributionId(grantFund: Address, expectedDistributionId: BigInt): void {
+    createMockedFunction(grantFund, 'getDistributionId', 'getDistributionId():(uint24)')
+        .withArgs([])
+        .returns([
+            ethereum.Value.fromUnsignedBigInt(expectedDistributionId),
+        ])
+}
+
+/***************************/
+/*** Pool Mock Functions ***/
+/***************************/
 
 // create a pool entity and save it to the store
 export function createPool(pool_: Address, collateral: Address, quote: Address, interestRate: BigInt, feeRate: BigInt): void {
@@ -450,15 +476,6 @@ export function mockGetTokenInfo(token: Address, expectedName: string, expectedS
     createMockedFunction(token, 'totalSupply', 'totalSupply():(uint256)')
         .withArgs([])
         .returns([ethereum.Value.fromUnsignedBigInt(expectedTotalSupply)])
-}
-
-// mock burnInfo contract calls
-export function mockGetDistributionId(grantFund: Address, expectedDistributionId: BigInt): void {
-    createMockedFunction(grantFund, 'getDistributionId', 'getDistributionId():(uint24)')
-        .withArgs([])
-        .returns([
-            ethereum.Value.fromUnsignedBigInt(expectedDistributionId),
-        ])
 }
 
 export class PoolMockParams {

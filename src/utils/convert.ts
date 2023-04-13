@@ -25,7 +25,11 @@ export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
       retval.push(addressToBytes(addresses[i]))
     }
     return retval
-  }
+}
+
+  export function bigIntToBytes(bi: BigInt): Bytes {
+    return Bytes.fromByteArray(Bytes.fromBigInt(bi))
+}
 
 /***************************/
 /*** To BigInt Functions ***/
@@ -33,10 +37,6 @@ export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
 
 export function bytesToBigInt(bytes: Bytes): BigInt {
     return BigInt.fromUnsignedBytes(bytes)
-}
-
-export function bigIntToBytes(bi: BigInt): Bytes {
-    return Bytes.fromUTF8(bi.toString())
 }
 
 // converts a BigDecimal WAD to a BigInt
