@@ -13,6 +13,7 @@ import {
   DelegateRewardClaimed,
   DistributionPeriod,
   DistributionPeriodVote,
+  ExtraordinaryVote,
   FundTreasury,
   FundedSlateUpdated,
   FundingVote,
@@ -29,7 +30,7 @@ import { ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToAddress, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getMechanismOfProposal, getProposalParamsId } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage } from './utils/grants/distribution'
-import { getDistributionPeriodVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
+import { getDistributionPeriodVoteId, getExtraordinaryVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
 import { loadOrCreateGrantFund } from './utils/grants/fund'
 
 export function handleDelegateRewardClaimed(
@@ -251,6 +252,9 @@ export function handleVoteCast(event: VoteCastEvent): void {
   voteCast.blockTimestamp = event.block.timestamp
   voteCast.transactionHash = event.transaction.hash
 
+  // load voter entity
+  const voter = loadOrCreateVoter(addressToBytes(event.params.voter))
+
   // update proposal entity
   const proposalId = bigIntToBytes(event.params.proposalId)
   const proposal = Proposal.load(proposalId) as Proposal
@@ -260,9 +264,6 @@ export function handleVoteCast(event: VoteCastEvent): void {
       // load distribution entity
       const distributionId = bigIntToBytes(getCurrentDistributionId())
       const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
-
-      // load voter entity
-      const voter = loadOrCreateVoter(addressToBytes(event.params.voter))
 
       // load voter's distributionPeriodVotes
       const distributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.id, voter.id)
@@ -314,18 +315,35 @@ export function handleVoteCast(event: VoteCastEvent): void {
         fundingVote.save()
       }
 
-      // save entities to the store
+      voter.distributionPeriodVotes.push(distributionPeriodVote.id)
+
+      // save standard funding mechanism entities to the store
       distributionPeriod.save()
       distributionPeriodVote.save()
       proposal.save()
-      voter.save()
     }
     else {
-      // record extraordinary proposal votes
+      const extraordinaryVotesCast = wadToDecimal(event.params.weight)
+      const extraordinaryVote = new ExtraordinaryVote(getExtraordinaryVoteId(proposalId, event.params.voter, event.logIndex)) as ExtraordinaryVote
+      extraordinaryVote.voter = voter.id
+      extraordinaryVote.proposal = proposalId
+      extraordinaryVote.votesCast = extraordinaryVotesCast
+      extraordinaryVote.voteBlock = voteCast.blockNumber
+
+      // update proposal state
+      proposal.extraordinaryVotesReceived = proposal.extraordinaryVotesReceived.plus(extraordinaryVotesCast)
+
+      // update voter state
+      voter.extraordinaryVotes.push(extraordinaryVote.id)
+
+      // save extraordinary funding mechanism entities to the store
+      extraordinaryVote.save()
     }
   }
 
+  // save entities to the store
   voteCast.save()
+  voter.save()
 }
 // TODO: use these to streamline logic in handleVoteCast()
 function handleVoteStandard(): void {}

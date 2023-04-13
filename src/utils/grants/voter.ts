@@ -12,6 +12,12 @@ export function getDistributionPeriodVoteId(distributionPeriodId: Bytes, voterId
         .concat(distributionPeriodId))
 }
 
+export function getExtraordinaryVoteId(proposalId: Bytes, voterId: Bytes, logIndex: BigInt): Bytes {
+    return proposalId
+        .concat(Bytes.fromUTF8('extraordinary'))
+        .concat(voterId)
+}
+
 export function getFundingVoteId(proposalId: Bytes, voterId: Bytes, logIndex: BigInt): Bytes {
     return proposalId
         .concat(Bytes.fromUTF8('funding'))
