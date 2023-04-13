@@ -14,6 +14,7 @@ import {
   DistributionPeriod,
   ExtraordinaryVote,
   FundTreasury,
+  FundedSlate,
   FundedSlateUpdated,
   FundingVote,
   Proposal,
@@ -27,7 +28,7 @@ import {
 
 import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToAddress, bytesToBigInt, wadToDecimal } from "./utils/convert"
-import { getMechanismOfProposal, getProposalParamsId } from './utils/grants/proposal'
+import { getMechanismOfProposal, getProposalParamsId, getProposalsInSlate, loadOrCreateProposal } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
 import { getDistributionPeriodVoteId, getExtraordinaryVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
 import { loadOrCreateGrantFund } from './utils/grants/fund'
@@ -97,6 +98,26 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
   fundedSlateUpdated.blockTimestamp = event.block.timestamp
   fundedSlateUpdated.transactionHash = event.transaction.hash
 
+  // update DistributionPeriod entity
+  const distributionId = bigIntToBytes(event.params.distributionId_)
+  const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
+  distributionPeriod.topSlate = event.params.fundedSlateHash_
+
+  // create FundedSlate entity
+  const fundedSlate = new FundedSlate(distributionId) as FundedSlate
+  fundedSlate.distribution = distributionId
+  fundedSlate.updateBlock = event.block.number
+
+  // get the list of proposals in the slate
+  const proposalsInSlate = getProposalsInSlate(fundedSlateUpdated.distributionId_)
+  for (let i = 0; i < proposalsInSlate.length; i++) {
+    const proposalId = proposalsInSlate[i]
+    fundedSlate.proposals.push(bigIntToBytes(proposalId))
+  }
+
+  // save entities to the store
+  distributionPeriod.save()
+  fundedSlate.save()
   fundedSlateUpdated.save()
 }
 
@@ -258,9 +279,14 @@ export function handleQuarterlyDistributionStarted(
   distributionPeriod.proposals = []
   distributionPeriod.slatesSubmitted = []
 
+  // update GrantFund entity
+  const grantFund = loadOrCreateGrantFund(event.address)
+  grantFund.distributionPeriods.push(distributionPeriod.id)
+
   // save entities to store
   distributionPeriod.save()
   distributionStarted.save()
+  grantFund.save()
 }
 
 export function handleVoteCast(event: VoteCastEvent): void {

@@ -23,7 +23,7 @@ import { mockFindMechanismOfProposal, mockGetDistributionId } from "./utils/comm
 
 describe("Grant Fund assertions", () => {
   beforeAll(() => {
-    // set dataSource.network() return value to "goerli" so constant mapping for poolInfoUtils can be accessed
+    // set dataSource.network() return value to "goerli" so constant mapping for grantFund can be accessed
     dataSourceMock.setNetwork("goerli")
   })
 
@@ -123,6 +123,10 @@ describe("Grant Fund assertions", () => {
       "endBlock_",
       `${endBlock}`
     )
+
+    // check GrantFund attributes
+    assert.entityCount("GrantFund", 1)
+
   })
 
   test("FundTreasury", () => {
@@ -247,6 +251,10 @@ describe("Grant Fund assertions", () => {
 
     // check ProposalExecuted attributes
     assert.entityCount("ProposalExecuted", 1)
+
+  })
+
+  test("FundedSlateUpdated", () => {
 
   })
 
