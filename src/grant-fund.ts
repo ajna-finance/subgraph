@@ -12,7 +12,6 @@ import {
 import {
   DelegateRewardClaimed,
   DistributionPeriod,
-  DistributionPeriodVote,
   ExtraordinaryVote,
   FundTreasury,
   FundedSlateUpdated,
@@ -40,12 +39,16 @@ export function handleDelegateRewardClaimed(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   delegateRewardClaimed.delegateeAddress_ = event.params.delegateeAddress_
-  delegateRewardClaimed.distributionId_   = event.params.distributionId_
   delegateRewardClaimed.rewardClaimed_    = event.params.rewardClaimed_
 
   delegateRewardClaimed.blockNumber     = event.block.number
   delegateRewardClaimed.blockTimestamp  = event.block.timestamp
   delegateRewardClaimed.transactionHash = event.transaction.hash
+
+  const distributionId = bigIntToBytes(getCurrentDistributionId())
+  // const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
+
+  delegateRewardClaimed.distribution = distributionId
 
   delegateRewardClaimed.save()
 }
@@ -111,6 +114,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   proposal.successful   = false
   proposal.screeningVotesReceived = ZERO_BD
   proposal.fundingVotesReceived = ZERO_BD
+  proposal.extraordinaryVotesReceived = ZERO_BD
 
   let totalTokensRequested = ZERO_BD
 
@@ -149,13 +153,14 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   proposal.isExtraordinary = proposalFundingMechanism == BigInt.fromI32(1)
 
   if (proposal.isStandard) {
-    const distributionId = getCurrentDistributionId()
-
     // update distribution entity
+    const distributionId = getCurrentDistributionId()
     const distributionPeriod = DistributionPeriod.load(bigIntToBytes(distributionId)) as DistributionPeriod
-    distributionPeriod.proposals.push(proposal.id)
-    distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
-    distributionPeriod.save()
+    if (distributionPeriod != null) {
+      distributionPeriod.proposals.push(proposal.id)
+      distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
+      distributionPeriod.save()
+    }
 
     // record proposals distributionId
     proposal.distribution = distributionPeriod.id
@@ -212,7 +217,8 @@ export function handleQuarterlyDistributionStarted(
   const distributionStarted = new QuarterlyDistributionStarted(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  distributionStarted.distributionId_ = event.params.distributionId_
+  const distributionId = bigIntToBytes(event.params.distributionId_)
+  distributionStarted.distribution = distributionId
   distributionStarted.startBlock_ = event.params.startBlock_
   distributionStarted.endBlock_ = event.params.endBlock_
 
@@ -221,7 +227,7 @@ export function handleQuarterlyDistributionStarted(
   distributionStarted.transactionHash = event.transaction.hash
 
   // create DistributionPeriod entities
-  const distributionPeriod = new DistributionPeriod(bigIntToBytes(distributionStarted.distributionId_)) as DistributionPeriod
+  const distributionPeriod = new DistributionPeriod(distributionId) as DistributionPeriod
 
   distributionPeriod.startBlock = distributionStarted.startBlock_
   distributionPeriod.endBlock = distributionStarted.endBlock_
@@ -232,6 +238,7 @@ export function handleQuarterlyDistributionStarted(
   distributionPeriod.fundingVotePowerUsed = ZERO_BD
   distributionPeriod.screeningVotesCast = ZERO_BD
   distributionPeriod.proposals = []
+  distributionPeriod.slatesSubmitted = []
 
   // save entities to store
   distributionPeriod.save()

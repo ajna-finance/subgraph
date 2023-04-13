@@ -38,7 +38,7 @@ import { getReserveAuctionId } from "../src/utils/reserve-auction"
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
 
-describe("Describe entity assertions", () => {
+describe("ERC20Pool assertions", () => {
 
   beforeAll(() => {
     // set dataSource.network() return value to "goerli" so constant mapping for poolInfoUtils can be accessed

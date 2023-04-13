@@ -13,7 +13,7 @@ import { createERC721PoolFactoryPoolCreatedEvent } from "./utils/erc-721-pool-fa
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
 
-describe("Describe entity assertions", () => {
+describe("ERC721PoolFactory assertions", () => {
   beforeAll(() => {
     let pool_ = Address.fromString("0x0000000000000000000000000000000000000001")
     let newERC721PoolFactoryPoolCreatedEvent = createERC721PoolFactoryPoolCreatedEvent(

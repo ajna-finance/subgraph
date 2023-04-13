@@ -778,10 +778,11 @@ type FundedSlate @entity {
   # GRANT FUND EVENTS #
   # # # # # # # # # # #
 
+# TODO: should we be able to track the distribution period for which the rewards have accrued?
 type DelegateRewardClaimed @entity(immutable: true) {
   id: Bytes!
   delegateeAddress_: Bytes! # address
-  distributionId_: BigInt! # uint256
+  distribution: DistributionPeriod! # distribution period the rewards were claimed in
   rewardClaimed_: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -830,9 +831,10 @@ type ProposalExecuted @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# TODO: remove underscores from event fields
 type QuarterlyDistributionStarted @entity(immutable: true) {
   id: Bytes!
-  distributionId_: BigInt! # uint256
+  distribution: DistributionPeriod! # The newly started distribution period
   startBlock_: BigInt! # uint256
   endBlock_: BigInt! # uint256
   blockNumber: BigInt!

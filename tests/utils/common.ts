@@ -452,6 +452,15 @@ export function mockGetTokenInfo(token: Address, expectedName: string, expectedS
         .returns([ethereum.Value.fromUnsignedBigInt(expectedTotalSupply)])
 }
 
+// mock burnInfo contract calls
+export function mockGetDistributionId(grantFund: Address, expectedDistributionId: BigInt): void {
+    createMockedFunction(grantFund, 'getDistributionId', 'getDistributionId():(uint24)')
+        .withArgs([])
+        .returns([
+            ethereum.Value.fromUnsignedBigInt(expectedDistributionId),
+        ])
+}
+
 export class PoolMockParams {
     // loans info mock params
     poolSize: BigInt
