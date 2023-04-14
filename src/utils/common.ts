@@ -3,7 +3,7 @@ import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphproto
 import { Bucket, Lend } from "../../generated/schema"
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { ZERO_BD, poolInfoUtilsNetworkLookUpTable } from "./constants"
+import { ONE_BD, ZERO_BD, poolInfoUtilsNetworkLookUpTable } from "./constants"
 import { bigDecimalWadToBigInt, wadToDecimal } from "./convert"
 
 export function lpbValueInQuote(pool: Bytes, bucketIndex: u32, lpAmount: BigDecimal): BigDecimal {
@@ -30,8 +30,12 @@ export function collateralization(debt: BigDecimal, encumberedCollateral: BigDec
 
 // TODO: check for precision loss
 export function collateralizationAtLup(debt: BigDecimal, collateral: BigDecimal, lup: BigDecimal): BigDecimal {
-    const encumberedCollateral = debt.div(lup)
-    return debt.div(encumberedCollateral)
+    if (debt > ZERO_BD && lup > ZERO_BD) {
+      const encumberedCollateral = debt.div(lup)
+      return debt.div(encumberedCollateral)
+    } else {
+      return ONE_BD
+    }
 }
 
 export function thresholdPrice(debt: BigDecimal, collateral: BigDecimal): BigDecimal {
