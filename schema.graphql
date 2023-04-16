@@ -718,7 +718,6 @@ type ProposalParams @entity {
   tokensRequested: BigDecimal! # uint256
 }
 
-# TODO: rename to Actor?
 type Voter @entity {
   id: Bytes! # voter address
   proposalsCreated: [Proposal!]! # Proposal[]

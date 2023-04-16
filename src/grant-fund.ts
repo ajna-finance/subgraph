@@ -28,7 +28,7 @@ import {
 
 import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToAddress, bytesToBigInt, wadToDecimal } from "./utils/convert"
-import { getMechanismOfProposal, getProposalParamsId, getProposalsInSlate, loadOrCreateProposal } from './utils/grants/proposal'
+import { getMechanismOfProposal, getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
 import { getDistributionPeriodVoteId, getExtraordinaryVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
 import { loadOrCreateGrantFund } from './utils/grants/fund'
@@ -238,9 +238,11 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
     const grantFund = loadOrCreateGrantFund(event.address)
     if (proposal.isStandard) {
       grantFund.standardProposalsExecuted.push(proposal.id)
+      grantFund.standardProposals = removeProposalFromList(proposal.id, grantFund.standardProposals)
     }
     else {
       grantFund.extraordinaryProposalsExecuted.push(proposal.id)
+      grantFund.extraordinaryProposals = removeProposalFromList(proposal.id, grantFund.standardProposals)
     }
 
     // save entities to the store
@@ -396,6 +398,3 @@ export function handleVoteCast(event: VoteCastEvent): void {
   voteCast.save()
   voter.save()
 }
-// TODO: use these to streamline logic in handleVoteCast()
-function handleVoteStandard(): void {}
-function handleVoteExtraordinary(): void {}

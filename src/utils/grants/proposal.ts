@@ -31,6 +31,15 @@ export function loadOrCreateProposal(proposalId: Bytes): Proposal {
     return proposal
 }
 
+export function removeProposalFromList(proposalId: Bytes, proposalList: Array<Bytes>): Array<Bytes> {
+    const proposalListCopy = proposalList
+    const index = proposalListCopy.indexOf(proposalId)
+    if (index > -1) {
+        proposalListCopy.splice(index, 1)
+    }
+    return proposalListCopy
+}
+
 /**********************/
 /*** Contract Calls ***/
 /**********************/
