@@ -15,7 +15,7 @@ import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/consta
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
 
-describe("Describe entity assertions", () => {
+describe("ERC20PoolFactory assertions", () => {
 
   beforeAll(() => {
     const pool_ = Address.fromString("0x0000000000000000000000000000000000000001")

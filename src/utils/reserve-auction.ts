@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Pool, ReserveAuction } from "../../generated/schema"
-import { ONE_BI, ZERO_BD, ZERO_BI } from "./constants"
-import { bigDecimalExp18 } from "./convert"
+import { EXP_18_BD, ONE_BI, ZERO_BD, ZERO_BI } from "./constants"
 
 export function getReserveAuctionId(poolId: Bytes, burnEpoch: BigInt): Bytes {
     return poolId.concat(Bytes.fromUTF8('|' + burnEpoch.toHexString()))
@@ -32,5 +31,5 @@ export function reserveAuctionKickerReward(pool: Pool): BigDecimal {
     // stored as a decimal converted from wad
     return BigDecimal.fromString(`${pool.claimableReserves}`)
         .times(BigDecimal.fromString("10000000000000000"))  // 1%
-        .div(bigDecimalExp18())
+        .div(EXP_18_BD)
 }

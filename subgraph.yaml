@@ -63,7 +63,6 @@ dataSources:
       abis:
         - name: ERC20PoolFactory
           file: ./abis/ERC20PoolFactory.json
-          # add pool and token ABIs to each respective factory type for querying token contracts
         - name: ERC20Pool
           file: ./abis/ERC20Pool.json
         - name: ERC20
@@ -130,6 +129,43 @@ dataSources:
         - event: PoolCreated(address)
           handler: handlePoolCreated
       file: ./src/erc-721-pool-factory.ts
+  - kind: ethereum
+    name: GrantFund
+    network: goerli
+    source:
+      address: "0xaeB91e664A49829FaBf06BE35d4447938d83A271"
+      abi: GrantFund
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DelegateRewardClaimed
+        - FundTreasury
+        - FundedSlateUpdated
+        - ProposalCreated
+        - ProposalExecuted
+        - QuarterlyDistributionStarted
+        - VoteCast
+      abis:
+        - name: GrantFund
+          file: ./abis/GrantFund.json
+      eventHandlers:
+        - event: DelegateRewardClaimed(indexed address,indexed uint256,uint256)
+          handler: handleDelegateRewardClaimed
+        - event: FundTreasury(uint256,uint256)
+          handler: handleFundTreasury
+        - event: FundedSlateUpdated(indexed uint256,indexed bytes32)
+          handler: handleFundedSlateUpdated
+        - event: ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)
+          handler: handleProposalCreated
+        - event: ProposalExecuted(uint256)
+          handler: handleProposalExecuted
+        - event: QuarterlyDistributionStarted(indexed uint256,uint256,uint256)
+          handler: handleQuarterlyDistributionStarted
+        - event: VoteCast(indexed address,uint256,uint8,uint256,string)
+          handler: handleVoteCast
+      file: ./src/grant-fund.ts
 templates:
   - kind: ethereum
     name: ERC20Pool

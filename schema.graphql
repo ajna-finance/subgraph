@@ -269,7 +269,7 @@ type AddCollateral @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type AddQuoteToken @entity {
+type AddQuoteToken @entity(immutable: true) {
   id: Bytes!
   pool: Pool!            # Pool to which quote was added
   bucket: Bucket!        # Bucket to which quote was added
@@ -617,6 +617,10 @@ type PoolCreated @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+  # # # # # # # # # # # # # #
+  # REWARDS MANAGER EVENTS  #
+  # # # # # # # # # # # # # #
+
 type ClaimRewards @entity(immutable: true) {
   id: Bytes!
   owner: Bytes!             # address
@@ -655,6 +659,195 @@ type UpdateExchangeRates @entity(immutable: true) {
   pool: Pool!
   indexesUpdated: [BigInt!]! # uint256[]
   rewardsClaimed: BigInt!    # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+  # # # # # # # # # # # #
+  # GRANT FUND ENTITIES #
+  # # # # # # # # # # # #
+
+type GrantFund @entity {
+  id: Bytes! # address of the grant fund
+  treasury: BigDecimal! # Total ajna tokens in the grant fund treasure
+  standardProposals: [Proposal!]! # List of standard proposals submitted to the grant fund
+  standardProposalsExecuted: [Proposal!]! # List of standard proposals executed by the grant fund
+  extraordinaryProposals: [Proposal!]! # List of extraordinary proposals submitted to the grant fund
+  extraordinaryProposalsExecuted: [Proposal!]! # List of extraordinary proposals executed by the grant fund
+  distributionPeriods: [DistributionPeriod!]! # List of distribution periods
+  totalDelegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed across all distribution periods
+}
+
+type DistributionPeriod @entity {
+  id: Bytes! # distribution period id converted to Bytes from uint
+  startBlock: BigInt! # block number the distribution period starts
+  endBlock: BigInt! # block number the distribution period ends
+  topSlate: FundedSlate! # The current top FundedSlate
+  slatesSubmitted: [FundedSlate!]! # FundedSlate[] slates submitted in the distribution period
+  delegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed in the distribution period
+  fundingVotesCast: BigDecimal! # number of funding votes cast
+  fundingVotePowerUsed: BigDecimal! # Total funding vote power used
+  screeningVotesCast: BigDecimal! # number of screening votes cast
+  proposals: [Proposal!]! # List of proposals submitted in the distribution period
+  totalTokensRequested: BigDecimal! # Total ajna tokens requested by all proposals in the distribution period
+}
+
+# TODO: split into standard and extraordinary?
+type Proposal @entity {
+  id: Bytes! # proposal id converted to Bytes from uint
+  description: String! # proposal description hashed as part of proposalId
+  distribution: DistributionPeriod # distributionPeriod in which the proposal was submitted if Standard, null otherwise
+  isStandard: Boolean! # bool
+  isExtraordinary: Boolean! # bool
+  executed: Boolean! # bool
+  successful: Boolean! # bool
+  extraordinaryVotesReceived: BigDecimal! # uint256
+  screeningVotesReceived: BigDecimal! # uint256
+  fundingVotesReceived: BigDecimal! # uint256
+  totalTokensRequested: BigDecimal! # uint256
+  params: [ProposalParams!]! # ProposalParams
+}
+
+type ProposalParams @entity {
+  id: Bytes! # $proposalId + '|' + $paramIndex
+  target: Bytes! # address
+  value: BigInt! # uint256
+  calldata: Bytes! # bytes
+  recipient: Bytes! # address
+  tokensRequested: BigDecimal! # uint256
+}
+
+type Voter @entity {
+  id: Bytes! # voter address
+  proposalsCreated: [Proposal!]! # Proposal[]
+  proposalsExecuted: [Proposal!]! # Proposal[]
+  distributionPeriodVotes: [DistributionPeriodVote!]! # DistributionPeriodVote[]
+  extraordinaryVotes: [ExtraordinaryVote!]! # ExtraordinaryVote[]
+}
+
+# TODO: record voting power used?
+type DistributionPeriodVote @entity {
+  id: Bytes! # $voterId + '|'' + $distributionId
+  distribution: DistributionPeriod! # uint256
+  screeningStageVotingPower: BigDecimal! # uint256
+  fundingStageVotingPower: BigDecimal! # uint256
+  screeningVotes: [ScreeningVote!]! # ScreeningVote[]
+  fundingVotes: [FundingVote!]! # FundingVote[]
+}
+
+type ScreeningVote @entity {
+  id: Bytes! # $proposalId + 'screening' + $Voter.id + $logIndex
+  distribution: DistributionPeriod! # distribution period the vote was cast in
+  voter: Voter! # Voter
+  proposal: Proposal! # proposal being voted on
+  votesCast: BigDecimal! # uint256
+  blockNumber: BigInt! # block number the vote was cast
+}
+
+type FundingVote @entity {
+  id: Bytes! # $proposalId + 'funding' + $Voter.id + $logIndex
+  distribution: DistributionPeriod! # distribution period the vote was cast in
+  voter: Voter! # Voter
+  proposal: Proposal! # proposal being voted on
+  votesCast: BigDecimal! # uint256 # TODO: can this be negative?
+  votingPowerUsed: BigDecimal! # uint256
+  blockNumber: BigInt! # block number the vote was cast
+}
+
+type ExtraordinaryVote @entity {
+  id: Bytes! # $proposalId + 'extraordinary' + $Voter.id
+  voter: Voter! # Voter
+  proposal: Proposal! # proposal being voted on
+  voteBlock: BigInt! # block number the vote was cast
+  votesCast: BigDecimal! # uint256 amount of votes cast
+}
+
+type FundedSlate @entity {
+  id: Bytes! # bytes32 hash of slate proposalIds
+  distribution: DistributionPeriod! # distribution period the vote was cast in
+  proposals: [Proposal!]! # uint256[] list of proposalIds
+  updateBlock: BigInt! # block number the slate was updated
+}
+
+# TODO: add stage specific entities?
+# type ScreeningStage @entity {}
+
+  # # # # # # # # # # #
+  # GRANT FUND EVENTS #
+  # # # # # # # # # # #
+
+# TODO: should we be able to track the distribution period for which the rewards have accrued?
+type DelegateRewardClaimed @entity(immutable: true) {
+  id: Bytes!
+  delegateeAddress_: Bytes! # address
+  distribution: DistributionPeriod! # distribution period the rewards were claimed in
+  rewardClaimed_: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FundTreasury @entity(immutable: true) {
+  id: Bytes!
+  amount: BigInt! # uint256
+  treasuryBalance: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FundedSlateUpdated @entity(immutable: true) {
+  id: Bytes!
+  distributionId_: BigInt! # uint256
+  fundedSlateHash_: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalCreated @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt! # uint256
+  proposer: Bytes! # address
+  targets: [Bytes!]! # address[]
+  values: [BigInt!]! # uint256[]
+  signatures: [String!]! # string[]
+  calldatas: [Bytes!]! # bytes[]
+  startBlock: BigInt! # uint256
+  endBlock: BigInt! # uint256
+  description: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProposalExecuted @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# TODO: remove underscores from event fields
+type QuarterlyDistributionStarted @entity(immutable: true) {
+  id: Bytes!
+  distribution: DistributionPeriod! # The newly started distribution period
+  startBlock_: BigInt! # uint256
+  endBlock_: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoteCast @entity(immutable: true) {
+  id: Bytes!
+  voter: Bytes! # address
+  proposalId: BigInt! # uint256
+  support: Int! # uint8
+  weight: BigInt! # uint256
+  reason: String! # string
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

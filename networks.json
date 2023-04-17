@@ -14,6 +14,9 @@
     },
     "ERC721PoolFactory": {
       "address": "0x7DB5ba7cB6dAD74b45AAB027A7E7388eF18656DF"
+    },
+    "GrantFund": {
+      "address": "0xaeB91e664A49829FaBf06BE35d4447938d83A271"
     }
   }
 }
