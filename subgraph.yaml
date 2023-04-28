@@ -135,6 +135,7 @@ dataSources:
     source:
       address: "0xaeB91e664A49829FaBf06BE35d4447938d83A271"
       abi: GrantFund
+      startBlock: 8613513
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
