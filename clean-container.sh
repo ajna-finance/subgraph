@@ -1,5 +1,5 @@
 #!/bin/bash
 docker-compose down -v
-rm -rf build
 sudo rm -rf data
-rm -rf generated
+source .env
+docker-compose up --force-recreate
