@@ -38,5 +38,9 @@ export function collateralizationAtLup(debt: BigDecimal, collateral: BigDecimal,
 }
 
 export function thresholdPrice(debt: BigDecimal, collateral: BigDecimal): BigDecimal {
-    return debt.div(collateral)
+    if (collateral > ZERO_BD) {
+      return debt.div(collateral)
+    } else {
+      return ZERO_BD;
+    }
 }
