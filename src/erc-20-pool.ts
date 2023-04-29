@@ -1,4 +1,4 @@
-import { BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
 
 import {
   AddCollateral as AddCollateralEvent,
@@ -38,6 +38,7 @@ import {
   BucketTake,
   BucketTakeLPAwarded,
   DrawDebt,
+  ERC20PoolFactory,
   Kick,
   Lend,
   LiquidationAuction,
@@ -55,14 +56,14 @@ import {
   UpdateInterestRate
 } from "../generated/schema"
 
-import { ZERO_BD, ONE_BI } from "./utils/constants"
+import { ZERO_BD, ONE_BI, ERC20_FACTORY_ADDRESS } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getBucketTakeLPAwardedId, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction } from "./utils/liquidation"
-import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo } from "./utils/pool"
+import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getDebtInfo } from "./utils/pool"
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 import { getReserveAuctionId, loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token-erc20"
@@ -259,6 +260,22 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
   }
 
   auctionSettle.save()
+}
+
+export function handleBlock(block: ethereum.Block): void {
+  // HACK: ignore old blocks (DateTime.now is unavailable)
+  if (block.timestamp.toI64() < 1682739611) return;
+
+  const factory = ERC20PoolFactory.load(ERC20_FACTORY_ADDRESS);
+  if (factory == null) return;
+
+  for (var i = 0; i < factory.pools.length; ++i) {
+    const pool = Pool.load(factory.pools[i]);
+    if (pool == null) continue;
+    const debtInfo = getDebtInfo(pool);
+    pool.currentDebt = wadToDecimal(debtInfo.pendingDebt);
+    pool.save();
+  }
 }
 
 export function handleBondWithdrawn(event: BondWithdrawnEvent): void {

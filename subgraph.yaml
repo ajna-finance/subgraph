@@ -207,6 +207,8 @@ templates:
           file: ./abis/ERC20Pool.json
         - name: PoolInfoUtils
           file: ./abis/PoolInfoUtils.json
+      blockHandlers:
+        - handler: handleBlock
       eventHandlers:
         - event: AddCollateral(indexed address,indexed uint256,uint256,uint256)
           handler: handleAddCollateral
