@@ -1,4 +1,4 @@
-import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts"
+import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts"
 
 import { Token } from "../../generated/schema"
 import { ONE_BI, ZERO_BI, positionManagerNetworkLookUpTable } from "../utils/constants"
@@ -9,14 +9,15 @@ import { PositionManager } from "../../generated/PositionManager/PositionManager
 export function loadOrCreateLPToken(tokenAddress: Address): Token {
   const id = addressToBytes(tokenAddress)
   let token = Token.load(id)
-  if (token == null) {
-    // create new account if account hasn't already been stored
+  if (token == null) {    
     token = new Token(id) as Token
     token.name        = getTokenName(tokenAddress)
+    token.decimals    = ZERO_BI
     token.symbol      = getTokenSymbol(tokenAddress)
     token.txCount     = ZERO_BI
     token.isERC721    = true
     token.poolCount   = ONE_BI
+    token.totalSupply = ONE_BI
   }
 
   return token

@@ -150,7 +150,7 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
 }
 
 export function handleTransfer(event: TransferEvent): void {
-  let entity = new Transfer(
+  const entity = new Transfer(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.from = event.params.from
@@ -158,11 +158,13 @@ export function handleTransfer(event: TransferEvent): void {
   entity.tokenId = event.params.tokenId
   entity.pool = getPoolForToken(entity.tokenId)
 
-  entity.token = loadOrCreateLPToken(event.address).id
+  const token = loadOrCreateLPToken(event.address)
+  entity.token = token.id
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
 
+  token.save();
   entity.save()
 }
