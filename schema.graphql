@@ -144,6 +144,7 @@ type Lend @entity {
   lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket (regardless of available deposit in bucket)
   lpbValueInQuote: BigDecimal!
+  # depositTime: BigInt! # timestamp of last lend interaction
 }
 
 # each borrower has only one loan with a pool
@@ -533,6 +534,62 @@ type ApprovalForAll @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type MoveLiquidity @entity(immutable: true) {
+  id: Bytes!
+  lender: Bytes!   # address
+  tokenId: BigInt! # uint256
+  pool: Pool!
+  fromIndex: Int!  # uint256
+  toIndex: Int!    # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# PositionManager ERC-721 transfer event
+type Transfer @entity(immutable: true) {
+  id: Bytes!
+  token: Token!    # token which was transferred
+  pool: Pool!
+  from: Bytes!     # address
+  to: Bytes!       # address
+  tokenId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolCreated @entity(immutable: true) {
+  id: Bytes!
+  pool: Bytes!        # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+  # # # # # # # # # # # # # # #
+  # POSITION MANAGER ENTITIES #
+  # # # # # # # # # # # # # # #
+
+type Position @entity {
+  id: Bytes! # byte encoded tokenId
+  indexes: [Lend!]! # list of lends which constitute a position
+  owner: Bytes! # address of the position owner
+  pool: Bytes!  # address of the pool that the position is associated with
+  token: Token! # pointer to positionNFT
+}
+
+# TODO: remove this in favor of reusing Lend for constituent positions
+# type PositionAtIndex @entity {
+#   id: Bytes! # $poolAddress + '#' + $bucketIndex
+#   lpb: BigDecimal!
+#   depositTime: BigInt! # unix timestamp of bucket deposit
+# }
+
+  # # # # # # # # # # # # # #
+  # POSITION MANAGER EVENTS #
+  # # # # # # # # # # # # # #
+
 type Burn @entity(immutable: true) {
   id: Bytes!
   lender: Bytes! # address
@@ -562,56 +619,12 @@ type Mint @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type MoveLiquidity @entity(immutable: true) {
-  id: Bytes!
-  lender: Bytes!   # address
-  tokenId: BigInt! # uint256
-  pool: Pool!
-  fromIndex: Int!  # uint256
-  toIndex: Int!    # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type MoveStakedLiquidity @entity(immutable: true) {
-  id: Bytes!
-  tokenId: BigInt!     # uint256
-  pool: Pool!
-  fromIndexes: [Int!]! # uint256
-  toIndexes: [Int!]!   # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
 type RedeemPosition @entity(immutable: true) {
   id: Bytes!
   lender: Bytes!   # address
   tokenId: BigInt! # uint256
   pool: Pool!
   indexes: [Int!]! # uint256[]
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-# PositionManager ERC-721 transfer event
-type Transfer @entity(immutable: true) {
-  id: Bytes!
-  token: Token!    # token which was transferred
-  pool: Pool!
-  from: Bytes!     # address
-  to: Bytes!       # address
-  tokenId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type PoolCreated @entity(immutable: true) {
-  id: Bytes!
-  pool: Bytes!        # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -628,6 +641,17 @@ type ClaimRewards @entity(immutable: true) {
   tokenId: BigInt!          # uint256
   epochsClaimed: [BigInt!]! # uint256[]
   amount: BigDecimal!       # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MoveStakedLiquidity @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt!     # uint256
+  pool: Pool!
+  fromIndexes: [Int!]! # uint256
+  toIndexes: [Int!]!   # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
