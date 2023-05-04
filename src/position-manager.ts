@@ -28,33 +28,33 @@ import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "./utils/position"
 
 export function handleApproval(event: ApprovalEvent): void {
-  let entity = new Approval(
+  const approval = new Approval(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.owner = event.params.owner
-  entity.approved = event.params.approved
-  entity.tokenId = event.params.tokenId
+  approval.owner = event.params.owner
+  approval.approved = event.params.approved
+  approval.tokenId = event.params.tokenId
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  approval.blockNumber = event.block.number
+  approval.blockTimestamp = event.block.timestamp
+  approval.transactionHash = event.transaction.hash
 
-  entity.save()
+  approval.save()
 }
 
 export function handleApprovalForAll(event: ApprovalForAllEvent): void {
-  let entity = new ApprovalForAll(
+  const approvalForAll = new ApprovalForAll(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.owner = event.params.owner
-  entity.operator = event.params.operator
-  entity.approved = event.params.approved
+  approvalForAll.owner = event.params.owner
+  approvalForAll.operator = event.params.operator
+  approvalForAll.approved = event.params.approved
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  approvalForAll.blockNumber = event.block.number
+  approvalForAll.blockTimestamp = event.block.timestamp
+  approvalForAll.transactionHash = event.transaction.hash
 
-  entity.save()
+  approvalForAll.save()
 }
 
 export function handleBurn(event: BurnEvent): void {
@@ -203,19 +203,24 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
 }
 
 export function handleTransfer(event: TransferEvent): void {
-  let entity = new Transfer(
+  const transfer = new Transfer(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.from = event.params.from
-  entity.to = event.params.to
-  entity.tokenId = event.params.tokenId
-  entity.pool = getPoolForToken(entity.tokenId)
+  transfer.from = event.params.from
+  transfer.to = event.params.to
+  transfer.tokenId = event.params.tokenId
+  transfer.pool = getPoolForToken(transfer.tokenId)
 
-  entity.token = loadOrCreateLPToken(event.address).id
+  transfer.token = loadOrCreateLPToken(event.address).id
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  transfer.blockNumber = event.block.number
+  transfer.blockTimestamp = event.block.timestamp
+  transfer.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update entities
+  const position = loadOrCreatePosition(transfer.tokenId)
+  position.owner = event.params.to
+
+  position.save()
+  transfer.save()
 }

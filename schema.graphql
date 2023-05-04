@@ -1,3 +1,4 @@
+# TODO: track approvals?
 # TODO: finish expanding this schema -> ERC20 / ERC721?
 # TODO: track token liquidity across all Ajna pools
 # this supports both ERC20 and ERC721 tokens, as union types aren't currently supported
