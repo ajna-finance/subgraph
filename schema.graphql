@@ -631,12 +631,14 @@ type RedeemPosition @entity(immutable: true) {
 type StakedPosition @entity {
   id: Bytes! # byte encoded tokenId
   position: Position! # pointer to associated Position entity
-  epochs: [EpochRewards!]! # list of EpochRewards associated to a staked position
-  stakedEpoch: Int!
-  lastClaimedEpoch: Int!
+  epochs: [EpochReward!]! # list of EpochRewards associated to a staked position
+  stakedEpoch: Int! # epoch in which the position was staked
+  lastClaimedEpoch: Int! # last epoch which the position staked or claimed rewards in
+  lpsAtStakeTime: BigDecimal! # the amount of LPB associated with a given index TODO: store information per index?
+  rateAtStakeTime: BigDecimal! # the exchange rate at a given index at stake time
 }
 
-type EpochRewards @entity {
+type EpochReward @entity {
   id: Bytes! # byte encoded epoch + '|' + $StakedPosition.id
   rewardsClaimed: BigDecimal! # ajna tokens claimed in this epoch
   updateRewardsClaimed: BigDecimal!
