@@ -4,14 +4,14 @@ import {
   test,
   clearStore,
   beforeAll,
-  afterAll,
+  afterEach,
   dataSourceMock
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { handleApproval, handleMint } from "../src/position-manager"
 import { createApprovalEvent, createMemorializePositionEvent, createMintEvent } from "./utils/position-manager-utils"
 import { bigIntToBytes } from "../src/utils/convert"
-import { mockGetPoolKey } from "./utils/common"
+import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./utils/common"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -22,7 +22,7 @@ describe("Describe entity assertions", () => {
     dataSourceMock.setNetwork("goerli")
   })
 
-  afterAll(() => {
+  afterEach(() => {
     clearStore()
   })
 
@@ -71,10 +71,16 @@ describe("Describe entity assertions", () => {
     const lender = Address.fromString("0x0000000000000000000000000000000000000001")
     const pool = Address.fromString("0x0000000000000000000000000000000000000591")
     const tokenId = BigInt.fromI32(234)
+    const tokenContractAddress = Address.fromString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a")
+    const expectedTokenId = bigIntToBytes(tokenId).toHexString()
+
+    // mock contract calls
+    mockGetPoolKey(tokenId, pool)
+    mockGetTokenName(tokenContractAddress, "unknown")
+    mockGetTokenSymbol(tokenContractAddress, "N/A")
+
     const newMintEvent = createMintEvent(lender, pool, tokenId)
     handleMint(newMintEvent)
-
-    const expectedTokenId = bigIntToBytes(tokenId).toHexString()
 
     assert.entityCount("Mint", 1)
     assert.entityCount("Position", 1)
@@ -96,7 +102,7 @@ describe("Describe entity assertions", () => {
       "Position",
       `${expectedTokenId}`,
       "token",
-      `${expectedTokenId}`
+      `${tokenContractAddress.toHexString()}`
     )
   })
 

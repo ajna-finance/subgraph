@@ -309,6 +309,31 @@ export function mockGetDistributionId(grantFund: Address, expectedDistributionId
 /*** Position Mock Functions ***/
 /*******************************/
 
+export function mockGetTokenName(tokenContract: Address, expectedName: String): void {
+    createMockedFunction(
+        tokenContract,
+        'name',
+        'name():(string)'
+    )
+    .withArgs([])
+    .returns([
+        ethereum.Value.fromString(expectedName),
+    ])
+}
+
+export function mockGetTokenSymbol(tokenContract: Address, expectedSymbol: String): void {
+    createMockedFunction(
+        tokenContract,
+        'symbol',
+        'symbol():(string)'
+    )
+    .withArgs([])
+    .returns([
+        ethereum.Value.fromString(expectedSymbol),
+    ])
+}
+
+
 export function mockGetPoolKey(tokenId: BigInt, expectedPoolAddress: Address): void {
     createMockedFunction(
         positionManagerNetworkLookUpTable.get(dataSource.network())!,
@@ -320,7 +345,6 @@ export function mockGetPoolKey(tokenId: BigInt, expectedPoolAddress: Address): v
         ethereum.Value.fromAddress(expectedPoolAddress),
     ])
 }
-
 
 /***************************/
 /*** Pool Mock Functions ***/
