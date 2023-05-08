@@ -333,7 +333,6 @@ export function mockGetTokenSymbol(tokenContract: Address, expectedSymbol: Strin
     ])
 }
 
-
 export function mockGetPoolKey(tokenId: BigInt, expectedPoolAddress: Address): void {
     createMockedFunction(
         positionManagerNetworkLookUpTable.get(dataSource.network())!,

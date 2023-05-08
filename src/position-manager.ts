@@ -16,13 +16,14 @@ import {
   MemorializePosition,
   Mint,
   MoveLiquidity,
+  Pool,
   Position,
   RedeemPosition,
   Transfer
 } from "../generated/schema"
 import { getBucketId } from "./utils/bucket"
 import { lpbValueInQuote } from "./utils/common"
-import { ZERO_BD } from "./utils/constants"
+import { ONE_BI, ZERO_BD } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "./utils/position"
@@ -122,7 +123,7 @@ export function handleMint(event: MintEvent): void {
   mint.blockTimestamp = event.block.timestamp
   mint.transactionHash = event.transaction.hash
 
-  // update entities
+  // update position
   const position = loadOrCreatePosition(mint.tokenId)
   position.owner = mint.lender
   position.pool = getPoolForToken(mint.tokenId)

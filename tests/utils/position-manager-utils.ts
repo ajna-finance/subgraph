@@ -1,4 +1,4 @@
-import { newMockEvent } from "matchstick-as"
+import { assert, newMockEvent } from "matchstick-as"
 import { ethereum, Address, BigInt } from "@graphprotocol/graph-ts"
 import {
   Approval,
@@ -10,6 +10,9 @@ import {
   RedeemPosition,
   Transfer
 } from "../../generated/PositionManager/PositionManager"
+import { mockFindMechanismOfProposal, mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./common"
+import { handleMint } from "../../src/position-manager"
+import { bigIntToBytes } from "../../src/utils/convert"
 
 export function createApprovalEvent(
   owner: Address,
@@ -198,4 +201,42 @@ export function createTransferEvent(
   )
 
   return transferEvent
+}
+
+  /*************************/
+  /*** Utility Functions ***/
+  /*************************/
+
+// mock contract calls and create event
+export function mintPosition(lender: Address, pool: Address, tokenId: BigInt, tokenContractAddress: Address): void {
+  mockGetPoolKey(tokenId, pool)
+  mockGetTokenName(tokenContractAddress, "unknown")
+  mockGetTokenSymbol(tokenContractAddress, "N/A")
+
+  const newMintEvent = createMintEvent(lender, pool, tokenId)
+  handleMint(newMintEvent)
+}
+
+export function assertPosition(lender: Address, pool: Address, tokenId: BigInt, tokenContractAddress: Address): void {
+  const expectedTokenId = bigIntToBytes(tokenId).toHexString()
+
+  // check position attributes
+  assert.fieldEquals(
+    "Position",
+    `${expectedTokenId}`,
+    "owner",
+    `${lender.toHexString()}`
+  )
+  assert.fieldEquals(
+    "Position",
+    `${expectedTokenId}`,
+    "pool",
+    `${pool.toHexString()}`
+  )
+  assert.fieldEquals(
+    "Position",
+    `${expectedTokenId}`,
+    "token",
+    `${tokenContractAddress.toHexString()}`
+  )
 }
