@@ -580,13 +580,6 @@ type Position @entity {
   token: Token! # pointer to positionNFT
 }
 
-# TODO: remove this in favor of reusing Lend for constituent positions
-# type PositionAtIndex @entity {
-#   id: Bytes! # $poolAddress + '#' + $bucketIndex
-#   lpb: BigDecimal!
-#   depositTime: BigInt! # unix timestamp of bucket deposit
-# }
-
   # # # # # # # # # # # # # #
   # POSITION MANAGER EVENTS #
   # # # # # # # # # # # # # #

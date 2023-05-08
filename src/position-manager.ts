@@ -68,7 +68,7 @@ export function handleBurn(event: BurnEvent): void {
   burn.blockTimestamp = event.block.timestamp
   burn.transactionHash = event.transaction.hash
 
-  // delete existing position? or add a isBurned: Bool field
+  // TODO: delete existing position? or add a isBurned: Bool field
 
   burn.save()
 }
@@ -92,8 +92,9 @@ export function handleMemorializePosition(
 
   // get lend entities for each index with extant lpb
   const poolAddress = addressToBytes(getPoolForToken(memorialize.tokenId))
-  const accountId = addressToBytes(memorialize.lender)
-  memorialize.indexes.forEach(index => {
+  const accountId = memorialize.lender
+
+  for (let index = 0; index < memorialize.indexes.length; index++) {
     const bucketId = getBucketId(poolAddress, index)
     const lendId = getLendId(bucketId, accountId)
     // TODO: verify that this correctly points to the existing lend object
@@ -102,7 +103,7 @@ export function handleMemorializePosition(
 
     // save incremental lend to the store
     lend.save()
-  })
+  }
 
   // save entities to store
   memorialize.save()
@@ -180,8 +181,9 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   const position = loadOrCreatePosition(redeem.tokenId)
 
   const poolAddress = addressToBytes(getPoolForToken(redeem.tokenId))
-  const accountId = addressToBytes(redeem.lender)
-  redeem.indexes.forEach(index => {
+  const accountId = redeem.lender
+
+  for (let index = 0; index < redeem.indexes.length; index++) {
     const bucketId = getBucketId(poolAddress, index)
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, poolAddress, accountId)
@@ -195,7 +197,7 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
 
     // save incremental lend to the store
     lend.save()
-  })
+  }
 
   // save entities to store
   position.save()

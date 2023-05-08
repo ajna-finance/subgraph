@@ -6,7 +6,7 @@ import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
 import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
-import { grantFundNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI } from "../../src/utils/constants"
+import { grantFundNetworkLookUpTable, positionManagerNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo } from "../../src/utils/liquidation"
 
@@ -304,6 +304,23 @@ export function mockGetDistributionId(grantFund: Address, expectedDistributionId
             ethereum.Value.fromUnsignedBigInt(expectedDistributionId),
         ])
 }
+
+/*******************************/
+/*** Position Mock Functions ***/
+/*******************************/
+
+export function mockGetPoolKey(tokenId: BigInt, expectedPoolAddress: Address): void {
+    createMockedFunction(
+        positionManagerNetworkLookUpTable.get(dataSource.network())!,
+        'poolKey',
+        'poolKey(uint256):(address)'
+    )
+    .withArgs([ethereum.Value.fromUnsignedBigInt(tokenId)])
+    .returns([
+        ethereum.Value.fromAddress(expectedPoolAddress),
+    ])
+}
+
 
 /***************************/
 /*** Pool Mock Functions ***/
