@@ -624,6 +624,25 @@ type RedeemPosition @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+  # # # # # # # # # # # # # # #
+  # REWARDS MANAGER ENTITIES  #
+  # # # # # # # # # # # # # # #
+
+type StakedPosition @entity {
+  id: Bytes! # byte encoded tokenId
+  position: Position! # pointer to associated Position entity
+  epochs: [EpochRewards!]! # list of EpochRewards associated to a staked position
+  stakedEpoch: Int!
+  lastClaimedEpoch: Int!
+}
+
+type EpochRewards @entity {
+  id: Bytes! # byte encoded epoch + '|' + $StakedPosition.id
+  rewardsClaimed: BigDecimal! # ajna tokens claimed in this epoch
+  updateRewardsClaimed: BigDecimal!
+  totalRewardsClaimed: BigDecimal!
+}
+
   # # # # # # # # # # # # # #
   # REWARDS MANAGER EVENTS  #
   # # # # # # # # # # # # # #
@@ -787,9 +806,6 @@ type FundedSlate @entity {
   proposals: [Proposal!]! # uint256[] list of proposalIds
   updateBlock: BigInt! # block number the slate was updated
 }
-
-# TODO: add stage specific entities?
-# type ScreeningStage @entity {}
 
   # # # # # # # # # # #
   # GRANT FUND EVENTS #
