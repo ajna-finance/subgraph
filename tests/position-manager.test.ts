@@ -9,8 +9,8 @@ import {
   logStore
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { handleApproval, handleBurn, handleMemorializePosition, handleMint, handleRedeemPosition } from "../src/position-manager"
-import { assertPosition, createApprovalEvent, createBurnEvent, createMemorializePositionEvent, createMintEvent, createRedeemPositionEvent, mintPosition } from "./utils/position-manager-utils"
+import { handleApproval, handleBurn, handleMemorializePosition, handleMint, handleMoveLiquidity, handleRedeemPosition } from "../src/position-manager"
+import { assertPosition, createApprovalEvent, createBurnEvent, createMemorializePositionEvent, createMintEvent, createMoveLiquidityEvent, createRedeemPositionEvent, mintPosition } from "./utils/position-manager-utils"
 import { bigIntToBytes } from "../src/utils/convert"
 import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./utils/common"
 
@@ -221,6 +221,65 @@ describe("Describe entity assertions", () => {
     assert.entityCount("MemorializePosition", 1)
     assert.entityCount("Position", 1)
     assert.entityCount("RedeemPosition", 1)
+  })
+
+  test("MoveLiquidity", () => {
+    assert.entityCount("Mint", 0)
+    assert.entityCount("MemorializePosition", 0)
+    assert.entityCount("Position", 0)
+    assert.entityCount("MoveLiquidity", 0)
+
+    const lender = Address.fromString("0x0000000000000000000000000000000000000001")
+    const pool = Address.fromString("0x0000000000000000000000000000000000000591")
+    const tokenId = BigInt.fromI32(234)
+    const tokenContractAddress = Address.fromString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a")
+    const indexes:BigInt[] = []
+    const fromIndex = BigInt.fromI32(5000)
+    const toIndex = BigInt.fromI32(4000)
+
+    /*********************/
+    /*** Mint Position ***/
+    /*********************/
+
+    // create mint position event
+    mintPosition(lender, pool, tokenId, tokenContractAddress)
+
+    // check position attributes
+    assertPosition(lender, pool, tokenId, tokenContractAddress)
+
+    /****************************/
+    /*** Memorialize Position ***/
+    /****************************/
+
+    mockGetPoolKey(tokenId, pool)
+    // memorialize existing position
+    const newMemorializeEvent = createMemorializePositionEvent(lender, tokenId, indexes)
+    handleMemorializePosition(newMemorializeEvent)
+
+    // check position attributes
+    assertPosition(lender, pool, tokenId, tokenContractAddress)
+    // TODO: check index attributes
+
+    assert.entityCount("Mint", 1)
+    assert.entityCount("MemorializePosition", 1)
+    assert.entityCount("Position", 1)
+    assert.entityCount("MoveLiquidity", 0)
+
+    /**********************/
+    /*** Move Liquidity ***/
+    /**********************/
+
+    const newMoveLiquidityEvent = createMoveLiquidityEvent(lender, tokenId, fromIndex, toIndex)
+    handleMoveLiquidity(newMoveLiquidityEvent)
+
+    // check position attributes
+    assertPosition(lender, pool, tokenId, tokenContractAddress)
+    // TODO: check index attributes
+
+    assert.entityCount("Mint", 1)
+    assert.entityCount("MemorializePosition", 1)
+    assert.entityCount("Position", 1)
+    assert.entityCount("MoveLiquidity", 1)
   })
 
 })
