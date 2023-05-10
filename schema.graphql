@@ -634,8 +634,8 @@ type StakedPosition @entity {
   epochs: [EpochReward!]! # list of EpochRewards associated to a staked position
   stakedEpoch: Int! # epoch in which the position was staked
   lastClaimedEpoch: Int! # last epoch which the position staked or claimed rewards in
-  lpsAtStakeTime: BigDecimal! # the amount of LPB associated with a given index TODO: store information per index?
-  rateAtStakeTime: BigDecimal! # the exchange rate at a given index at stake time
+  # lpsAtStakeTime: BigDecimal! # the amount of LPB associated with a given index TODO: store information per index?
+  # rateAtStakeTime: BigDecimal! # the exchange rate at a given index at stake time
 }
 
 type EpochReward @entity {
@@ -643,6 +643,14 @@ type EpochReward @entity {
   rewardsClaimed: BigDecimal! # ajna tokens claimed in this epoch
   updateRewardsClaimed: BigDecimal!
   totalRewardsClaimed: BigDecimal!
+}
+
+# TODO: is this entity necessary? if so referenced by index in stakedposition list
+# house state tracking information about a staked position in a single bucket index
+type StakedLiquidity @entity {
+  id: Bytes! # $lendId + '|' + $StakedPosition.id
+  lpsAtStakeTime: BigDecimal! # the amount of LPB associated with a given index
+  rateAtStakeTime: BigDecimal! # the exchange rate at a given index at stake time
 }
 
   # # # # # # # # # # # # # #
