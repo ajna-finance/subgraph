@@ -14,10 +14,12 @@ export function loadOrCreateLPToken(tokenAddress: Address): Token {
     // create new token if token hasn't already been stored
     token = new Token(id) as Token
     token.name        = getTokenName(tokenAddress)
+    token.decimals    = ZERO_BI
     token.symbol      = getTokenSymbol(tokenAddress)
     token.txCount     = ZERO_BI
     token.isERC721    = true
     token.poolCount   = ONE_BI
+    token.totalSupply = ONE_BI
   }
 
   return token

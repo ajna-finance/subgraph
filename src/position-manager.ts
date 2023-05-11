@@ -214,16 +214,17 @@ export function handleTransfer(event: TransferEvent): void {
   transfer.tokenId = event.params.tokenId
   transfer.pool = getPoolForToken(transfer.tokenId)
 
-  transfer.token = loadOrCreateLPToken(event.address).id
+  transfer.blockNumber = event.block.number;
+  transfer.blockTimestamp = event.block.timestamp;
+  transfer.transactionHash = event.transaction.hash;
 
-  transfer.blockNumber = event.block.number
-  transfer.blockTimestamp = event.block.timestamp
-  transfer.transactionHash = event.transaction.hash
-
-  // update entities
+  // create/update entities
+  const token = loadOrCreateLPToken(event.address);
+  transfer.token = token.id;
   const position = loadOrCreatePosition(transfer.tokenId)
   position.owner = event.params.to
 
+  token.save();
   position.save()
   transfer.save()
 }
