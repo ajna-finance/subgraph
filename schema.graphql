@@ -573,11 +573,12 @@ type PoolCreated @entity(immutable: true) {
   # # # # # # # # # # # # # # #
 
 type Position @entity {
-  id: Bytes! # byte encoded tokenId
+  id: Bytes!        # byte encoded tokenId
+  tokenId: BigInt   # tokenId
   indexes: [Lend!]! # list of lends which constitute a position
-  owner: Bytes! # address of the position owner
-  pool: Bytes!  # address of the pool that the position is associated with
-  token: Token! # pointer to positionNFT
+  owner: Bytes!     # address of the position owner
+  pool: Bytes!      # address of the pool that the position is associated with
+  token: Token!     # pointer to positionNFT
 }
 
   # # # # # # # # # # # # # #

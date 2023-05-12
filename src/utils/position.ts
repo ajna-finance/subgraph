@@ -30,6 +30,7 @@ export function loadOrCreatePosition(tokenId: BigInt): Position {
   let position = Position.load(byteTokenId)
   if (position == null) {
     position = new Position(byteTokenId) as Position
+    position.tokenId = tokenId
     position.indexes = []
     position.owner = Bytes.empty()
     position.pool = Bytes.empty()
