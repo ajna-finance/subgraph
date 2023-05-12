@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, dataSource, store } from "@graphprotocol/graph-ts"
 
 import { Position, Token } from "../../generated/schema"
 import { ONE_BI, ZERO_BI, positionManagerNetworkLookUpTable } from "../utils/constants"
@@ -36,6 +36,10 @@ export function loadOrCreatePosition(tokenId: BigInt): Position {
     position.token = Bytes.empty()
   }
   return position
+}
+
+export function deletePosition(tokenId: BigInt): void {
+  store.remove('Position', bigIntToBytes(tokenId).toHexString())
 }
 
 export function getPoolForToken(tokenId: BigInt): Address {

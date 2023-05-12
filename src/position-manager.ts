@@ -1,3 +1,4 @@
+import { log } from "@graphprotocol/graph-ts"
 import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
@@ -26,7 +27,7 @@ import { lpbValueInQuote } from "./utils/common"
 import { ONE_BI, ZERO_BD } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
-import { getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "./utils/position"
+import { deletePosition, getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "./utils/position"
 
 export function handleApproval(event: ApprovalEvent): void {
   const approval = new Approval(
@@ -69,7 +70,7 @@ export function handleBurn(event: BurnEvent): void {
   burn.blockTimestamp = event.block.timestamp
   burn.transactionHash = event.transaction.hash
 
-  // TODO: delete existing position? or add a isBurned: Bool field
+  deletePosition(event.params.tokenId);
 
   burn.save()
 }
@@ -80,7 +81,7 @@ export function handleMemorializePosition(
   const memorialize = new MemorializePosition(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  memorialize.lender = event.params.lender
+  memorialize.lender = addressToBytes(event.params.lender)
   memorialize.tokenId = event.params.tokenId
   memorialize.indexes = bigIntArrayToIntArray(event.params.indexes)
 
@@ -92,19 +93,21 @@ export function handleMemorializePosition(
   const position = loadOrCreatePosition(memorialize.tokenId)
 
   // get lend entities for each index with extant lpb
-  const poolAddress = addressToBytes(getPoolForToken(memorialize.tokenId))
+  const addressNotBytes = getPoolForToken(memorialize.tokenId)
+  const poolAddress = addressToBytes(addressNotBytes)
   const accountId = memorialize.lender
 
-  for (let index = 0; index < memorialize.indexes.length; index++) {
+  const positionIndexes = position.indexes;
+  for (let i = 0; i < memorialize.indexes.length; i++) {
+    const index = memorialize.indexes[i];
     const bucketId = getBucketId(poolAddress, index)
     const lendId = getLendId(bucketId, accountId)
-    // TODO: verify that this correctly points to the existing lend object
     const lend = loadOrCreateLend(bucketId, lendId, poolAddress, accountId)
-    position.indexes.push(lend.id)
-
-    // save incremental lend to the store
+    positionIndexes.push(lend.id)
+    // save incremental lend to the store 
     lend.save()
   }
+  position.indexes = positionIndexes
 
   // save entities to store
   memorialize.save()
@@ -127,11 +130,16 @@ export function handleMint(event: MintEvent): void {
   const position = loadOrCreatePosition(mint.tokenId)
   position.owner = mint.lender
   position.pool = getPoolForToken(mint.tokenId)
-  position.token = loadOrCreateLPToken(event.address).id
+
+  // update token
+  const token = loadOrCreateLPToken(event.address)
+  position.token = token.id
+  token.txCount = token.txCount.plus(ONE_BI);
 
   // save entities to store
   mint.save()
   position.save()
+  token.save()
 }
 
 export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
@@ -158,11 +166,15 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   lendFrom.save()
   lendTo.save()
 
+  const token = loadOrCreateLPToken(event.address)
+  token.txCount = token.txCount.plus(ONE_BI);
+
   moveLiquidity.blockNumber = event.block.number
   moveLiquidity.blockTimestamp = event.block.timestamp
   moveLiquidity.transactionHash = event.transaction.hash
 
   moveLiquidity.save()
+  token.save()
 }
 
 export function handleRedeemPosition(event: RedeemPositionEvent): void {
@@ -189,7 +201,6 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, poolAddress, accountId)
 
-    // TODO: should we simply splice out redeemed lends, or do we need to maintain access for hisorical analytics?
     // remove lends from position
     const existingIndex = position.indexes.indexOf(lendId)
     if (existingIndex != -1) {
@@ -200,9 +211,14 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
     lend.save()
   }
 
+  // increment token txCount
+  const token = loadOrCreateLPToken(event.address)
+  token.txCount = token.txCount.plus(ONE_BI);
+
   // save entities to store
-  position.save()
   redeem.save()
+  position.save()
+  token.save()
 }
 
 export function handleTransfer(event: TransferEvent): void {
@@ -221,6 +237,7 @@ export function handleTransfer(event: TransferEvent): void {
   // create/update entities
   const token = loadOrCreateLPToken(event.address);
   transfer.token = token.id;
+  token.txCount = token.txCount.plus(ONE_BI);
   const position = loadOrCreatePosition(transfer.tokenId)
   position.owner = event.params.to
 
