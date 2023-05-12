@@ -17,7 +17,7 @@ export function getTokenName(tokenAddress: Address): string {
 export function getTokenSymbol(tokenAddress: Address): string {
     const tokenSymbolCall = ERC721.bind(tokenAddress).try_symbol()
     if (tokenSymbolCall.reverted) {
-        return "unknown"
+        return "N/A"
     } else {
         return tokenSymbolCall.value
     }

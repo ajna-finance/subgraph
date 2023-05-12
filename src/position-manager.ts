@@ -1,3 +1,4 @@
+import { log } from "@graphprotocol/graph-ts"
 import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
@@ -16,155 +17,231 @@ import {
   MemorializePosition,
   Mint,
   MoveLiquidity,
+  Pool,
+  Position,
   RedeemPosition,
   Transfer
 } from "../generated/schema"
 import { getBucketId } from "./utils/bucket"
 import { lpbValueInQuote } from "./utils/common"
-import { ZERO_BD } from "./utils/constants"
-import { bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
+import { ONE_BI, ZERO_BD } from "./utils/constants"
+import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
-import { getPoolForToken, loadOrCreateLPToken } from "./utils/position"
+import { deletePosition, getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "./utils/position"
 
 export function handleApproval(event: ApprovalEvent): void {
-  let entity = new Approval(
+  const approval = new Approval(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.owner = event.params.owner
-  entity.approved = event.params.approved
-  entity.tokenId = event.params.tokenId
+  approval.owner = event.params.owner
+  approval.approved = event.params.approved
+  approval.tokenId = event.params.tokenId
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  approval.blockNumber = event.block.number
+  approval.blockTimestamp = event.block.timestamp
+  approval.transactionHash = event.transaction.hash
 
-  entity.save()
+  approval.save()
 }
 
 export function handleApprovalForAll(event: ApprovalForAllEvent): void {
-  let entity = new ApprovalForAll(
+  const approvalForAll = new ApprovalForAll(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.owner = event.params.owner
-  entity.operator = event.params.operator
-  entity.approved = event.params.approved
+  approvalForAll.owner = event.params.owner
+  approvalForAll.operator = event.params.operator
+  approvalForAll.approved = event.params.approved
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  approvalForAll.blockNumber = event.block.number
+  approvalForAll.blockTimestamp = event.block.timestamp
+  approvalForAll.transactionHash = event.transaction.hash
 
-  entity.save()
+  approvalForAll.save()
 }
 
 export function handleBurn(event: BurnEvent): void {
-  let entity = new Burn(
+  const burn = new Burn(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.lender = event.params.lender
-  entity.tokenId = event.params.tokenId
+  burn.lender = event.params.lender
+  burn.tokenId = event.params.tokenId
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  burn.blockNumber = event.block.number
+  burn.blockTimestamp = event.block.timestamp
+  burn.transactionHash = event.transaction.hash
 
-  entity.save()
+  deletePosition(event.params.tokenId);
+
+  burn.save()
 }
 
 export function handleMemorializePosition(
   event: MemorializePositionEvent
 ): void {
-  let entity = new MemorializePosition(
+  const memorialize = new MemorializePosition(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.lender = event.params.lender
-  entity.tokenId = event.params.tokenId
-  entity.indexes = bigIntArrayToIntArray(event.params.indexes)
+  memorialize.lender = addressToBytes(event.params.lender)
+  memorialize.tokenId = event.params.tokenId
+  memorialize.indexes = bigIntArrayToIntArray(event.params.indexes)
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  memorialize.blockNumber = event.block.number
+  memorialize.blockTimestamp = event.block.timestamp
+  memorialize.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update entities
+  const position = loadOrCreatePosition(memorialize.tokenId)
+
+  // get lend entities for each index with extant lpb
+  const addressNotBytes = getPoolForToken(memorialize.tokenId)
+  const poolAddress = addressToBytes(addressNotBytes)
+  const accountId = memorialize.lender
+
+  const positionIndexes = position.indexes;
+  for (let i = 0; i < memorialize.indexes.length; i++) {
+    const index = memorialize.indexes[i];
+    const bucketId = getBucketId(poolAddress, index)
+    const lendId = getLendId(bucketId, accountId)
+    const lend = loadOrCreateLend(bucketId, lendId, poolAddress, accountId)
+    positionIndexes.push(lend.id)
+    // save incremental lend to the store 
+    lend.save()
+  }
+  position.indexes = positionIndexes
+
+  // save entities to store
+  memorialize.save()
+  position.save()
 }
 
 export function handleMint(event: MintEvent): void {
-  let entity = new Mint(
+  const mint = new Mint(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.lender = event.params.lender
-  entity.pool = event.params.pool
-  entity.tokenId = event.params.tokenId
+  mint.lender = event.params.lender
+  mint.pool = event.params.pool
+  mint.tokenId = event.params.tokenId
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  mint.blockNumber = event.block.number
+  mint.blockTimestamp = event.block.timestamp
+  mint.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update position
+  const position = loadOrCreatePosition(mint.tokenId)
+  position.owner = mint.lender
+  position.pool = getPoolForToken(mint.tokenId)
+
+  // update token
+  const token = loadOrCreateLPToken(event.address)
+  position.token = token.id
+  token.txCount = token.txCount.plus(ONE_BI);
+
+  // save entities to store
+  mint.save()
+  position.save()
+  token.save()
 }
 
 export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
-  let entity = new MoveLiquidity(
+  const moveLiquidity = new MoveLiquidity(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.lender = event.params.lender
-  entity.tokenId = event.params.tokenId
-  entity.pool = getPoolForToken(entity.tokenId)
-  entity.fromIndex = event.params.fromIndex.toU32()
-  entity.toIndex = event.params.toIndex.toU32()
+  moveLiquidity.lender = event.params.lender
+  moveLiquidity.tokenId = event.params.tokenId
+  moveLiquidity.pool = getPoolForToken(moveLiquidity.tokenId)
+  moveLiquidity.fromIndex = event.params.fromIndex.toU32()
+  moveLiquidity.toIndex = event.params.toIndex.toU32()
 
-  const bucketIdFrom = getBucketId(entity.pool, entity.fromIndex)
-  const lendIdFrom   = getLendId(bucketIdFrom, entity.lender)
-  const lendFrom     = loadOrCreateLend(bucketIdFrom, lendIdFrom, entity.pool, entity.lender)
-  const bucketIdTo   = getBucketId(entity.pool, entity.toIndex)
-  const lendIdTo     = getLendId(bucketIdTo, entity.lender)
-  const lendTo       = loadOrCreateLend(bucketIdTo, lendIdTo, entity.pool, entity.lender)
+  const bucketIdFrom = getBucketId(moveLiquidity.pool, moveLiquidity.fromIndex)
+  const lendIdFrom   = getLendId(bucketIdFrom, moveLiquidity.lender)
+  const lendFrom     = loadOrCreateLend(bucketIdFrom, lendIdFrom, moveLiquidity.pool, moveLiquidity.lender)
+  const bucketIdTo   = getBucketId(moveLiquidity.pool, moveLiquidity.toIndex)
+  const lendIdTo     = getLendId(bucketIdTo, moveLiquidity.lender)
+  const lendTo       = loadOrCreateLend(bucketIdTo, lendIdTo, moveLiquidity.pool, moveLiquidity.lender)
   // FIXME: determine how much liquidity was moved
   // lendTo.lpb               = ???
-  // lendTo.lpbValueInQuote   = lpbValueInQuote(entity.pool, entity.toIndex, lendTo.lpb)
+  // lendTo.lpbValueInQuote   = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendTo.lpb)
   lendFrom.lpb             = ZERO_BD
   lendFrom.lpbValueInQuote = ZERO_BD
   lendFrom.save()
   lendTo.save()
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  const token = loadOrCreateLPToken(event.address)
+  token.txCount = token.txCount.plus(ONE_BI);
 
-  entity.save()
+  moveLiquidity.blockNumber = event.block.number
+  moveLiquidity.blockTimestamp = event.block.timestamp
+  moveLiquidity.transactionHash = event.transaction.hash
+
+  moveLiquidity.save()
+  token.save()
 }
 
 export function handleRedeemPosition(event: RedeemPositionEvent): void {
-  let entity = new RedeemPosition(
+  const redeem = new RedeemPosition(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.lender = event.params.lender
-  entity.tokenId = event.params.tokenId
-  entity.pool = getPoolForToken(entity.tokenId)
-  entity.indexes = bigIntArrayToIntArray(event.params.indexes)
+  redeem.lender = event.params.lender
+  redeem.tokenId = event.params.tokenId
+  redeem.pool = getPoolForToken(redeem.tokenId)
+  redeem.indexes = bigIntArrayToIntArray(event.params.indexes)
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  redeem.blockNumber = event.block.number
+  redeem.blockTimestamp = event.block.timestamp
+  redeem.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update entities
+  const position = loadOrCreatePosition(redeem.tokenId)
+
+  const poolAddress = addressToBytes(getPoolForToken(redeem.tokenId))
+  const accountId = redeem.lender
+
+  for (let index = 0; index < redeem.indexes.length; index++) {
+    const bucketId = getBucketId(poolAddress, index)
+    const lendId = getLendId(bucketId, accountId)
+    const lend = loadOrCreateLend(bucketId, lendId, poolAddress, accountId)
+
+    // remove lends from position
+    const existingIndex = position.indexes.indexOf(lendId)
+    if (existingIndex != -1) {
+      position.indexes.splice(existingIndex, 1)
+    }
+
+    // save incremental lend to the store
+    lend.save()
+  }
+
+  // increment token txCount
+  const token = loadOrCreateLPToken(event.address)
+  token.txCount = token.txCount.plus(ONE_BI);
+
+  // save entities to store
+  redeem.save()
+  position.save()
+  token.save()
 }
 
 export function handleTransfer(event: TransferEvent): void {
-  const entity = new Transfer(
+  const transfer = new Transfer(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.from = event.params.from
-  entity.to = event.params.to
-  entity.tokenId = event.params.tokenId
-  entity.pool = getPoolForToken(entity.tokenId)
+  transfer.from = event.params.from
+  transfer.to = event.params.to
+  transfer.tokenId = event.params.tokenId
+  transfer.pool = getPoolForToken(transfer.tokenId)
 
-  const token = loadOrCreateLPToken(event.address)
-  entity.token = token.id
+  transfer.blockNumber = event.block.number;
+  transfer.blockTimestamp = event.block.timestamp;
+  transfer.transactionHash = event.transaction.hash;
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  // create/update entities
+  const token = loadOrCreateLPToken(event.address);
+  transfer.token = token.id;
+  token.txCount = token.txCount.plus(ONE_BI);
+  const position = loadOrCreatePosition(transfer.tokenId)
+  position.owner = event.params.to
 
   token.save();
-  entity.save()
+  position.save()
+  transfer.save()
 }
