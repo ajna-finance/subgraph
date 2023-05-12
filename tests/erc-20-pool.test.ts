@@ -475,7 +475,7 @@ describe("ERC20Pool assertions", () => {
     const collateralPledged = BigInt.fromI32(1067)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
 
-    const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI)
+    const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
     mockGetDebtInfo(poolAddress, expectedPoolDebtInfo)
 
     // mock drawDebt event

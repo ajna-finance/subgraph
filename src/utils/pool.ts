@@ -259,10 +259,12 @@ export class DebtInfo {
     pendingDebt: BigInt
     accruedDebt: BigInt
     liquidationDebt: BigInt
-    constructor(pendingDebt: BigInt, accruedDebt: BigInt, liquidationDebt: BigInt) {
-        this.pendingDebt = pendingDebt  
-        this.accruedDebt = accruedDebt  
-        this.liquidationDebt = liquidationDebt  
+    t0Debt2ToCollateral: BigInt
+    constructor(pendingDebt: BigInt, accruedDebt: BigInt, liquidationDebt: BigInt, t0Debt2ToCollateral: BigInt) {
+        this.pendingDebt = pendingDebt
+        this.accruedDebt = accruedDebt
+        this.liquidationDebt = liquidationDebt
+        this.t0Debt2ToCollateral = t0Debt2ToCollateral
     }
 }
 export function getDebtInfo(pool: Pool): DebtInfo {
@@ -272,6 +274,7 @@ export function getDebtInfo(pool: Pool): DebtInfo {
   return new DebtInfo(
     debtInfoResult.value0,
     debtInfoResult.value1,
-    debtInfoResult.value2
+    debtInfoResult.value2,
+    debtInfoResult.value3
   )
 }

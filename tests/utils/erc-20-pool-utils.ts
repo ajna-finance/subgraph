@@ -17,7 +17,7 @@ import {
   ReserveAuction,
   Settle,
   Take,
-  TransferLPs,
+  TransferLP,
   UpdateInterestRate
 } from "../../generated/templates/ERC20Pool/ERC20Pool"
 
@@ -94,7 +94,7 @@ export function createAddQuoteTokenEvent(
 export function createAuctionNFTSettleEvent(
   borrower: Address,
   collateral: BigInt,
-  lps: BigInt,
+  lp: BigInt,
   index: BigInt
 ): AuctionNFTSettle {
   let auctionNftSettleEvent = changetype<AuctionNFTSettle>(newMockEvent())
@@ -111,7 +111,7 @@ export function createAuctionNFTSettleEvent(
     )
   )
   auctionNftSettleEvent.parameters.push(
-    new ethereum.EventParam("lps", ethereum.Value.fromUnsignedBigInt(lps))
+    new ethereum.EventParam("lp", ethereum.Value.fromUnsignedBigInt(lp))
   )
   auctionNftSettleEvent.parameters.push(
     new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
@@ -571,13 +571,13 @@ export function createTakeEvent(
   return takeEvent
 }
 
-export function createTransferLPsEvent(
+export function createTransferLPEvent(
   owner: Address,
   newOwner: Address,
   indexes: Array<BigInt>,
-  lps: BigInt
-): TransferLPs {
-  let transferLpTokensEvent = changetype<TransferLPs>(newMockEvent())
+  lp: BigInt
+): TransferLP {
+  let transferLpTokensEvent = changetype<TransferLP>(newMockEvent())
 
   transferLpTokensEvent.parameters = new Array()
 
@@ -595,8 +595,8 @@ export function createTransferLPsEvent(
   )
   transferLpTokensEvent.parameters.push(
     new ethereum.EventParam(
-      "lps",
-      ethereum.Value.fromUnsignedBigInt(lps)
+      "lp",
+      ethereum.Value.fromUnsignedBigInt(lp)
     )
   )
 

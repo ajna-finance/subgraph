@@ -10,7 +10,7 @@ export function lpbValueInQuote(pool: Bytes, bucketIndex: u32, lpAmount: BigDeci
     const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
 
-    const quoteTokenAmount = poolInfoUtilsContract.lpsToQuoteTokens(
+    const quoteTokenAmount = poolInfoUtilsContract.lpToQuoteTokens(
       poolAddress, 
       bigDecimalWadToBigInt(lpAmount), 
       BigInt.fromU32(bucketIndex)

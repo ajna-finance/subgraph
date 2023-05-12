@@ -3,7 +3,7 @@ import { BigInt, Bytes } from "@graphprotocol/graph-ts"
 import {
   AddCollateral as AddCollateralEvent,
   AddQuoteToken as AddQuoteTokenEvent,
-  ApproveLpTransferors as ApproveLpTransferorsEvent,
+  ApproveLPTransferors as ApproveLPTransferorsEvent,
   AuctionNFTSettle as AuctionNFTSettleEvent,
   AuctionSettle as AuctionSettleEvent,
   BondWithdrawn as BondWithdrawnEvent,
@@ -11,6 +11,7 @@ import {
   BucketTake as BucketTakeEvent,
   BucketTakeLPAwarded as BucketTakeLPAwardedEvent,
   DrawDebt as DrawDebtEvent,
+  IncreaseLPAllowance as IncreaseLPAllowanceEvent,
   Kick as KickEvent,
   LoanStamped as LoanStampedEvent,
   MoveQuoteToken as MoveQuoteTokenEvent,
@@ -18,12 +19,11 @@ import {
   RemoveQuoteToken as RemoveQuoteTokenEvent,
   RepayDebt as RepayDebtEvent,
   ReserveAuction as ReserveAuctionEvent,
-  RevokeLpAllowance as RevokeLpAllowanceEvent,
-  RevokeLpTransferors as RevokeLpTransferorsEvent,
-  SetLpAllowance as SetLpAllowanceEvent,
+  RevokeLPAllowance as RevokeLPAllowanceEvent,
+  RevokeLPTransferors as RevokeLPTransferorsEvent,
   Settle as SettleEvent,
   Take as TakeEvent,
-  TransferLPs as TransferLPsEvent,
+  TransferLP as TransferLPEvent,
   UpdateInterestRate as UpdateInterestRateEvent
 } from "../generated/templates/ERC20Pool/ERC20Pool"
 import {
@@ -51,7 +51,7 @@ import {
   Settle,
   Take,
   Token,
-  TransferLPs,
+  TransferLP,
   UpdateInterestRate
 } from "../generated/schema"
 
@@ -190,8 +190,8 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   addQuoteToken.save()
 }
 
-export function handleApproveLpTransferors(
-  event: ApproveLpTransferorsEvent
+export function handleApproveLPTransferors(
+  event: ApproveLPTransferorsEvent
 ): void {
   const poolId = addressToBytes(event.address)
   const entity = loadOrCreateTransferors(poolId, event.params.lender)
@@ -207,7 +207,7 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   )
   entity.borrower = event.params.borrower
   entity.collateral = wadToDecimal(event.params.collateral)
-  entity.lps = wadToDecimal(event.params.lps)
+  entity.lp = wadToDecimal(event.params.lp)
   entity.index = event.params.index.toU32()
 
   entity.blockNumber = event.block.number
@@ -935,7 +935,7 @@ export function handleReserveAuction(event: ReserveAuctionEvent): void {
   reserveAuctionEvent.save()
 }
 
-export function handleRevokeLpAllowance(event: RevokeLpAllowanceEvent): void {
+export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
   const poolId = addressToBytes(event.address)
   const lender = event.transaction.from
   const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
@@ -950,8 +950,8 @@ export function handleRevokeLpAllowance(event: RevokeLpAllowanceEvent): void {
   entity.save()
 }
 
-export function handleRevokeLpTransferors(
-  event: RevokeLpTransferorsEvent
+export function handleRevokeLPTransferors(
+  event: RevokeLPTransferorsEvent
 ): void {
   const poolId = addressToBytes(event.address)
   const entity = loadOrCreateTransferors(poolId, event.params.lender)
@@ -966,7 +966,7 @@ export function handleRevokeLpTransferors(
   entity.save()
 }
 
-export function handleSetLpAllowance(event: SetLpAllowanceEvent): void {
+export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
   const poolId = addressToBytes(event.address)
   const lender = event.transaction.from
   const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
@@ -1119,14 +1119,14 @@ export function handleSettle(event: SettleEvent): void {
   settle.save()
 }
 
-export function handleTransferLPs(event: TransferLPsEvent): void {
-  const entity = new TransferLPs(
+export function handleTransferLP(event: TransferLPEvent): void {
+  const entity = new TransferLP(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.owner    = event.params.owner
   entity.newOwner = event.params.newOwner
   entity.indexes  = bigIntArrayToIntArray(event.params.indexes)
-  entity.lps      = wadToDecimal(event.params.lps)
+  entity.lp       = wadToDecimal(event.params.lp)
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp

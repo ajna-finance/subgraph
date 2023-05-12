@@ -6,9 +6,9 @@ dataSources:
     name: PositionManager
     network: goerli
     source:
-      address: "0x31BcbE14Ad30B2f7E1E4A14caB2C16849B73Dac3"
+      address: "0x83AB3762A4AeC9FBD4e7c01581C9495f2160630b"
       abi: PositionManager
-      startBlock: 8613513
+      startBlock: 8884538
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -40,7 +40,7 @@ dataSources:
           handler: handleMemorializePosition
         - event: Mint(indexed address,indexed address,uint256)
           handler: handleMint
-        - event: MoveLiquidity(indexed address,uint256,uint256,uint256)
+        - event: MoveLiquidity(indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleMoveLiquidity
         - event: RedeemPosition(indexed address,uint256,uint256[])
           handler: handleRedeemPosition
@@ -51,9 +51,9 @@ dataSources:
     name: ERC20PoolFactory
     network: goerli
     source:
-      address: "0x9684b8eC942985b23d343cB82D2F30EdA8fD7179"
+      address: "0x68ced2E7d257da67794B00556B31203A344d3c1e"
       abi: ERC20PoolFactory
-      startBlock: 8613513
+      startBlock: 8884537
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -75,9 +75,9 @@ dataSources:
     name: RewardsManager
     network: goerli
     source:
-      address: "0xEd6890d748e62ddbb3f80e7256Deeb2fBb853476"
+      address: "0xaF9bc1F09fe561CbD00018fC352507fD23cD46E2"
       abi: RewardsManager
-      startBlock: 8613513
+      startBlock: 8884538
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -109,9 +109,9 @@ dataSources:
     name: ERC721PoolFactory
     network: goerli
     source:
-      address: "0x7DB5ba7cB6dAD74b45AAB027A7E7388eF18656DF"
+      address: "0x86EEA73d8071b03D998f1c466fe2125f0D3C4195"
       abi: ERC721PoolFactory
-      startBlock: 8613513
+      startBlock: 8884538
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -133,9 +133,9 @@ dataSources:
     name: GrantFund
     network: goerli
     source:
-      address: "0xaeB91e664A49829FaBf06BE35d4447938d83A271"
+      address: "0x54110a15011bcb145a8CD4f5adf108B2B6939A1e"
       abi: GrantFund
-      startBlock: 8613513
+      startBlock: 8885195
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -180,7 +180,7 @@ templates:
       entities:
         - AddCollateral
         - AddQuoteToken
-        - ApproveLpTransferors
+        - ApproveLPTransferors
         - AuctionNFTSettle
         - AuctionSettle
         - BondWithdrawn
@@ -188,6 +188,7 @@ templates:
         - BucketTake
         - BucketTakeLPAwarded
         - DrawDebt
+        - IncreaseLPAllowance
         - Kick
         - LoanStamped
         - MoveQuoteToken
@@ -195,12 +196,11 @@ templates:
         - RemoveQuoteToken
         - RepayDebt
         - ReserveAuctionKickOrTake
-        - RevokeLpAllowance
-        - RevokeLpTransferors
-        - SetLpAllowance
+        - RevokeLPAllowance
+        - RevokeLPTransferors
         - Settle
         - Take
-        - TransferLPs
+        - TransferLP
         - UpdateInterestRate
       abis:
         - name: ERC20Pool
@@ -212,8 +212,8 @@ templates:
           handler: handleAddCollateral
         - event: AddQuoteToken(indexed address,indexed uint256,uint256,uint256,uint256)
           handler: handleAddQuoteToken
-        - event: ApproveLpTransferors(indexed address,address[])
-          handler: handleApproveLpTransferors
+        - event: ApproveLPTransferors(indexed address,address[])
+          handler: handleApproveLPTransferors
         - event: AuctionNFTSettle(indexed address,uint256,uint256,uint256)
           handler: handleAuctionNFTSettle
         - event: AuctionSettle(indexed address,uint256)
@@ -228,6 +228,8 @@ templates:
           handler: handleBucketTakeLPAwarded
         - event: DrawDebt(indexed address,uint256,uint256,uint256)
           handler: handleDrawDebt
+        - event: IncreaseLPAllowance(indexed address,indexed address,uint256[],uint256[])
+          handler: handleIncreaseLPAllowance
         - event: Kick(indexed address,uint256,uint256,uint256)
           handler: handleKick
         - event: LoanStamped(indexed address)
@@ -243,18 +245,16 @@ templates:
           handler: handleRepayDebt
         - event: ReserveAuction(uint256,uint256,uint256)
           handler: handleReserveAuction
-        - event: RevokeLpAllowance(indexed address,uint256[])
-          handler: handleRevokeLpAllowance
-        - event: RevokeLpTransferors(indexed address,address[])
-          handler: handleRevokeLpTransferors
-        - event: SetLpAllowance(indexed address,uint256[],uint256[])
-          handler: handleSetLpAllowance
+        - event: RevokeLPAllowance(indexed address,indexed address,uint256[])
+          handler: handleRevokeLPAllowance
+        - event: RevokeLPTransferors(indexed address,address[])
+          handler: handleRevokeLPTransferors
         - event: Settle(indexed address,uint256)
           handler: handleSettle
         - event: Take(indexed address,uint256,uint256,uint256,bool)
           handler: handleTake
-        - event: TransferLPs(address,address,uint256[],uint256)
-          handler: handleTransferLPs
+        - event: TransferLP(address,address,uint256[],uint256)
+          handler: handleTransferLP
         - event: UpdateInterestRate(uint256,uint256)
           handler: handleUpdateInterestRate
       file: ./src/erc-20-pool.ts

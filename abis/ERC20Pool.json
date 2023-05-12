@@ -96,12 +96,17 @@
   },
   {
     "inputs": [],
-    "name": "InsufficientLPs",
+    "name": "InsufficientLP",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "InsufficientLiquidity",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidAllowancesInput",
     "type": "error"
   },
   {
@@ -428,7 +433,7 @@
         "type": "address[]"
       }
     ],
-    "name": "ApproveLpTransferors",
+    "name": "ApproveLPTransferors",
     "type": "event"
   },
   {
@@ -449,7 +454,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "lps",
+        "name": "lp",
         "type": "uint256"
       },
       {
@@ -605,6 +610,37 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "indexes",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "amounts",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "DecreaseLPAllowance",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "borrower",
         "type": "address"
       },
@@ -636,6 +672,62 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Flashloan",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "indexes",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "amounts",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "IncreaseLPAllowance",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "borrower",
         "type": "address"
       },
@@ -659,6 +751,31 @@
       }
     ],
     "name": "Kick",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "claimableReservesRemaining",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "auctionPrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "currentBurnEpoch",
+        "type": "uint256"
+      }
+    ],
+    "name": "KickReserveAuction",
     "type": "event"
   },
   {
@@ -851,6 +968,31 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldRate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newRate",
+        "type": "uint256"
+      }
+    ],
+    "name": "ResetInterestRate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
         "indexed": true,
         "internalType": "address",
         "name": "spender",
@@ -863,7 +1005,7 @@
         "type": "uint256[]"
       }
     ],
-    "name": "RevokeLpAllowance",
+    "name": "RevokeLPAllowance",
     "type": "event"
   },
   {
@@ -882,32 +1024,7 @@
         "type": "address[]"
       }
     ],
-    "name": "RevokeLpTransferors",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "indexes",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "amounts",
-        "type": "uint256[]"
-      }
-    ],
-    "name": "SetLpAllowance",
+    "name": "RevokeLPTransferors",
     "type": "event"
   },
   {
@@ -990,11 +1107,11 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "lps",
+        "name": "lp",
         "type": "uint256"
       }
     ],
-    "name": "TransferLPs",
+    "name": "TransferLP",
     "type": "event"
   },
   {
@@ -1038,7 +1155,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "bucketLPs_",
+        "name": "bucketLP_",
         "type": "uint256"
       }
     ],
@@ -1049,7 +1166,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "quoteTokenAmountToAdd_",
+        "name": "amount_",
         "type": "uint256"
       },
       {
@@ -1067,7 +1184,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "bucketLPs_",
+        "name": "bucketLP_",
         "type": "uint256"
       }
     ],
@@ -1082,7 +1199,7 @@
         "type": "address[]"
       }
     ],
-    "name": "approveLpTransferors",
+    "name": "approveLPTransferors",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1123,52 +1240,52 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "kicker",
+        "name": "kicker_",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "bondFactor",
+        "name": "bondFactor_",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "bondSize",
+        "name": "bondSize_",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "kickTime",
+        "name": "kickTime_",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "kickMomp",
+        "name": "kickMomp_",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "neutralPrice",
+        "name": "neutralPrice_",
         "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "head",
+        "name": "head_",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "next",
+        "name": "next_",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "prev",
+        "name": "prev_",
         "type": "address"
       },
       {
         "internalType": "bool",
-        "name": "alreadyTaken",
+        "name": "alreadyTaken_",
         "type": "bool"
       }
     ],
@@ -1208,7 +1325,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "bucketIndex",
+        "name": "bucketIndex_",
         "type": "uint256"
       }
     ],
@@ -1390,6 +1507,11 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1438,8 +1560,46 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "index_",
+        "type": "uint256"
+      }
+    ],
+    "name": "depositScale",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "depositSize",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "index_",
+        "type": "uint256"
+      }
+    ],
+    "name": "depositUpToIndex",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1653,16 +1813,23 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "borrowerAddress_",
+        "name": "borrower_",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "limitIndex_",
+        "name": "npLimitIndex_",
         "type": "uint256"
       }
     ],
     "name": "kick",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "kickReserveAuction",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1676,7 +1843,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "limitIndex_",
+        "name": "npLimitIndex_",
         "type": "uint256"
       }
     ],
@@ -1837,7 +2004,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "maxAmountToMove_",
+        "name": "maxAmount_",
         "type": "uint256"
       },
       {
@@ -1860,12 +2027,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "fromBucketLPs_",
+        "name": "fromBucketLP_",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "toBucketLPs_",
+        "name": "toBucketLP_",
         "type": "uint256"
       },
       {
@@ -1978,12 +2145,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "collateralAmount_",
+        "name": "removedAmount_",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "lpAmount_",
+        "name": "redeemedLP_",
         "type": "uint256"
       }
     ],
@@ -2012,7 +2179,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "redeemedLPs_",
+        "name": "redeemedLP_",
         "type": "uint256"
       }
     ],
@@ -2106,7 +2273,7 @@
         "type": "address[]"
       }
     ],
-    "name": "revokeLpTransferors",
+    "name": "revokeLPTransferors",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -2137,13 +2304,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "startClaimableReserveAuction",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -2152,7 +2312,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "collateral_",
+        "name": "maxAmount_",
         "type": "uint256"
       },
       {
@@ -2247,7 +2407,7 @@
         "type": "uint256[]"
       }
     ],
-    "name": "transferLPs",
+    "name": "transferLP",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

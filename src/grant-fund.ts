@@ -39,14 +39,14 @@ export function handleDelegateRewardClaimed(
   const delegateRewardClaimed = new DelegateRewardClaimed(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  delegateRewardClaimed.delegateeAddress_ = event.params.delegateeAddress_
-  delegateRewardClaimed.rewardClaimed_    = event.params.rewardClaimed_
+  delegateRewardClaimed.delegateeAddress_ = event.params.delegateeAddress
+  delegateRewardClaimed.rewardClaimed_    = event.params.rewardClaimed
 
   delegateRewardClaimed.blockNumber     = event.block.number
   delegateRewardClaimed.blockTimestamp  = event.block.timestamp
   delegateRewardClaimed.transactionHash = event.transaction.hash
 
-  const rewardsClaimed = wadToDecimal(event.params.rewardClaimed_)
+  const rewardsClaimed = wadToDecimal(event.params.rewardClaimed)
 
   // update DistributionPeriod entity
   const distributionId = bigIntToBytes(getCurrentDistributionId())
@@ -91,17 +91,17 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
   const fundedSlateUpdated = new FundedSlateUpdated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  fundedSlateUpdated.distributionId_ = event.params.distributionId_
-  fundedSlateUpdated.fundedSlateHash_ = event.params.fundedSlateHash_
+  fundedSlateUpdated.distributionId_ = event.params.distributionId
+  fundedSlateUpdated.fundedSlateHash_ = event.params.fundedSlateHash
 
   fundedSlateUpdated.blockNumber = event.block.number
   fundedSlateUpdated.blockTimestamp = event.block.timestamp
   fundedSlateUpdated.transactionHash = event.transaction.hash
 
   // update DistributionPeriod entity
-  const distributionId = bigIntToBytes(event.params.distributionId_)
+  const distributionId = bigIntToBytes(event.params.distributionId)
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
-  distributionPeriod.topSlate = event.params.fundedSlateHash_
+  distributionPeriod.topSlate = event.params.fundedSlateHash
 
   // create FundedSlate entity
   const fundedSlate = new FundedSlate(distributionId) as FundedSlate
@@ -258,10 +258,10 @@ export function handleQuarterlyDistributionStarted(
   const distributionStarted = new QuarterlyDistributionStarted(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  const distributionId = bigIntToBytes(event.params.distributionId_)
+  const distributionId = bigIntToBytes(event.params.distributionId)
   distributionStarted.distribution = distributionId
-  distributionStarted.startBlock_ = event.params.startBlock_
-  distributionStarted.endBlock_ = event.params.endBlock_
+  distributionStarted.startBlock_ = event.params.startBlock
+  distributionStarted.endBlock_ = event.params.endBlock
 
   distributionStarted.blockNumber = event.block.number
   distributionStarted.blockTimestamp = event.block.timestamp

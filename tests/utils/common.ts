@@ -391,17 +391,18 @@ export function mockGetBucketInfo(pool: Address, bucketIndex: BigInt, expectedIn
 }
 
 export function mockGetDebtInfo(pool: Address, expectInfo: DebtInfo): void {
-    createMockedFunction(pool, 'debtInfo', 'debtInfo():(uint256,uint256,uint256)')
+    createMockedFunction(pool, 'debtInfo', 'debtInfo():(uint256,uint256,uint256,uint256)')
         .returns([
           ethereum.Value.fromUnsignedBigInt(expectInfo.pendingDebt),
           ethereum.Value.fromUnsignedBigInt(expectInfo.accruedDebt),
           ethereum.Value.fromUnsignedBigInt(expectInfo.liquidationDebt),
+          ethereum.Value.fromUnsignedBigInt(expectInfo.t0Debt2ToCollateral)
         ])
 }
 
 // mock getLPBValueInQuote contract calls
 export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, bucketIndex: BigInt, expectedValue: BigInt): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lpsToQuoteTokens', 'lpsToQuoteTokens(address,uint256,uint256):(uint256)')
+    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lpToQuoteTokens', 'lpToQuoteTokens(address,uint256,uint256):(uint256)')
         .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(lpb), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
         .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
 }
@@ -558,7 +559,7 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
     )
     mockGetPoolLoansInfo(pool, expectedPoolLoansInfo)
 
-    const expectedPoolDebtInfo = new DebtInfo(params.debt, ZERO_BI, ZERO_BI)
+    const expectedPoolDebtInfo = new DebtInfo(params.debt, ZERO_BI, ZERO_BI, ZERO_BI)
     mockGetDebtInfo(pool, expectedPoolDebtInfo)
 
     const expectedPoolPricesInfo = new PoolPricesInfo(
