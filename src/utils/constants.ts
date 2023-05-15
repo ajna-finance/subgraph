@@ -23,6 +23,8 @@ export const ZERO_BD = BigDecimal.zero()
 export const MAX_PRICE = BigDecimal.fromString(`${1_004_968_987.606512354182109771}`)
 export const MAX_PRICE_INDEX = 0
 export const MAX_PRICE_BI = BigInt.fromString('1004968987606512354182109771')
+export const MIN_BUCKET_INDEX = -3232;
+export const MAX_BUCKET_INDEX = 4156;
 
 // poolInfoUtils contract address per network
 export const poolInfoUtilsNetworkLookUpTable = new TypedMap<string, Address>()

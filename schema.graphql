@@ -117,6 +117,8 @@ type Bucket @entity {
   id: Bytes!
   # bucket index
   bucketIndex: Int!
+  # bucket price
+  bucketPrice: BigDecimal!
   # current exchange rate of the bucket
   exchangeRate: BigDecimal!
   # pool address

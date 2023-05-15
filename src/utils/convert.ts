@@ -1,6 +1,7 @@
 import { BigInt, BigDecimal, Bytes, Address, log } from '@graphprotocol/graph-ts'
 
-import { EXP_18_BD, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
+import { EXP_18_BD, MAX_BUCKET_INDEX, MIN_BUCKET_INDEX, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
+import { prices} from './prices'
 
 /****************************/
 /*** To Address Functions ***/
@@ -84,12 +85,13 @@ export function bigIntArrayToIntArray(indexes: BigInt[]): i32[] {
 }
 
 
-// import prices from '../../prices.json'
-// export function indexToPrice(index: BigInt): BigDecimal {
-//     const bucketIndex = MAX_BUCKET_INDEX - index;
-//     if (bucketIndex < MIN_BUCKET_INDEX || bucketIndex > MAX_BUCKET_INDEX) {
-//       throw new Error('ERR_BUCKET_INDEX_OUT_OF_BOUNDS');
-//     }
-// }
+export function indexToPrice(index: u32): BigDecimal {
+    const bucketIndex = MAX_BUCKET_INDEX - index;
+    if (bucketIndex < MIN_BUCKET_INDEX || bucketIndex > MAX_BUCKET_INDEX) {
+      throw new Error('ERR_BUCKET_INDEX_OUT_OF_BOUNDS');
+    }
+
+    return BigDecimal.fromString(prices[index]);
+}
 
 // export function priceToIndex(price: BigDecimal): BigInt {
