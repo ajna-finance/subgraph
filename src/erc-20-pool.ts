@@ -232,33 +232,31 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
   auctionSettle.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.address))
-  if (pool != null) {
-    // pool doesn't need to be updated here as it was already updated in the concurrent Settle event
+  const pool = Pool.load(addressToBytes(event.address))!
+  // pool doesn't need to be updated here as it was already updated in the concurrent Settle event
 
-    // update auction state
-    const loanId       = getLoanId(pool.id, addressToBytes(event.params.borrower))
-    const loan         = loadOrCreateLoan(loanId, pool.id, addressToBytes(event.params.borrower))
-    const auctionId    = loan.liquidationAuction!
-    const auction      = LiquidationAuction.load(auctionId)!
-    auction.settle     = auctionSettle.id
-    auction.settleTime = auctionSettle.blockTimestamp
-    auction.settled    = true
+  // update auction state
+  const loanId       = getLoanId(pool.id, addressToBytes(event.params.borrower))
+  const loan         = Loan.load(loanId)!
+  const auctionId    = loan.liquidationAuction!
+  const auction      = LiquidationAuction.load(auctionId)!
+  auction.settle     = auctionSettle.id
+  auction.settleTime = auctionSettle.blockTimestamp
+  auction.settled    = true
 
-    // update loan state
-    loan.debt = ZERO_BD
-    loan.collateralPledged = auctionSettle.collateral
-    loan.inLiquidation = false
-    loan.collateralization = ZERO_BD
-    loan.tp = ZERO_BD
+  // update loan state
+  loan.debt = ZERO_BD
+  loan.collateralPledged = auctionSettle.collateral
+  loan.inLiquidation = false
+  loan.collateralization = ZERO_BD
+  loan.tp = ZERO_BD
 
-    // save entities to the store
-    loan.save()
+  // save entities to the store
+  loan.save()
 
-    // update auctionSettle pointer
-    auctionSettle.loan = loan.id
-  }
-
+  // update auctionSettle pointers
+  auctionSettle.pool = pool.id
+  auctionSettle.loan = loan.id
   auctionSettle.save()
 }
 
