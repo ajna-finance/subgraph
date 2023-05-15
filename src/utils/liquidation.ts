@@ -6,8 +6,8 @@ import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 import { wadToDecimal } from "./convert"
 import { ONE_BI, ZERO_BD } from "./constants"
 
-export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, blockNumber: BigInt): Bytes {
-    return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + blockNumber.toString()))
+export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, kickBlock: BigInt): Bytes {
+    return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + kickBlock.toString()))
 }
 
 export function getBucketTakeLPAwardedId(transactionHash: Bytes, logIndex: BigInt): Bytes {

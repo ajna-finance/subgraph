@@ -223,7 +223,7 @@ export function addReserveAuctionToPool(pool: Pool, reserveAuction: ReserveAucti
   // get current index of pool in account's list of pools
   const index = reserveAuctions.indexOf(reserveAuction.id)
   if (index == -1) {
-      pool.reserveAuctions.push(reserveAuction.id)
+    pool.reserveAuctions = pool.reserveAuctions.concat([reserveAuction.id])
   }
 }
 

@@ -160,6 +160,8 @@ type Loan @entity {
   pool: Pool!
   # boolean indicating whether the loan is in liquidations
   inLiquidation: Boolean!
+  # most recent liquidation, whether active or inactive
+  liquidationAuction: LiquidationAuction
   # collateral tokens deposited in a pool by the borrower
   collateralPledged: BigDecimal!
   # collateralization of the borrow position in the pool
