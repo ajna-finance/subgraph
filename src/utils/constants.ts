@@ -11,6 +11,7 @@ export const ONE_BI  = BigInt.fromI32(1)
 export const ONE_RAY_BI = BigInt.fromString("1000000000000000000000000000")
 export const ONE_WAD_BI = BigInt.fromString("1000000000000000000")
 export const FIVE_PERCENT_BI = BigInt.fromString("50000000000000000") // 0.05 * 1e18
+export const TEN_BI = BigInt.fromI32(10)
 
 // BigDecimal constants
 export const EXP_18_BD = BigDecimal.fromString('1000000000000000000')

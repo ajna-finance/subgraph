@@ -1,11 +1,12 @@
 import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
 
-import { LiquidationAuction, Pool, ReserveAuction } from "../../generated/schema"
+import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../generated/schema"
 import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsNetworkLookUpTable, ONE_BI } from "./constants"
-import { wadToDecimal } from './convert'
+import { poolInfoUtilsNetworkLookUpTable, ONE_BI, TEN_BI } from "./constants"
+import { bytesToAddress, wadToDecimal } from './convert'
+import { getTokenBalance } from './token-erc20'
 
 export function getPoolAddress(poolId: Bytes): Address {
     return Address.fromBytes(poolId)
@@ -197,6 +198,15 @@ export function updatePool(pool: Pool): void {
     pool.collateralization = wadToDecimal(poolUtilizationInfo.collateralization)
     pool.actualUtilization = wadToDecimal(poolUtilizationInfo.actualUtilization)
     pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
+
+    // update pool token balances
+    const poolAddress = Address.fromBytes(pool.id)
+    const quoteToken = Token.load(pool.quoteToken)!
+    let scaleFactor = TEN_BI.pow(18 - quoteToken.decimals.toU32() as u8) // unexpected upcast?
+    const unnormalizedQuoteTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
+    pool.quoteTokenBalance = wadToDecimal(unnormalizedQuoteTokenBalance.times(scaleFactor))
+
+    // TODO: update collateralBalance
 }
 
 // if absent, add a liquidation auction to the pool's collection of active liquidations

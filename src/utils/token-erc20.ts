@@ -3,7 +3,11 @@ import { Address, BigInt } from "@graphprotocol/graph-ts"
 
 import { ERC20 } from "../../generated/ERC20PoolFactory/ERC20"
 import { Pool, Token } from "../../generated/schema"
-import { ONE_BI } from "./constants"
+import { ONE_BI, ZERO_BI } from "./constants"
+
+export function getTokenBalance(tokenAddress: Address, address: Address): BigInt {
+  return ERC20.bind(tokenAddress).balanceOf(address)
+}
 
 export function getTokenName(tokenAddress: Address): string {
     const tokenNameCall = ERC20.bind(tokenAddress).try_name()

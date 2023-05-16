@@ -23,7 +23,8 @@ import {
   mockGetCurrentBurnEpoch,
   mockGetDebtInfo,
   mockGetLPBValueInQuote,
-  mockPoolInfoUtilsPoolUpdateCalls
+  mockPoolInfoUtilsPoolUpdateCalls,
+  mockTokenBalance
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
@@ -47,13 +48,12 @@ describe("ERC20Pool assertions", () => {
 
   beforeEach(() => {
     // deploy pool contract
-    const pool_ = Address.fromString("0x0000000000000000000000000000000000000001")
+    const pool = Address.fromString("0x0000000000000000000000000000000000000001")
     const collateralToken = Address.fromString("0x0000000000000000000000000000000000000010")
     const quoteToken = Address.fromString("0x0000000000000000000000000000000000000012")
     const expectedInitialInterestRate = FIVE_PERCENT_BI
     const expectedInitialFeeRate = ZERO_BI
-
-    createPool(pool_, collateralToken, quoteToken, expectedInitialInterestRate, expectedInitialFeeRate)
+    createPool(pool, collateralToken, quoteToken, expectedInitialInterestRate, expectedInitialFeeRate)
   })
 
   afterEach(() => {
@@ -111,6 +111,8 @@ describe("ERC20Pool assertions", () => {
       actualUtilization: ZERO_BI,
       targetUtilization: ONE_WAD_BI
     })
+
+    mockTokenBalance(Address.fromString("0x0000000000000000000000000000000000000012"), poolAddress, ZERO_BI)
 
     // mock addCollateralEvent
     const newAddCollateralEvent = createAddCollateralEvent(

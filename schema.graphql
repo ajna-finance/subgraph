@@ -10,7 +10,7 @@ type Token @entity {
   # token name
   name: String!
   # token decimals
-  decimals: BigInt!
+  decimals: BigInt!  # TODO: change to Int!; must be <= 18
   # flag for whether the token is an ERC721
   # TODO: make this a string, enabling new pool types (such as ERC1155)
   isERC721: Boolean!
@@ -47,12 +47,12 @@ type Pool @entity {
   # fee rate of the pool
   feeRate: BigDecimal!
   # current total debt in the pool
-  currentDebt: BigDecimal!
+  currentDebt: BigDecimal!  # TODO: rename debt
   # current pool inflator snapshot
   inflator: BigDecimal!
   # block timestamp at which the inflator was last updated
   inflatorUpdate: BigInt!
-  # current pool interest rate
+  # borrower interest rate
   interestRate: BigDecimal!
   # total collateral pledged to the pool
   pledgedCollateral: BigDecimal!
@@ -65,7 +65,9 @@ type Pool @entity {
   poolSize: BigDecimal! # total amount of quote tokens in the pool
   loansCount: BigInt! # total number of loans in the pool
   maxBorrower: Bytes! # address of the borrower with the highest TP in the pool
-  pendingInflator: BigDecimal! # pending inflator value
+  # TODO: eliminate, store pending inflator in inflator
+  pendingInflator: BigDecimal! 
+  # TODO: rename interestFactor
   pendingInterestFactor: BigDecimal! # pending interest factor used to scale the inflator
 
   # PRICES INFORMATION
@@ -110,6 +112,10 @@ type Pool @entity {
   totalBondEscrowed: BigDecimal!
   # list of active liquidation auctions in the pool, sorted by kick time
   liquidationAuctions: [LiquidationAuction!]!
+
+  # TVL information
+  quoteTokenBalance: BigDecimal!
+  collateralBalance: BigDecimal!
 }
 
 type Bucket @entity {

@@ -9,6 +9,7 @@ import { prices} from './prices'
 
 export function bytesToAddress(bytes: Bytes): Address {
     return Address.fromHexString(bytes.toHexString()) as Address
+    // FIXME: we use Address.fromBytes(pool.id) more often; what's the difference?
 }
 
 /**************************/

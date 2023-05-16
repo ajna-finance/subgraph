@@ -591,3 +591,15 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
     )
     mockGetPoolUtilizationInfo(pool, expectedPoolUtilizationInfo)
 }
+
+/****************************/
+/*** Token Mock Functions ***/
+/****************************/
+
+export function mockTokenBalance(tokenAddress: Address, address: Address, expectedBalance: BigInt): void {
+  createMockedFunction(tokenAddress, 'balanceOf', 'balanceOf(address):(uint256)')
+      .withArgs([ethereum.Value.fromAddress(address)])
+      .returns([
+          ethereum.Value.fromUnsignedBigInt(expectedBalance),
+      ])
+}

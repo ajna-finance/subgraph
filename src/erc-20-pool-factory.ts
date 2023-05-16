@@ -91,7 +91,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.quoteToken = quoteToken.id
   pool.currentDebt = ZERO_BD
   pool.feeRate = wadToDecimal(interestRateResults.value1)
-  pool.inflator = ONE_BD //ONE_WAD_BD
+  pool.inflator = ONE_BD
   pool.inflatorUpdate = event.block.timestamp
   pool.interestRate = wadToDecimal(interestRateResults.value0)
   pool.pledgedCollateral = ZERO_BD
@@ -102,7 +102,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.poolSize = ZERO_BD
   pool.loansCount = ZERO_BI
   pool.maxBorrower = ZERO_ADDRESS
-  pool.pendingInflator = ONE_WAD_BD
+  pool.pendingInflator = ONE_BD
   pool.pendingInterestFactor = ZERO_BD
 
   // pool prices information
@@ -133,6 +133,10 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // liquidation information
   pool.totalBondEscrowed = ZERO_BD
   pool.liquidationAuctions = []
+
+  // TVL information
+  pool.quoteTokenBalance = ZERO_BD
+  pool.collateralBalance = ZERO_BD
 
   // add pool reference to factories' list of pools
   factory.pools = factory.pools.concat([pool.id])
