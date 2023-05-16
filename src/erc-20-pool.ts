@@ -642,7 +642,14 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
     // update from bucket lend state
     const fromBucketLendId = getLendId(fromBucketId, event.params.lender)
     const fromBucketLend = loadOrCreateLend(fromBucketId, fromBucketLendId, pool.id, moveQuoteToken.lender)
-    fromBucketLend.lpb = fromBucketLend.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
+    const lpRedeemedFrom = wadToDecimal(event.params.lpRedeemedFrom)
+    if (lpRedeemedFrom.le(fromBucketLend.lpb)) {
+      fromBucketLend.lpb = fromBucketLend.lpb.minus(lpRedeemedFrom)
+    } else {
+      log.warning('handleMoveQuoteToken: lender {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0', 
+                  [moveQuoteToken.lender.toHexString(), lpRedeemedFrom.toString(), fromBucketLend.lpb.toString()])
+      fromBucketLend.lpb = ZERO_BD
+    }
     fromBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, fromBucket.bucketIndex, fromBucketLend.lpb)
 
     // update to bucket lend state

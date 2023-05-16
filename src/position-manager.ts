@@ -161,7 +161,14 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
 
   lendTo.lpb               = lendTo.lpb.plus(wadToDecimal(event.params.lpAwardedTo))
   lendTo.lpbValueInQuote   = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendTo.lpb)
-  lendFrom.lpb             = lendFrom.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
+  const lpRedeemedFrom     = wadToDecimal(event.params.lpRedeemedFrom)
+  if (lpRedeemedFrom.le(lendFrom.lpb)) {
+    lendFrom.lpb           = lendFrom.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
+  } else {
+    log.warning('handleMoveLiquidity: lender {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0', 
+    [moveLiquidity.lender.toHexString(), lpRedeemedFrom.toString(), lendFrom.lpb.toString()])
+    lendFrom.lpb = ZERO_BD
+  }
   lendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendFrom.lpb)
   lendFrom.save()
   lendTo.save()
