@@ -201,12 +201,13 @@ export function updatePool(pool: Pool): void {
 
     // update pool token balances
     const poolAddress = Address.fromBytes(pool.id)
-    const quoteToken = Token.load(pool.quoteToken)!
-    let scaleFactor = TEN_BI.pow(18 - quoteToken.decimals.toU32() as u8) // unexpected upcast?
-    const unnormalizedQuoteTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
-    pool.quoteTokenBalance = wadToDecimal(unnormalizedQuoteTokenBalance.times(scaleFactor))
-
-    // TODO: update collateralBalance
+    let token = Token.load(pool.quoteToken)!
+    let scaleFactor = TEN_BI.pow(18 - token.decimals.toU32() as u8)
+    let unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
+    pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
+    token = Token.load(pool.collateralToken)!
+    scaleFactor = TEN_BI.pow(18 - token.decimals.toU32() as u8)
+    pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 }
 
 // if absent, add a liquidation auction to the pool's collection of active liquidations

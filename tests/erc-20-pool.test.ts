@@ -113,10 +113,11 @@ describe("ERC20Pool assertions", () => {
     })
 
     mockTokenBalance(Address.fromString("0x0000000000000000000000000000000000000012"), poolAddress, ZERO_BI)
+    mockTokenBalance(Address.fromString("0x0000000000000000000000000000000000000010"), poolAddress, ZERO_BI)
 
     // mock addCollateralEvent
     const newAddCollateralEvent = createAddCollateralEvent(
-      poolAddress,
+      poolAddress,1
       actor,
       index,
       collateralAmount,
