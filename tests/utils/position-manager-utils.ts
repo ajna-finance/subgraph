@@ -133,7 +133,9 @@ export function createMoveLiquidityEvent(
   lender: Address,
   tokenId: BigInt,
   fromIndex: BigInt,
-  toIndex: BigInt
+  toIndex: BigInt,
+  lpRedeemedFrom: BigInt,
+  lpAwardedTo: BigInt
 ): MoveLiquidity {
   let moveLiquidityEvent = changetype<MoveLiquidity>(newMockEvent())
 
@@ -153,6 +155,12 @@ export function createMoveLiquidityEvent(
   )
   moveLiquidityEvent.parameters.push(
     new ethereum.EventParam("toIndex", ethereum.Value.fromUnsignedBigInt(toIndex))
+  )
+  moveLiquidityEvent.parameters.push(
+    new ethereum.EventParam("lpRedeemedFrom", ethereum.Value.fromUnsignedBigInt(lpRedeemedFrom))
+  )
+  moveLiquidityEvent.parameters.push(
+    new ethereum.EventParam("lpAwardedTo", ethereum.Value.fromUnsignedBigInt(lpAwardedTo))
   )
 
 
@@ -217,7 +225,7 @@ export function mintPosition(lender: Address, pool: Address, tokenId: BigInt, to
   handleMint(newMintEvent)
 }
 
-export function assertPosition(lender: Address, pool: Address, tokenId: BigInt, tokenContractAddress: Address): void {
+export function  assertPosition(lender: Address, pool: Address, tokenId: BigInt, tokenContractAddress: Address): void {
   const expectedTokenId = bigIntToBytes(tokenId).toHexString()
 
   // check position attributes

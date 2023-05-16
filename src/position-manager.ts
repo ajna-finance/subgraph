@@ -158,11 +158,11 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   const bucketIdTo   = getBucketId(moveLiquidity.pool, moveLiquidity.toIndex)
   const lendIdTo     = getLendId(bucketIdTo, moveLiquidity.lender)
   const lendTo       = loadOrCreateLend(bucketIdTo, lendIdTo, moveLiquidity.pool, moveLiquidity.lender)
-  // FIXME: determine how much liquidity was moved
-  // lendTo.lpb               = ???
-  // lendTo.lpbValueInQuote   = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendTo.lpb)
-  lendFrom.lpb             = ZERO_BD
-  lendFrom.lpbValueInQuote = ZERO_BD
+
+  lendTo.lpb               = lendTo.lpb.plus(wadToDecimal(event.params.lpAwardedTo))
+  lendTo.lpbValueInQuote   = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendTo.lpb)
+  lendFrom.lpb             = lendFrom.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
+  lendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendFrom.lpb)
   lendFrom.save()
   lendTo.save()
 

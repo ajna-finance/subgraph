@@ -11,8 +11,12 @@ import {
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { handleApproval, handleBurn, handleMemorializePosition, handleMint, handleMoveLiquidity, handleRedeemPosition } from "../src/position-manager"
 import { assertPosition, createApprovalEvent, createBurnEvent, createMemorializePositionEvent, createMintEvent, createMoveLiquidityEvent, createRedeemPositionEvent, mintPosition } from "./utils/position-manager-utils"
-import { bigIntToBytes } from "../src/utils/convert"
-import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./utils/common"
+import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
+import { mockGetLPBValueInQuote, mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./utils/common"
+import { Lend } from "../generated/schema"
+import { getLendId, loadOrCreateLend } from "../src/utils/lend"
+import { getBucketId } from "../src/utils/bucket"
+import { ZERO_BI } from "../src/utils/constants"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -236,6 +240,9 @@ describe("Describe entity assertions", () => {
     const indexes:BigInt[] = []
     const fromIndex = BigInt.fromI32(5000)
     const toIndex = BigInt.fromI32(4000)
+    const lpRedeemedFrom = BigInt.fromString("63380000000000000000") // 63.38
+    const lpRedeemedto = BigInt.fromString("62740000000000000000") // 62.74
+    const lpValueInQuote = BigInt.fromString("64380000000000000000")
 
     /*********************/
     /*** Mint Position ***/
@@ -251,6 +258,16 @@ describe("Describe entity assertions", () => {
     /*** Memorialize Position ***/
     /****************************/
 
+    const bucketId = getBucketId(pool, fromIndex.toU32())
+    const lend = new Lend(getLendId(bucketId, lender))
+    lend.bucket = bucketId
+    lend.lender = lender
+    lend.pool = pool
+    lend.poolAddress = pool.toHexString()
+    lend.lpb = wadToDecimal(lpRedeemedFrom)
+    lend.lpbValueInQuote = wadToDecimal(lpValueInQuote)
+    lend.save();
+
     mockGetPoolKey(tokenId, pool)
     // memorialize existing position
     const newMemorializeEvent = createMemorializePositionEvent(lender, tokenId, indexes)
@@ -261,6 +278,7 @@ describe("Describe entity assertions", () => {
     // TODO: check index attributes
 
     assert.entityCount("Mint", 1)
+    assert.entityCount("Lend", 1)
     assert.entityCount("MemorializePosition", 1)
     assert.entityCount("Position", 1)
     assert.entityCount("MoveLiquidity", 0)
@@ -268,8 +286,11 @@ describe("Describe entity assertions", () => {
     /**********************/
     /*** Move Liquidity ***/
     /**********************/
-
-    const newMoveLiquidityEvent = createMoveLiquidityEvent(lender, tokenId, fromIndex, toIndex)
+  
+    mockGetLPBValueInQuote(pool, lpRedeemedFrom, fromIndex, lpValueInQuote)
+    mockGetLPBValueInQuote(pool, ZERO_BI, toIndex, ZERO_BI)
+    mockGetLPBValueInQuote(pool, lpRedeemedto, toIndex, lpValueInQuote)
+    const newMoveLiquidityEvent = createMoveLiquidityEvent(lender, tokenId, fromIndex, toIndex, lpRedeemedFrom, lpRedeemedto)
     handleMoveLiquidity(newMoveLiquidityEvent)
 
     // check position attributes

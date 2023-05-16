@@ -110,7 +110,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, addCollateral.actor)
-    lend.lpb             = lend.lpb.plus(wadToDecimal(event.params.lpAwarded))
+    lend.lpb             = lend.lpb.plus(addCollateral.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
     // update account's list of pools and lends if necessary
@@ -171,7 +171,7 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
-    lend.lpb             = lend.lpb.plus(wadToDecimal(event.params.lpAwarded))
+    lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
     // update account's list of pools and lends if necessary
@@ -775,12 +775,8 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeQuote.lender)
-
-    // FIXME: seems this sometimes underflows
-    // if (removeQuote.lpRedeemed >= lend.lpb) {
-    //   lend.lpb = lend.lpb.minus(removeQuote.lpRedeemed)
-    //   lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
-    // }
+    lend.lpb             = lend.lpb.minus(removeQuote.lpRedeemed)
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
