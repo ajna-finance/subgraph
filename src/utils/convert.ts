@@ -84,14 +84,10 @@ export function bigIntArrayToIntArray(indexes: BigInt[]): i32[] {
     return retval
 }
 
-
 export function indexToPrice(index: u32): BigDecimal {
     const bucketIndex = MAX_BUCKET_INDEX - index;
-    if (bucketIndex < MIN_BUCKET_INDEX || bucketIndex > MAX_BUCKET_INDEX) {
-      throw new Error('ERR_BUCKET_INDEX_OUT_OF_BOUNDS');
-    }
-
-    return BigDecimal.fromString(prices[index]);
+    assert(bucketIndex >= MIN_BUCKET_INDEX && bucketIndex <= MAX_BUCKET_INDEX, 'Invalid bucket index')
+    return wadToDecimal(BigInt.fromString(prices[index]));
 }
 
 // export function priceToIndex(price: BigDecimal): BigInt {
