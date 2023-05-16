@@ -187,6 +187,7 @@ templates:
         - BucketBankruptcy
         - BucketTake
         - BucketTakeLPAwarded
+        - DecreaseLPAllowance
         - DrawDebt
         - IncreaseLPAllowance
         - Kick
@@ -226,6 +227,8 @@ templates:
           handler: handleBucketTake
         - event: BucketTakeLPAwarded(indexed address,indexed address,uint256,uint256)
           handler: handleBucketTakeLPAwarded
+        - event: DecreaseLPAllowance(indexed address,indexed address,uint256[],uint256[])
+          handler: handleDecreaseLPAllowance
         - event: DrawDebt(indexed address,uint256,uint256,uint256)
           handler: handleDrawDebt
         - event: IncreaseLPAllowance(indexed address,indexed address,uint256[],uint256[])
@@ -234,8 +237,7 @@ templates:
           handler: handleKick
         - event: LoanStamped(indexed address)
           handler: handleLoanStamped
-        - event: MoveQuoteToken(indexed address,indexed uint256,indexed
-            uint256,uint256,uint256,uint256,uint256)
+        - event: MoveQuoteToken(indexed address,indexed uint256,indexed uint256,uint256,uint256,uint256,uint256)
           handler: handleMoveQuoteToken
         - event: RemoveCollateral(indexed address,indexed uint256,uint256,uint256)
           handler: handleRemoveCollateral

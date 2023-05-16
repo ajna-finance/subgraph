@@ -10,6 +10,7 @@ import {
   BucketBankruptcy as BucketBankruptcyEvent,
   BucketTake as BucketTakeEvent,
   BucketTakeLPAwarded as BucketTakeLPAwardedEvent,
+  DecreaseLPAllowance as DecreaseLPAllowanceEvent,
   DrawDebt as DrawDebtEvent,
   IncreaseLPAllowance as IncreaseLPAllowanceEvent,
   Kick as KickEvent,
@@ -68,7 +69,7 @@ import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils
 import { getReserveAuctionId, loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/lp-transferors"
-import { loadOrCreateAllowances, revokeAllowances, setAllowances } from "./utils/lp-allowances"
+import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "./utils/lp-allowances"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -460,6 +461,21 @@ export function handleBucketTakeLPAwarded(
   bucketTakeLpAwarded.save()
 }
 
+export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
+  const poolId = addressToBytes(event.address)
+  const lender = event.transaction.from
+  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  decreaseAllowances(entity, event.params.indexes, event.params.amounts)
+
+  const pool = Pool.load(poolId)
+  if (pool != null) {
+    pool.txCount = pool.txCount.plus(ONE_BI)
+    pool.save()
+  }
+
+  entity.save()
+}
+
 export function handleDrawDebt(event: DrawDebtEvent): void {
   const drawDebt = new DrawDebt(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -511,6 +527,21 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
   }
 
   drawDebt.save()
+}
+
+export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
+  const poolId = addressToBytes(event.address)
+  const lender = event.transaction.from
+  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  increaseAllowances(entity, event.params.indexes, event.params.amounts)
+
+  const pool = Pool.load(poolId)
+  if (pool != null) {
+    pool.txCount = pool.txCount.plus(ONE_BI)
+    pool.save()
+  }
+
+  entity.save()
 }
 
 export function handleKick(event: KickEvent): void {
@@ -721,7 +752,13 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeCollateral.claimer)
-    lend.lpb             = lend.lpb.minus(removeCollateral.lpRedeemed)
+    if (removeCollateral.lpRedeemed.le(lend.lpb)) {
+      lend.lpb = lend.lpb.minus(removeCollateral.lpRedeemed)
+    } else {
+      log.warning('handleRemoveCollateral: claimer {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0', 
+                  [removeCollateral.claimer.toHexString(), removeCollateral.lpRedeemed.toString(), lend.lpb.toString()])
+      lend.lpb = ZERO_BD
+    }
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
     // update account's list of pools and lends if necessary
@@ -782,7 +819,13 @@ export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeQuote.lender)
-    lend.lpb             = lend.lpb.minus(removeQuote.lpRedeemed)
+    if (removeQuote.lpRedeemed.le(lend.lpb)) {
+      lend.lpb = lend.lpb.minus(removeQuote.lpRedeemed)
+    } else {
+      log.warning('handleRemoveQuoteToken: lender {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0', 
+                  [removeQuote.lender.toHexString(), removeQuote.lpRedeemed.toString(), lend.lpb.toString()])
+      lend.lpb = ZERO_BD
+    }
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
     // update account's list of pools and lends if necessary
@@ -959,21 +1002,6 @@ export function handleRevokeLPTransferors(
   const poolId = addressToBytes(event.address)
   const entity = loadOrCreateTransferors(poolId, event.params.lender)
   revokeTransferors(entity, event.params.transferors)
-
-  const pool = Pool.load(poolId)
-  if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-    pool.save()
-  }
-
-  entity.save()
-}
-
-export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
-  const poolId = addressToBytes(event.address)
-  const lender = event.transaction.from
-  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  setAllowances(entity, event.params.indexes, event.params.amounts)
 
   const pool = Pool.load(poolId)
   if (pool != null) {

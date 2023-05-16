@@ -249,7 +249,7 @@ type LPAllowance @entity {
   amount: BigDecimal! # size of the allowance (measured in LP)
 }
 
-# updated upon IncreaseLPAllowance and RevokeLPAllowance
+# updated upon Increase/Decrease/RevokeLPAllowance
 type LPAllowances @entity {
   id: Bytes! # $poolAddress + '|' + $lender + '|' + $spender
   pool: Pool! # pool in which LP allowances have been granted
