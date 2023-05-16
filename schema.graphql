@@ -234,8 +234,8 @@ type ReserveAuction @entity {
   ajnaBurnedAcrossAllTakes: BigDecimal! # total amount of ajna burned across all takes in the reserve auction
 }
 
-# updated upon ApproveLpTransferors and RevokeLpTransferors
-type LPTransferors @entity {
+# LP transferors approved by a lender for a pool, updated upon Approve/RevokeLpTransferors
+type LPTransferorList @entity {
   id: Bytes! # $poolAddress + '|' + $lender
   pool: Pool! # pool in which these transferors have been approved
   lender: Bytes! # address of the lender who has approved transferors
