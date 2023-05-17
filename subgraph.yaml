@@ -233,6 +233,8 @@ templates:
           handler: handleDecreaseLPAllowance
         - event: DrawDebt(indexed address,uint256,uint256,uint256)
           handler: handleDrawDebt
+        - event: Flashloan(indexed address,indexed address,uint256)
+          handler: handleFlashloan
         - event: IncreaseLPAllowance(indexed address,indexed address,uint256[],uint256[])
           handler: handleIncreaseLPAllowance
         - event: Kick(indexed address,uint256,uint256,uint256)

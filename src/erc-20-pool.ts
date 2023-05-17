@@ -12,6 +12,7 @@ import {
   BucketTakeLPAwarded as BucketTakeLPAwardedEvent,
   DecreaseLPAllowance as DecreaseLPAllowanceEvent,
   DrawDebt as DrawDebtEvent,
+  Flashloan as FlashloanEvent,
   IncreaseLPAllowance as IncreaseLPAllowanceEvent,
   Kick as KickEvent,
   LoanStamped as LoanStampedEvent,
@@ -39,6 +40,7 @@ import {
   BucketTake,
   BucketTakeLPAwarded,
   DrawDebt,
+  Flashloan,
   Kick,
   Lend,
   LiquidationAuction,
@@ -57,7 +59,7 @@ import {
   UpdateInterestRate
 } from "../generated/schema"
 
-import { ZERO_BD, ONE_BI } from "./utils/constants"
+import { ZERO_BD, ONE_BI, TEN_BI } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
@@ -528,6 +530,30 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
   }
 
   drawDebt.save()
+}
+
+export function handleFlashloan(event: FlashloanEvent): void {
+  const flashloan = new Flashloan(event.transaction.hash.concatI32(event.logIndex.toI32()))
+  const pool = Pool.load(addressToBytes(event.address))!
+  const token = Token.load(addressToBytes(event.params.token))!
+  const scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+
+  flashloan.pool = pool.id
+  flashloan.borrower = event.params.receiver
+
+  const normalizedAmount = wadToDecimal(event.params.amount.times(scaleFactor))
+  flashloan.amount = normalizedAmount
+  if (token.id == pool.quoteToken) {
+    pool.quoteTokenFlashloaned = pool.quoteTokenFlashloaned.plus(normalizedAmount)
+  } else if (token.id == pool.collateralToken) {
+    pool.collateralFlashloaned = pool.collateralFlashloaned.plus(normalizedAmount)
+  }
+  token.txCount = token.txCount.plus(ONE_BI)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+
+  token.save()
+  pool.save()
+  flashloan.save()
 }
 
 export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {

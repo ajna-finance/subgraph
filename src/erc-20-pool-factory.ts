@@ -107,6 +107,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.poolSize = ZERO_BD
   pool.loansCount = ZERO_BI
   pool.maxBorrower = ZERO_ADDRESS
+  pool.quoteTokenFlashloaned = ZERO_BD
+  pool.collateralFlashloaned = ZERO_BD
 
   // pool prices information
   pool.hpb = ZERO_BD

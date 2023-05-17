@@ -70,6 +70,9 @@ type Pool @entity {
   # LOANS INFORMATION
   loansCount: BigInt! # total number of loans in the pool
   maxBorrower: Bytes! # address of the borrower with the highest TP in the pool
+  # normalized total amount of tokens flashloaned from the pool
+  quoteTokenFlashloaned: BigDecimal!
+  collateralFlashloaned: BigDecimal!
 
   # PRICES INFORMATION
   hpb: BigDecimal! # current highest price bucket
@@ -114,7 +117,7 @@ type Pool @entity {
   # list of active liquidation auctions in the pool, sorted by kick time
   liquidationAuctions: [LiquidationAuction!]!
 
-  # TVL information
+  # normalized contract balances, used for TVL
   quoteTokenBalance: BigDecimal!
   collateralBalance: BigDecimal!
 }
@@ -379,6 +382,13 @@ type DrawDebt @entity(immutable: true) {
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
+}
+
+type Flashloan @entity(immutable: true) {
+  id: Bytes!
+  pool: Pool! 
+  borrower: Bytes!    # address
+  amount: BigDecimal! # uint256
 }
 
 type Kick @entity {
