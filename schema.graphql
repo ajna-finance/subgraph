@@ -10,7 +10,7 @@ type Token @entity {
   # token name
   name: String!
   # token decimals
-  decimals: BigInt!  # TODO: change to Int!; must be <= 18
+  decimals: Int!
   # flag for whether the token is an ERC721
   # TODO: make this a string, enabling new pool types (such as ERC1155)
   isERC721: Boolean!

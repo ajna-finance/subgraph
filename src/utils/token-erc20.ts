@@ -6,7 +6,12 @@ import { Pool, Token } from "../../generated/schema"
 import { ONE_BI, ZERO_BI } from "./constants"
 
 export function getTokenBalance(tokenAddress: Address, address: Address): BigInt {
-  return ERC20.bind(tokenAddress).balanceOf(address)
+  const balanceOfCall = ERC20.bind(tokenAddress).try_balanceOf(address)
+  if (balanceOfCall.reverted) {
+    return ZERO_BI    
+  } else {
+    return balanceOfCall.value
+  }
 }
 
 export function getTokenName(tokenAddress: Address): string {
@@ -27,12 +32,12 @@ export function getTokenSymbol(tokenAddress: Address): string {
     }
 }
 
-export function getTokenDecimals(tokenAddress: Address): BigInt {
+export function getTokenDecimals(tokenAddress: Address): u32 {
     const tokenDecimalsCall = ERC20.bind(tokenAddress).try_decimals()
     if (tokenDecimalsCall.reverted) {
-        return BigInt.fromI32(18)
+        return 18
     } else {
-        return BigInt.fromI32(tokenDecimalsCall.value)
+        return tokenDecimalsCall.value
     }
 }
 

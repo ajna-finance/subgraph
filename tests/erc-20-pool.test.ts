@@ -117,7 +117,7 @@ describe("ERC20Pool assertions", () => {
 
     // mock addCollateralEvent
     const newAddCollateralEvent = createAddCollateralEvent(
-      poolAddress,1
+      poolAddress,
       actor,
       index,
       collateralAmount,

@@ -202,11 +202,11 @@ export function updatePool(pool: Pool): void {
     // update pool token balances
     const poolAddress = Address.fromBytes(pool.id)
     let token = Token.load(pool.quoteToken)!
-    let scaleFactor = TEN_BI.pow(18 - token.decimals.toU32() as u8)
+    let scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
     let unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
     pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
     token = Token.load(pool.collateralToken)!
-    scaleFactor = TEN_BI.pow(18 - token.decimals.toU32() as u8)
+    scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
     pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 }
 
