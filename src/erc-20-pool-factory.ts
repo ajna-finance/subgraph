@@ -1,3 +1,4 @@
+import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
 import { PoolCreated, Token } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
@@ -47,6 +48,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // get pool initial interest rate
   const interestRateResults = poolContract.interestRateInfo()
+  // upon pool creation, MAU=0, so NIM=0.15, and LIM=0.85
+  const lenderInterestMargin = BigInt.fromString("850000000000000000")
 
   // create Token entites associated with the pool
   const collateralTokenAddress      = poolContract.collateralAddress()
@@ -94,7 +97,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.feeRate = wadToDecimal(interestRateResults.value1)
   pool.inflator = ONE_BD
   pool.inflatorLastUpdate = event.block.timestamp
-  pool.interestRate = wadToDecimal(interestRateResults.value0)
+  pool.borrowRate = wadToDecimal(interestRateResults.value0)
+  pool.lendRate = wadToDecimal(interestRateResults.value0.times(lenderInterestMargin))
   pool.pledgedCollateral = ZERO_BD
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI

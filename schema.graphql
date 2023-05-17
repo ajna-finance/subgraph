@@ -56,8 +56,10 @@ type Pool @entity {
   inflator: BigDecimal!
   # block timestamp at which the inflator was last updated
   inflatorLastUpdate: BigInt!
-  # borrower interest rate
-  interestRate: BigDecimal!
+  # interest rate paid by borrowers, excluding fees
+  borrowRate: BigDecimal!
+  # interest rate awarded to lenders, excluding fees
+  lendRate: BigDecimal!
   # total collateral pledged to the pool
   pledgedCollateral: BigDecimal!
   # total interest earned by all lenders in the pool
@@ -518,8 +520,8 @@ type TransferLP @entity(immutable: true) {
 type UpdateInterestRate @entity(immutable: true) {
   id: Bytes!
   pool: Pool!          # Pool whose interest rate was updated
-  oldRate: BigDecimal! # uint256
-  newRate: BigDecimal! # uint256
+  newBorrowRate: BigDecimal! # uint256
+  newLendRate: BigDecimal!   # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

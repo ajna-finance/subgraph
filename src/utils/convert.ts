@@ -1,7 +1,7 @@
 import { BigInt, BigDecimal, Bytes, Address, log } from '@graphprotocol/graph-ts'
 
 import { EXP_18_BD, MAX_BUCKET_INDEX, MIN_BUCKET_INDEX, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
-import { prices} from './prices'
+import { prices } from './prices'
 
 /****************************/
 /*** To Address Functions ***/
@@ -41,8 +41,8 @@ export function bytesToBigInt(bytes: Bytes): BigInt {
     return BigInt.fromUnsignedBytes(bytes)
 }
 
-// converts a BigDecimal WAD to a BigInt
-export function bigDecimalWadToBigInt(value: BigDecimal): BigInt {
+// converts a BigDecimal to a BigInt scaled to WAD precision
+export function decimalToWad(value: BigDecimal): BigInt {
     return BigInt.fromString(value.times(EXP_18_BD).toString())
 }
 
@@ -56,16 +56,6 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
       bd = bd.times(BigDecimal.fromString('10'))
     }
     return bd
-}
-
-// TODO: move this to a separate math library
-// returns 0 if denominator is 0 in division
-export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
-    if (amount1.equals(ZERO_BD)) {
-        return ZERO_BD
-    } else {
-        return amount0.div(amount1)
-    }
 }
 
 // convert an 18 decimal int to a decimal

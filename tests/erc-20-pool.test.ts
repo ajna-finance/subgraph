@@ -23,6 +23,7 @@ import {
   mockGetCurrentBurnEpoch,
   mockGetDebtInfo,
   mockGetLPBValueInQuote,
+  mockGetLenderInterestMargin,
   mockPoolInfoUtilsPoolUpdateCalls,
   mockTokenBalance
 } from "./utils/common"
@@ -1564,9 +1565,12 @@ describe("ERC20Pool assertions", () => {
     assert.fieldEquals(
       "Pool",
       `${poolAddress.toHexString()}`,
-      "interestRate",
+      "borrowRate",
       `${wadToDecimal(oldInterestRate)}`
     )
+
+    // mock required contract calls
+    mockGetLenderInterestMargin(poolAddress, BigInt.fromString("920000000000000000"))
 
     // mock update interest rate event
     const newUpdateInterestRateEvent = createUpdateInterestRateEvent(
@@ -1583,7 +1587,7 @@ describe("ERC20Pool assertions", () => {
     assert.fieldEquals(
       "Pool",
       `${poolAddress.toHexString()}`,
-      "interestRate",
+      "borrowRate",
       `${wadToDecimal(newInterestRate)}`
     )
   })

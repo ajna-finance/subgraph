@@ -64,12 +64,13 @@ import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getBucketTakeLPAwardedId, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction } from "./utils/liquidation"
-import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo } from "./utils/pool"
+import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getLenderInterestMargin } from "./utils/pool"
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
 import { getReserveAuctionId, loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/lp-transferors"
 import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "./utils/lp-allowances"
+import { wmul } from "./utils/math"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -1194,25 +1195,25 @@ export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   const updateInterestRate = new UpdateInterestRate(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  updateInterestRate.oldRate = wadToDecimal(event.params.oldRate)
-  updateInterestRate.newRate = wadToDecimal(event.params.newRate)
+  const poolAddress = addressToBytes(event.address)
+  const pool = Pool.load(poolAddress)!
+  const lenderInterestMargin = getLenderInterestMargin(poolAddress)
+
+  updateInterestRate.pool = pool.id
+  updateInterestRate.newBorrowRate = wadToDecimal(event.params.newRate)
+  updateInterestRate.newLendRate = wadToDecimal(wmul(event.params.newRate, lenderInterestMargin))
 
   updateInterestRate.blockNumber = event.block.number
   updateInterestRate.blockTimestamp = event.block.timestamp
   updateInterestRate.transactionHash = event.transaction.hash
 
-  const pool = Pool.load(addressToBytes(event.address))
-  if (pool != null) {
-    // update pool state
-    updatePool(pool)
-    pool.interestRate = wadToDecimal(event.params.newRate)
-    pool.txCount = pool.txCount.plus(ONE_BI)
+  // update pool state
+  updatePool(pool)
+  pool.borrowRate = updateInterestRate.newBorrowRate
+  pool.lendRate = updateInterestRate.newLendRate
+  pool.txCount = pool.txCount.plus(ONE_BI)
 
-    updateInterestRate.pool = pool.id
-
-    // save entities to the store
-    pool.save()
-  }
-
+  // save entities to the store
+  pool.save()
   updateInterestRate.save()
 }

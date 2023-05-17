@@ -386,6 +386,12 @@ export function mockGetDebtInfo(pool: Address, expectInfo: DebtInfo): void {
         ])
 }
 
+export function mockGetLenderInterestMargin(pool: Address, expectedValue: BigInt): void {
+  createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lenderInterestMargin', 'lenderInterestMargin(address):(uint256)')
+      .withArgs([ethereum.Value.fromAddress(pool)])
+      .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
+}
+
 // mock getLPBValueInQuote contract calls
 export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, bucketIndex: BigInt, expectedValue: BigInt): void {
     createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lpToQuoteTokens', 'lpToQuoteTokens(address,uint256,uint256):(uint256)')
@@ -575,6 +581,8 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.targetUtilization
     )
     mockGetPoolUtilizationInfo(pool, expectedPoolUtilizationInfo)
+
+    mockGetLenderInterestMargin(pool, BigInt.fromString("850000000000000000")) // 0.85 * 1e18
 }
 
 /****************************/

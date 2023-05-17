@@ -5,11 +5,12 @@ import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
 import { poolInfoUtilsNetworkLookUpTable, ONE_BI, TEN_BI, ONE_WAD_BI } from "./constants"
-import { bytesToAddress, wadToDecimal } from './convert'
+import { bytesToAddress, decimalToWad, wadToDecimal } from './convert'
 import { getTokenBalance } from './token-erc20'
+import { wdiv, wmul } from './math'
 
 export function getPoolAddress(poolId: Bytes): Address {
-    return Address.fromBytes(poolId)
+  return Address.fromBytes(poolId)
 }
 
 export class LenderInfo {
@@ -22,25 +23,27 @@ export class LenderInfo {
 }
 export function getLenderInfo(poolId: Bytes, bucketIndex: BigInt, lender: Address): LenderInfo {
   const poolContract = ERC20Pool.bind(Address.fromBytes(poolId))
-    const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
+  const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
 
-    return new LenderInfo(
-      lenderInfoResult.value0,
-      lenderInfoResult.value1
-    )
+  return new LenderInfo(
+    lenderInfoResult.value0,
+    lenderInfoResult.value1
+  )
 }
 
 // retrieve the current pool MOMP by calling PoolInfoUtils.momp()
 export function getMomp(poolId: Bytes): BigDecimal {
-    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
-    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
-    const pool = Pool.load(poolId)
-    // HACK: work around bug https://github.com/ajna-finance/contracts/issues/702
-    if (pool == null || pool.loansCount == BigInt.zero()) {
-      return BigDecimal.zero()  // TODO: should probably return MAX_PRICE
-    } else {
-      return wadToDecimal(poolInfoUtilsContract.momp(Address.fromBytes(poolId)))
-    }
+  const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+  const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
+  const pool = Pool.load(poolId)
+  return wadToDecimal(poolInfoUtilsContract.momp(Address.fromBytes(poolId)))
+}
+
+export function getLenderInterestMargin(poolId: Bytes): BigInt {
+  const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+  const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
+  const pool = Pool.load(poolId)
+  return poolInfoUtilsContract.lenderInterestMargin(Address.fromBytes(poolId))
 }
 
 export class LoansInfo {
@@ -172,7 +175,7 @@ export function updatePool(pool: Pool): void {
     // update amount of debt in pool
     const debtInfo = getDebtInfo(pool)
     pool.debt = wadToDecimal(debtInfo.pendingDebt)
-    pool.t0debt = wadToDecimal(debtInfo.pendingDebt.times(ONE_WAD_BI).div(poolLoansInfo.pendingInflator))
+    pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
 
     // update pool prices information
     const poolPricesInfo = getPoolPricesInfo(pool)
@@ -208,6 +211,11 @@ export function updatePool(pool: Pool): void {
     token = Token.load(pool.collateralToken)!
     scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
     pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
+
+    // update lend rate, since lender interest margin changes irrespective of borrow rate
+    const lenderInterestMargin = getLenderInterestMargin(poolAddress)
+    const borrowRate = decimalToWad(pool.borrowRate)
+    pool.lendRate = wadToDecimal(wmul(borrowRate, lenderInterestMargin))
 }
 
 // if absent, add a liquidation auction to the pool's collection of active liquidations
