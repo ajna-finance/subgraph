@@ -4,7 +4,7 @@ import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../generated
 import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsNetworkLookUpTable, ONE_BI, TEN_BI } from "./constants"
+import { poolInfoUtilsNetworkLookUpTable, ONE_BI, TEN_BI, ONE_WAD_BI } from "./constants"
 import { bytesToAddress, wadToDecimal } from './convert'
 import { getTokenBalance } from './token-erc20'
 
@@ -164,15 +164,15 @@ export function getPoolUtilizationInfo(pool: Pool): PoolUtilizationInfo {
 export function updatePool(pool: Pool): void {
     // update pool loan information
     const poolLoansInfo = getPoolLoansInfo(pool)
-    pool.poolSize              = wadToDecimal(poolLoansInfo.poolSize)
-    pool.loansCount            = poolLoansInfo.loansCount
-    pool.maxBorrower           = poolLoansInfo.maxBorrower
-    pool.pendingInflator       = wadToDecimal(poolLoansInfo.pendingInflator)
-    pool.pendingInterestFactor = wadToDecimal(poolLoansInfo.pendingInterestFactor)
+    pool.poolSize       = wadToDecimal(poolLoansInfo.poolSize)
+    pool.loansCount     = poolLoansInfo.loansCount
+    pool.maxBorrower    = poolLoansInfo.maxBorrower
+    pool.inflator       = wadToDecimal(poolLoansInfo.pendingInflator)
     
     // update amount of debt in pool
     const debtInfo = getDebtInfo(pool)
-    pool.currentDebt = wadToDecimal(debtInfo.pendingDebt)
+    pool.debt = wadToDecimal(debtInfo.pendingDebt)
+    pool.t0debt = wadToDecimal(debtInfo.pendingDebt.times(ONE_WAD_BI).div(poolLoansInfo.pendingInflator))
 
     // update pool prices information
     const poolPricesInfo = getPoolPricesInfo(pool)

@@ -89,10 +89,11 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.createdAtBlockNumber = event.block.number
   pool.collateralToken = collateralToken.id
   pool.quoteToken = quoteToken.id
-  pool.currentDebt = ZERO_BD
+  pool.debt = ZERO_BD
+  pool.t0debt = ZERO_BD
   pool.feeRate = wadToDecimal(interestRateResults.value1)
   pool.inflator = ONE_BD
-  pool.inflatorUpdate = event.block.timestamp
+  pool.inflatorLastUpdate = event.block.timestamp
   pool.interestRate = wadToDecimal(interestRateResults.value0)
   pool.pledgedCollateral = ZERO_BD
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
@@ -102,8 +103,6 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.poolSize = ZERO_BD
   pool.loansCount = ZERO_BI
   pool.maxBorrower = ZERO_ADDRESS
-  pool.pendingInflator = ONE_BD
-  pool.pendingInterestFactor = ZERO_BD
 
   // pool prices information
   pool.hpb = ZERO_BD

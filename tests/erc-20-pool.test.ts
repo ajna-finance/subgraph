@@ -91,8 +91,7 @@ describe("ERC20Pool assertions", () => {
       debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
-      pendingInflator: ONE_WAD_BI,
-      pendingInterestFactor: ZERO_BI,
+      inflator: ONE_WAD_BI,
       hpb: ZERO_BI, //TODO: indexToPrice(price)
       hpbIndex: index,
       htp: ZERO_BI, //TODO: indexToPrice(price)
@@ -199,8 +198,7 @@ describe("ERC20Pool assertions", () => {
       debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
-      pendingInflator: ONE_WAD_BI,
-      pendingInterestFactor: ZERO_BI,
+      inflator: ONE_WAD_BI,
       hpb: ZERO_BI, //TODO: indexToPrice(price)
       hpbIndex: index,
       htp: ZERO_BI, //TODO: indexToPrice(price)
@@ -283,9 +281,8 @@ describe("ERC20Pool assertions", () => {
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS.toHexString(),
       inflator: ONE_WAD_BI,
-      pendingInflator: ONE_WAD_BI,
-      pendingInterestFactor: ZERO_BI,
-      currentDebt: ZERO_BI,
+      inflator: ONE_WAD_BI,
+      debt: ZERO_BI,
       pledgedCollateral: ZERO_BI,
       hpb: ZERO_BI,
       hpbIndex: index,
@@ -525,7 +522,7 @@ describe("ERC20Pool assertions", () => {
     assert.fieldEquals(
       "Pool",
       `${addressToBytes(poolAddress).toHexString()}`,
-      "currentDebt",
+      "debt",
       `${wadToDecimal(amountBorrowed)}`
     )
     assert.fieldEquals(
@@ -757,9 +754,8 @@ describe("ERC20Pool assertions", () => {
     //   loansCount: ZERO_BI, // should be one while kicked but not settled
     //   maxBorrower: borrower.toHexString(),
     //   inflator: ONE_WAD_BI,
-    //   pendingInflator: ONE_WAD_BI,
-    //   pendingInterestFactor: ZERO_BI,
-    //   currentDebt: ZERO_BI,
+    //   inflator: ONE_WAD_BI,
+    //   debt: ZERO_BI,
     //   pledgedCollateral: ZERO_BI,
     //   hpb: ZERO_BI,
     //   hpbIndex: ZERO_BI,
@@ -1210,8 +1206,7 @@ describe("ERC20Pool assertions", () => {
       debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
-      pendingInflator: ONE_WAD_BI,
-      pendingInterestFactor: ZERO_BI,
+      inflator: ONE_WAD_BI,
       hpb: ZERO_BI, //TODO: indexToPrice(price)
       hpbIndex: ZERO_BI,
       htp: ZERO_BI, //TODO: indexToPrice(price)
@@ -1304,8 +1299,7 @@ describe("ERC20Pool assertions", () => {
       debt: ZERO_BI,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS,
-      pendingInflator: ONE_WAD_BI,
-      pendingInterestFactor: ZERO_BI,
+      inflator: ONE_WAD_BI,
       hpb: ZERO_BI, //TODO: indexToPrice(price)
       hpbIndex: ZERO_BI,
       htp: ZERO_BI, //TODO: indexToPrice(price)
@@ -1463,9 +1457,8 @@ describe("ERC20Pool assertions", () => {
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS.toHexString(),
       inflator: ONE_WAD_BI,
-      pendingInflator: ONE_WAD_BI,
-      pendingInterestFactor: ZERO_BI,
-      currentDebt: ZERO_BI,
+      inflator: ONE_WAD_BI,
+      debt: ZERO_BI,
       pledgedCollateral: ZERO_BI,
       hpb: ZERO_BI,
       hpbIndex: ZERO_BI,

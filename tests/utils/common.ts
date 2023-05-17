@@ -6,7 +6,7 @@ import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
 import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
-import { grantFundNetworkLookUpTable, positionManagerNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI } from "../../src/utils/constants"
+import { grantFundNetworkLookUpTable, positionManagerNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo } from "../../src/utils/liquidation"
 
@@ -86,9 +86,7 @@ export class PoolUpdatedParams {
     loansCount: BigInt
     maxBorrower: String
     inflator: BigInt
-    pendingInflator: BigInt
-    pendingInterestFactor: BigInt
-    currentDebt: BigInt
+    debt: BigInt
     pledgedCollateral: BigInt
     // prices info
     hpb: BigInt
@@ -143,20 +141,8 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
     assert.fieldEquals(
         "Pool",
         `${params.poolAddress}`,
-        "pendingInflator",
-        `${wadToDecimal(params.pendingInflator)}`
-    )
-    assert.fieldEquals(
-        "Pool",
-        `${params.poolAddress}`,
-        "pendingInterestFactor",
-        `${wadToDecimal(params.pendingInterestFactor)}`
-    )
-    assert.fieldEquals(
-        "Pool",
-        `${params.poolAddress}`,
-        "currentDebt",
-        `${wadToDecimal(params.currentDebt)}`
+        "debt",
+        `${wadToDecimal(params.debt)}`
     )
     assert.fieldEquals(
         "Pool",
@@ -525,8 +511,7 @@ export class PoolMockParams {
     debt: BigInt
     loansCount: BigInt
     maxBorrower: Address
-    pendingInflator: BigInt
-    pendingInterestFactor: BigInt
+    inflator: BigInt
     // prices info mock params
     hpb: BigInt
     hpbIndex: BigInt
@@ -554,8 +539,8 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.poolSize,
         params.loansCount,
         params.maxBorrower,
-        params.pendingInflator,
-        params.pendingInterestFactor
+        params.inflator,
+        ONE_BI
     )
     mockGetPoolLoansInfo(pool, expectedPoolLoansInfo)
 

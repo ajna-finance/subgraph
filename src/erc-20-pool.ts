@@ -493,7 +493,7 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
   const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
-    pool.currentDebt       = pool.currentDebt.plus(wadToDecimal(event.params.amountBorrowed))
+    pool.debt       = pool.debt.plus(wadToDecimal(event.params.amountBorrowed))
     pool.pledgedCollateral = pool.pledgedCollateral.plus(wadToDecimal(event.params.collateralPledged))
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
@@ -862,7 +862,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
-    pool.currentDebt       = pool.currentDebt.minus(wadToDecimal(event.params.quoteRepaid))
+    pool.debt       = pool.debt.minus(wadToDecimal(event.params.quoteRepaid))
     pool.pledgedCollateral = pool.pledgedCollateral.minus(wadToDecimal(event.params.collateralPulled))
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)

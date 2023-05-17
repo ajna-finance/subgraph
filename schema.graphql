@@ -46,12 +46,16 @@ type Pool @entity {
   quoteToken: Token!
   # fee rate of the pool
   feeRate: BigDecimal!
-  # current total debt in the pool
-  currentDebt: BigDecimal!  # TODO: rename debt
-  # current pool inflator snapshot
+  # amount of deposit in the pool
+  poolSize: BigDecimal! 
+  # total debt in the pool
+  debt: BigDecimal!
+  # debt in T0 terms, useful when the caller knows the pending inflator
+  t0debt: BigDecimal!
+  # pool inflator snapshot
   inflator: BigDecimal!
   # block timestamp at which the inflator was last updated
-  inflatorUpdate: BigInt!
+  inflatorLastUpdate: BigInt!
   # borrower interest rate
   interestRate: BigDecimal!
   # total collateral pledged to the pool
@@ -62,13 +66,8 @@ type Pool @entity {
   txCount: BigInt!
 
   # LOANS INFORMATION
-  poolSize: BigDecimal! # total amount of quote tokens in the pool
   loansCount: BigInt! # total number of loans in the pool
   maxBorrower: Bytes! # address of the borrower with the highest TP in the pool
-  # TODO: eliminate, store pending inflator in inflator
-  pendingInflator: BigDecimal! 
-  # TODO: rename interestFactor
-  pendingInterestFactor: BigDecimal! # pending interest factor used to scale the inflator
 
   # PRICES INFORMATION
   hpb: BigDecimal! # current highest price bucket

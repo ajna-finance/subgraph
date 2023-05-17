@@ -71,7 +71,7 @@ Details for a specific pool:
   pool(id: "0xe1200aefd60559d494d4419e17419571ef8fc1eb") {
     id
     actualUtilization
-    currentDebt
+    debt
     htp
     hpb
     lup
