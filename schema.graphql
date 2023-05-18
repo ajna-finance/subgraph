@@ -210,7 +210,7 @@ type LiquidationAuction @entity {
   id: Bytes!                       # $poolAddress + '|' + $loanId + '|' + blockNumber
   pool: Pool!                      # pool in which the liquidation occurred
   borrower: Bytes!                 # address of the borrower being liquidated
-  auctionPrice: BigDecimal!        # initial price at which auction was kicked # FIXME: not exposed
+  auctionPrice: BigDecimal!        # price of auction upon kick or last take
   collateral: BigDecimal!          # initial collateral up for auction
   collateralRemaining: BigDecimal! # collateral which has not been taken
   debt: BigDecimal!                # initial debt to be covered by the auction
@@ -343,16 +343,17 @@ type BucketBankruptcy @entity(immutable: true) {
 
 type BucketTake @entity(immutable: true) {
   id: Bytes!
-  taker: Bytes!           # address of the taker
+  taker: Bytes!             # address of the taker
   liquidationAuction: LiquidationAuction! # liquidation auction in which the take is occuring
-  loan: Loan!             # loan which was taken
-  pool: Pool!             # pool in which the take is occuring
-  borrower: Bytes!        # address
-  index: Int!             # uint256
-  amount: BigDecimal!     # uint256
-  collateral: BigDecimal! # uint256
-  bondChange: BigDecimal! # uint256
-  isReward: Boolean!      # bool
+  loan: Loan!               # loan which was taken
+  pool: Pool!               # pool in which the take is occuring
+  borrower: Bytes!          # address
+  index: Int!               # uint256
+  auctionPrice: BigDecimal! # price of auction when taken
+  amount: BigDecimal!       # uint256
+  collateral: BigDecimal!   # uint256
+  bondChange: BigDecimal!   # uint256
+  isReward: Boolean!        # bool
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -391,17 +392,18 @@ type Flashloan @entity(immutable: true) {
 
 type Kick @entity {
   id: Bytes!
-  kicker: Bytes!          # address of the kicker
-  kickMomp: BigDecimal!   # pool MOMP at the time of kicking
-  pool: Pool!             # Pool in which a kick occurred
-  loan: Loan!             # Loan which was kicked
-  locked: BigDecimal!     # amount of quote from the bond locked in the kick (updated on take)
-  claimable: BigDecimal!  # amount of quote from the bond claimable by the kicker (updated on settle)
+  kicker: Bytes!             # address of the kicker
+  kickMomp: BigDecimal!      # pool MOMP at the time of kicking
+  pool: Pool!                # Pool in which a kick occurred
+  loan: Loan!                # Loan which was kicked
+  locked: BigDecimal!        # amount of quote from the bond locked in the kick (updated on take)
+  claimable: BigDecimal!     # amount of quote from the bond claimable by the kicker (updated on settle)
   liquidationAuction: LiquidationAuction! # Liquidation auction which was initiated
-  borrower: Bytes!        # address of the borrower being liquidated
-  debt: BigDecimal!       # uint256
-  collateral: BigDecimal! # uint256
-  bond: BigDecimal!       # uint256
+  borrower: Bytes!           # address of the borrower being liquidated
+  debt: BigDecimal!          # amount of debt to be covered
+  collateral: BigDecimal!    # amount of collateral available to liquidate
+  bond: BigDecimal!          # liquidation bond paid by kicker
+  startingPrice: BigDecimal! # initial price of auction
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -527,15 +529,16 @@ type Settle @entity(immutable: true) {
 
 type Take @entity(immutable: true) {
   id: Bytes!
-  taker: Bytes!           # address of the taker
-  pool: Pool!             # Pool in which the take occurred
-  borrower: Bytes!        # address of the borrower being liquidated
+  taker: Bytes!             # address of the taker
+  pool: Pool!               # Pool in which the take occurred
+  borrower: Bytes!          # address of the borrower being liquidated
   liquidationAuction: LiquidationAuction! # Liquidation auction which was taken
-  loan: Loan!             # Loan which was taken
-  amount: BigDecimal!     # uint256
-  collateral: BigDecimal! # uint256
-  bondChange: BigDecimal! # uint256
-  isReward: Boolean! # bool
+  loan: Loan!               # Loan which was taken
+  auctionPrice: BigDecimal! # price of auction when taken
+  amount: BigDecimal!       # uint256
+  collateral: BigDecimal!   # uint256
+  bondChange: BigDecimal!   # uint256
+  isReward: Boolean!        # bool
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

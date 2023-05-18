@@ -17,6 +17,7 @@ import {
   assertPoolUpdate,
   createPool,
   mockGetAuctionInfoERC20Pool,
+  mockGetAuctionStatus,
   mockGetBucketInfo,
   mockGetBurnInfo,
   mockGetCurrentBurnEpoch,
@@ -32,7 +33,7 @@ import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_
 import { Account, Lend, Loan, Pool } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
-import { AuctionInfo, getLiquidationAuctionId } from "../src/utils/liquidation"
+import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/liquidation"
 import { BurnInfo, DebtInfo } from "../src/utils/pool"
 import { getReserveAuctionId } from "../src/utils/reserve-auction"
 import { wmul } from "../src/utils/math"
@@ -631,6 +632,7 @@ describe("ERC20Pool assertions", () => {
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
     const alreadyTaken = false
+    const startPrice = neutralPrice.times(BigInt.fromU32(32))
     const expectedAuctionInfo = new AuctionInfo(
       kicker,
       bondFactor,
@@ -644,6 +646,15 @@ describe("ERC20Pool assertions", () => {
       alreadyTaken
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+    const expectedAuctionStatus = new AuctionStatus(
+      kickTime,
+      collateral,
+      debt,
+      false,
+      startPrice,
+      neutralPrice
+    )
+    mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
 
     // mock kick event
     const newKickEvent = createKickEvent(
@@ -848,6 +859,15 @@ describe("ERC20Pool assertions", () => {
       alreadyTaken
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+    const expectedAuctionStatus = new AuctionStatus(
+      kickTime,
+      collateral,
+      debt,
+      false,
+      wmul(neutralPrice, BigInt.fromString("970000000000000000")), // take price = neutral price * 0.97
+      neutralPrice
+    )
+    mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
 
     // mock take event
     const newTakeEvent = createTakeEvent(
@@ -1017,6 +1037,15 @@ describe("ERC20Pool assertions", () => {
       alreadyTaken
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+    const expectedAuctionStatus = new AuctionStatus(
+      kickTime,
+      collateral,
+      debt,
+      false,
+      wmul(neutralPrice, BigInt.fromString("1020000000000000000")), // take price = neutral price * 1.02
+      neutralPrice
+    )
+    mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
 
     // mock bucket take event
     const newBucketTakeEvent = createBucketTakeEvent(

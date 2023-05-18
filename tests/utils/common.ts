@@ -8,7 +8,7 @@ import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
 import { grantFundNetworkLookUpTable, positionManagerNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
-import { AuctionInfo } from "../../src/utils/liquidation"
+import { AuctionInfo, AuctionStatus } from "../../src/utils/liquidation"
 
 /*************************/
 /*** Bucket Assertions ***/
@@ -476,6 +476,21 @@ export function mockGetAuctionInfoERC20Pool(borrower: Address, pool: Address, ex
             ethereum.Value.fromAddress(expectedInfo.prev),
             ethereum.Value.fromBoolean(expectedInfo.alreadyTaken)
         ])
+}
+
+// mock auctionStatus poolInfoUtils calls
+export function mockGetAuctionStatus(pool: Address, borrower: Address, expectedInfo: AuctionStatus): void {
+  createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 
+  'auctionStatus', 'auctionStatus(address,address):(uint256,uint256,uint256,bool,uint256,uint256)')
+  .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
+  .returns([
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.kickTime),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.debtToCover),
+      ethereum.Value.fromBoolean(expectedInfo.isCollateralized),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.price),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice)
+  ])
 }
 
 // mock currentBurnEpoch contract calls
