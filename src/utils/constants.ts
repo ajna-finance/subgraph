@@ -21,8 +21,6 @@ export const ZERO_BD = BigDecimal.zero()
 export const EXP_18_BD = BigDecimal.fromString('1000000000000000000')
 export const ONE_BD = BigDecimal.fromString('1')
 export const ONE_WAD_BD = EXP_18_BD
-// FIXME: why is this needed? BigDecimals should never be scaled as WAD
-export const FIVE_PERCENT_BD = BigDecimal.fromString("50000000000000000") // 0.05 * 1e18
 
 // max price of the pool is 1_004_968_987.606512354182109771 * 1e18
 export const MAX_PRICE = BigDecimal.fromString(`${1_004_968_987.606512354182109771}`)

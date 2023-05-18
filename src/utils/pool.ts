@@ -5,7 +5,7 @@ import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
 import { poolInfoUtilsNetworkLookUpTable, ONE_BI, TEN_BI, ONE_WAD_BI } from "./constants"
-import { bytesToAddress, decimalToWad, wadToDecimal } from './convert'
+import { decimalToWad, wadToDecimal } from './convert'
 import { getTokenBalance } from './token-erc20'
 import { wdiv, wmul } from './math'
 

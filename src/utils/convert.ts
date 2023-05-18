@@ -3,18 +3,11 @@ import { BigInt, BigDecimal, Bytes, Address, log } from '@graphprotocol/graph-ts
 import { EXP_18_BD, MAX_BUCKET_INDEX, MIN_BUCKET_INDEX, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
 import { prices } from './prices'
 
-/****************************/
-/*** To Address Functions ***/
-/****************************/
-
-export function bytesToAddress(bytes: Bytes): Address {
-    return Address.fromHexString(bytes.toHexString()) as Address
-    // FIXME: we use Address.fromBytes(pool.id) more often; what's the difference?
-}
-
 /**************************/
 /*** To Bytes Functions ***/
 /**************************/
+
+// use Address.fromBytes() to convert bytes to an Address
 
 export function addressToBytes(address: Address): Bytes {
     // return address.map<Bytes>((b: Bytes) => b)
