@@ -22,6 +22,7 @@ import {
   RemoveQuoteToken as RemoveQuoteTokenEvent,
   RepayDebt as RepayDebtEvent,
   ReserveAuction as ReserveAuctionEvent,
+  ResetInterestRate as ResetInterestRateEvent,
   RevokeLPAllowance as RevokeLPAllowanceEvent,
   RevokeLPTransferors as RevokeLPTransferorsEvent,
   Settle as SettleEvent,
@@ -1019,6 +1020,34 @@ export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
   reserveTake.save()
 }
 
+export function handleResetInterestRate(event: ResetInterestRateEvent): void {
+  const resetInterestRate = new UpdateInterestRate(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  const poolAddress = addressToBytes(event.address)
+  const pool = Pool.load(poolAddress)!
+  const lenderInterestMargin = getLenderInterestMargin(poolAddress)
+
+  resetInterestRate.pool = pool.id
+  resetInterestRate.oldBorrowRate = pool.borrowRate
+  resetInterestRate.oldLendRate = pool.lendRate
+  resetInterestRate.newBorrowRate = wadToDecimal(event.params.newRate)
+  resetInterestRate.newLendRate = wadToDecimal(wmul(event.params.newRate, lenderInterestMargin))
+
+  resetInterestRate.blockNumber = event.block.number
+  resetInterestRate.blockTimestamp = event.block.timestamp
+  resetInterestRate.transactionHash = event.transaction.hash
+
+  // update pool state
+  updatePool(pool)
+  pool.borrowRate = resetInterestRate.newBorrowRate
+  pool.lendRate = resetInterestRate.newLendRate
+  pool.txCount = pool.txCount.plus(ONE_BI)
+
+  // save entities to the store
+  pool.save()
+  resetInterestRate.save()
+}
 
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
   const poolId = addressToBytes(event.address)
@@ -1238,6 +1267,8 @@ export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   const lenderInterestMargin = getLenderInterestMargin(poolAddress)
 
   updateInterestRate.pool = pool.id
+  updateInterestRate.oldBorrowRate = pool.borrowRate
+  updateInterestRate.oldLendRate = pool.lendRate
   updateInterestRate.newBorrowRate = wadToDecimal(event.params.newRate)
   updateInterestRate.newLendRate = wadToDecimal(wmul(event.params.newRate, lenderInterestMargin))
 

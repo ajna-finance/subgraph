@@ -43,14 +43,9 @@ List pools showing their tokens and how many transactions have been performed on
 Positions for a specific lender across all pools:
 ```
 {
-  accounts(where: {id:"0x31bcbe14ad30b2f7e1e4a14cab2c16849b73dac3"}) {
+  accounts(where: {id:"0x4eb7f19d6efcace59eaed70220da5002709f9b71"}) {
     id
     lends {
-      bucket {
-        bucketIndex
-        deposit
-        collateral
-      }
       pool {
         id
         quoteToken {
@@ -60,6 +55,11 @@ Positions for a specific lender across all pools:
           symbol
         }
       }
+      bucket {
+        bucketIndex
+        deposit
+        collateral
+      }
     }
   }
 }
@@ -68,25 +68,21 @@ Positions for a specific lender across all pools:
 Details for a specific pool:
 ```
 {
-  pool(id: "0xe1200aefd60559d494d4419e17419571ef8fc1eb") {
+  pool(id: "0xc2b64ca87090fe79786a8773009d7fb1288d3db1") {
     id
-    actualUtilization
+    quoteToken { symbol }
+    collateralToken { symbol }
+    poolSize
     debt
+    actualUtilization
     htp
     hpb
     lup
-    maxBorrower
-    poolSize
     reserves
-    targetUtilization
+    borrowRate
+    lendRate
     totalAjnaBurned
     totalInterestEarned
-    quoteToken {
-      symbol
-    }
-    collateralToken {
-      symbol
-    }
   }
 }
 ```

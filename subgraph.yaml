@@ -198,6 +198,7 @@ templates:
         - RepayDebt
         - ReserveAuctionKick
         - ReserveAuctionTake
+        - ResetInterestRate
         - RevokeLPAllowance
         - RevokeLPTransferors
         - Settle
@@ -254,6 +255,8 @@ templates:
           handler: handleRepayDebt
         - event: ReserveAuction(uint256,uint256,uint256)
           handler: handleReserveAuctionTake
+        - event: ResetInterestRate(uint256,uint256)
+          handler: handleResetInterestRate
         - event: RevokeLPAllowance(indexed address,indexed address,uint256[])
           handler: handleRevokeLPAllowance
         - event: RevokeLPTransferors(indexed address,address[])

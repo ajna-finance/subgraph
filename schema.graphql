@@ -499,6 +499,19 @@ type ReserveAuctionTake @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# indicates rate was reset on an underutilized pool with high interest rate
+type ResetInterestRate @entity(immutable: true) {
+  id: Bytes!
+  pool: Pool!                # Pool whose interest rate was reset
+  oldBorrowRate: BigDecimal! # uint256
+  newBorrowRate: BigDecimal! # uint256
+  oldLendRate: BigDecimal!   # uint256
+  newLendRate: BigDecimal!   # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 # emitted for each settle TX; one to many required before auction is settled
 type Settle @entity(immutable: true) {
   id: Bytes!
@@ -541,8 +554,10 @@ type TransferLP @entity(immutable: true) {
 
 type UpdateInterestRate @entity(immutable: true) {
   id: Bytes!
-  pool: Pool!          # Pool whose interest rate was updated
+  pool: Pool!                # Pool whose interest rate was updated
+  oldBorrowRate: BigDecimal! # uint256
   newBorrowRate: BigDecimal! # uint256
+  oldLendRate: BigDecimal!   # uint256
   newLendRate: BigDecimal!   # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
