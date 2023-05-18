@@ -5,13 +5,12 @@ import {
   clearStore,
   beforeEach,
   afterEach,
-  logStore,
   beforeAll,
-  dataSourceMock
+  dataSourceMock,
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuction, handleTake, handleUpdateInterestRate } from "../src/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketBankruptcyEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionEvent, createTakeEvent, createUpdateInterestRateEvent } from "./utils/erc-20-pool-utils"
+import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuctionKick, handleReserveAuctionTake, handleTake, handleUpdateInterestRate } from "../src/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketBankruptcyEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionKickEvent, createReserveAuctionTakeEvent, createTakeEvent, createUpdateInterestRateEvent } from "./utils/erc-20-pool-utils"
 import {
   assertBucketUpdate,
   assertLendUpdate,
@@ -29,13 +28,14 @@ import {
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
-import { EXP_18_BD, FIVE_PERCENT_BD, FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
-import { Account, Lend, Loan, ReserveAuctionKickOrTake } from "../generated/schema"
+import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
+import { Account, Lend, Loan, Pool } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
 import { getLoanId } from "../src/utils/loan"
 import { AuctionInfo, getLiquidationAuctionId } from "../src/utils/liquidation"
 import { BurnInfo, DebtInfo } from "../src/utils/pool"
 import { getReserveAuctionId } from "../src/utils/reserve-auction"
+import { wmul } from "../src/utils/math"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -281,7 +281,6 @@ describe("ERC20Pool assertions", () => {
       poolSize: amount,
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS.toHexString(),
-      inflator: ONE_WAD_BI,
       inflator: ONE_WAD_BI,
       debt: ZERO_BI,
       pledgedCollateral: ZERO_BI,
@@ -1190,12 +1189,13 @@ describe("ERC20Pool assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const kicker = Address.fromString("0x0000000000000000000000000000000000000008")
     const taker = Address.fromString("0x0000000000000000000000000000000000000018")
-    let claimableReservesRemaining = BigInt.fromString("100000000000000000000") // Wad(100)
+    const claimableReserves = BigInt.fromString("100000000000000000000") // Wad(100)
     const auctionPrice = BigInt.fromI32(456)
     const seventyTwoHours = BigInt.fromString("259200")
     let timestamp = BigInt.fromI32(123)
     let totalInterest = ZERO_BI
-    const totalBurnedAtKick = ONE_WAD_BI
+    const totalBurnedAtKick = BigInt.fromString("12000000000000000000") // Wad(12)
+    const burnEpoch = BigInt.fromI32(9998101)
 
     /****************************/
     /*** Kick Reserve Auction ***/
@@ -1216,10 +1216,10 @@ describe("ERC20Pool assertions", () => {
       lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
       momp: BigInt.fromI32(623801),
       reserves: ZERO_BI,
-      claimableReserves: claimableReservesRemaining,
-      claimableReservesRemaining: claimableReservesRemaining,
+      claimableReserves: claimableReserves,
+      claimableReservesRemaining: claimableReserves,
       reserveAuctionPrice: auctionPrice,
-      currentBurnEpoch: BigInt.fromI32(9998101),
+      currentBurnEpoch: burnEpoch,
       reserveAuctionTimeRemaining: seventyTwoHours,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -1228,45 +1228,63 @@ describe("ERC20Pool assertions", () => {
     })
 
     // mock burnInfo contract calls
-    const expectedBurnEpoch = ONE_BI
-    mockGetCurrentBurnEpoch(poolAddress, expectedBurnEpoch)
+    mockGetCurrentBurnEpoch(poolAddress, burnEpoch)
 
-    let expectedBurnInfo = new BurnInfo(
-      timestamp,
-      totalInterest,
-      totalBurnedAtKick
-    )
-    mockGetBurnInfo(poolAddress, ONE_BI, expectedBurnInfo)
+    // Pretend the pool already had some AJNA burned.  Kick event should not need to check burn info.
+    const pool = Pool.load(Address.fromBytes(poolAddress))!
+    pool.totalAjnaBurned = wadToDecimal(totalBurnedAtKick)
+    pool.save()
 
-    let newReserveAuctionEvent = createReserveAuctionEvent(
+    const kickEvent = createReserveAuctionKickEvent(
       kicker,
       poolAddress,
-      claimableReservesRemaining,
+      claimableReserves,
       auctionPrice,
-      expectedBurnEpoch,
+      burnEpoch,
     )
-    handleReserveAuction(newReserveAuctionEvent)
+    handleReserveAuctionKick(kickEvent)
 
     /*********************************/
     /*** Assert Reserve Kick State ***/
     /*********************************/
 
-    assert.entityCount("ReserveAuctionKickOrTake", 1)
+    assert.entityCount("ReserveAuctionKick", 1)
+    const kickReserveAuctionID = Bytes.fromHexString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a").concat(addressToBytes(kicker))
+    const reserveAuctionId     = getReserveAuctionId(addressToBytes(poolAddress), burnEpoch)
 
-    const reserveAuctionId = getReserveAuctionId(addressToBytes(poolAddress), expectedBurnEpoch)
-    assert.entityCount("ReserveAuction", 1)
+    // assert kick reserve auction entity
     assert.fieldEquals(
-      "ReserveAuction",
-      `${reserveAuctionId.toHexString()}`,
+      "ReserveAuctionKick",
+      `${kickReserveAuctionID.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionKick",
+      `${kickReserveAuctionID.toHexString()}`,
+      "reserveAuction",
+      `${reserveAuctionId.toHexString()}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionKick",
+      `${kickReserveAuctionID.toHexString()}`,
+      "claimableReserves",
+      `${wadToDecimal(claimableReserves)}`
+    )
+    assert.fieldEquals(
+      "ReserveAuctionKick",
+      `${kickReserveAuctionID.toHexString()}`,
       "kicker",
       `${kicker.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuction",
-      `${reserveAuctionId.toHexString()}`,
+      "ReserveAuctionKick",
+      `${kickReserveAuctionID.toHexString()}`,
       "kickerAward",
-      `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000"))).div(EXP_18_BD)}`
+      `${wadToDecimal(wmul(claimableReserves, ONE_PERCENT_BI))}`
     )
+
+    assert.entityCount("ReserveAuction", 1)
     assert.fieldEquals(
       "ReserveAuction",
       `${reserveAuctionId.toHexString()}`,
@@ -1276,23 +1294,30 @@ describe("ERC20Pool assertions", () => {
     assert.fieldEquals(
       "ReserveAuction",
       `${reserveAuctionId.toHexString()}`,
-      "burnEpoch",
-      `${expectedBurnEpoch}`
+      "claimableReservesRemaining",
+      `${wadToDecimal(claimableReserves)}`
     )
     assert.fieldEquals(
       "ReserveAuction",
       `${reserveAuctionId.toHexString()}`,
-      "ajnaBurnedAcrossAllTakes",
-      `${0}`
+      "burnEpoch",
+      `${burnEpoch}`
+    )
+    assert.fieldEquals(
+      "ReserveAuction",
+      `${reserveAuctionId.toHexString()}`,
+      "ajnaBurned",
+      `${ZERO_BD}`
     )
 
     /****************************/
     /*** Take Reserve Auction ***/
     /****************************/
 
-    const totalBurnedAtTake = BigInt.fromString("100000000000000000000") // Wad(100)
-    const claimableReservesRemainingAfterTake = BigInt.fromString("500000000000000000000") // Wad(500)
-    const seventyHours = BigInt.fromString("252000")
+    const totalBurnedAtTake = BigInt.fromString("14000000000000000000") // Wad(14) (2 AJNA burned)
+    timestamp = timestamp.plus(BigInt.fromU32(3600 * 2))  // two hours elapsed
+    const seventyHours = BigInt.fromString("252000")      // seventy hours remain
+    const claimableReservesAfterTake = BigInt.fromString("500000000000000000000") // Wad(500)
 
     // mock pool info contract calls
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
@@ -1309,10 +1334,10 @@ describe("ERC20Pool assertions", () => {
       lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
       momp: BigInt.fromI32(623802),
       reserves: ZERO_BI,
-      claimableReserves: claimableReservesRemainingAfterTake,
-      claimableReservesRemaining: claimableReservesRemainingAfterTake,
+      claimableReserves: claimableReservesAfterTake,
+      claimableReservesRemaining: claimableReservesAfterTake,
       reserveAuctionPrice: auctionPrice,
-      currentBurnEpoch: BigInt.fromI32(9998104),
+      currentBurnEpoch: burnEpoch,
       reserveAuctionTimeRemaining: seventyHours,
       minDebtAmount: ZERO_BI,
       collateralization: ONE_WAD_BI,
@@ -1320,97 +1345,55 @@ describe("ERC20Pool assertions", () => {
       targetUtilization: ONE_WAD_BI
     })
 
-    timestamp = BigInt.fromI32(456)
     totalInterest = BigInt.fromString("100000000000000000000") // Wad(100)
-    expectedBurnInfo = new BurnInfo(
+    const expectedBurnInfo = new BurnInfo(
       timestamp,
       totalInterest,
       totalBurnedAtTake
     )
-    mockGetBurnInfo(poolAddress, ONE_BI, expectedBurnInfo)
+    mockGetBurnInfo(poolAddress, burnEpoch, expectedBurnInfo)
 
-    newReserveAuctionEvent = createReserveAuctionEvent(
+    const takeEvent = createReserveAuctionTakeEvent(
       taker,
       poolAddress,
-      claimableReservesRemainingAfterTake,
+      claimableReservesAfterTake,
       auctionPrice,
-      timestamp,
+      burnEpoch,
     )
-    handleReserveAuction(newReserveAuctionEvent)
+    handleReserveAuctionTake(takeEvent)
 
-    /*********************************/
-    /*** Assert Reserve Kick State ***/
-    /*********************************/
-
-    const kickReserveAuctionID = Bytes.fromHexString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a").concat(addressToBytes(kicker))
     const takeReserveAuctionID = Bytes.fromHexString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a").concat(addressToBytes(taker))
-    const loadedKickReserveAuction = ReserveAuctionKickOrTake.load(kickReserveAuctionID)!
-    const loadedTakeReserveAuction = ReserveAuctionKickOrTake.load(takeReserveAuctionID)!
     const incrementalAjnaBurned = wadToDecimal(totalBurnedAtTake.minus(totalBurnedAtKick))
 
-    assert.entityCount("ReserveAuctionKickOrTake", 2)
-    // assert first kick reserve auction entity
+    // assert take reserve auction entity
+    assert.entityCount("ReserveAuctionTake", 1)
     assert.fieldEquals(
-      "ReserveAuctionKickOrTake",
-      `${kickReserveAuctionID.toHexString()}`,
-      "pool",
-      `${poolAddress.toHexString()}`
-    )
-    assert.fieldEquals(
-      "ReserveAuctionKickOrTake",
-      `${kickReserveAuctionID.toHexString()}`,
-      "reserveAuction",
-      `${reserveAuctionId.toHexString()}`
-    )
-    assert.fieldEquals(
-      "ReserveAuctionKickOrTake",
-      `${kickReserveAuctionID.toHexString()}`,
-      "incrementalAjnaBurned",
-      `${0}`
-    )
-    // assert.assertNull(loadedKickReserveAuction.taker) // FIXME: this is failing with a type issue
-
-    // assert second take reserve auction entity
-    assert.fieldEquals(
-      "ReserveAuctionKickOrTake",
+      "ReserveAuctionTake",
       `${takeReserveAuctionID.toHexString()}`,
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionKickOrTake",
+      "ReserveAuctionTake",
       `${takeReserveAuctionID.toHexString()}`,
       "taker",
       `${taker.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionKickOrTake",
+      "ReserveAuctionTake",
       `${takeReserveAuctionID.toHexString()}`,
       "reserveAuction",
       `${reserveAuctionId.toHexString()}`
     )
     assert.fieldEquals(
-      "ReserveAuctionKickOrTake",
+      "ReserveAuctionTake",
       `${takeReserveAuctionID.toHexString()}`,
-      "incrementalAjnaBurned",
+      "ajnaBurned",
       `${incrementalAjnaBurned}`
     )
-    // assert.assertNotNull(loadedTakeReserveAuction.taker) // FIXME: this is failing with a type issue
 
-    // assert reserve auction process entity
+    // assert reserve auction entity
     assert.entityCount("ReserveAuction", 1)
-    assert.fieldEquals(
-      "ReserveAuction",
-      `${reserveAuctionId.toHexString()}`,
-      "kicker",
-      `${kicker.toHexString()}`
-    )
-    assert.fieldEquals(
-      "ReserveAuction",
-      `${reserveAuctionId.toHexString()}`,
-      "kickerAward",
-      `${wadToDecimal(claimableReservesRemaining.times(BigInt.fromString("10000000000000000"))).div(EXP_18_BD)}`
-    )
     assert.fieldEquals(
       "ReserveAuction",
       `${reserveAuctionId.toHexString()}`,
@@ -1421,18 +1404,18 @@ describe("ERC20Pool assertions", () => {
       "ReserveAuction",
       `${reserveAuctionId.toHexString()}`,
       "claimableReservesRemaining",
-      `${wadToDecimal(claimableReservesRemainingAfterTake)}`
+      `${wadToDecimal(claimableReservesAfterTake)}`
     )
     assert.fieldEquals(
       "ReserveAuction",
       `${reserveAuctionId.toHexString()}`,
       "burnEpoch",
-      `${expectedBurnEpoch}`
+      `${burnEpoch}`
     )
     assert.fieldEquals(
       "ReserveAuction",
       `${reserveAuctionId.toHexString()}`,
-      "ajnaBurnedAcrossAllTakes",
+      "ajnaBurned",
       `${incrementalAjnaBurned}`
     )
 
@@ -1458,7 +1441,6 @@ describe("ERC20Pool assertions", () => {
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS.toHexString(),
       inflator: ONE_WAD_BI,
-      inflator: ONE_WAD_BI,
       debt: ZERO_BI,
       pledgedCollateral: ZERO_BI,
       hpb: ZERO_BI,
@@ -1468,8 +1450,8 @@ describe("ERC20Pool assertions", () => {
       lup: MAX_PRICE_BI,
       lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
       reserves: ZERO_BI,
-      claimableReserves: claimableReservesRemainingAfterTake,
-      claimableReservesRemaining: claimableReservesRemainingAfterTake,
+      claimableReserves: claimableReservesAfterTake,
+      claimableReservesRemaining: claimableReservesAfterTake,
       reserveAuctionPrice: auctionPrice,
       reserveAuctionTimeRemaining: seventyHours,
       minDebtAmount: ZERO_BI,
@@ -1480,7 +1462,6 @@ describe("ERC20Pool assertions", () => {
       // liquidationAuctions: Bytes.fromHexString("0x"),
       txCount: BigInt.fromI32(2)
     })
-
   })
 
   test("BucketBankruptcy", () => {

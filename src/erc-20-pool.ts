@@ -15,6 +15,7 @@ import {
   Flashloan as FlashloanEvent,
   IncreaseLPAllowance as IncreaseLPAllowanceEvent,
   Kick as KickEvent,
+  KickReserveAuction as KickReserveAuctionEvent,
   LoanStamped as LoanStampedEvent,
   MoveQuoteToken as MoveQuoteTokenEvent,
   RemoveCollateral as RemoveCollateralEvent,
@@ -51,7 +52,9 @@ import {
   RemoveCollateral,
   RemoveQuoteToken,
   RepayDebt,
-  ReserveAuctionKickOrTake,
+  ReserveAuction,
+  ReserveAuctionKick,
+  ReserveAuctionTake,
   Settle,
   Take,
   Token,
@@ -924,89 +927,98 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   repayDebt.save()
 }
 
+
 // called on both start and take reserves
-export function handleReserveAuction(event: ReserveAuctionEvent): void {
-  const reserveAuctionEvent = new ReserveAuctionKickOrTake(
+export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
+  // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
+  const reserveKick = new ReserveAuctionKick(
     event.transaction.hash.concat(event.transaction.from)
   )
-  reserveAuctionEvent.claimableReservesRemaining = wadToDecimal(event.params.claimableReservesRemaining)
-  reserveAuctionEvent.auctionPrice               = wadToDecimal(event.params.auctionPrice)
-  reserveAuctionEvent.currentBurnEpoch           = event.params.currentBurnEpoch
+  const pool           = Pool.load(addressToBytes(event.address))!
+  const reserveAuction = loadOrCreateReserveAuction(pool.id, event.params.currentBurnEpoch)
 
-  reserveAuctionEvent.blockNumber = event.block.number
-  reserveAuctionEvent.blockTimestamp = event.block.timestamp
-  reserveAuctionEvent.transactionHash = event.transaction.hash
+  reserveKick.kicker            = event.transaction.from
+  reserveKick.reserveAuction    = reserveAuction.id
+  reserveKick.pool              = pool.id
+  reserveKick.claimableReserves = wadToDecimal(event.params.claimableReservesRemaining)
+  reserveKick.startingPrice     = wadToDecimal(event.params.auctionPrice)
 
-  // update entities
-  const pool = Pool.load(addressToBytes(event.address))
-  if (pool != null) {
-    // update pool state
-    updatePool(pool)
-    pool.txCount = pool.txCount.plus(ONE_BI)
+  reserveKick.blockNumber = event.block.number
+  reserveKick.blockTimestamp = event.block.timestamp
+  reserveKick.transactionHash = event.transaction.hash
 
-    // update tx count for a pools tokens
-    incrementTokenTxCount(pool)
+  reserveAuction.claimableReservesRemaining = reserveKick.claimableReserves
+  reserveAuction.auctionPrice = reserveKick.startingPrice
+  reserveAuction.kick = reserveKick.id
 
-    // update account state
-    const accountId = addressToBytes(event.transaction.from)
-    const account   = loadOrCreateAccount(accountId)
-    account.txCount = account.txCount.plus(ONE_BI)
-    updateAccountReserveAuctions(account, reserveAuctionEvent.id)
+  // update pool state
+  pool.burnEpoch = event.params.currentBurnEpoch
+  updatePool(pool)
+  addReserveAuctionToPool(pool, reserveAuction)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  reserveKick.kickerAward = reserveAuctionKickerReward(pool)
 
-    // retrieve ajna burn information from the pool
-    const currentBurnEpoch = getCurrentBurnEpoch(pool)
-    const burnInfo = getBurnInfo(pool, currentBurnEpoch)
+  // update account state
+  const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountReserveAuctions(account, reserveAuction.id)
 
-    // update reserve auction process state
-    const reserveAuctionId = getReserveAuctionId(pool.id, currentBurnEpoch)
-    const reserveAuction = loadOrCreateReserveAuction(pool.id, reserveAuctionId)
-
-    // if kicker is null, then assume this is the start of the auction,
-    // and set kicker to the caller of startReserveAuction and calculate kickerAward
-    if (reserveAuction.kicker == Bytes.empty()) {
-      reserveAuction.burnEpoch = currentBurnEpoch
-      reserveAuction.kicker = event.transaction.from
-      reserveAuction.kickerAward = reserveAuctionKickerReward(pool)
-      reserveAuction.kickTime = event.block.timestamp
-      reserveAuction.pool = pool.id
-
-      // set the total ajna burned at the start of the auction
-      pool.totalAjnaBurned = wadToDecimal(burnInfo.totalBurned)
-    }
-    else {
-      // if kicker is not null, then assume this is the takeReserveAuction call
-      // and set taker to the caller of takeReserveAuction
-      reserveAuctionEvent.taker = event.transaction.from
-      // concat the additional event into the reserveAuction list
-      reserveAuction.reserveAuctionTakes = reserveAuction.reserveAuctionTakes.concat([reserveAuctionEvent.id])
-    }
-
-    // update ReserveAuction with latest auction state
-    reserveAuction.auctionPrice = wadToDecimal(event.params.auctionPrice)
-    reserveAuction.claimableReservesRemaining = wadToDecimal(event.params.claimableReservesRemaining)
-
-    // update burn information of the reserve auction take
-    // since only one reserve auction can occur at a time, look at the difference since the last reserve auction
-    reserveAuctionEvent.incrementalAjnaBurned = wadToDecimal(burnInfo.totalBurned).minus(pool.totalAjnaBurned)
-    reserveAuction.ajnaBurnedAcrossAllTakes = reserveAuction.ajnaBurnedAcrossAllTakes.plus(reserveAuctionEvent.incrementalAjnaBurned)
-
-    // update pool burn and interest earned information
-    pool.burnEpoch = currentBurnEpoch
-    pool.totalAjnaBurned = wadToDecimal(burnInfo.totalBurned)
-    pool.totalInterestEarned = wadToDecimal(burnInfo.totalInterest)
-    addReserveAuctionToPool(pool, reserveAuction)
-
-    reserveAuctionEvent.pool = pool.id
-    reserveAuctionEvent.reserveAuction = reserveAuctionId
-
-    // save entities to store
-    account.save()
-    pool.save()
-    reserveAuction.save()
-  }
-
-  reserveAuctionEvent.save()
+  account.save()
+  pool.save()
+  reserveAuction.save()
+  reserveKick.save()
 }
+
+// called on both start and take reserves
+export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
+  const reserveTake = new ReserveAuctionTake(
+    event.transaction.hash.concat(event.transaction.from)
+  )
+  const pool           = Pool.load(addressToBytes(event.address))!
+  const reserveAuction = loadOrCreateReserveAuction(pool.id, event.params.currentBurnEpoch)
+
+  reserveTake.taker                      = event.transaction.from
+  reserveTake.reserveAuction             = reserveAuction.id
+  reserveTake.pool                       = pool.id
+  reserveTake.claimableReservesRemaining = wadToDecimal(event.params.claimableReservesRemaining)
+  reserveTake.auctionPrice               = wadToDecimal(event.params.auctionPrice)
+
+  // retrieve ajna burn information from the pool
+  const burnInfo = getBurnInfo(pool, event.params.currentBurnEpoch)
+  // update burn information of the reserve auction take
+  // since only one reserve auction can occur at a time, look at the difference since the last reserve auction
+  reserveTake.ajnaBurned = wadToDecimal(burnInfo.totalBurned).minus(pool.totalAjnaBurned)
+  reserveAuction.claimableReservesRemaining = reserveTake.claimableReservesRemaining
+  reserveAuction.auctionPrice               = reserveTake.auctionPrice
+  reserveAuction.ajnaBurned                 = reserveAuction.ajnaBurned.plus(reserveTake.ajnaBurned)
+  reserveAuction.takes                      = reserveAuction.takes.concat([reserveTake.id])
+
+  // event does not provide amount purchased; use auctionPrice and ajnaBurned to calculate
+  reserveTake.quotePurchased = reserveTake.ajnaBurned.div(reserveTake.auctionPrice)
+
+  reserveTake.blockNumber = event.block.number
+  reserveTake.blockTimestamp = event.block.timestamp
+  reserveTake.transactionHash = event.transaction.hash
+
+  // update pool state
+  pool.totalAjnaBurned = wadToDecimal(burnInfo.totalBurned)
+  pool.totalInterestEarned = wadToDecimal(burnInfo.totalInterest)
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
+
+  // update account state
+  const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountReserveAuctions(account, reserveAuction.id)
+
+  // save entities to store
+  account.save()
+  pool.save()
+  reserveAuction.save()
+  reserveTake.save()
+}
+
 
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
   const poolId = addressToBytes(event.address)

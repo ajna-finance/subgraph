@@ -10,6 +10,7 @@ import {
   BucketTakeLPAwarded,
   DrawDebt,
   Kick,
+  KickReserveAuction,
   MoveQuoteToken,
   RemoveCollateral,
   RemoveQuoteToken,
@@ -20,6 +21,7 @@ import {
   TransferLP,
   UpdateInterestRate
 } from "../../generated/templates/ERC20Pool/ERC20Pool"
+import { ReserveAuctionKick, ReserveAuctionTake } from "../../generated/schema"
 
 export function createAddCollateralEvent(
   pool: Address,
@@ -465,7 +467,44 @@ export function createRepayDebtEvent(
   return repayDebtEvent
 }
 
-export function createReserveAuctionEvent(
+export function createReserveAuctionKickEvent(
+  operator: Address,
+  pool: Address,
+  claimableReservesRemaining: BigInt,
+  auctionPrice: BigInt,
+  currentBurnEpoch: BigInt,
+): KickReserveAuction {
+  let reserveAuctionEvent = changetype<KickReserveAuction>(newMockEvent())
+
+  reserveAuctionEvent.parameters = new Array()
+
+  reserveAuctionEvent.parameters.push(
+    new ethereum.EventParam(
+      "claimableReservesRemaining",
+      ethereum.Value.fromUnsignedBigInt(claimableReservesRemaining)
+    )
+  )
+  reserveAuctionEvent.parameters.push(
+    new ethereum.EventParam(
+      "auctionPrice",
+      ethereum.Value.fromUnsignedBigInt(auctionPrice)
+    )
+  )
+  reserveAuctionEvent.parameters.push(
+    new ethereum.EventParam(
+      "currentBurnEpoch",
+      ethereum.Value.fromUnsignedBigInt(currentBurnEpoch)
+    )
+  )
+
+  // update transaction target to the expected pool address
+  reserveAuctionEvent.transaction.from = operator
+  reserveAuctionEvent.address = pool
+  
+  return reserveAuctionEvent;
+}
+
+export function createReserveAuctionTakeEvent(
   operator: Address,
   pool: Address,
   claimableReservesRemaining: BigInt,

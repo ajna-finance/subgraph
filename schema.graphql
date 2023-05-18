@@ -233,15 +233,13 @@ type LiquidationAuction @entity {
 # used as start and take events are emitted as ReserveAuction
 type ReserveAuction @entity {
   id: Bytes! # $poolAddress + '|' + $burnEpoch
-  kicker: Bytes! # address of the kicker
-  kickerAward: BigDecimal! # amount of quote rewarded to kicker for starting reserves auction
-  kickTime: BigInt! # block timestamp at which the reserve auction started
   pool: Pool! # Pool in which the reserve auction occurred
   claimableReservesRemaining: BigDecimal! # uint256 claimable reserves remaining at start or at latest take
   auctionPrice: BigDecimal! # uint256 price at start or at latest take
   burnEpoch: BigInt! # uint256 burn epoch at which the reserve auction was started
-  reserveAuctionTakes: [ReserveAuctionKickOrTake!]! # list of reserve auction takes that occured during this auction process
-  ajnaBurnedAcrossAllTakes: BigDecimal! # total amount of ajna burned across all takes in the reserve auction
+  kick: ReserveAuctionKick!     # kick information
+  takes: [ReserveAuctionTake!]! # list of reserve auction takes that occured during this auction process
+  ajnaBurned: BigDecimal!       # total amount of ajna burned across all takes in the reserve auction
 }
 
 # LP transferors approved by a lender for a pool, updated upon Approve/RevokeLpTransferors
@@ -472,16 +470,30 @@ type RepayDebt @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-# a reserve auction take or start event
-type ReserveAuctionKickOrTake @entity(immutable: true) {
+# starts a claimable reserve auction
+type ReserveAuctionKick @entity(immutable: true) {
+  id: Bytes!                      # transaction.hash + transaction.from
+  kicker: Bytes                   # address of the taker, null if emitted as start of event
+  kickerAward: BigDecimal!        # amount of quote rewarded to kicker for starting reserves auction
+  reserveAuction: ReserveAuction! # reserve auction in which the take is occuring
+  pool: Pool!                     # pool in which the auction was kicked
+  claimableReserves: BigDecimal!  # uint256 initial amount of claimable reserves in the auction
+  startingPrice: BigDecimal!      # uint256 initial auction price
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# indicates AJNA was burned in a claimable reserve auction
+type ReserveAuctionTake @entity(immutable: true) {
   id: Bytes!                         # transaction.hash + transaction.from
   taker: Bytes                       # address of the taker, null if emitted as start of event
   reserveAuction: ReserveAuction!    # reserve auction in which the take is occuring
   pool: Pool!                        # pool in which the take is occuring
   claimableReservesRemaining: BigDecimal! # uint256 remaining amount of claimable reserves in the auction
-  auctionPrice: BigDecimal!          # uint256 auction price at time of event emit
-  incrementalAjnaBurned: BigDecimal! # amount of ajna burned in this take
-  currentBurnEpoch: BigInt!          # current burn epoch
+  auctionPrice: BigDecimal!          # uint256 cost of purchasing one quote token, denominated in AJNA
+  quotePurchased: BigDecimal!        # amount of quote token purchased by taker in this take
+  ajnaBurned: BigDecimal!            # amount of AJNA burned by taker in this take
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

@@ -196,7 +196,8 @@ templates:
         - RemoveCollateral
         - RemoveQuoteToken
         - RepayDebt
-        - ReserveAuctionKickOrTake
+        - ReserveAuctionKick
+        - ReserveAuctionTake
         - RevokeLPAllowance
         - RevokeLPTransferors
         - Settle
@@ -239,6 +240,8 @@ templates:
           handler: handleIncreaseLPAllowance
         - event: Kick(indexed address,uint256,uint256,uint256)
           handler: handleKick
+        - event: KickReserveAuction(uint256,uint256,uint256)
+          handler: handleReserveAuctionKick
         - event: LoanStamped(indexed address)
           handler: handleLoanStamped
         - event: MoveQuoteToken(indexed address,indexed uint256,indexed uint256,uint256,uint256,uint256,uint256)
@@ -250,7 +253,7 @@ templates:
         - event: RepayDebt(indexed address,uint256,uint256,uint256)
           handler: handleRepayDebt
         - event: ReserveAuction(uint256,uint256,uint256)
-          handler: handleReserveAuction
+          handler: handleReserveAuctionTake
         - event: RevokeLPAllowance(indexed address,indexed address,uint256[])
           handler: handleRevokeLPAllowance
         - event: RevokeLPTransferors(indexed address,address[])
