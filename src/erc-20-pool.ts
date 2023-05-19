@@ -251,6 +251,7 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
   auction.settle     = auctionSettle.id
   auction.settleTime = auctionSettle.blockTimestamp
   auction.settled    = true
+  auction.save()
 
   // update loan state
   loan.debt = ZERO_BD
@@ -258,8 +259,6 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
   loan.inLiquidation = false
   loan.collateralization = ZERO_BD
   loan.tp = ZERO_BD
-
-  // save entities to the store
   loan.save()
 
   // update auctionSettle pointers
@@ -1188,6 +1187,7 @@ export function handleSettle(event: SettleEvent): void {
   const auctionInfo = getAuctionInfoERC20Pool(settle.borrower, pool)
   // price upon settle is irrelevant, so do not pass auction status
   updateLiquidationAuction(auction, auctionInfo, null)
+  auction.settles = auction.settles.concat([settle.id])
 
   // update settle pointers
   settle.pool = pool.id

@@ -221,7 +221,8 @@ type LiquidationAuction @entity {
   kickTime: BigInt!                # block timestamp at which the kick was executed
   takes: [Take!]!                  # list of takes which occured using outside liquidity
   bucketTakes: [BucketTake!]!      # list of takes which involved the pool's book
-  settle: AuctionSettle            # used to reconcile the liquidation
+  settles: [Settle!]!              # list of possibly-intermediate settles performed on the auction
+  settle: AuctionSettle            # final settlement of the auction
   settleTime: BigInt               # block timestamp at which the liquidation was settled
   settled: Boolean!                # boolean indicating whether the auction has been settled
   bondSize: BigDecimal!            # bond provided by kicker to initate auction
@@ -396,8 +397,8 @@ type Kick @entity {
   kickMomp: BigDecimal!      # pool MOMP at the time of kicking
   pool: Pool!                # Pool in which a kick occurred
   loan: Loan!                # Loan which was kicked
-  locked: BigDecimal!        # amount of quote from the bond locked in the kick (updated on take)
-  claimable: BigDecimal!     # amount of quote from the bond claimable by the kicker (updated on settle)
+  locked: BigDecimal!        # amount of quote from the bond locked in the kick (updated on take)  TODO: rename bondLocked
+  claimable: BigDecimal!     # amount of quote from the bond claimable by the kicker (updated on settle)  TODO: rename bondClaimable?
   liquidationAuction: LiquidationAuction! # Liquidation auction which was initiated
   borrower: Bytes!           # address of the borrower being liquidated
   debt: BigDecimal!          # amount of debt to be covered

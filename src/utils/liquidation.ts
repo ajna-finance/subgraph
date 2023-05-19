@@ -41,6 +41,7 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
         // collections
         liquidationAuction.takes = []
         liquidationAuction.bucketTakes = []
+        liquidationAuction.settles = []
     }
     return liquidationAuction
 }
