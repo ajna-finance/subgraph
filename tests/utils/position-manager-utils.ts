@@ -225,7 +225,7 @@ export function mintPosition(lender: Address, pool: Address, tokenId: BigInt, to
   handleMint(newMintEvent)
 }
 
-export function  assertPosition(lender: Address, pool: Address, tokenId: BigInt, tokenContractAddress: Address): void {
+export function assertPosition(lender: Address, pool: Address, tokenId: BigInt, tokenContractAddress: Address): void {
   const expectedTokenId = bigIntToBytes(tokenId).toHexString()
 
   // check position attributes

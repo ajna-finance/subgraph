@@ -96,7 +96,6 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.t0debt = ZERO_BD
   pool.feeRate = wadToDecimal(interestRateResults.value1)
   pool.inflator = ONE_BD
-  pool.inflatorLastUpdate = event.block.timestamp
   pool.borrowRate = wadToDecimal(interestRateResults.value0)
   pool.lendRate = wadToDecimal(interestRateResults.value0.times(lenderInterestMargin))
   pool.pledgedCollateral = ZERO_BD

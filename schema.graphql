@@ -54,8 +54,6 @@ type Pool @entity {
   t0debt: BigDecimal!
   # pool inflator snapshot
   inflator: BigDecimal!
-  # block timestamp at which the inflator was last updated
-  inflatorLastUpdate: BigInt!
   # interest rate paid by borrowers, excluding fees
   borrowRate: BigDecimal!
   # interest rate awarded to lenders, excluding fees
