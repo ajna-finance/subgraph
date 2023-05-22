@@ -10,7 +10,7 @@ import {
 import { Address } from "@graphprotocol/graph-ts"
 import { createPool } from "./utils/common"
 
-import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"
+import { ERC20_FACTORY_ADDRESS, FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -54,13 +54,13 @@ describe("ERC20PoolFactory assertions", () => {
   
     assert.fieldEquals(
       "ERC20PoolFactory",
-      "0x9684b8ec942985b23d343cb82d2f30eda8fd7179",
+      ERC20_FACTORY_ADDRESS.toHexString(),
       "poolCount",
       `${ONE_BI}`
     )
     assert.fieldEquals(
       "ERC20PoolFactory",
-      "0x9684b8ec942985b23d343cb82d2f30eda8fd7179",
+      ERC20_FACTORY_ADDRESS.toHexString(),
       "txCount",
       `${ONE_BI}`
     )
@@ -90,7 +90,7 @@ describe("ERC20PoolFactory assertions", () => {
     assert.fieldEquals(
       "Pool",
       "0x0000000000000000000000000000000000000001",
-      "currentDebt",
+      "debt",
       `${ZERO_BI}`
     )
     assert.fieldEquals(

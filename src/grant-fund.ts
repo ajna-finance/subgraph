@@ -1,4 +1,4 @@
-import { BigInt, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
+import { Address, BigInt, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,
@@ -27,7 +27,7 @@ import {
 } from "../generated/schema"
 
 import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
-import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToAddress, bytesToBigInt, wadToDecimal } from "./utils/convert"
+import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getMechanismOfProposal, getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
 import { getDistributionPeriodVoteId, getExtraordinaryVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
@@ -39,14 +39,14 @@ export function handleDelegateRewardClaimed(
   const delegateRewardClaimed = new DelegateRewardClaimed(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  delegateRewardClaimed.delegateeAddress_ = event.params.delegateeAddress_
-  delegateRewardClaimed.rewardClaimed_    = event.params.rewardClaimed_
+  delegateRewardClaimed.delegateeAddress_ = event.params.delegateeAddress
+  delegateRewardClaimed.rewardClaimed_    = event.params.rewardClaimed
 
   delegateRewardClaimed.blockNumber     = event.block.number
   delegateRewardClaimed.blockTimestamp  = event.block.timestamp
   delegateRewardClaimed.transactionHash = event.transaction.hash
 
-  const rewardsClaimed = wadToDecimal(event.params.rewardClaimed_)
+  const rewardsClaimed = wadToDecimal(event.params.rewardClaimed)
 
   // update DistributionPeriod entity
   const distributionId = bigIntToBytes(getCurrentDistributionId())
@@ -91,17 +91,17 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
   const fundedSlateUpdated = new FundedSlateUpdated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  fundedSlateUpdated.distributionId_ = event.params.distributionId_
-  fundedSlateUpdated.fundedSlateHash_ = event.params.fundedSlateHash_
+  fundedSlateUpdated.distributionId_ = event.params.distributionId
+  fundedSlateUpdated.fundedSlateHash_ = event.params.fundedSlateHash
 
   fundedSlateUpdated.blockNumber = event.block.number
   fundedSlateUpdated.blockTimestamp = event.block.timestamp
   fundedSlateUpdated.transactionHash = event.transaction.hash
 
   // update DistributionPeriod entity
-  const distributionId = bigIntToBytes(event.params.distributionId_)
+  const distributionId = bigIntToBytes(event.params.distributionId)
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
-  distributionPeriod.topSlate = event.params.fundedSlateHash_
+  distributionPeriod.topSlate = event.params.fundedSlateHash
 
   // create FundedSlate entity
   const fundedSlate = new FundedSlate(distributionId) as FundedSlate
@@ -258,10 +258,10 @@ export function handleQuarterlyDistributionStarted(
   const distributionStarted = new QuarterlyDistributionStarted(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  const distributionId = bigIntToBytes(event.params.distributionId_)
+  const distributionId = bigIntToBytes(event.params.distributionId)
   distributionStarted.distribution = distributionId
-  distributionStarted.startBlock_ = event.params.startBlock_
-  distributionStarted.endBlock_ = event.params.endBlock_
+  distributionStarted.startBlock_ = event.params.startBlock
+  distributionStarted.endBlock_ = event.params.endBlock
 
   distributionStarted.blockNumber = event.block.number
   distributionStarted.blockTimestamp = event.block.timestamp
@@ -340,7 +340,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
 
         // update voter's distributionPeriodVote entity if it hasn't been recorded yet
         if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-          distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(bytesToBigInt(distributionId), bytesToAddress(voter.id))
+          distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(bytesToBigInt(distributionId), Address.fromBytes(voter.id))
         }
 
         // add additional screening votes to voter's distributionPeriodVote entity
@@ -361,7 +361,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
 
         // update voter's distributionPeriodVote entity if it hasn't been recorded yet
         if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-          distributionPeriodVote.fundingStageVotingPower = getFundingStageVotingPower(bytesToBigInt(distributionId), bytesToAddress(voter.id))
+          distributionPeriodVote.fundingStageVotingPower = getFundingStageVotingPower(bytesToBigInt(distributionId), Address.fromBytes(voter.id))
         }
 
         // save fundingVote to the store

@@ -1,13 +1,14 @@
-import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes, Value, dataSource } from "@graphprotocol/graph-ts"
 
 import { LiquidationAuction, Kick, Loan, Pool } from "../../generated/schema"
 import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 
 import { wadToDecimal } from "./convert"
-import { ONE_BI, ZERO_BD } from "./constants"
+import { ONE_BI, ZERO_BD, poolInfoUtilsNetworkLookUpTable } from "./constants"
+import { PoolInfoUtils } from "../../generated/templates/ERC20Pool/PoolInfoUtils"
 
-export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, blockNumber: BigInt): Bytes {
-    return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + blockNumber.toString()))
+export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, kickBlock: BigInt): Bytes {
+    return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + kickBlock.toString()))
 }
 
 export function getBucketTakeLPAwardedId(transactionHash: Bytes, logIndex: BigInt): Bytes {
@@ -40,11 +41,22 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
         // collections
         liquidationAuction.takes = []
         liquidationAuction.bucketTakes = []
+        liquidationAuction.settles = []
     }
     return liquidationAuction
 }
 
-export function updateLiquidationAuction(liquidationAuction: LiquidationAuction, auctionInfo: AuctionInfo, poolId: Bytes): void {
+export function updateLiquidationAuction(
+  liquidationAuction: LiquidationAuction, 
+  auctionInfo: AuctionInfo, 
+  auctionStatus: AuctionStatus | null): void {
+    // intentionally not passed upon settle; we care about state as of last take
+    if (auctionStatus) {
+      liquidationAuction.auctionPrice        = wadToDecimal(auctionStatus.price)
+      liquidationAuction.collateralRemaining = wadToDecimal(auctionStatus.collateral)
+      liquidationAuction.debtRemaining       = wadToDecimal(auctionStatus.debtToCover)
+    }
+
     liquidationAuction.kickTime     = auctionInfo.kickTime
     liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)
     liquidationAuction.bondFactor   = wadToDecimal(auctionInfo.bondFactor)
@@ -91,4 +103,34 @@ export function getAuctionInfoERC20Pool(borrower: Bytes, pool: Pool): AuctionInf
         auctionInfoResult.value9
     )
     return auctionInfo
+}
+
+export class AuctionStatus {
+    kickTime: BigInt
+    collateral: BigInt
+    debtToCover: BigInt
+    isCollateralized: bool
+    price: BigInt
+    neutralPrice: BigInt
+    constructor(kickTime: BigInt, collateral: BigInt, debtToCover: BigInt, isCollateralized: bool, price: BigInt, neutralPrice: BigInt) {
+      this.kickTime = kickTime
+      this.collateral = collateral
+      this.debtToCover = debtToCover
+      this.isCollateralized = isCollateralized
+      this.price = price
+      this.neutralPrice = neutralPrice
+    }
+}
+export function getAuctionStatus(pool: Pool, borrower: Address): AuctionStatus {
+    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
+    const result = poolInfoUtilsContract.auctionStatus(Address.fromBytes(pool.id), borrower)
+    return new AuctionStatus(
+      result.value0,
+      result.value1,
+      result.value2,
+      result.value3,
+      result.value4,
+      result.value5
+    )
 }

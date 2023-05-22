@@ -10,6 +10,7 @@ import {
   BucketTakeLPAwarded,
   DrawDebt,
   Kick,
+  KickReserveAuction,
   MoveQuoteToken,
   RemoveCollateral,
   RemoveQuoteToken,
@@ -17,9 +18,10 @@ import {
   ReserveAuction,
   Settle,
   Take,
-  TransferLPs,
+  TransferLP,
   UpdateInterestRate
 } from "../../generated/templates/ERC20Pool/ERC20Pool"
+import { ReserveAuctionKick, ReserveAuctionTake } from "../../generated/schema"
 
 export function createAddCollateralEvent(
   pool: Address,
@@ -94,7 +96,7 @@ export function createAddQuoteTokenEvent(
 export function createAuctionNFTSettleEvent(
   borrower: Address,
   collateral: BigInt,
-  lps: BigInt,
+  lp: BigInt,
   index: BigInt
 ): AuctionNFTSettle {
   let auctionNftSettleEvent = changetype<AuctionNFTSettle>(newMockEvent())
@@ -111,7 +113,7 @@ export function createAuctionNFTSettleEvent(
     )
   )
   auctionNftSettleEvent.parameters.push(
-    new ethereum.EventParam("lps", ethereum.Value.fromUnsignedBigInt(lps))
+    new ethereum.EventParam("lp", ethereum.Value.fromUnsignedBigInt(lp))
   )
   auctionNftSettleEvent.parameters.push(
     new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
@@ -465,7 +467,44 @@ export function createRepayDebtEvent(
   return repayDebtEvent
 }
 
-export function createReserveAuctionEvent(
+export function createReserveAuctionKickEvent(
+  operator: Address,
+  pool: Address,
+  claimableReservesRemaining: BigInt,
+  auctionPrice: BigInt,
+  currentBurnEpoch: BigInt,
+): KickReserveAuction {
+  let reserveAuctionEvent = changetype<KickReserveAuction>(newMockEvent())
+
+  reserveAuctionEvent.parameters = new Array()
+
+  reserveAuctionEvent.parameters.push(
+    new ethereum.EventParam(
+      "claimableReservesRemaining",
+      ethereum.Value.fromUnsignedBigInt(claimableReservesRemaining)
+    )
+  )
+  reserveAuctionEvent.parameters.push(
+    new ethereum.EventParam(
+      "auctionPrice",
+      ethereum.Value.fromUnsignedBigInt(auctionPrice)
+    )
+  )
+  reserveAuctionEvent.parameters.push(
+    new ethereum.EventParam(
+      "currentBurnEpoch",
+      ethereum.Value.fromUnsignedBigInt(currentBurnEpoch)
+    )
+  )
+
+  // update transaction target to the expected pool address
+  reserveAuctionEvent.transaction.from = operator
+  reserveAuctionEvent.address = pool
+  
+  return reserveAuctionEvent;
+}
+
+export function createReserveAuctionTakeEvent(
   operator: Address,
   pool: Address,
   claimableReservesRemaining: BigInt,
@@ -571,13 +610,13 @@ export function createTakeEvent(
   return takeEvent
 }
 
-export function createTransferLPsEvent(
+export function createTransferLPEvent(
   owner: Address,
   newOwner: Address,
   indexes: Array<BigInt>,
-  lps: BigInt
-): TransferLPs {
-  let transferLpTokensEvent = changetype<TransferLPs>(newMockEvent())
+  lp: BigInt
+): TransferLP {
+  let transferLpTokensEvent = changetype<TransferLP>(newMockEvent())
 
   transferLpTokensEvent.parameters = new Array()
 
@@ -595,8 +634,8 @@ export function createTransferLPsEvent(
   )
   transferLpTokensEvent.parameters.push(
     new ethereum.EventParam(
-      "lps",
-      ethereum.Value.fromUnsignedBigInt(lps)
+      "lp",
+      ethereum.Value.fromUnsignedBigInt(lp)
     )
   )
 

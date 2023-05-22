@@ -1,3 +1,4 @@
+import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
 import { PoolCreated, Token } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
@@ -47,6 +48,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // get pool initial interest rate
   const interestRateResults = poolContract.interestRateInfo()
+  // upon pool creation, MAU=0, so NIM=0.15, and LIM=0.85
+  const lenderInterestMargin = BigInt.fromString("850000000000000000")
 
   // create Token entites associated with the pool
   const collateralTokenAddress      = poolContract.collateralAddress()
@@ -89,11 +92,12 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.createdAtBlockNumber = event.block.number
   pool.collateralToken = collateralToken.id
   pool.quoteToken = quoteToken.id
-  pool.currentDebt = ZERO_BD
+  pool.debt = ZERO_BD
+  pool.t0debt = ZERO_BD
   pool.feeRate = wadToDecimal(interestRateResults.value1)
-  pool.inflator = ONE_BD //ONE_WAD_BD
-  pool.inflatorUpdate = event.block.timestamp
-  pool.interestRate = wadToDecimal(interestRateResults.value0)
+  pool.inflator = ONE_BD
+  pool.borrowRate = wadToDecimal(interestRateResults.value0)
+  pool.lendRate = wadToDecimal(interestRateResults.value0.times(lenderInterestMargin))
   pool.pledgedCollateral = ZERO_BD
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI
@@ -102,8 +106,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.poolSize = ZERO_BD
   pool.loansCount = ZERO_BI
   pool.maxBorrower = ZERO_ADDRESS
-  pool.pendingInflator = ONE_WAD_BD
-  pool.pendingInterestFactor = ZERO_BD
+  pool.quoteTokenFlashloaned = ZERO_BD
+  pool.collateralFlashloaned = ZERO_BD
 
   // pool prices information
   pool.hpb = ZERO_BD
@@ -133,6 +137,10 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // liquidation information
   pool.totalBondEscrowed = ZERO_BD
   pool.liquidationAuctions = []
+
+  // TVL information
+  pool.quoteTokenBalance = ZERO_BD
+  pool.collateralBalance = ZERO_BD
 
   // add pool reference to factories' list of pools
   factory.pools = factory.pools.concat([pool.id])

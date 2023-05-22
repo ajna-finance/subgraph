@@ -17,6 +17,11 @@
   },
   {
     "inputs": [],
+    "name": "DeployQuoteCollateralSameToken",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "DeployWithZeroAddress",
     "type": "error"
   },

@@ -1,18 +1,13 @@
 import { BigInt, BigDecimal, Bytes, Address, log } from '@graphprotocol/graph-ts'
 
-import { EXP_18_BD, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
-
-/****************************/
-/*** To Address Functions ***/
-/****************************/
-
-export function bytesToAddress(bytes: Bytes): Address {
-    return Address.fromHexString(bytes.toHexString()) as Address
-}
+import { EXP_18_BD, MAX_BUCKET_INDEX, MIN_BUCKET_INDEX, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
+import { prices } from './prices'
 
 /**************************/
 /*** To Bytes Functions ***/
 /**************************/
+
+// use Address.fromBytes() to convert bytes to an Address
 
 export function addressToBytes(address: Address): Bytes {
     // return address.map<Bytes>((b: Bytes) => b)
@@ -39,8 +34,8 @@ export function bytesToBigInt(bytes: Bytes): BigInt {
     return BigInt.fromUnsignedBytes(bytes)
 }
 
-// converts a BigDecimal WAD to a BigInt
-export function bigDecimalWadToBigInt(value: BigDecimal): BigInt {
+// converts a BigDecimal to a BigInt scaled to WAD precision
+export function decimalToWad(value: BigDecimal): BigInt {
     return BigInt.fromString(value.times(EXP_18_BD).toString())
 }
 
@@ -54,16 +49,6 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
       bd = bd.times(BigDecimal.fromString('10'))
     }
     return bd
-}
-
-// TODO: move this to a separate math library
-// returns 0 if denominator is 0 in division
-export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
-    if (amount1.equals(ZERO_BD)) {
-        return ZERO_BD
-    } else {
-        return amount0.div(amount1)
-    }
 }
 
 // convert an 18 decimal int to a decimal
@@ -83,13 +68,10 @@ export function bigIntArrayToIntArray(indexes: BigInt[]): i32[] {
     return retval
 }
 
-
-// import prices from '../../prices.json'
-// export function indexToPrice(index: BigInt): BigDecimal {
-//     const bucketIndex = MAX_BUCKET_INDEX - index;
-//     if (bucketIndex < MIN_BUCKET_INDEX || bucketIndex > MAX_BUCKET_INDEX) {
-//       throw new Error('ERR_BUCKET_INDEX_OUT_OF_BOUNDS');
-//     }
-// }
+export function indexToPrice(index: u32): BigDecimal {
+    const bucketIndex = MAX_BUCKET_INDEX - index;
+    assert(bucketIndex >= MIN_BUCKET_INDEX && bucketIndex <= MAX_BUCKET_INDEX, 'Invalid bucket index')
+    return wadToDecimal(BigInt.fromString(prices[index]));
+}
 
 // export function priceToIndex(price: BigDecimal): BigInt {

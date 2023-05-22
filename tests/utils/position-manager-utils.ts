@@ -133,7 +133,9 @@ export function createMoveLiquidityEvent(
   lender: Address,
   tokenId: BigInt,
   fromIndex: BigInt,
-  toIndex: BigInt
+  toIndex: BigInt,
+  lpRedeemedFrom: BigInt,
+  lpAwardedTo: BigInt
 ): MoveLiquidity {
   let moveLiquidityEvent = changetype<MoveLiquidity>(newMockEvent())
 
@@ -153,6 +155,12 @@ export function createMoveLiquidityEvent(
   )
   moveLiquidityEvent.parameters.push(
     new ethereum.EventParam("toIndex", ethereum.Value.fromUnsignedBigInt(toIndex))
+  )
+  moveLiquidityEvent.parameters.push(
+    new ethereum.EventParam("lpRedeemedFrom", ethereum.Value.fromUnsignedBigInt(lpRedeemedFrom))
+  )
+  moveLiquidityEvent.parameters.push(
+    new ethereum.EventParam("lpAwardedTo", ethereum.Value.fromUnsignedBigInt(lpAwardedTo))
   )
 
 

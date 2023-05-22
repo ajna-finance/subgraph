@@ -6,9 +6,9 @@ import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
 import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
-import { grantFundNetworkLookUpTable, positionManagerNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI } from "../../src/utils/constants"
+import { grantFundNetworkLookUpTable, positionManagerNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
-import { AuctionInfo } from "../../src/utils/liquidation"
+import { AuctionInfo, AuctionStatus } from "../../src/utils/liquidation"
 
 /*************************/
 /*** Bucket Assertions ***/
@@ -86,9 +86,7 @@ export class PoolUpdatedParams {
     loansCount: BigInt
     maxBorrower: String
     inflator: BigInt
-    pendingInflator: BigInt
-    pendingInterestFactor: BigInt
-    currentDebt: BigInt
+    debt: BigInt
     pledgedCollateral: BigInt
     // prices info
     hpb: BigInt
@@ -143,20 +141,8 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
     assert.fieldEquals(
         "Pool",
         `${params.poolAddress}`,
-        "pendingInflator",
-        `${wadToDecimal(params.pendingInflator)}`
-    )
-    assert.fieldEquals(
-        "Pool",
-        `${params.poolAddress}`,
-        "pendingInterestFactor",
-        `${wadToDecimal(params.pendingInterestFactor)}`
-    )
-    assert.fieldEquals(
-        "Pool",
-        `${params.poolAddress}`,
-        "currentDebt",
-        `${wadToDecimal(params.currentDebt)}`
+        "debt",
+        `${wadToDecimal(params.debt)}`
     )
     assert.fieldEquals(
         "Pool",
@@ -391,17 +377,24 @@ export function mockGetBucketInfo(pool: Address, bucketIndex: BigInt, expectedIn
 }
 
 export function mockGetDebtInfo(pool: Address, expectInfo: DebtInfo): void {
-    createMockedFunction(pool, 'debtInfo', 'debtInfo():(uint256,uint256,uint256)')
+    createMockedFunction(pool, 'debtInfo', 'debtInfo():(uint256,uint256,uint256,uint256)')
         .returns([
           ethereum.Value.fromUnsignedBigInt(expectInfo.pendingDebt),
           ethereum.Value.fromUnsignedBigInt(expectInfo.accruedDebt),
           ethereum.Value.fromUnsignedBigInt(expectInfo.liquidationDebt),
+          ethereum.Value.fromUnsignedBigInt(expectInfo.t0Debt2ToCollateral)
         ])
+}
+
+export function mockGetLenderInterestMargin(pool: Address, expectedValue: BigInt): void {
+  createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lenderInterestMargin', 'lenderInterestMargin(address):(uint256)')
+      .withArgs([ethereum.Value.fromAddress(pool)])
+      .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
 }
 
 // mock getLPBValueInQuote contract calls
 export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, bucketIndex: BigInt, expectedValue: BigInt): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lpsToQuoteTokens', 'lpsToQuoteTokens(address,uint256,uint256):(uint256)')
+    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lpToQuoteTokens', 'lpToQuoteTokens(address,uint256,uint256):(uint256)')
         .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(lpb), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
         .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
 }
@@ -485,6 +478,21 @@ export function mockGetAuctionInfoERC20Pool(borrower: Address, pool: Address, ex
         ])
 }
 
+// mock auctionStatus poolInfoUtils calls
+export function mockGetAuctionStatus(pool: Address, borrower: Address, expectedInfo: AuctionStatus): void {
+  createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 
+  'auctionStatus', 'auctionStatus(address,address):(uint256,uint256,uint256,bool,uint256,uint256)')
+  .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
+  .returns([
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.kickTime),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.debtToCover),
+      ethereum.Value.fromBoolean(expectedInfo.isCollateralized),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.price),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice)
+  ])
+}
+
 // mock currentBurnEpoch contract calls
 export function mockGetCurrentBurnEpoch(pool: Address, expectedEpoch: BigInt): void {
     createMockedFunction(pool, 'currentBurnEpoch', 'currentBurnEpoch():(uint256)')
@@ -524,8 +532,7 @@ export class PoolMockParams {
     debt: BigInt
     loansCount: BigInt
     maxBorrower: Address
-    pendingInflator: BigInt
-    pendingInterestFactor: BigInt
+    inflator: BigInt
     // prices info mock params
     hpb: BigInt
     hpbIndex: BigInt
@@ -553,12 +560,12 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.poolSize,
         params.loansCount,
         params.maxBorrower,
-        params.pendingInflator,
-        params.pendingInterestFactor
+        params.inflator,
+        ONE_BI
     )
     mockGetPoolLoansInfo(pool, expectedPoolLoansInfo)
 
-    const expectedPoolDebtInfo = new DebtInfo(params.debt, ZERO_BI, ZERO_BI)
+    const expectedPoolDebtInfo = new DebtInfo(params.debt, ZERO_BI, ZERO_BI, ZERO_BI)
     mockGetDebtInfo(pool, expectedPoolDebtInfo)
 
     const expectedPoolPricesInfo = new PoolPricesInfo(
@@ -589,4 +596,18 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.targetUtilization
     )
     mockGetPoolUtilizationInfo(pool, expectedPoolUtilizationInfo)
+
+    mockGetLenderInterestMargin(pool, BigInt.fromString("850000000000000000")) // 0.85 * 1e18
+}
+
+/****************************/
+/*** Token Mock Functions ***/
+/****************************/
+
+export function mockTokenBalance(tokenAddress: Address, address: Address, expectedBalance: BigInt): void {
+  createMockedFunction(tokenAddress, 'balanceOf', 'balanceOf(address):(uint256)')
+      .withArgs([ethereum.Value.fromAddress(address)])
+      .returns([
+          ethereum.Value.fromUnsignedBigInt(expectedBalance),
+      ])
 }

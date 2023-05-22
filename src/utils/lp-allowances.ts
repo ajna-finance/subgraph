@@ -23,27 +23,59 @@ export function loadOrCreateAllowances(poolId: Bytes, lenderId: Bytes, spenderId
   return entity;
 }
 
-export function setAllowances(entity: LPAllowances, indexes: Array<BigInt>, amounts: Array<BigInt>): void {
-  let id = entity.id;
+export function increaseAllowances(entity: LPAllowances, indexes: Array<BigInt>, amounts: Array<BigInt>): void {
+  const id = entity.id;
+  const entityAllowances = entity.allowances;
   for (var i=0; i<indexes.length; ++i) {
     const aid = getAllowanceId(id, indexes[i])
     let allowance = LPAllowance.load(aid)
     if (allowance == null) {
+      // create a new allowance if first time
       allowance = new LPAllowance(aid)
       allowance.amount = wadToDecimal(amounts[i])
-      entity.allowances.push(aid)
+      entityAllowances.push(aid)
     } else {
-      allowance.amount = wadToDecimal(amounts[i])
+      // increase existing allowance
+      allowance.amount = allowance.amount.plus(wadToDecimal(amounts[i]))
     }
   }
+  entity.allowances = entityAllowances
+}
+
+export function decreaseAllowances(entity: LPAllowances, indexes: Array<BigInt>, amounts: Array<BigInt>): void {
+  const id = entity.id;
+  const entityAllowances = entity.allowances;
+  for (var i=0; i<indexes.length; ++i) {
+    const aid = getAllowanceId(id, indexes[i])
+    const allowance = LPAllowance.load(aid)
+    if (allowance != null) {
+      const decrease = wadToDecimal(amounts[i])
+      if (decrease.lt(allowance.amount)) {
+          // decrease existing allowance
+        allowance.amount = allowance.amount.minus(decrease)
+      } else {
+        // delete the allowance
+        const indexToRemove = entityAllowances.indexOf(aid)
+        if (indexToRemove != -1)
+          entityAllowances.splice(indexToRemove, 1)
+      }
+    }
+  }
+  entity.allowances = entityAllowances
 }
 
 export function revokeAllowances(entity: LPAllowances, indexes: Array<BigInt>): void {
-  let id = entity.id;
+  const id = entity.id;
+  const entityAllowances = entity.allowances;
   for (var i=0; i<indexes.length; ++i) {
     const aid = getAllowanceId(id, indexes[i])
-    const indexToRemove = entity.allowances.indexOf(aid)
-    if (indexToRemove != -1)
-      entity.allowances.splice(indexToRemove, 1)
+    const allowance = LPAllowance.load(aid)
+    if (allowance != null) {
+      // delete the allowance
+      const indexToRemove = entityAllowances.indexOf(aid)
+      if (indexToRemove != -1)
+        entityAllowances.splice(indexToRemove, 1)
+    }
   }
+  entity.allowances = entityAllowances
 }

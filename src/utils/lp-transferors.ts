@@ -1,15 +1,15 @@
 import { Address, Bytes } from "@graphprotocol/graph-ts"
-import { LPTransferors, Pool } from "../../generated/schema";
+import { LPTransferorList, Pool } from "../../generated/schema";
 
 export function getTransferorId(poolId: Bytes, lenderId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|' + lenderId.toString()));
 }
 
-export function loadOrCreateTransferors(poolId: Bytes, lenderId: Bytes): LPTransferors {
+export function loadOrCreateTransferors(poolId: Bytes, lenderId: Bytes): LPTransferorList {
   let id = getTransferorId(poolId, lenderId)
-  let entity = LPTransferors.load(id)
+  let entity = LPTransferorList.load(id)
   if (entity == null) {
-    entity = new LPTransferors(id) as LPTransferors
+    entity = new LPTransferorList(id) as LPTransferorList
     entity.pool = poolId
     entity.lender = lenderId
     entity.transferors = []
@@ -17,21 +17,25 @@ export function loadOrCreateTransferors(poolId: Bytes, lenderId: Bytes): LPTrans
   return entity;
 }
 
-export function approveTransferors(entity: LPTransferors, transferorsApproved: Address[]): void {
+export function approveTransferors(entity: LPTransferorList, transferorsApproved: Address[]): void {
   // iterate through newly-approved transferors, pushing each transfer if not already there
+  const entityTransferors = entity.transferors
   for (var i=0; i<transferorsApproved.length; ++i) {
     const approved = transferorsApproved[i]
-    if (entity.transferors.indexOf(approved) == -1)
-      entity.transferors.push(approved)
+    if (entityTransferors.indexOf(approved) == -1)
+      entityTransferors.push(approved)
   }
+  entity.transferors = entityTransferors
 }
 
-export function revokeTransferors(entity: LPTransferors, transferorsRevoked: Address[]): void {
+export function revokeTransferors(entity: LPTransferorList, transferorsRevoked: Address[]): void {
   // iterate through, removing each revoked transferor
+  const entityTransferors = entity.transferors
   for (var i=0; i<transferorsRevoked.length; ++i) {
     const revoked = transferorsRevoked[i]
-    const indexToRemove = entity.transferors.indexOf(revoked)
+    const indexToRemove = entityTransferors.indexOf(revoked)
     if (indexToRemove != -1)
-      entity.transferors.splice(indexToRemove, 1)
+      entityTransferors.splice(indexToRemove, 1)
   }
+  entity.transferors = entityTransferors
 }
