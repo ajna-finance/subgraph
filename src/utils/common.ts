@@ -19,15 +19,9 @@ export function lpbValueInQuote(pool: Bytes, bucketIndex: u32, lpAmount: BigDeci
     return wadToDecimal(quoteTokenAmount)
 }
 
-export function collateralization(debt: BigDecimal, encumberedCollateral: BigDecimal): BigDecimal {
-    return debt.div(encumberedCollateral)
-}
-
-// TODO: check for precision loss
 export function collateralizationAtLup(debt: BigDecimal, collateral: BigDecimal, lup: BigDecimal): BigDecimal {
     if (debt > ZERO_BD && lup > ZERO_BD) {
-      const encumberedCollateral = debt.div(lup)
-      return debt.div(encumberedCollateral)
+      return collateral.times(lup).div(debt)
     } else {
       return ONE_BD
     }
