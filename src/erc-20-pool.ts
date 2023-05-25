@@ -68,7 +68,7 @@ import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/con
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
-import { getLoanId, loadOrCreateLoan } from "./utils/loan"
+import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getBucketTakeLPAwardedId, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus } from "./utils/liquidation"
 import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getLenderInterestMargin } from "./utils/pool"
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
@@ -883,7 +883,6 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
-    pool.debt       = pool.debt.minus(wadToDecimal(event.params.quoteRepaid))
     pool.pledgedCollateral = pool.pledgedCollateral.minus(wadToDecimal(event.params.collateralPulled))
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
@@ -899,8 +898,9 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     // update loan state
     const loanId = getLoanId(pool.id, accountId)
     const loan = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
-    loan.collateralPledged = loan.collateralPledged.minus(wadToDecimal(event.params.collateralPulled))
-    loan.debt              = loan.debt.minus(wadToDecimal(event.params.quoteRepaid))
+    const borrowerInfo = getBorrowerInfo(accountId, pool.id)
+    loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+    loan.debt              = wadToDecimal(borrowerInfo.debt)
     loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
     loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
 
