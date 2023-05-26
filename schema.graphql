@@ -155,7 +155,6 @@ type Lend @entity {
   lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket (regardless of available deposit in bucket)
   lpbValueInQuote: BigDecimal!
-  # depositTime: BigInt! # timestamp of last lend interaction
 }
 
 # each borrower has only one loan with a pool

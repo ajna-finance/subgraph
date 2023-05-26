@@ -40,10 +40,11 @@ export function updateAccountLends(account: Account, lend: Lend): void {
     // get current index of lend in account's list of lends
     const index = lends.indexOf(lend.id)
     if (lend.lpb != ZERO_BD && index == -1) {
-        account.lends = account.lends.concat([lend.id])
+      lends.push(lend.id)
     } else if (lend.lpb == ZERO_BD && index == -1) {
-        account.lends.splice(index, 1)
+      lends.splice(index, 1)
     }
+    account.lends = lends
 }
 
 // update the list of loans initiated by an account, if it hasn't been added already
@@ -52,10 +53,11 @@ export function updateAccountLoans(account: Account, loan: Loan): void {
     // get current index of loan in account's list of loans
     const index = loans.indexOf(loan.id)
     if (loan.debt != ZERO_BD && index == -1) {
-        account.loans = account.loans.concat([loan.id])
+      loans.push(loan.id)
     } else if (loan.collateralPledged == ZERO_BD && loan.debt == ZERO_BD && index != -1) {
-        account.loans.splice(index, 1)
+      loans.splice(index, 1)
     }
+    account.loans = loans
 }
 
 // update the list of kicks initiated by an account, if it hasn't been added already

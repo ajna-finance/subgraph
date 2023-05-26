@@ -68,7 +68,7 @@ import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/con
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
-import { getLoanId, loadOrCreateLoan } from "./utils/loan"
+import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getBucketTakeLPAwardedId, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus } from "./utils/liquidation"
 import { getBurnInfo, getCurrentBurnEpoch, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getLenderInterestMargin } from "./utils/pool"
 import { collateralizationAtLup, lpbValueInQuote, thresholdPrice } from "./utils/common"
@@ -153,49 +153,43 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   addQuoteToken.transactionHash = event.transaction.hash
 
   // update entities
-  const pool = Pool.load(addressToBytes(event.address))
-  if (pool != null) {
-    // update pool state
-    updatePool(pool)
-    pool.txCount = pool.txCount.plus(ONE_BI)
+  const pool = Pool.load(addressToBytes(event.address))!
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
 
-    // update tx count for a pools tokens
-    incrementTokenTxCount(pool)
+  // update bucket state
+  const bucketId      = getBucketId(pool.id, event.params.index.toU32())
+  const bucket        = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
+  const bucketInfo    = getBucketInfo(pool.id, bucket.bucketIndex)
+  bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+  bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+  bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+  bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
 
-    // update bucket state
-    const bucketId   = getBucketId(pool.id, event.params.index.toU32())
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
-    const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
-    bucket.collateral   = wadToDecimal(bucketInfo.collateral)
-    bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
-    bucket.lpb          = wadToDecimal(bucketInfo.lpb)
-    bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+  // update account state
+  const accountId = addressToBytes(event.params.lender)
+  const account   = loadOrCreateAccount(accountId)
+  account.txCount = account.txCount.plus(ONE_BI)
 
-    // update account state
-    const accountId = addressToBytes(event.params.lender)
-    const account   = loadOrCreateAccount(accountId)
-    account.txCount = account.txCount.plus(ONE_BI)
+  // update lend state
+  const lendId         = getLendId(bucketId, accountId)
+  const lend           = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
+  lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
+  lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
-    // update lend state
-    const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
-    lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
-    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+  // update account's list of pools and lends if necessary
+  updateAccountPools(account, pool)
+  updateAccountLends(account, lend)
 
-    // update account's list of pools and lends if necessary
-    updateAccountPools(account, pool)
-    updateAccountLends(account, lend)
+  // save entities to store
+  account.save()
+  bucket.save()
+  lend.save()
+  pool.save()
 
-    // save entities to store
-    account.save()
-    bucket.save()
-    lend.save()
-    pool.save()
-
-    addQuoteToken.bucket = bucket.id
-    addQuoteToken.pool = pool.id
-  }
-
+  addQuoteToken.bucket = bucket.id
+  addQuoteToken.pool = pool.id
   addQuoteToken.save()
 }
 
@@ -309,6 +303,8 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
 
     bucketBankruptcy.bucket = bucketId
     bucketBankruptcy.pool = pool.id
+
+    // TODO: update Lends
 
     // save entities to store
     pool.save()
@@ -887,7 +883,6 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
-    pool.debt       = pool.debt.minus(wadToDecimal(event.params.quoteRepaid))
     pool.pledgedCollateral = pool.pledgedCollateral.minus(wadToDecimal(event.params.collateralPulled))
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
@@ -901,10 +896,11 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     account.txCount = account.txCount.plus(ONE_BI)
 
     // update loan state
-    const loanId = getLoanId(pool.id, accountId)
-    const loan = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
-    loan.collateralPledged = loan.collateralPledged.minus(wadToDecimal(event.params.collateralPulled))
-    loan.debt              = loan.debt.minus(wadToDecimal(event.params.quoteRepaid))
+    const loanId           = getLoanId(pool.id, accountId)
+    const loan             = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
+    const borrowerInfo     = getBorrowerInfo(accountId, pool.id)
+    loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+    loan.debt              = wadToDecimal(borrowerInfo.debt)
     loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
     loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
 
@@ -1185,8 +1181,8 @@ export function handleSettle(event: SettleEvent): void {
   const auctionId = loan.liquidationAuction!
   const auction   = LiquidationAuction.load(auctionId)!
   const auctionInfo = getAuctionInfoERC20Pool(settle.borrower, pool)
-  // price upon settle is irrelevant, so do not pass auction status
-  updateLiquidationAuction(auction, auctionInfo, null)
+  const auctionStatus = getAuctionStatus(pool, event.params.borrower)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus, true)
   auction.settles = auction.settles.concat([settle.id])
 
   // update settle pointers

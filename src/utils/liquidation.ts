@@ -49,18 +49,18 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
 export function updateLiquidationAuction(
   liquidationAuction: LiquidationAuction, 
   auctionInfo: AuctionInfo, 
-  auctionStatus: AuctionStatus | null): void {
-    // intentionally not passed upon settle; we care about state as of last take
-    if (auctionStatus) {
-      liquidationAuction.auctionPrice        = wadToDecimal(auctionStatus.price)
-      liquidationAuction.collateralRemaining = wadToDecimal(auctionStatus.collateral)
-      liquidationAuction.debtRemaining       = wadToDecimal(auctionStatus.debtToCover)
+  auctionStatus: AuctionStatus,
+  isSettle: bool = false): void {
+    if (!isSettle) {
+      liquidationAuction.auctionPrice = wadToDecimal(auctionStatus.price)
+      liquidationAuction.bondFactor   = wadToDecimal(auctionInfo.bondFactor)
+      liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)
+      liquidationAuction.kickTime     = auctionInfo.kickTime
+      liquidationAuction.neutralPrice = wadToDecimal(auctionInfo.neutralPrice)
     }
 
-    liquidationAuction.kickTime     = auctionInfo.kickTime
-    liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)
-    liquidationAuction.bondFactor   = wadToDecimal(auctionInfo.bondFactor)
-    liquidationAuction.neutralPrice = wadToDecimal(auctionInfo.neutralPrice)
+    liquidationAuction.collateralRemaining = wadToDecimal(auctionStatus.collateral)
+    liquidationAuction.debtRemaining       = wadToDecimal(auctionStatus.debtToCover)
 }
 
 export class AuctionInfo {
