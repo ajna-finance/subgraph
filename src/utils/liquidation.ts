@@ -53,14 +53,14 @@ export function updateLiquidationAuction(
   isSettle: bool = false): void {
     if (!isSettle) {
       liquidationAuction.auctionPrice = wadToDecimal(auctionStatus.price)
+      liquidationAuction.bondFactor   = wadToDecimal(auctionInfo.bondFactor)
+      liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)
       liquidationAuction.kickTime     = auctionInfo.kickTime
+      liquidationAuction.neutralPrice = wadToDecimal(auctionInfo.neutralPrice)
     }
 
     liquidationAuction.collateralRemaining = wadToDecimal(auctionStatus.collateral)
     liquidationAuction.debtRemaining       = wadToDecimal(auctionStatus.debtToCover)
-    liquidationAuction.bondSize            = wadToDecimal(auctionInfo.bondSize)
-    liquidationAuction.bondFactor          = wadToDecimal(auctionInfo.bondFactor)
-    liquidationAuction.neutralPrice        = wadToDecimal(auctionInfo.neutralPrice)
 }
 
 export class AuctionInfo {
