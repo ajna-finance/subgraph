@@ -18,6 +18,7 @@ import {
   createPool,
   mockGetAuctionInfoERC20Pool,
   mockGetAuctionStatus,
+  mockGetBorrowerInfo,
   mockGetBucketInfo,
   mockGetBurnInfo,
   mockGetCurrentBurnEpoch,
@@ -32,7 +33,7 @@ import { addressToBytes, wadToDecimal } from "../src/utils/convert"
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan, Pool } from "../generated/schema"
 import { getLendId } from "../src/utils/lend"
-import { getLoanId } from "../src/utils/loan"
+import { BorrowerInfo, getLoanId } from "../src/utils/loan"
 import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/liquidation"
 import { BurnInfo, DebtInfo } from "../src/utils/pool"
 import { getReserveAuctionId } from "../src/utils/reserve-auction"
@@ -574,6 +575,9 @@ describe("ERC20Pool assertions", () => {
     const quoteRepaid = BigInt.fromString("567111000000000000000")     // 567.111  * 1e18
     const collateralPulled = BigInt.fromString("13400500000000000000") //  13.4005 * 1e18
     const lup = BigInt.fromString("63480000000000000000")              //  63.48   * 1e18
+
+    const expectedBorrowerInfo = new BorrowerInfo(quoteRepaid, collateralPulled, BigInt.fromString("501250000000000000"))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     const newRepayDebtEvent = createRepayDebtEvent(
       poolAddress,

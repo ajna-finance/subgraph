@@ -896,9 +896,9 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     account.txCount = account.txCount.plus(ONE_BI)
 
     // update loan state
-    const loanId = getLoanId(pool.id, accountId)
-    const loan = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
-    const borrowerInfo = getBorrowerInfo(accountId, pool.id)
+    const loanId           = getLoanId(pool.id, accountId)
+    const loan             = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
+    const borrowerInfo     = getBorrowerInfo(accountId, pool.id)
     loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
     loan.debt              = wadToDecimal(borrowerInfo.debt)
     loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)

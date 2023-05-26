@@ -9,6 +9,7 @@ import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
 import { grantFundNetworkLookUpTable, positionManagerNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo, AuctionStatus } from "../../src/utils/liquidation"
+import { BorrowerInfo } from "../../src/utils/loan"
 
 /*************************/
 /*** Bucket Assertions ***/
@@ -360,6 +361,16 @@ export function createPool(pool_: Address, collateral: Address, quote: Address, 
     // mock PoolCreated event
     const newPoolCreatedEvent = createPoolCreatedEvent(pool_)
     handlePoolCreated(newPoolCreatedEvent)
+}
+
+export function mockGetBorrowerInfo(pool: Address, borrower: Address, expectedInfo: BorrowerInfo): void {
+  createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'borrowerInfo', 'borrowerInfo(address,address):(uint256,uint256,uint256)')
+    .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
+    .returns([
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.debt),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.t0Np)
+    ])
 }
 
 // mock getBucketInfo contract calls
