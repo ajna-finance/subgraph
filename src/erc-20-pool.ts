@@ -1224,6 +1224,8 @@ export function handleTransferLP(event: TransferLPEvent): void {
     const oldLendId = getLendId(bucketId, entity.owner)
     const newLendId = getLendId(bucketId, entity.newOwner)
 
+    // FIXME: introduce special handling for transferring to/from PositionManager
+
     // event does not reveal LP amounts transferred for each bucket, so query the pool and update
     // remove old lend
     const oldLend = loadOrCreateLend(bucketId, oldLendId, poolId, entity.owner)

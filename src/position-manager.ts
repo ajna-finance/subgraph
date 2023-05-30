@@ -213,15 +213,20 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   for (let index = 0; index < redeem.indexes.length; index++) {
     const bucketId = getBucketId(poolAddress, index)
     const lendId = getLendId(bucketId, accountId)
-    const lend = Lend.load(lendId)!
-    lpAmounts.push(lend.lpb)
-    // remove lends from position
-    const existingIndex = position.indexes.indexOf(lendId)
-    if (existingIndex != -1) {
-      positionIndexes.splice(existingIndex, 1)
+    const lend = Lend.load(lendId)  // FIXME: unexpected null
+    if (lend !== null) {
+      lpAmounts.push(lend.lpb)
+      // remove lends from position
+      const existingIndex = position.indexes.indexOf(lendId)
+      if (existingIndex != -1) {
+        positionIndexes.splice(existingIndex, 1)
+      }
+      lend.tokenId = null
+      lend.save()
+    } else {
+      log.warning('handleRedeemPosition: could not find lend for lender {} and tokenId {} ', 
+                  [redeem.lender.toHexString(), redeem.tokenId.toString()])
     }
-    lend.tokenId = null
-    lend.save()
   }
   position.indexes = positionIndexes
   redeem.lpAmounts = lpAmounts
