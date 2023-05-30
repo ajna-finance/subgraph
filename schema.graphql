@@ -645,9 +645,11 @@ type Burn @entity(immutable: true) {
 
 type MemorializePosition @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes!   # address
-  tokenId: BigInt! # uint256
-  indexes: [Int!]! # uint256[]
+  pool: Pool!
+  lender: Bytes!            # address
+  tokenId: BigInt!          # uint256
+  indexes: [Int!]!          # uint256[]
+  lpAmounts: [BigDecimal!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -665,10 +667,11 @@ type Mint @entity(immutable: true) {
 
 type RedeemPosition @entity(immutable: true) {
   id: Bytes!
-  lender: Bytes!   # address
-  tokenId: BigInt! # uint256
   pool: Pool!
-  indexes: [Int!]! # uint256[]
+  lender: Bytes!            # address
+  tokenId: BigInt!          # uint256
+  indexes: [Int!]!          # uint256[]
+  lpAmounts: [BigDecimal!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

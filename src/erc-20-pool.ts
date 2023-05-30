@@ -715,6 +715,7 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
     const account   = loadOrCreateAccount(accountId)
     account.txCount = account.txCount.plus(ONE_BI)
     // update account lends if necessary
+    updateAccountLends(account, fromBucketLend)
     updateAccountLends(account, toBucketLend)
 
     // save entities to store
