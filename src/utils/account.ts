@@ -41,7 +41,7 @@ export function updateAccountLends(account: Account, lend: Lend): void {
     const index = lends.indexOf(lend.id)
     if (lend.lpb != ZERO_BD && index == -1) {
       lends.push(lend.id)
-    } else if (lend.lpb == ZERO_BD && index == -1) {
+    } else if (lend.lpb == ZERO_BD && index != -1) {
       lends.splice(index, 1)
     }
     account.lends = lends
@@ -79,7 +79,6 @@ export function updateAccountReserveAuctions(account: Account, reserveAuctionId:
         account.reserveAuctions = account.reserveAuctions.concat([reserveAuctionId])
     }
 }
-
 
 // update the list of settles initiated by an account, if it hasn't been added already
 export function updateAccountSettles(account: Account, settle: Settle): void {
