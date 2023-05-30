@@ -81,10 +81,10 @@ export function handleMemorializePosition(
   const memorialize = new MemorializePosition(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  memorialize.lender    = addressToBytes(event.params.lender)
-  memorialize.tokenId   = event.params.tokenId
-  memorialize.pool      = getPoolForToken(memorialize.tokenId)
-  memorialize.indexes   = bigIntArrayToIntArray(event.params.indexes)
+  memorialize.lender  = addressToBytes(event.params.lender)
+  memorialize.tokenId = event.params.tokenId
+  memorialize.pool    = getPoolForToken(memorialize.tokenId)
+  memorialize.indexes = bigIntArrayToIntArray(event.params.indexes)
   const lpAmounts: BigDecimal[] = []
 
   memorialize.blockNumber = event.block.number
@@ -104,11 +104,12 @@ export function handleMemorializePosition(
     const index = memorialize.indexes[i];
     const bucketId = getBucketId(poolAddress, index)
     const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, poolAddress, accountId)
+    const lend = Lend.load(lendId)!
     // add lend to position
     positionIndexes.push(lendId)
-    lpAmounts.push(lend.lpb)
-    // lend.save()
+    lpAmounts.push(lend.lpb)  // FIXME: this seems unexpectedly 0
+    lend.tokenId = memorialize.tokenId
+    lend.save()
   }
   position.indexes      = positionIndexes
   memorialize.lpAmounts = lpAmounts
@@ -192,9 +193,9 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   const redeem = new RedeemPosition(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  redeem.lender = event.params.lender
+  redeem.lender  = event.params.lender
   redeem.tokenId = event.params.tokenId
-  redeem.pool = getPoolForToken(redeem.tokenId)
+  redeem.pool    = getPoolForToken(redeem.tokenId)
   redeem.indexes = bigIntArrayToIntArray(event.params.indexes)
   const lpAmounts: BigDecimal[] = []
 
@@ -212,14 +213,15 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   for (let index = 0; index < redeem.indexes.length; index++) {
     const bucketId = getBucketId(poolAddress, index)
     const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, poolAddress, accountId)
+    const lend = Lend.load(lendId)!
     lpAmounts.push(lend.lpb)
     // remove lends from position
     const existingIndex = position.indexes.indexOf(lendId)
     if (existingIndex != -1) {
       positionIndexes.splice(existingIndex, 1)
     }
-    // lend.save()
+    lend.tokenId = null
+    lend.save()
   }
   position.indexes = positionIndexes
   redeem.lpAmounts = lpAmounts

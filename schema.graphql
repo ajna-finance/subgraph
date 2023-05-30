@@ -155,6 +155,8 @@ type Lend @entity {
   lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket (regardless of available deposit in bucket)
   lpbValueInQuote: BigDecimal!
+  # tokenId of LP NFT in which lender's position in this bucket was most recently memorialized
+  tokenId: BigInt
 }
 
 # each borrower has only one loan with a pool
