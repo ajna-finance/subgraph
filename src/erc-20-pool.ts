@@ -1,4 +1,4 @@
-import { BigInt, Bytes, log } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
 import {
   AddCollateral as AddCollateralEvent,
@@ -63,7 +63,7 @@ import {
   UpdateInterestRate
 } from "../generated/schema"
 
-import { ZERO_BD, ONE_BI, TEN_BI } from "./utils/constants"
+import { ZERO_BD, ONE_BI, TEN_BI, positionManagerNetworkLookUpTable } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
@@ -1212,36 +1212,40 @@ export function handleTransferLP(event: TransferLPEvent): void {
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
 
-  // update Lends for old and new owners, creating entities where necessary
   const poolId = addressToBytes(event.address)
   const pool = Pool.load(poolId)!
-  const oldOwnerAccount = Account.load(entity.owner)!
-  const newOwnerAccount = loadOrCreateAccount(entity.newOwner)
-  for (var i=0; i<event.params.indexes.length; ++i) {
-    const bucketIndex = event.params.indexes[i]
-    const bucketId = getBucketId(poolId, bucketIndex.toU32())
-    const bucket = Bucket.load(bucketId)!
-    const oldLendId = getLendId(bucketId, entity.owner)
-    const newLendId = getLendId(bucketId, entity.newOwner)
 
-    // FIXME: introduce special handling for transferring to/from PositionManager
+  // do not meddle with Lends if transfer is due to memorializing/dememorializing a position
+  const positionManagerAddress = positionManagerNetworkLookUpTable.get(dataSource.network())!
+  if (entity.newOwner !== positionManagerAddress && entity.owner !== positionManagerAddress) {
+    // update Lends for old and new owners, creating entities where necessary
+    const oldOwnerAccount = Account.load(entity.owner)!
+    const newOwnerAccount = loadOrCreateAccount(entity.newOwner)
+    for (var i=0; i<event.params.indexes.length; ++i) {
+      const bucketIndex = event.params.indexes[i]
+      const bucketId = getBucketId(poolId, bucketIndex.toU32())
+      const bucket = Bucket.load(bucketId)!
+      const oldLendId = getLendId(bucketId, entity.owner)
+      const newLendId = getLendId(bucketId, entity.newOwner)
 
-    // event does not reveal LP amounts transferred for each bucket, so query the pool and update
-    // remove old lend
-    const oldLend = loadOrCreateLend(bucketId, oldLendId, poolId, entity.owner)
-    oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
-    oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
-    updateAccountLends(oldOwnerAccount, Lend.load(oldLendId)!)
-    oldLend.save()
-    // add new lend
-    const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
-    newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.newOwner).lpBalance)
-    newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
-    updateAccountLends(newOwnerAccount, newLend)
-    newLend.save()
+      // event does not reveal LP amounts transferred for each bucket, so query the pool and update
+      // remove old lend
+      const oldLend = Lend.load(oldLendId)!
+      oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
+      oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
+      updateAccountLends(oldOwnerAccount, Lend.load(oldLendId)!)
+      oldLend.save()
+      
+      // add new lend
+      const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
+      newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.newOwner).lpBalance)
+      newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
+      updateAccountLends(newOwnerAccount, newLend)
+      newLend.save()
+    }
+    oldOwnerAccount.save()
+    newOwnerAccount.save()
   }
-  oldOwnerAccount.save()
-  newOwnerAccount.save()
   
   // increment pool and token tx counts
   pool.txCount = pool.txCount.plus(ONE_BI)

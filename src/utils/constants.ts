@@ -1,6 +1,7 @@
 import { BigInt, Address, BigDecimal, TypedMap } from '@graphprotocol/graph-ts'
 
 // address of the factory deployed to Goerli
+// TODO: load this from network lookup table
 export const ERC20_FACTORY_ADDRESS = Address.fromString('0x68ced2E7d257da67794B00556B31203A344d3c1e')
 
 export const ZERO_ADDRESS = Address.fromString('0x0000000000000000000000000000000000000000')
