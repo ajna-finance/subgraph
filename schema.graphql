@@ -155,8 +155,6 @@ type Lend @entity {
   lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket (regardless of available deposit in bucket)
   lpbValueInQuote: BigDecimal!
-  # tokenId of LP NFT in which lender's position in this bucket was most recently memorialized
-  tokenId: BigInt
 }
 
 # each borrower has only one loan with a pool
@@ -648,10 +646,9 @@ type Burn @entity(immutable: true) {
 type MemorializePosition @entity(immutable: true) {
   id: Bytes!
   pool: Pool!
-  lender: Bytes!            # address
-  tokenId: BigInt!          # uint256
-  indexes: [Int!]!          # uint256[]
-  lpAmounts: [BigDecimal!]! # uint256[]
+  lender: Bytes!   # address
+  tokenId: BigInt! # uint256
+  indexes: [Int!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -670,10 +667,9 @@ type Mint @entity(immutable: true) {
 type RedeemPosition @entity(immutable: true) {
   id: Bytes!
   pool: Pool!
-  lender: Bytes!            # address
-  tokenId: BigInt!          # uint256
-  indexes: [Int!]!          # uint256[]
-  lpAmounts: [BigDecimal!]! # uint256[]
+  lender: Bytes!   # address
+  tokenId: BigInt! # uint256
+  indexes: [Int!]! # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

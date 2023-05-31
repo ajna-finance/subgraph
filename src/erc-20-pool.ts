@@ -1215,42 +1215,40 @@ export function handleTransferLP(event: TransferLPEvent): void {
   const poolId = addressToBytes(event.address)
   const pool = Pool.load(poolId)!
 
-  // do not meddle with Lends if transfer is due to memorializing/dememorializing a position
-  const positionManagerAddress = addressToBytes(positionManagerNetworkLookUpTable.get(dataSource.network())!)
   log.info("handleTransferLP from {} to {}" , [entity.owner.toHexString(), entity.newOwner.toHexString()])
-  if (!entity.newOwner.equals(positionManagerAddress) && !entity.owner.equals(positionManagerAddress)) {
-    log.info("handleTransferLP owner/newOwner does not match PositionManager address {}", [positionManagerAddress.toHexString()])
-    // update Lends for old and new owners, creating entities where necessary
-    const oldOwnerAccount = Account.load(entity.owner)!
-    const newOwnerAccount = loadOrCreateAccount(entity.newOwner)
-    for (var i=0; i<event.params.indexes.length; ++i) {
-      const bucketIndex = event.params.indexes[i]
-      const bucketId = getBucketId(poolId, bucketIndex.toU32())
-      const bucket = Bucket.load(bucketId)!
-      const oldLendId = getLendId(bucketId, entity.owner)
-      const newLendId = getLendId(bucketId, entity.newOwner)
 
-      // event does not reveal LP amounts transferred for each bucket, so query the pool and update
-      // remove old lend
-      const oldLend = Lend.load(oldLendId)!
-      oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
-      oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
-      updateAccountLends(oldOwnerAccount, Lend.load(oldLendId)!)
-      oldLend.save()
+  // update Lends for old and new owners, creating entities where necessary
+  const oldOwnerAccount = Account.load(entity.owner)!
+  const newOwnerAccount = loadOrCreateAccount(entity.newOwner)
+  for (var i=0; i<event.params.indexes.length; ++i) {
+    const bucketIndex = event.params.indexes[i]
+    const bucketId = getBucketId(poolId, bucketIndex.toU32())
+    const bucket = Bucket.load(bucketId)!
+    const oldLendId = getLendId(bucketId, entity.owner)
+    const newLendId = getLendId(bucketId, entity.newOwner)
 
-      // add new lend
-      const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
-      newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.newOwner).lpBalance)
-      newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
-      updateAccountLends(newOwnerAccount, newLend)
-      newLend.save()
-    }
-    oldOwnerAccount.save()
-    newOwnerAccount.save()
-  } else {
-    log.info("handleTransferLP skipping Lend updates for memorializing/dememorializing a position", [])
+    // If PositionManager generated this event, it means either:
+    // Memorialize - transfer from lender to PositionManager, eliminating the lender's Lend
+    // Redeem      - transfer from PositionManager to lender, creating the lender's Lend
+
+    // event does not reveal LP amounts transferred for each bucket, so query the pool and update
+    // remove old lend
+    const oldLend = Lend.load(oldLendId)!
+    oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
+    oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
+    updateAccountLends(oldOwnerAccount, Lend.load(oldLendId)!)
+    oldLend.save()
+
+    // add new lend
+    const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
+    newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.newOwner).lpBalance)
+    newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
+    updateAccountLends(newOwnerAccount, newLend)
+    newLend.save()
   }
-  
+  oldOwnerAccount.save()
+  newOwnerAccount.save()
+
   // increment pool and token tx counts
   pool.txCount = pool.txCount.plus(ONE_BI)
   const quoteToken = Token.load(pool.quoteToken)!
