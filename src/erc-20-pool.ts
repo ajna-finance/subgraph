@@ -1217,6 +1217,7 @@ export function handleTransferLP(event: TransferLPEvent): void {
 
   // do not meddle with Lends if transfer is due to memorializing/dememorializing a position
   const positionManagerAddress = positionManagerNetworkLookUpTable.get(dataSource.network())!
+  log.info("handleTransferLP from {} to {}" , [event.params.owner.toHexString(), event.params.newOwner.toHexString()])
   if (entity.newOwner !== positionManagerAddress && entity.owner !== positionManagerAddress) {
     // update Lends for old and new owners, creating entities where necessary
     const oldOwnerAccount = Account.load(entity.owner)!
@@ -1235,7 +1236,7 @@ export function handleTransferLP(event: TransferLPEvent): void {
       oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
       updateAccountLends(oldOwnerAccount, Lend.load(oldLendId)!)
       oldLend.save()
-      
+
       // add new lend
       const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
       newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.newOwner).lpBalance)
@@ -1245,6 +1246,8 @@ export function handleTransferLP(event: TransferLPEvent): void {
     }
     oldOwnerAccount.save()
     newOwnerAccount.save()
+  } else {
+    log.info("handleTransferLP skipping Lend updates for memorializing/dememorializing a position", [])
   }
   
   // increment pool and token tx counts
