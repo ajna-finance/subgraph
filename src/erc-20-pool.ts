@@ -1218,7 +1218,7 @@ export function handleTransferLP(event: TransferLPEvent): void {
   // do not meddle with Lends if transfer is due to memorializing/dememorializing a position
   const positionManagerAddress = addressToBytes(positionManagerNetworkLookUpTable.get(dataSource.network())!)
   log.info("handleTransferLP from {} to {}" , [entity.owner.toHexString(), entity.newOwner.toHexString()])
-  if (entity.newOwner !== positionManagerAddress && entity.owner !== positionManagerAddress) {
+  if (!entity.newOwner.equals(positionManagerAddress) && !entity.owner.equals(positionManagerAddress)) {
     log.info("handleTransferLP owner/newOwner does not match PositionManager address {}", [positionManagerAddress.toHexString()])
     // update Lends for old and new owners, creating entities where necessary
     const oldOwnerAccount = Account.load(entity.owner)!
