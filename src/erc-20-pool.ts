@@ -1203,8 +1203,8 @@ export function handleTransferLP(event: TransferLPEvent): void {
   const entity = new TransferLP(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.owner    = event.params.owner
-  entity.newOwner = event.params.newOwner
+  entity.owner    = addressToBytes(event.params.owner)
+  entity.newOwner = addressToBytes(event.params.newOwner)
   entity.indexes  = bigIntArrayToIntArray(event.params.indexes)
   entity.lp       = wadToDecimal(event.params.lp)
 
@@ -1216,8 +1216,8 @@ export function handleTransferLP(event: TransferLPEvent): void {
   const pool = Pool.load(poolId)!
 
   // do not meddle with Lends if transfer is due to memorializing/dememorializing a position
-  const positionManagerAddress = positionManagerNetworkLookUpTable.get(dataSource.network())!
-  log.info("handleTransferLP from {} to {}" , [event.params.owner.toHexString(), event.params.newOwner.toHexString()])
+  const positionManagerAddress = addressToBytes(positionManagerNetworkLookUpTable.get(dataSource.network())!)
+  log.info("handleTransferLP from {} to {}" , [entity.owner.toHexString(), entity.newOwner.toHexString()])
   if (entity.newOwner !== positionManagerAddress && entity.owner !== positionManagerAddress) {
     // update Lends for old and new owners, creating entities where necessary
     const oldOwnerAccount = Account.load(entity.owner)!
