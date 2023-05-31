@@ -28,6 +28,7 @@ export const MAX_BUCKET_INDEX = 4156;
 // TODO: rename these something more palatable, like "AddressTable"
 export const erc20FactoryNetworkLookUpTable = new TypedMap<string, Address>()
 erc20FactoryNetworkLookUpTable.set('goerli', Address.fromString('0x68ced2E7d257da67794B00556B31203A344d3c1e'))
+erc20FactoryNetworkLookUpTable.set('mainnet', Address.fromString('0x0000000000000000000000000000000010000001'))  // faked for unit testing
 export const poolInfoUtilsNetworkLookUpTable = new TypedMap<string, Address>()
 poolInfoUtilsNetworkLookUpTable.set('goerli', Address.fromString('0x1F9F7732ff409FC0AbcAAea94634A7b41F445299'))
 export const positionManagerNetworkLookUpTable = new TypedMap<string, Address>()
