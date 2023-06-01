@@ -7,10 +7,10 @@ import {
   afterAll,
   logStore
 } from "matchstick-as/assembly/index"
-import { Address } from "@graphprotocol/graph-ts"
+import { Address, dataSource } from "@graphprotocol/graph-ts"
 import { createPool } from "./utils/common"
 
-import { ERC20_FACTORY_ADDRESS, FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"
+import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI, erc20FactoryNetworkLookUpTable } from "../src/utils/constants"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -52,15 +52,16 @@ describe("ERC20PoolFactory assertions", () => {
   test("Factory entity attributes", () => {
     assert.entityCount("ERC20PoolFactory", 1)
   
+    const erc20factoryAddress = erc20FactoryNetworkLookUpTable.get(dataSource.network())!
     assert.fieldEquals(
       "ERC20PoolFactory",
-      ERC20_FACTORY_ADDRESS.toHexString(),
+      erc20factoryAddress.toHexString(),
       "poolCount",
       `${ONE_BI}`
     )
     assert.fieldEquals(
       "ERC20PoolFactory",
-      ERC20_FACTORY_ADDRESS.toHexString(),
+      erc20factoryAddress.toHexString(),
       "txCount",
       `${ONE_BI}`
     )

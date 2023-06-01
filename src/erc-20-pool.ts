@@ -1,4 +1,4 @@
-import { BigInt, Bytes, log } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
 import {
   AddCollateral as AddCollateralEvent,
@@ -63,7 +63,7 @@ import {
   UpdateInterestRate
 } from "../generated/schema"
 
-import { ZERO_BD, ONE_BI, TEN_BI } from "./utils/constants"
+import { ZERO_BD, ONE_BI, TEN_BI, positionManagerNetworkLookUpTable } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
@@ -715,6 +715,7 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
     const account   = loadOrCreateAccount(accountId)
     account.txCount = account.txCount.plus(ONE_BI)
     // update account lends if necessary
+    updateAccountLends(account, fromBucketLend)
     updateAccountLends(account, toBucketLend)
 
     // save entities to store
@@ -1202,8 +1203,8 @@ export function handleTransferLP(event: TransferLPEvent): void {
   const entity = new TransferLP(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.owner    = event.params.owner
-  entity.newOwner = event.params.newOwner
+  entity.owner    = addressToBytes(event.params.owner)
+  entity.newOwner = addressToBytes(event.params.newOwner)
   entity.indexes  = bigIntArrayToIntArray(event.params.indexes)
   entity.lp       = wadToDecimal(event.params.lp)
 
@@ -1211,9 +1212,12 @@ export function handleTransferLP(event: TransferLPEvent): void {
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
 
-  // update Lends for old and new owners, creating entities where necessary
   const poolId = addressToBytes(event.address)
   const pool = Pool.load(poolId)!
+
+  log.info("handleTransferLP from {} to {}" , [entity.owner.toHexString(), entity.newOwner.toHexString()])
+
+  // update Lends for old and new owners, creating entities where necessary
   const oldOwnerAccount = Account.load(entity.owner)!
   const newOwnerAccount = loadOrCreateAccount(entity.newOwner)
   for (var i=0; i<event.params.indexes.length; ++i) {
@@ -1223,13 +1227,18 @@ export function handleTransferLP(event: TransferLPEvent): void {
     const oldLendId = getLendId(bucketId, entity.owner)
     const newLendId = getLendId(bucketId, entity.newOwner)
 
+    // If PositionManager generated this event, it means either:
+    // Memorialize - transfer from lender to PositionManager, eliminating the lender's Lend
+    // Redeem      - transfer from PositionManager to lender, creating the lender's Lend
+
     // event does not reveal LP amounts transferred for each bucket, so query the pool and update
     // remove old lend
-    const oldLend = loadOrCreateLend(bucketId, oldLendId, poolId, entity.owner)
+    const oldLend = Lend.load(oldLendId)!
     oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
     oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
     updateAccountLends(oldOwnerAccount, Lend.load(oldLendId)!)
     oldLend.save()
+
     // add new lend
     const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
     newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.newOwner).lpBalance)
@@ -1239,7 +1248,7 @@ export function handleTransferLP(event: TransferLPEvent): void {
   }
   oldOwnerAccount.save()
   newOwnerAccount.save()
-  
+
   // increment pool and token tx counts
   pool.txCount = pool.txCount.plus(ONE_BI)
   const quoteToken = Token.load(pool.quoteToken)!

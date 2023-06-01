@@ -1,4 +1,4 @@
-import { log } from "@graphprotocol/graph-ts"
+import { BigDecimal, log } from "@graphprotocol/graph-ts"
 import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
@@ -81,8 +81,9 @@ export function handleMemorializePosition(
   const memorialize = new MemorializePosition(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  memorialize.lender = addressToBytes(event.params.lender)
+  memorialize.lender  = addressToBytes(event.params.lender)
   memorialize.tokenId = event.params.tokenId
+  memorialize.pool    = getPoolForToken(memorialize.tokenId)
   memorialize.indexes = bigIntArrayToIntArray(event.params.indexes)
 
   memorialize.blockNumber = event.block.number
@@ -97,17 +98,17 @@ export function handleMemorializePosition(
   const poolAddress = addressToBytes(addressNotBytes)
   const accountId = memorialize.lender
 
+  log.info("handleMemorializePosition for lender {} token {}" , [accountId.toHexString(), memorialize.tokenId.toString()])
+
   const positionIndexes = position.indexes;
   for (let i = 0; i < memorialize.indexes.length; i++) {
     const index = memorialize.indexes[i];
     const bucketId = getBucketId(poolAddress, index)
     const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, poolAddress, accountId)
-    positionIndexes.push(lend.id)
-    // save incremental lend to the store 
-    lend.save()
+    // add lend to position
+    positionIndexes.push(lendId)
   }
-  position.indexes = positionIndexes
+  position.indexes      = positionIndexes
 
   // save entities to store
   memorialize.save()
@@ -188,35 +189,32 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   const redeem = new RedeemPosition(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  redeem.lender = event.params.lender
+  redeem.lender  = event.params.lender
   redeem.tokenId = event.params.tokenId
-  redeem.pool = getPoolForToken(redeem.tokenId)
+  redeem.pool    = getPoolForToken(redeem.tokenId)
   redeem.indexes = bigIntArrayToIntArray(event.params.indexes)
 
   redeem.blockNumber = event.block.number
   redeem.blockTimestamp = event.block.timestamp
   redeem.transactionHash = event.transaction.hash
 
-  // update entities
   const position = loadOrCreatePosition(redeem.tokenId)
-
   const poolAddress = addressToBytes(getPoolForToken(redeem.tokenId))
   const accountId = redeem.lender
 
+  log.info("handleRedeemPosition for lender {} token {}" , [accountId.toHexString(), redeem.tokenId.toString()])
+
+  const positionIndexes = position.indexes;
   for (let index = 0; index < redeem.indexes.length; index++) {
     const bucketId = getBucketId(poolAddress, index)
     const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, poolAddress, accountId)
-
     // remove lends from position
     const existingIndex = position.indexes.indexOf(lendId)
     if (existingIndex != -1) {
-      position.indexes.splice(existingIndex, 1)
+      positionIndexes.splice(existingIndex, 1)
     }
-
-    // save incremental lend to the store
-    lend.save()
   }
+  position.indexes = positionIndexes
 
   // increment token txCount
   const token = loadOrCreateLPToken(event.address)

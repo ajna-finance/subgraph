@@ -1,4 +1,4 @@
-import { Address, BigInt } from "@graphprotocol/graph-ts"
+import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts"
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
 import { PoolCreated, Token } from "../generated/schema"
 import { ERC20PoolFactory, Pool } from "../generated/schema"
@@ -6,7 +6,6 @@ import { ERC20Pool } from "../generated/templates"
 import { ERC20Pool as ERC20PoolContract } from "../generated/templates/ERC20Pool/ERC20Pool"
 
 import {
-  ERC20_FACTORY_ADDRESS,
   MAX_PRICE,
   MAX_PRICE_INDEX,
   ONE_BI,
@@ -14,7 +13,8 @@ import {
   ZERO_BD,
   ONE_WAD_BD,
   ZERO_ADDRESS,
-  ONE_BD
+  ONE_BD,
+  erc20FactoryNetworkLookUpTable
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
@@ -30,10 +30,11 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   poolCreated.transactionHash = event.transaction.hash
 
   // record factory information
-  let factory = ERC20PoolFactory.load(ERC20_FACTORY_ADDRESS)
+  const erc20factoryAddress = erc20FactoryNetworkLookUpTable.get(dataSource.network())!
+  let factory = ERC20PoolFactory.load(erc20factoryAddress)
   if (factory == null) {
     // create new factory
-    factory = new ERC20PoolFactory(ERC20_FACTORY_ADDRESS) as ERC20PoolFactory
+    factory = new ERC20PoolFactory(erc20factoryAddress) as ERC20PoolFactory
     factory.poolCount = ZERO_BI
     factory.pools     = []
     factory.txCount   = ZERO_BI
