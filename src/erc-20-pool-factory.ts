@@ -18,6 +18,7 @@ import {
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
+import { wmul } from "./utils/math"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
@@ -98,7 +99,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.feeRate = wadToDecimal(interestRateResults.value1)
   pool.inflator = ONE_BD
   pool.borrowRate = wadToDecimal(interestRateResults.value0)
-  pool.lendRate = wadToDecimal(interestRateResults.value0.times(lenderInterestMargin))
+  pool.lendRate = wadToDecimal(wmul(interestRateResults.value0, lenderInterestMargin))
   pool.pledgedCollateral = ZERO_BD
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI
