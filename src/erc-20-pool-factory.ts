@@ -11,7 +11,6 @@ import {
   ONE_BI,
   ZERO_BI,
   ZERO_BD,
-  ONE_WAD_BD,
   ZERO_ADDRESS,
   ONE_BD,
   erc20FactoryNetworkLookUpTable
@@ -132,9 +131,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // utilization information
   pool.minDebtAmount = ZERO_BD
-  pool.collateralization = ONE_WAD_BD
+  pool.collateralization = ONE_BD
   pool.actualUtilization = ZERO_BD
-  pool.targetUtilization = ONE_WAD_BD
+  pool.targetUtilization = ONE_BD
 
   // liquidation information
   pool.totalBondEscrowed = ZERO_BD
