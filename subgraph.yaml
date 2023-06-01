@@ -4,7 +4,6 @@ schema:
 dataSources:
   - kind: ethereum
     name: PositionManager
-    network: goerli
     source:
       abi: PositionManager
     mapping:
@@ -47,7 +46,6 @@ dataSources:
       file: ./src/position-manager.ts
   - kind: ethereum
     name: ERC20PoolFactory
-    network: goerli
     source:
       abi: ERC20PoolFactory
     mapping:
@@ -69,7 +67,6 @@ dataSources:
       file: ./src/erc-20-pool-factory.ts
   - kind: ethereum
     name: RewardsManager
-    network: goerli
     source:
       abi: RewardsManager
     mapping:
@@ -101,7 +98,6 @@ dataSources:
       file: ./src/rewards-manager.ts
   - kind: ethereum
     name: ERC721PoolFactory
-    network: goerli
     source:
       abi: ERC721PoolFactory
     mapping:
@@ -123,7 +119,6 @@ dataSources:
       file: ./src/erc-721-pool-factory.ts
   - kind: ethereum
     name: GrantFund
-    network: goerli
     source:
       abi: GrantFund
     mapping:
@@ -160,7 +155,6 @@ dataSources:
 templates:
   - kind: ethereum
     name: ERC20Pool
-    network: goerli
     source:
       abi: ERC20Pool
     mapping:

@@ -8,9 +8,6 @@
       "address": "0x86EEA73d8071b03D998f1c466fe2125f0D3C4195",
       "startBlock": 8884538
     },
-    "PoolInfoUtils": {
-      "address": "0x1F9F7732ff409FC0AbcAAea94634A7b41F445299"
-    },
     "PositionManager": {
       "address": "0x83AB3762A4AeC9FBD4e7c01581C9495f2160630b",
       "startBlock": 8884538
@@ -30,9 +27,6 @@
     },
     "ERC721PoolFactory": {
       "address": "0x9EF8ad06546EE0FbCB9927bC015b0ce7159c2e1e"
-    },
-    "PoolInfoUtils": {
-      "address": "0xD86c4A8b172170Da0d5C0C1F12455bA80Eaa42AD"
     },
     "PositionManager": {
       "address": "0x9617ABE221F9A9c492D5348be56aef4Db75A692d"
