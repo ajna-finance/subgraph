@@ -11,13 +11,13 @@ import {
   ONE_BI,
   ZERO_BI,
   ZERO_BD,
-  ONE_WAD_BD,
   ZERO_ADDRESS,
   ONE_BD,
   erc20FactoryAddressTable
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
+import { wmul } from "./utils/math"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
@@ -98,7 +98,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.feeRate = wadToDecimal(interestRateResults.value1)
   pool.inflator = ONE_BD
   pool.borrowRate = wadToDecimal(interestRateResults.value0)
-  pool.lendRate = wadToDecimal(interestRateResults.value0.times(lenderInterestMargin))
+  pool.lendRate = wadToDecimal(wmul(interestRateResults.value0, lenderInterestMargin))
   pool.pledgedCollateral = ZERO_BD
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI
@@ -131,9 +131,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // utilization information
   pool.minDebtAmount = ZERO_BD
-  pool.collateralization = ONE_WAD_BD
+  pool.collateralization = ONE_BD
   pool.actualUtilization = ZERO_BD
-  pool.targetUtilization = ONE_WAD_BD
+  pool.targetUtilization = ONE_BD
 
   // liquidation information
   pool.totalBondEscrowed = ZERO_BD

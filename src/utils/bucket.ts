@@ -3,7 +3,7 @@ import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphproto
 import { Bucket } from "../../generated/schema"
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsAddressTable, ONE_BD, ONE_BI, ZERO_BD, ZERO_BI, ONE_WAD_BD } from "./constants"
+import { poolInfoUtilsAddressTable, ONE_BD, ZERO_BD } from "./constants"
 import { indexToPrice, wadToDecimal } from "./convert"
 
 export function getBucketId(pool: Bytes, index: u32): Bytes {
@@ -58,7 +58,7 @@ export function loadOrCreateBucket(poolId: Bytes, bucketId: Bytes, index: u32): 
       bucket.poolAddress  = poolId.toHexString()
       bucket.collateral   = ZERO_BD
       bucket.deposit      = ZERO_BD
-      bucket.exchangeRate = ONE_WAD_BD
+      bucket.exchangeRate = ONE_BD
       bucket.lpb          = ZERO_BD
     }
     return bucket

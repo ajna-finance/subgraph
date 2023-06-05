@@ -210,6 +210,7 @@ export function updatePool(pool: Pool): void {
     pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
     token = Token.load(pool.collateralToken)!
     scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+    unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
     pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 
     // update lend rate, since lender interest margin changes irrespective of borrow rate
