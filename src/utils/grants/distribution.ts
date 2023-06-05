@@ -3,7 +3,7 @@ import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 import { DistributionPeriod } from "../../../generated/schema"
 
-import { FUNDING_PERIOD_LENGTH, ONE_BI, ZERO_BD, ZERO_BI, grantFundNetworkLookUpTable } from "../constants"
+import { FUNDING_PERIOD_LENGTH, ONE_BI, ZERO_BD, ZERO_BI, grantFundAddressTable } from "../constants"
 import { bigIntToBytes } from "../convert"
 
 export function getDistributionIdAtBlock(blockNumber: BigInt): BigInt {
@@ -18,7 +18,7 @@ export function getDistributionIdAtBlock(blockNumber: BigInt): BigInt {
 }
 
 export function getCurrentDistributionId(): BigInt {
-    const grantFundAddress  = grantFundNetworkLookUpTable.get(dataSource.network())!
+    const grantFundAddress  = grantFundAddressTable.get(dataSource.network())!
     const grantFundContract = GrantFund.bind(grantFundAddress)
     const distributionIdResult = grantFundContract.getDistributionId()
     return BigInt.fromI32(distributionIdResult)

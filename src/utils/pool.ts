@@ -4,7 +4,7 @@ import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../generated
 import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsNetworkLookUpTable, ONE_BI, TEN_BI, ONE_WAD_BI } from "./constants"
+import { poolInfoUtilsAddressTable, ONE_BI, TEN_BI, ONE_WAD_BI } from "./constants"
 import { decimalToWad, wadToDecimal } from './convert'
 import { getTokenBalance } from './token-erc20'
 import { wdiv, wmul } from './math'
@@ -33,14 +33,14 @@ export function getLenderInfo(poolId: Bytes, bucketIndex: BigInt, lender: Addres
 
 // retrieve the current pool MOMP by calling PoolInfoUtils.momp()
 export function getMomp(poolId: Bytes): BigDecimal {
-  const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+  const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
   const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
   const pool = Pool.load(poolId)
   return wadToDecimal(poolInfoUtilsContract.momp(Address.fromBytes(poolId)))
 }
 
 export function getLenderInterestMargin(poolId: Bytes): BigInt {
-  const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+  const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
   const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
   const pool = Pool.load(poolId)
   return poolInfoUtilsContract.lenderInterestMargin(Address.fromBytes(poolId))
@@ -61,7 +61,7 @@ export class LoansInfo {
     }
 }
 export function getPoolLoansInfo(pool: Pool): LoansInfo {
-    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
     const loansInfoResult = poolInfoUtilsContract.poolLoansInfo(Address.fromBytes(pool.id))
 
@@ -92,7 +92,7 @@ export class PoolPricesInfo {
     }
 }
 export function getPoolPricesInfo(pool: Pool): PoolPricesInfo {
-    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
     const pricesInfoResult = poolInfoUtilsContract.poolPricesInfo(Address.fromBytes(pool.id))
 
@@ -122,7 +122,7 @@ export class ReservesInfo {
     }
 }
 export function getPoolReservesInfo(pool: Pool): ReservesInfo {
-    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
     const reservesInfoResult = poolInfoUtilsContract.poolReservesInfo(Address.fromBytes(pool.id))
 
@@ -149,7 +149,7 @@ export class PoolUtilizationInfo {
     }
 }
 export function getPoolUtilizationInfo(pool: Pool): PoolUtilizationInfo {
-    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
     const poolUtilizationInfoResult = poolInfoUtilsContract.poolUtilizationInfo(Address.fromBytes(pool.id))
 

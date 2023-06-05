@@ -1,7 +1,7 @@
 import { Address, BigInt, Bytes, dataSource, store } from "@graphprotocol/graph-ts"
 
 import { Position, Token } from "../../generated/schema"
-import { ONE_BI, ZERO_BI, positionManagerNetworkLookUpTable } from "../utils/constants"
+import { ONE_BI, ZERO_BI, positionManagerAddressTable } from "../utils/constants"
 import { addressToBytes } from "../utils/convert"
 import { getTokenName, getTokenSymbol } from "./token-erc721"
 import { PositionManager } from "../../generated/PositionManager/PositionManager"
@@ -44,7 +44,7 @@ export function deletePosition(tokenId: BigInt): void {
 }
 
 export function getPoolForToken(tokenId: BigInt): Address {
-  const positionManagerAddress = positionManagerNetworkLookUpTable.get(dataSource.network())!
+  const positionManagerAddress = positionManagerAddressTable.get(dataSource.network())!
   const positionManagerContract = PositionManager.bind(positionManagerAddress);
   return positionManagerContract.poolKey(tokenId)
 }

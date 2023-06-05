@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/g
 import { PoolInfoUtils } from "../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 import { Loan }    from "../../generated/schema"
-import { poolInfoUtilsNetworkLookUpTable, ZERO_BD, ZERO_BI } from "./constants"
+import { poolInfoUtilsAddressTable, ZERO_BD, ZERO_BI } from "./constants"
 
 export function getLoanId(poolId: Bytes, accountId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|').concat(accountId))
@@ -39,7 +39,7 @@ export class BorrowerInfo {
   }
 }
 export function getBorrowerInfo(borrower: Bytes, poolId: Bytes): BorrowerInfo {
-  const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+  const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
   const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
   const borrowerInfoResult = poolInfoUtilsContract.borrowerInfo(Address.fromBytes(poolId), Address.fromBytes(borrower))
 

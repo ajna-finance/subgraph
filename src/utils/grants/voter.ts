@@ -3,7 +3,7 @@ import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/g
 import { DistributionPeriodVote, Voter } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
-import { ZERO_BD, ZERO_BI, grantFundNetworkLookUpTable } from "../constants"
+import { ZERO_BD, ZERO_BI, grantFundAddressTable } from "../constants"
 import { wadToDecimal } from "../convert"
 
 export function getDistributionPeriodVoteId(distributionPeriodId: Bytes, voterId: Bytes): Bytes {
@@ -62,7 +62,7 @@ export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, 
 /**********************/
 
 export function getFundingStageVotingPower(distributionId: BigInt, voter: Address): BigDecimal {
-    const grantFundAddress  = grantFundNetworkLookUpTable.get(dataSource.network())!
+    const grantFundAddress  = grantFundAddressTable.get(dataSource.network())!
     const grantFundContract = GrantFund.bind(grantFundAddress)
     const votingPower = grantFundContract.getVotesFunding(distributionId.toI32(), voter)
 
@@ -70,7 +70,7 @@ export function getFundingStageVotingPower(distributionId: BigInt, voter: Addres
 }
 
 export function getScreeningStageVotingPower(distributionId: BigInt, voter: Address): BigDecimal {
-    const grantFundAddress  = grantFundNetworkLookUpTable.get(dataSource.network())!
+    const grantFundAddress  = grantFundAddressTable.get(dataSource.network())!
     const grantFundContract = GrantFund.bind(grantFundAddress)
     const votingPower = grantFundContract.getVotesScreening(distributionId.toI32(), voter)
 

@@ -10,7 +10,7 @@ import {
 import { Address, dataSource } from "@graphprotocol/graph-ts"
 import { createPool } from "./utils/common"
 
-import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI, erc20FactoryNetworkLookUpTable } from "../src/utils/constants"
+import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI, erc20FactoryAddressTable } from "../src/utils/constants"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -52,7 +52,7 @@ describe("ERC20PoolFactory assertions", () => {
   test("Factory entity attributes", () => {
     assert.entityCount("ERC20PoolFactory", 1)
   
-    const erc20factoryAddress = erc20FactoryNetworkLookUpTable.get(dataSource.network())!
+    const erc20factoryAddress = erc20FactoryAddressTable.get(dataSource.network())!
     assert.fieldEquals(
       "ERC20PoolFactory",
       erc20factoryAddress.toHexString(),
