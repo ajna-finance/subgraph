@@ -1,4 +1,5 @@
-version: '3'
+version: '3.7'
+
 services:
   graph-node:
     image: graphprotocol/graph-node
@@ -19,13 +20,16 @@ services:
       postgres_pass: let-me-in
       postgres_db: graph-node
       ipfs: 'ipfs:5001'
-      # Change next line if you want to connect to a different JSON-RPC endpoint
-      ethereum: 'goerli:${ETH_RPC_URL}'
+      ethereum: ${ETH_NETWORK}
       GRAPH_LOG: info
+    networks:
+      - ajna_test_network
   ipfs:
     image: ipfs/kubo:master-latest
     ports:
       - '5001:5001'
+    networks:
+      - ajna_test_network
     volumes:
       - ./data/ipfs:/data/ipfs
   postgres:
@@ -38,5 +42,10 @@ services:
       POSTGRES_PASSWORD: let-me-in
       POSTGRES_DB: graph-node
       POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+    networks:
+      - ajna_test_network
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+networks:
+  ajna_test_network:
+    name: ajna_test_network

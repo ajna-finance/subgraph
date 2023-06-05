@@ -12,7 +12,9 @@ sudo yarn global add @graphprotocol/graph-cli
 yarn install
 ```
 
-Configure `ETH_RPC_URL` for your target network in `.env`.
+Set `ETH_NETWORK` environment for your target network to `network:endpoint.  Examples:
+- Goerli: `ETH_NETWORK=goerli:https://eth-goerli.g.alchemy.com/v2/<your_api_key_here>`
+- Local testnet: `ganache:http://ganache:8555`
 
 If you will change ABIs, please install `jq`.
 
@@ -115,14 +117,14 @@ This subgraph will retain a list of `Pools`, even if they have no liquidity. Poo
 ## Development and Deployment
 Commands for adding new data sources to the subgraph are listed in the [add-commands.txt](./add-commands.txt) file.
 
-Once data sources have been added, entites can be modified in the [schema.graphql](./schema.graphql) file. After any update, the following commands must be run to ensure the new types are available for the event handlers:
+Once data sources have been added, entites can be modified in the [schema.graphql](./schema.graphql) file. After any update, the following commands must be run to ensure the new types are available for the event handlers.  Before running, ensure `ETH_NETWORK` is set as prescribed above.
 ```
 yarn codegen
 yarn build --network [NETWORK_NAME]
 ```
-...where `[NETWORK_NAME]` is `goerli` or `ganache`.  Upon building, `subgraph.yaml` will be updated with contract addresses and start blocks for the specified network.
+`[NETWORK_NAME]` should be defined in `networks.json` and specified by `ETH_NETWORK`.  Upon building, `subgraph.yaml` will be updated with contract addresses and start blocks for the specified network.
 
-After building, this subgraph can be run locally using provided docker container. To start, set the environment variable *ETH_RPC_URL* in your .env file. Then, run `docker-compose up`. Once the node is running, deploy the subgraph with:
+After building, this subgraph can be run locally using provided docker container. To start, run `docker-compose up`. Once _graph-node_ is running, deploy the subgraph with:
 ```
 yarn create-local
 yarn deploy-local
