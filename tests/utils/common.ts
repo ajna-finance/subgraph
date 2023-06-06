@@ -6,7 +6,7 @@ import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
 import { BucketInfo, getBucketId } from "../../src/utils/bucket"
 import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
-import { grantFundNetworkLookUpTable, positionManagerNetworkLookUpTable, poolInfoUtilsNetworkLookUpTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
+import { grantFundAddressTable, positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo, AuctionStatus } from "../../src/utils/liquidation"
 import { BorrowerInfo } from "../../src/utils/loan"
@@ -275,7 +275,7 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
 // @param expectedMechanism: The expected mechanism of the proposal
 export function mockFindMechanismOfProposal(proposalId: BigInt, expectedMechanism: BigInt): void {
     createMockedFunction(
-      grantFundNetworkLookUpTable.get(dataSource.network())!,
+      grantFundAddressTable.get(dataSource.network())!,
       'findMechanismOfProposal',
       'findMechanismOfProposal(uint256):(uint8)'
     )
@@ -322,7 +322,7 @@ export function mockGetTokenSymbol(tokenContract: Address, expectedSymbol: Strin
 
 export function mockGetPoolKey(tokenId: BigInt, expectedPoolAddress: Address): void {
     createMockedFunction(
-        positionManagerNetworkLookUpTable.get(dataSource.network())!,
+        positionManagerAddressTable.get(dataSource.network())!,
         'poolKey',
         'poolKey(uint256):(address)'
     )
@@ -364,7 +364,7 @@ export function createPool(pool_: Address, collateral: Address, quote: Address, 
 }
 
 export function mockGetBorrowerInfo(pool: Address, borrower: Address, expectedInfo: BorrowerInfo): void {
-  createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'borrowerInfo', 'borrowerInfo(address,address):(uint256,uint256,uint256)')
+  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'borrowerInfo', 'borrowerInfo(address,address):(uint256,uint256,uint256)')
     .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
     .returns([
       ethereum.Value.fromUnsignedBigInt(expectedInfo.debt),
@@ -375,7 +375,7 @@ export function mockGetBorrowerInfo(pool: Address, borrower: Address, expectedIn
 
 // mock getBucketInfo contract calls
 export function mockGetBucketInfo(pool: Address, bucketIndex: BigInt, expectedInfo: BucketInfo): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'bucketInfo', 'bucketInfo(address,uint256):(uint256,uint256,uint256,uint256,uint256,uint256)')
+    createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'bucketInfo', 'bucketInfo(address,uint256):(uint256,uint256,uint256,uint256,uint256,uint256)')
         .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
         .returns([
             ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(123456789)),
@@ -398,21 +398,21 @@ export function mockGetDebtInfo(pool: Address, expectInfo: DebtInfo): void {
 }
 
 export function mockGetLenderInterestMargin(pool: Address, expectedValue: BigInt): void {
-  createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lenderInterestMargin', 'lenderInterestMargin(address):(uint256)')
+  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'lenderInterestMargin', 'lenderInterestMargin(address):(uint256)')
       .withArgs([ethereum.Value.fromAddress(pool)])
       .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
 }
 
 // mock getLPBValueInQuote contract calls
 export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, bucketIndex: BigInt, expectedValue: BigInt): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'lpToQuoteTokens', 'lpToQuoteTokens(address,uint256,uint256):(uint256)')
+    createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'lpToQuoteTokens', 'lpToQuoteTokens(address,uint256,uint256):(uint256)')
         .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromUnsignedBigInt(lpb), ethereum.Value.fromUnsignedBigInt(bucketIndex)])
         .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
 }
 
 // mock getPoolLoansInfo contract calls
 export function mockGetPoolLoansInfo(pool: Address, expectedInfo: LoansInfo): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'poolLoansInfo', 'poolLoansInfo(address):(uint256,uint256,address,uint256,uint256)')
+    createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'poolLoansInfo', 'poolLoansInfo(address):(uint256,uint256,address,uint256,uint256)')
         .withArgs([ethereum.Value.fromAddress(pool)])
         .returns([
             ethereum.Value.fromUnsignedBigInt(expectedInfo.poolSize),
@@ -425,7 +425,7 @@ export function mockGetPoolLoansInfo(pool: Address, expectedInfo: LoansInfo): vo
 
 // mock getPoolPricesInfo contract calls
 export function mockGetPoolPricesInfo(pool: Address, expectedInfo: PoolPricesInfo): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'poolPricesInfo', 'poolPricesInfo(address):(uint256,uint256,uint256,uint256,uint256,uint256)')
+    createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'poolPricesInfo', 'poolPricesInfo(address):(uint256,uint256,uint256,uint256,uint256,uint256)')
         .withArgs([ethereum.Value.fromAddress(pool)])
         .returns([
             ethereum.Value.fromUnsignedBigInt(expectedInfo.hpb),
@@ -439,7 +439,7 @@ export function mockGetPoolPricesInfo(pool: Address, expectedInfo: PoolPricesInf
 
 // mock getMomp contract calls
 export function mockGetPoolMomp(pool: Address, expectedInfo: BigInt): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'momp', 'momp(address):(uint256)')
+    createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'momp', 'momp(address):(uint256)')
         .withArgs([ethereum.Value.fromAddress(pool)])
         .returns([
           ethereum.Value.fromUnsignedBigInt(expectedInfo)
@@ -448,7 +448,7 @@ export function mockGetPoolMomp(pool: Address, expectedInfo: BigInt): void {
 
 // mock getPoolReserves contract calls
 export function mockGetPoolReserves(pool: Address, expectedInfo: ReservesInfo): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'poolReservesInfo', 'poolReservesInfo(address):(uint256,uint256,uint256,uint256,uint256)')
+    createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'poolReservesInfo', 'poolReservesInfo(address):(uint256,uint256,uint256,uint256,uint256)')
         .withArgs([ethereum.Value.fromAddress(pool)])
         .returns([
             ethereum.Value.fromUnsignedBigInt(expectedInfo.reserves),
@@ -461,7 +461,7 @@ export function mockGetPoolReserves(pool: Address, expectedInfo: ReservesInfo): 
 
 // mock getPoolUtilizationInfo contract calls
 export function mockGetPoolUtilizationInfo(pool: Address, expectedInfo: PoolUtilizationInfo): void {
-    createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 'poolUtilizationInfo', 'poolUtilizationInfo(address):(uint256,uint256,uint256,uint256)')
+    createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'poolUtilizationInfo', 'poolUtilizationInfo(address):(uint256,uint256,uint256,uint256)')
         .withArgs([ethereum.Value.fromAddress(pool)])
         .returns([
             ethereum.Value.fromUnsignedBigInt(expectedInfo.minDebtAmount),
@@ -491,7 +491,7 @@ export function mockGetAuctionInfoERC20Pool(borrower: Address, pool: Address, ex
 
 // mock auctionStatus poolInfoUtils calls
 export function mockGetAuctionStatus(pool: Address, borrower: Address, expectedInfo: AuctionStatus): void {
-  createMockedFunction(poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!, 
+  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 
   'auctionStatus', 'auctionStatus(address,address):(uint256,uint256,uint256,bool,uint256,uint256)')
   .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
   .returns([

@@ -4,11 +4,8 @@ schema:
 dataSources:
   - kind: ethereum
     name: PositionManager
-    network: goerli
     source:
-      address: "0x83AB3762A4AeC9FBD4e7c01581C9495f2160630b"
       abi: PositionManager
-      startBlock: 8884538
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -49,11 +46,8 @@ dataSources:
       file: ./src/position-manager.ts
   - kind: ethereum
     name: ERC20PoolFactory
-    network: goerli
     source:
-      address: "0x68ced2E7d257da67794B00556B31203A344d3c1e"
       abi: ERC20PoolFactory
-      startBlock: 8884537
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -73,11 +67,8 @@ dataSources:
       file: ./src/erc-20-pool-factory.ts
   - kind: ethereum
     name: RewardsManager
-    network: goerli
     source:
-      address: "0xaF9bc1F09fe561CbD00018fC352507fD23cD46E2"
       abi: RewardsManager
-      startBlock: 8884538
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -107,11 +98,8 @@ dataSources:
       file: ./src/rewards-manager.ts
   - kind: ethereum
     name: ERC721PoolFactory
-    network: goerli
     source:
-      address: "0x86EEA73d8071b03D998f1c466fe2125f0D3C4195"
       abi: ERC721PoolFactory
-      startBlock: 8884538
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -131,11 +119,8 @@ dataSources:
       file: ./src/erc-721-pool-factory.ts
   - kind: ethereum
     name: GrantFund
-    network: goerli
     source:
-      address: "0x54110a15011bcb145a8CD4f5adf108B2B6939A1e"
       abi: GrantFund
-      startBlock: 8885195
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -170,7 +155,6 @@ dataSources:
 templates:
   - kind: ethereum
     name: ERC20Pool
-    network: goerli
     source:
       abi: ERC20Pool
     mapping:

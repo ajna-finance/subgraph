@@ -63,7 +63,7 @@ import {
   UpdateInterestRate
 } from "../generated/schema"
 
-import { ZERO_BD, ONE_BI, TEN_BI, positionManagerNetworkLookUpTable } from "./utils/constants"
+import { ZERO_BD, ONE_BI, TEN_BI, positionManagerAddressTable } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"

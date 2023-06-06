@@ -4,7 +4,7 @@ import { LiquidationAuction, Kick, Loan, Pool } from "../../generated/schema"
 import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 
 import { wadToDecimal } from "./convert"
-import { ONE_BI, ZERO_BD, poolInfoUtilsNetworkLookUpTable } from "./constants"
+import { ONE_BI, ZERO_BD, poolInfoUtilsAddressTable } from "./constants"
 import { PoolInfoUtils } from "../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, kickBlock: BigInt): Bytes {
@@ -122,7 +122,7 @@ export class AuctionStatus {
     }
 }
 export function getAuctionStatus(pool: Pool, borrower: Address): AuctionStatus {
-    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
     const result = poolInfoUtilsContract.auctionStatus(Address.fromBytes(pool.id), borrower)
     return new AuctionStatus(

@@ -14,7 +14,7 @@ import {
 import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
 import { handleDelegateRewardClaimed, handleFundTreasury, handleProposalCreated, handleProposalExecuted, handleQuarterlyDistributionStarted } from "../src/grant-fund"
 import { createDelegateRewardClaimedEvent, createFundTreasuryEvent, createProposalCreatedEvent, createProposalExecutedEvent, createQuarterlyDistributionStartedEvent } from "./utils/grant-fund-utils"
-import { DISTRIBUTION_PERIOD_LENGTH, ONE_BI, ONE_WAD_BI, ZERO_BD, ZERO_BI, grantFundNetworkLookUpTable } from "../src/utils/constants"
+import { DISTRIBUTION_PERIOD_LENGTH, ONE_BI, ONE_WAD_BI, ZERO_BD, ZERO_BI, grantFundAddressTable } from "../src/utils/constants"
 import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
 import { mockFindMechanismOfProposal, mockGetDistributionId } from "./utils/common"
 
@@ -38,7 +38,7 @@ describe("Grant Fund assertions", () => {
     const delegateeAddress_ = Address.fromString(
       "0x0000000000000000000000000000000000000001"
     )
-    const grantFundAddress = grantFundNetworkLookUpTable.get(dataSource.network())!
+    const grantFundAddress = grantFundAddressTable.get(dataSource.network())!
     const distributionId_ = BigInt.fromI32(234)
     const rewardClaimed_ = BigInt.fromI32(234)
 
@@ -159,7 +159,7 @@ describe("Grant Fund assertions", () => {
     const startBlock = ONE_BI
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH)
     const description = "test proposal"
-    const grantFundAddress = grantFundNetworkLookUpTable.get(dataSource.network())!
+    const grantFundAddress = grantFundAddressTable.get(dataSource.network())!
 
     // mock GrantFund contract calls
     const expectedMechanism = BigInt.fromI32(0) // standard proposal
@@ -209,7 +209,7 @@ describe("Grant Fund assertions", () => {
     const startBlock = ONE_BI
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH)
     const description = "test proposal"
-    const grantFundAddress = grantFundNetworkLookUpTable.get(dataSource.network())!
+    const grantFundAddress = grantFundAddressTable.get(dataSource.network())!
 
     // mock GrantFund contract calls
     const expectedMechanism = BigInt.fromI32(0) // standard proposal

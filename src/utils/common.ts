@@ -2,12 +2,12 @@ import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphproto
 
 import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { ONE_BD, ZERO_BD, poolInfoUtilsNetworkLookUpTable } from "./constants"
+import { ONE_BD, ZERO_BD, poolInfoUtilsAddressTable } from "./constants"
 import { decimalToWad, wadToDecimal } from "./convert"
 
 export function lpbValueInQuote(pool: Bytes, bucketIndex: u32, lpAmount: BigDecimal): BigDecimal {
     const poolAddress = Address.fromBytes(pool)
-    const poolInfoUtilsAddress = poolInfoUtilsNetworkLookUpTable.get(dataSource.network())!
+    const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
     const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
 
     const quoteTokenAmount = poolInfoUtilsContract.lpToQuoteTokens(

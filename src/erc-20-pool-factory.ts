@@ -13,7 +13,7 @@ import {
   ZERO_BD,
   ZERO_ADDRESS,
   ONE_BD,
-  erc20FactoryNetworkLookUpTable
+  erc20FactoryAddressTable
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
@@ -30,7 +30,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   poolCreated.transactionHash = event.transaction.hash
 
   // record factory information
-  const erc20factoryAddress = erc20FactoryNetworkLookUpTable.get(dataSource.network())!
+  const erc20factoryAddress = erc20FactoryAddressTable.get(dataSource.network())!
   let factory = ERC20PoolFactory.load(erc20factoryAddress)
   if (factory == null) {
     // create new factory
