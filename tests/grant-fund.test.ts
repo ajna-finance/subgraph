@@ -12,8 +12,8 @@ import {
   beforeEach
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
-import { handleDelegateRewardClaimed, handleFundTreasury, handleProposalCreated, handleProposalExecuted, handleQuarterlyDistributionStarted } from "../src/grant-fund"
-import { createDelegateRewardClaimedEvent, createFundTreasuryEvent, createProposalCreatedEvent, createProposalExecutedEvent, createQuarterlyDistributionStartedEvent } from "./utils/grant-fund-utils"
+import { handleDelegateRewardClaimed, handleFundTreasury, handleProposalCreated, handleProposalExecuted, handleDistributionPeriodStarted } from "../src/grant-fund"
+import { createDelegateRewardClaimedEvent, createFundTreasuryEvent, createProposalCreatedEvent, createProposalExecutedEvent, createDistributionPeriodStartedEvent } from "./utils/grant-fund-utils"
 import { DISTRIBUTION_PERIOD_LENGTH, ONE_BI, ONE_WAD_BI, ZERO_BD, ZERO_BI, grantFundAddressTable } from "../src/utils/constants"
 import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
 import { mockFindMechanismOfProposal, mockGetDistributionId } from "./utils/common"
@@ -83,8 +83,8 @@ describe("Grant Fund assertions", () => {
     const startBlock = ONE_BI
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH)
 
-    const newQuarterlyDistributionStartedEvent = createQuarterlyDistributionStartedEvent(distributionId, startBlock, endBlock)
-    handleQuarterlyDistributionStarted(newQuarterlyDistributionStartedEvent)
+    const newDistributionPeriodStartedEvent = createDistributionPeriodStartedEvent(distributionId, startBlock, endBlock)
+    handleDistributionPeriodStarted(newDistributionPeriodStartedEvent)
 
     const expectedDistributionId = bigIntToBytes(distributionId).toHexString()
 
@@ -110,17 +110,17 @@ describe("Grant Fund assertions", () => {
     )
 
     // check DistributionPeriod attributes
-    assert.entityCount("QuarterlyDistributionStarted", 1)
+    assert.entityCount("DistributionPeriodStarted", 1)
     assert.fieldEquals(
-      "QuarterlyDistributionStarted",
+      "DistributionPeriodStarted",
       `0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000`,
-      "startBlock_",
+      "startBlock",
       `${startBlock}`
     )
     assert.fieldEquals(
-      "QuarterlyDistributionStarted",
+      "DistributionPeriodStarted",
       `0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000`,
-      "endBlock_",
+      "endBlock",
       `${endBlock}`
     )
 

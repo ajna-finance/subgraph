@@ -18,13 +18,10 @@ export function loadOrCreateProposal(proposalId: Bytes): Proposal {
         proposal = new Proposal(proposalId) as Proposal
         proposal.description  = ""
         proposal.distribution = Bytes.empty()
-        proposal.isStandard   = false
-        proposal.isExtraordinary = false
         proposal.executed     = false
         proposal.successful   = false
         proposal.screeningVotesReceived = ZERO_BD
         proposal.fundingVotesReceived = ZERO_BD
-        proposal.extraordinaryVotesReceived = ZERO_BD
         proposal.totalTokensRequested = ZERO_BD
         proposal.params = []
     }
@@ -43,15 +40,6 @@ export function removeProposalFromList(proposalId: Bytes, proposalList: Array<By
 /**********************/
 /*** Contract Calls ***/
 /**********************/
-
-export function getMechanismOfProposal(proposalId: Bytes): BigInt {
-    const grantFundAddress  = grantFundAddressTable.get(dataSource.network())!
-    const grantFundContract = GrantFund.bind(grantFundAddress)
-    const findMechanismOfProposalResult = grantFundContract.findMechanismOfProposal(bytesToBigInt(proposalId))
-
-    return BigInt.fromI32(findMechanismOfProposalResult)
-}
-
 
 export function getProposalsInSlate(distributionId: BigInt): Array<BigInt> {
     const grantFundAddress  = grantFundAddressTable.get(dataSource.network())!

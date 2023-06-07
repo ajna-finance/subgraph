@@ -6,7 +6,7 @@ import {
   FundedSlateUpdated,
   ProposalCreated,
   ProposalExecuted,
-  QuarterlyDistributionStarted,
+  DistributionPeriodStarted,
   VoteCast
 } from "../../generated/GrantFund/GrantFund"
 
@@ -172,37 +172,37 @@ export function createProposalExecutedEvent(
   return proposalExecutedEvent
 }
 
-export function createQuarterlyDistributionStartedEvent(
+export function createDistributionPeriodStartedEvent(
   distributionId_: BigInt,
   startBlock_: BigInt,
   endBlock_: BigInt
-): QuarterlyDistributionStarted {
-  let quarterlyDistributionStartedEvent = changetype<
-    QuarterlyDistributionStarted
+): DistributionPeriodStarted {
+  let DistributionPeriodStartedEvent = changetype<
+    DistributionPeriodStarted
   >(newMockEvent())
 
-  quarterlyDistributionStartedEvent.parameters = new Array()
+  DistributionPeriodStartedEvent.parameters = new Array()
 
-  quarterlyDistributionStartedEvent.parameters.push(
+  DistributionPeriodStartedEvent.parameters.push(
     new ethereum.EventParam(
       "distributionId_",
       ethereum.Value.fromUnsignedBigInt(distributionId_)
     )
   )
-  quarterlyDistributionStartedEvent.parameters.push(
+  DistributionPeriodStartedEvent.parameters.push(
     new ethereum.EventParam(
       "startBlock_",
       ethereum.Value.fromUnsignedBigInt(startBlock_)
     )
   )
-  quarterlyDistributionStartedEvent.parameters.push(
+  DistributionPeriodStartedEvent.parameters.push(
     new ethereum.EventParam(
       "endBlock_",
       ethereum.Value.fromUnsignedBigInt(endBlock_)
     )
   )
 
-  return quarterlyDistributionStartedEvent
+  return DistributionPeriodStartedEvent
 }
 
 export function createVoteCastEvent(
