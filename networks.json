@@ -9,11 +9,11 @@
       "startBlock": 9129648
     },
     "PositionManager": {
-      "address": "0xFFF7544D77d3869934Ba244b42397F8338267B39",
+      "address": "0x31E3B448cAFF35e9eEb232053f4d5e76776a1C83",
       "startBlock": 9129648
     },
     "RewardsManager": {
-      "address": "0xF35185B17e0c6B18CB94589226b52C7A30f6610e",
+      "address": "0x015441062c2aad707629D9A1f2029074F58ad5aE",
       "startBlock": 9129648
     },
     "GrantFund": {
