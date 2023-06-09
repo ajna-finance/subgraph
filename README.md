@@ -12,9 +12,8 @@ sudo yarn global add @graphprotocol/graph-cli
 yarn install
 ```
 
-Set `ETH_NETWORK` environment for your target network to `network:endpoint.  Examples:
-- Goerli: `ETH_NETWORK=goerli:https://eth-goerli.g.alchemy.com/v2/<your_api_key_here>`
-- Local testnet: `ganache:http://ganache:8555`
+Set `ETH_NETWORK` environment for your target network to `network:endpoint.  For example, 
+ `ETH_NETWORK=goerli:https://eth-goerli.g.alchemy.com/v2/<your_api_key_here>` configures your environment for Goerli using an Alchemy node.  This environment variable is not needed when indexing a local ganache testnet.
 
 If you will change ABIs, please install `jq`.
 
@@ -122,9 +121,12 @@ Once data sources have been added, entites can be modified in the [schema.graphq
 yarn codegen
 yarn build --network [NETWORK_NAME]
 ```
-`[NETWORK_NAME]` should be defined in `networks.json` and specified by `ETH_NETWORK`.  Upon building, `subgraph.yaml` will be updated with contract addresses and start blocks for the specified network.
+Upon building, `subgraph.yaml` will be updated with contract addresses and start blocks for the specified network.
 
-After building, this subgraph can be run locally using provided docker container. To start, run `docker-compose up`. Once _graph-node_ is running, deploy the subgraph with:
+- To connect to a public network, `[NETWORK_NAME]` should be defined in `networks.json` and specified by `ETH_NETWORK`.  To start, run `docker-compose up`.  
+- To run and index a local testchain, run `docker-compose -f ganache-indexer.yml up`.  This will start an instance of ganache with a canned deployment of Ajna, and an indexer pointed at it.  No need to configure `ETH_NETWORK`.
+
+Once _graph-node_ is running, deploy the subgraph with:
 ```
 yarn create-local
 yarn deploy-local

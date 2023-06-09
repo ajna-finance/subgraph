@@ -766,13 +766,12 @@ type UpdateExchangeRates @entity(immutable: true) {
   # GRANT FUND ENTITIES #
   # # # # # # # # # # # #
 
+# TODO: rename standardProposals to proposals
 type GrantFund @entity {
   id: Bytes! # address of the grant fund
   treasury: BigDecimal! # Total ajna tokens in the grant fund treasure
   standardProposals: [Proposal!]! # List of standard proposals submitted to the grant fund
   standardProposalsExecuted: [Proposal!]! # List of standard proposals executed by the grant fund
-  extraordinaryProposals: [Proposal!]! # List of extraordinary proposals submitted to the grant fund
-  extraordinaryProposalsExecuted: [Proposal!]! # List of extraordinary proposals executed by the grant fund
   distributionPeriods: [DistributionPeriod!]! # List of distribution periods
   totalDelegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed across all distribution periods
 }
@@ -791,16 +790,12 @@ type DistributionPeriod @entity {
   totalTokensRequested: BigDecimal! # Total ajna tokens requested by all proposals in the distribution period
 }
 
-# TODO: split into standard and extraordinary?
 type Proposal @entity {
   id: Bytes! # proposal id converted to Bytes from uint
   description: String! # proposal description hashed as part of proposalId
   distribution: DistributionPeriod # distributionPeriod in which the proposal was submitted if Standard, null otherwise
-  isStandard: Boolean! # bool
-  isExtraordinary: Boolean! # bool
   executed: Boolean! # bool
   successful: Boolean! # bool
-  extraordinaryVotesReceived: BigDecimal! # uint256
   screeningVotesReceived: BigDecimal! # uint256
   fundingVotesReceived: BigDecimal! # uint256
   totalTokensRequested: BigDecimal! # uint256
@@ -821,7 +816,6 @@ type Voter @entity {
   proposalsCreated: [Proposal!]! # Proposal[]
   proposalsExecuted: [Proposal!]! # Proposal[]
   distributionPeriodVotes: [DistributionPeriodVote!]! # DistributionPeriodVote[]
-  extraordinaryVotes: [ExtraordinaryVote!]! # ExtraordinaryVote[]
 }
 
 # TODO: record voting power used?
@@ -851,14 +845,6 @@ type FundingVote @entity {
   votesCast: BigDecimal! # uint256 # TODO: can this be negative?
   votingPowerUsed: BigDecimal! # uint256
   blockNumber: BigInt! # block number the vote was cast
-}
-
-type ExtraordinaryVote @entity {
-  id: Bytes! # $proposalId + 'extraordinary' + $Voter.id
-  voter: Voter! # Voter
-  proposal: Proposal! # proposal being voted on
-  voteBlock: BigInt! # block number the vote was cast
-  votesCast: BigDecimal! # uint256 amount of votes cast
 }
 
 type FundedSlate @entity {
@@ -925,12 +911,11 @@ type ProposalExecuted @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-# TODO: remove underscores from event fields
-type QuarterlyDistributionStarted @entity(immutable: true) {
+type DistributionPeriodStarted @entity(immutable: true) {
   id: Bytes!
   distribution: DistributionPeriod! # The newly started distribution period
-  startBlock_: BigInt! # uint256
-  endBlock_: BigInt! # uint256
+  startBlock: BigInt! # uint256
+  endBlock: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

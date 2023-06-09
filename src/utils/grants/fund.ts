@@ -12,8 +12,6 @@ export function loadOrCreateGrantFund(grantFundAddress: Address): GrantFund {
     grantFund.treasury = ZERO_BD
     grantFund.standardProposals = []
     grantFund.standardProposalsExecuted = []
-    grantFund.extraordinaryProposals = []
-    grantFund.extraordinaryProposalsExecuted = []
     grantFund.distributionPeriods = []
     grantFund.totalDelegationRewardsClaimed = ZERO_BD
   }

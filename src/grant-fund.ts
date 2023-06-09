@@ -6,13 +6,12 @@ import {
   FundedSlateUpdated as FundedSlateUpdatedEvent,
   ProposalCreated as ProposalCreatedEvent,
   ProposalExecuted as ProposalExecutedEvent,
-  QuarterlyDistributionStarted as QuarterlyDistributionStartedEvent,
+  DistributionPeriodStarted as DistributionPeriodStartedEvent,
   VoteCast as VoteCastEvent
 } from "../generated/GrantFund/GrantFund"
 import {
   DelegateRewardClaimed,
   DistributionPeriod,
-  ExtraordinaryVote,
   FundTreasury,
   FundedSlate,
   FundedSlateUpdated,
@@ -21,16 +20,16 @@ import {
   ProposalCreated,
   ProposalExecuted,
   ProposalParams,
-  QuarterlyDistributionStarted,
+  DistributionPeriodStarted,
   ScreeningVote,
   VoteCast
 } from "../generated/schema"
 
 import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
-import { getMechanismOfProposal, getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
+import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
-import { getDistributionPeriodVoteId, getExtraordinaryVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
+import { getDistributionPeriodVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
 import { loadOrCreateGrantFund } from './utils/grants/fund'
 
 export function handleDelegateRewardClaimed(
@@ -148,7 +147,6 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   proposal.successful   = false
   proposal.screeningVotesReceived = ZERO_BD
   proposal.fundingVotesReceived = ZERO_BD
-  proposal.extraordinaryVotesReceived = ZERO_BD
   proposal.params = []
 
   let totalTokensRequested = ZERO_BD
@@ -186,31 +184,20 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   // load GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
 
-  // set proposal funding mechanism
-  const proposalFundingMechanism = getMechanismOfProposal(proposalId)
-  proposal.isStandard = proposalFundingMechanism == BigInt.fromI32(0)
-  proposal.isExtraordinary = proposalFundingMechanism == BigInt.fromI32(1)
-
-  if (proposal.isStandard) {
-    // update distribution entity
-    const distributionId = getCurrentDistributionId()
-    const distributionPeriod = loadOrCreateDistributionPeriod(bigIntToBytes(distributionId))
-    if (distributionPeriod != null) {
-      distributionPeriod.proposals.push(proposal.id)
-      distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
-      distributionPeriod.save()
-    }
-
-    // record proposals distributionId
-    proposal.distribution = distributionPeriod.id
-
-    // record proposal in GrantFund entity
-    grantFund.standardProposals.push(proposal.id)
+  // update distribution entity
+  const distributionId = getCurrentDistributionId()
+  const distributionPeriod = loadOrCreateDistributionPeriod(bigIntToBytes(distributionId))
+  if (distributionPeriod != null) {
+    distributionPeriod.proposals.push(proposal.id)
+    distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
+    distributionPeriod.save()
   }
-  else {
-    // record proposal in GrantFund entity
-    grantFund.extraordinaryProposals.push(proposal.id)
-  }
+
+  // record proposals distributionId
+  proposal.distribution = distributionPeriod.id
+
+  // record proposal in GrantFund entity
+  grantFund.standardProposals.push(proposal.id)
 
   // save entities to the store
   grantFund.save()
@@ -236,14 +223,8 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
 
     // record proposal in GrantFund entity
     const grantFund = loadOrCreateGrantFund(event.address)
-    if (proposal.isStandard) {
-      grantFund.standardProposalsExecuted.push(proposal.id)
-      grantFund.standardProposals = removeProposalFromList(proposal.id, grantFund.standardProposals)
-    }
-    else {
-      grantFund.extraordinaryProposalsExecuted.push(proposal.id)
-      grantFund.extraordinaryProposals = removeProposalFromList(proposal.id, grantFund.standardProposals)
-    }
+    grantFund.standardProposalsExecuted.push(proposal.id)
+    grantFund.standardProposals = removeProposalFromList(proposal.id, grantFund.standardProposals)
 
     // save entities to the store
     grantFund.save()
@@ -252,16 +233,16 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
   proposalExecuted.save()
 }
 
-export function handleQuarterlyDistributionStarted(
-  event: QuarterlyDistributionStartedEvent
+export function handleDistributionPeriodStarted(
+  event: DistributionPeriodStartedEvent
 ): void {
-  const distributionStarted = new QuarterlyDistributionStarted(
+  const distributionStarted = new DistributionPeriodStarted(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   const distributionId = bigIntToBytes(event.params.distributionId)
   distributionStarted.distribution = distributionId
-  distributionStarted.startBlock_ = event.params.startBlock
-  distributionStarted.endBlock_ = event.params.endBlock
+  distributionStarted.startBlock = event.params.startBlock
+  distributionStarted.endBlock = event.params.endBlock
 
   distributionStarted.blockNumber = event.block.number
   distributionStarted.blockTimestamp = event.block.timestamp
@@ -270,8 +251,8 @@ export function handleQuarterlyDistributionStarted(
   // create DistributionPeriod entities
   const distributionPeriod = new DistributionPeriod(distributionId) as DistributionPeriod
 
-  distributionPeriod.startBlock = distributionStarted.startBlock_
-  distributionPeriod.endBlock = distributionStarted.endBlock_
+  distributionPeriod.startBlock = distributionStarted.startBlock
+  distributionPeriod.endBlock = distributionStarted.endBlock
   distributionPeriod.topSlate = Bytes.empty()
   distributionPeriod.delegationRewardsClaimed = ZERO_BD
   distributionPeriod.totalTokensRequested = ZERO_BD
@@ -312,86 +293,67 @@ export function handleVoteCast(event: VoteCastEvent): void {
   const proposalId = bigIntToBytes(event.params.proposalId)
   const proposal = Proposal.load(proposalId) as Proposal
   if (proposal != null) {
-    if (proposal.isStandard) {
-      // TODO: need to be able to access the distributionId at that block height or call getDistributionIdAtBlock()?
-      // load distribution entity
-      const distributionId = bigIntToBytes(getCurrentDistributionId())
-      const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
+    // TODO: need to be able to access the distributionId at that block height or call getDistributionIdAtBlock()?
+    // load distribution entity
+    const distributionId = bigIntToBytes(getCurrentDistributionId())
+    const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
 
-      // load voter's distributionPeriodVotes
-      const distributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.id, voter.id)
+    // load voter's distributionPeriodVotes
+    const distributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.id, voter.id)
 
-      // check stage of proposal
-      const stage = getCurrentStage(voteCast.blockNumber, distributionPeriod)
+    // check stage of proposal
+    const stage = getCurrentStage(voteCast.blockNumber, distributionPeriod)
 
-      // proposal is in screening stage
-      if (stage === "SCREENING") {
-        const screeningVotesCast = wadToDecimal(event.params.weight)
-        proposal.screeningVotesReceived = proposal.screeningVotesReceived.plus(screeningVotesCast)
-        distributionPeriod.screeningVotesCast = distributionPeriod.screeningVotesCast.plus(event.params.weight.toBigDecimal())
+    // proposal is in screening stage
+    if (stage === "SCREENING") {
+      const screeningVotesCast = wadToDecimal(event.params.weight)
+      proposal.screeningVotesReceived = proposal.screeningVotesReceived.plus(screeningVotesCast)
+      distributionPeriod.screeningVotesCast = distributionPeriod.screeningVotesCast.plus(event.params.weight.toBigDecimal())
 
-        // create ScreeningVote entity
-        const screeningVote = new ScreeningVote(getScreeningVoteId(proposalId, voter.id, event.logIndex)) as ScreeningVote
-        screeningVote.distribution = distributionId
-        screeningVote.voter = voter.id
-        screeningVote.proposal = proposalId
-        screeningVote.votesCast = screeningVotesCast
-        screeningVote.blockNumber = voteCast.blockNumber
+      // create ScreeningVote entity
+      const screeningVote = new ScreeningVote(getScreeningVoteId(proposalId, voter.id, event.logIndex)) as ScreeningVote
+      screeningVote.distribution = distributionId
+      screeningVote.voter = voter.id
+      screeningVote.proposal = proposalId
+      screeningVote.votesCast = screeningVotesCast
+      screeningVote.blockNumber = voteCast.blockNumber
 
-        // update voter's distributionPeriodVote entity if it hasn't been recorded yet
-        if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-          distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(bytesToBigInt(distributionId), Address.fromBytes(voter.id))
-        }
-
-        // add additional screening votes to voter's distributionPeriodVote entity
-        distributionPeriodVote.screeningVotes.push(screeningVote.id)
-
-        // save screeningVote to the store
-        screeningVote.save()
-      }
-      else if (stage === "FUNDING") {
-        // create FundingVote entity
-        const fundingVote = new FundingVote(getFundingVoteId(proposalId, voter.id, event.logIndex)) as FundingVote
-        fundingVote.distribution = distributionId
-        fundingVote.voter = voter.id
-        fundingVote.proposal = proposalId
-        fundingVote.votesCast = wadToDecimal(event.params.weight)
-        // fundingVote.votingPowerUsed = ZERO_BD TODO: need to calculate this
-        fundingVote.blockNumber = voteCast.blockNumber
-
-        // update voter's distributionPeriodVote entity if it hasn't been recorded yet
-        if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-          distributionPeriodVote.fundingStageVotingPower = getFundingStageVotingPower(bytesToBigInt(distributionId), Address.fromBytes(voter.id))
-        }
-
-        // save fundingVote to the store
-        fundingVote.save()
+      // update voter's distributionPeriodVote entity if it hasn't been recorded yet
+      if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
+        distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
 
-      voter.distributionPeriodVotes.push(distributionPeriodVote.id)
+      // add additional screening votes to voter's distributionPeriodVote entity
+      distributionPeriodVote.screeningVotes.push(screeningVote.id)
 
-      // save standard funding mechanism entities to the store
-      distributionPeriod.save()
-      distributionPeriodVote.save()
-      proposal.save()
+      // save screeningVote to the store
+      screeningVote.save()
     }
-    else {
-      const extraordinaryVotesCast = wadToDecimal(event.params.weight)
-      const extraordinaryVote = new ExtraordinaryVote(getExtraordinaryVoteId(proposalId, event.params.voter, event.logIndex)) as ExtraordinaryVote
-      extraordinaryVote.voter = voter.id
-      extraordinaryVote.proposal = proposalId
-      extraordinaryVote.votesCast = extraordinaryVotesCast
-      extraordinaryVote.voteBlock = voteCast.blockNumber
+    else if (stage === "FUNDING") {
+      // create FundingVote entity
+      const fundingVote = new FundingVote(getFundingVoteId(proposalId, voter.id, event.logIndex)) as FundingVote
+      fundingVote.distribution = distributionId
+      fundingVote.voter = voter.id
+      fundingVote.proposal = proposalId
+      fundingVote.votesCast = wadToDecimal(event.params.weight)
+      // fundingVote.votingPowerUsed = ZERO_BD TODO: need to calculate this
+      fundingVote.blockNumber = voteCast.blockNumber
 
-      // update proposal state
-      proposal.extraordinaryVotesReceived = proposal.extraordinaryVotesReceived.plus(extraordinaryVotesCast)
+      // update voter's distributionPeriodVote entity if it hasn't been recorded yet
+      if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
+        distributionPeriodVote.fundingStageVotingPower = getFundingStageVotingPower(bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+      }
 
-      // update voter state
-      voter.extraordinaryVotes.push(extraordinaryVote.id)
-
-      // save extraordinary funding mechanism entities to the store
-      extraordinaryVote.save()
+      // save fundingVote to the store
+      fundingVote.save()
     }
+
+    voter.distributionPeriodVotes.push(distributionPeriodVote.id)
+
+    // save entities to the store
+    distributionPeriod.save()
+    distributionPeriodVote.save()
+    proposal.save()
   }
 
   // save entities to the store
