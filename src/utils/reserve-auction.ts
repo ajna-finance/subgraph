@@ -16,7 +16,7 @@ export function loadOrCreateReserveAuction(poolId: Bytes, burnEpoch: BigInt): Re
         // set initial values
         reserveAuction.pool = poolId
         reserveAuction.claimableReservesRemaining = ZERO_BD
-        reserveAuction.auctionPrice = ZERO_BD
+        reserveAuction.lastTakePrice = ZERO_BD
         reserveAuction.burnEpoch = burnEpoch
         reserveAuction.ajnaBurned = ZERO_BD
         reserveAuction.takes = []

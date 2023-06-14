@@ -52,9 +52,9 @@ export function updateAccountLoans(account: Account, loan: Loan): void {
     const loans = account.loans
     // get current index of loan in account's list of loans
     const index = loans.indexOf(loan.id)
-    if (loan.debt != ZERO_BD && index == -1) {
+    if (loan.t0debt != ZERO_BD && index == -1) {
       loans.push(loan.id)
-    } else if (loan.collateralPledged == ZERO_BD && loan.debt == ZERO_BD && index != -1) {
+    } else if (loan.collateralPledged == ZERO_BD && loan.t0debt == ZERO_BD && index != -1) {
       loans.splice(index, 1)
     }
     account.loans = loans

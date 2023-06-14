@@ -37,7 +37,7 @@ import { BorrowerInfo, getLoanId } from "../src/utils/loan"
 import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/liquidation"
 import { BurnInfo, DebtInfo } from "../src/utils/pool"
 import { getReserveAuctionId } from "../src/utils/reserve-auction"
-import { wmul } from "../src/utils/math"
+import { wdiv, wmul } from "../src/utils/math"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -284,7 +284,7 @@ describe("ERC20Pool assertions", () => {
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS.toHexString(),
       inflator: ONE_WAD_BI,
-      debt: ZERO_BI,
+      t0debt: ZERO_BI,
       pledgedCollateral: ZERO_BI,
       hpb: ZERO_BI,
       hpbIndex: index,
@@ -295,10 +295,7 @@ describe("ERC20Pool assertions", () => {
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
-      reserveAuctionPrice: ZERO_BI,
-      reserveAuctionTimeRemaining: ZERO_BI,
       minDebtAmount: ZERO_BI,
-      collateralization: ONE_WAD_BI,
       actualUtilization: ZERO_BI,
       targetUtilization: ONE_WAD_BI,
       totalBondEscrowed: ZERO_BI,
@@ -480,6 +477,13 @@ describe("ERC20Pool assertions", () => {
     const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
     mockGetDebtInfo(poolAddress, expectedPoolDebtInfo)
 
+    const inflator = BigInt.fromString("1002804000000000000")
+    const expectedBorrowerInfo = new BorrowerInfo(
+      wdiv(amountBorrowed, inflator), 
+      collateralPledged, 
+      BigInt.fromString("8766934085068726351"))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
+
     // mock drawDebt event
     const newDrawDebtEvent = createDrawDebtEvent(
       poolAddress,
@@ -521,11 +525,12 @@ describe("ERC20Pool assertions", () => {
     // TODO: check bucket attributes updated -> requires handling liquidations
 
     // check pool attributes updated
+    // FIXME: only passes if I don't divide by inflator, which I should be doing
     assert.fieldEquals(
       "Pool",
       `${addressToBytes(poolAddress).toHexString()}`,
-      "debt",
-      `${wadToDecimal(amountBorrowed)}`
+      "t0debt",
+      `${wadToDecimal(wdiv(amountBorrowed, inflator))}`
     )
     assert.fieldEquals(
       "Pool",
@@ -564,8 +569,8 @@ describe("ERC20Pool assertions", () => {
     assert.fieldEquals(
       "Loan",
       `${loanId.toHexString()}`,
-      "debt",
-      `${wadToDecimal(amountBorrowed)}`
+      "t0debt",
+      `${wadToDecimal(wdiv(amountBorrowed, inflator))}`
     )
   })
 
@@ -820,6 +825,7 @@ describe("ERC20Pool assertions", () => {
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
     const alreadyTaken = false
+
     let expectedAuctionInfo = new AuctionInfo(
       kicker,
       bondFactor,
@@ -833,6 +839,13 @@ describe("ERC20Pool assertions", () => {
       false
     )
     mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+
+    const inflator = BigInt.fromString("1001530000000000000")
+    let expectedBorrowerInfo = new BorrowerInfo(
+      wdiv(debt, inflator), 
+      collateral, 
+      wdiv(neutralPrice, inflator))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock kick event
     const newKickEvent = createKickEvent(
@@ -872,6 +885,11 @@ describe("ERC20Pool assertions", () => {
       neutralPrice
     )
     mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
+    expectedBorrowerInfo = new BorrowerInfo(
+      wdiv(debt, inflator), 
+      collateral.minus(amountToTake), 
+      wdiv(neutralPrice, inflator))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock take event
     const newTakeEvent = createTakeEvent(
@@ -941,8 +959,8 @@ describe("ERC20Pool assertions", () => {
     assert.fieldEquals(
       "Loan",
       `${loanId.toHexString()}`,
-      "debt",
-      `${debt.minus(amountToTake)}`
+      "t0debt",
+      `${wadToDecimal(wdiv(debt, inflator))}`
     )
 
     // check LiquidationAuction attributes
@@ -1474,7 +1492,7 @@ describe("ERC20Pool assertions", () => {
       loansCount: ZERO_BI,
       maxBorrower: ZERO_ADDRESS.toHexString(),
       inflator: ONE_WAD_BI,
-      debt: ZERO_BI,
+      t0debt: ZERO_BI,
       pledgedCollateral: ZERO_BI,
       hpb: ZERO_BI,
       hpbIndex: ZERO_BI,
@@ -1485,10 +1503,7 @@ describe("ERC20Pool assertions", () => {
       reserves: ZERO_BI,
       claimableReserves: claimableReservesAfterTake,
       claimableReservesRemaining: claimableReservesAfterTake,
-      reserveAuctionPrice: auctionPrice,
-      reserveAuctionTimeRemaining: seventyHours,
       minDebtAmount: ZERO_BI,
-      collateralization: ONE_WAD_BI,
       actualUtilization: ZERO_BI,
       targetUtilization: ONE_WAD_BI,
       totalBondEscrowed: ZERO_BI,

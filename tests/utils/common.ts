@@ -87,7 +87,7 @@ export class PoolUpdatedParams {
     loansCount: BigInt
     maxBorrower: String
     inflator: BigInt
-    debt: BigInt
+    t0debt: BigInt
     pledgedCollateral: BigInt
     // prices info
     hpb: BigInt
@@ -100,11 +100,8 @@ export class PoolUpdatedParams {
     reserves: BigInt
     claimableReserves: BigInt
     claimableReservesRemaining: BigInt
-    reserveAuctionPrice: BigInt
-    reserveAuctionTimeRemaining: BigInt
     // utilization info
     minDebtAmount: BigInt
-    collateralization: BigInt
     actualUtilization: BigInt
     targetUtilization: BigInt
     // liquidation info
@@ -142,8 +139,8 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
     assert.fieldEquals(
         "Pool",
         `${params.poolAddress}`,
-        "debt",
-        `${wadToDecimal(params.debt)}`
+        "t0debt",
+        `${wadToDecimal(params.t0debt)}`
     )
     assert.fieldEquals(
         "Pool",
@@ -207,30 +204,12 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
         "claimableReservesRemaining",
         `${wadToDecimal(params.claimableReservesRemaining)}`
     )
-    assert.fieldEquals(
-        "Pool",
-        `${params.poolAddress}`,
-        "reserveAuctionPrice",
-        `${wadToDecimal(params.reserveAuctionPrice)}`
-    )
-    assert.fieldEquals(
-        "Pool",
-        `${params.poolAddress}`,
-        "reserveAuctionTimeRemaining",
-        `${params.reserveAuctionTimeRemaining}`
-    )
     // utilization assertions
     assert.fieldEquals(
         "Pool",
         `${params.poolAddress}`,
         "minDebtAmount",
         `${wadToDecimal(params.minDebtAmount)}`
-    )
-    assert.fieldEquals(
-        "Pool",
-        `${params.poolAddress}`,
-        "collateralization",
-        `${wadToDecimal(params.collateralization)}`
     )
     assert.fieldEquals(
         "Pool",
@@ -364,10 +343,10 @@ export function createPool(pool_: Address, collateral: Address, quote: Address, 
 }
 
 export function mockGetBorrowerInfo(pool: Address, borrower: Address, expectedInfo: BorrowerInfo): void {
-  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'borrowerInfo', 'borrowerInfo(address,address):(uint256,uint256,uint256)')
-    .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
+  createMockedFunction(pool, 'borrowerInfo', 'borrowerInfo(address):(uint256,uint256,uint256)')
+    .withArgs([ethereum.Value.fromAddress(borrower)])
     .returns([
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.debt),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.t0debt),
       ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
       ethereum.Value.fromUnsignedBigInt(expectedInfo.t0Np)
     ])

@@ -64,7 +64,7 @@ import {
 } from "../generated/schema"
 
 import { ZERO_BD, ONE_BI, TEN_BI, positionManagerAddressTable } from "./utils/constants"
-import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
+import { addressToBytes, bigIntArrayToIntArray, decimalToWad, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
@@ -248,11 +248,9 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
   auction.save()
 
   // update loan state
-  loan.debt = ZERO_BD
+  loan.t0debt = ZERO_BD
   loan.collateralPledged = auctionSettle.collateral
   loan.inLiquidation = false
-  loan.collateralization = ZERO_BD
-  loan.tp = ZERO_BD
   loan.save()
 
   // update auctionSettle pointers
@@ -347,16 +345,9 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   // update loan state
   const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
   const loan = loadOrCreateLoan(loanId, pool.id, addressToBytes(event.params.borrower))
-  loan.debt = loan.debt.minus(wadToDecimal(event.params.amount))
-  loan.collateralPledged = loan.collateralPledged.minus(wadToDecimal(event.params.collateral))
-  if (loan.debt.notEqual(ZERO_BD) && loan.collateralPledged.notEqual(ZERO_BD)) {
-    loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
-    loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
-  } else {
-    // set collateralization and tp to zero if loan is fully repaid
-    loan.collateralization = ZERO_BD
-    loan.tp = ZERO_BD
-  }
+  const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
+  loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+  loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
 
   // retrieve auction information on the take's auction
   const auctionInfo   = getAuctionInfoERC20Pool(bucketTake.borrower, pool)
@@ -492,7 +483,6 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
   const pool = Pool.load(addressToBytes(event.address))
   if (pool != null) {
     // update pool state
-    pool.debt       = pool.debt.plus(wadToDecimal(event.params.amountBorrowed))
     pool.pledgedCollateral = pool.pledgedCollateral.plus(wadToDecimal(event.params.collateralPledged))
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
@@ -508,10 +498,9 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
     // update loan state
     const loanId = getLoanId(pool.id, accountId)
     const loan = loadOrCreateLoan(loanId, pool.id, drawDebt.borrower)
-    loan.collateralPledged = loan.collateralPledged.plus(wadToDecimal(event.params.collateralPledged))
-    loan.debt              = loan.debt.plus(wadToDecimal(event.params.amountBorrowed))
-    loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
-    loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
+    const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
+    loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+    loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
 
     // update account's list of pools and loans if necessary
     updateAccountPools(account, pool)
@@ -604,9 +593,7 @@ export function handleKick(event: KickEvent): void {
   const loan = loadOrCreateLoan(loanId, pool.id, kick.borrower)
   loan.inLiquidation     = true
   loan.collateralPledged = kick.collateral
-  loan.debt              = kick.debt // update loan debt to account for kick penalty
-  loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
-  loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
+  loan.t0debt            = kick.debt.div(pool.inflator) // update loan debt to account for kick penalty
 
   // retrieve auction information on the kicked loan
   const auctionInfo = getAuctionInfoERC20Pool(kick.borrower, pool)
@@ -615,7 +602,7 @@ export function handleKick(event: KickEvent): void {
   // update liquidation auction state
   const auctionId = getLiquidationAuctionId(pool.id, loan.id, kick.blockNumber)
   const auction = loadOrCreateLiquidationAuction(pool.id, auctionId, kick, loan)
-  updateLiquidationAuction(auction, auctionInfo, auctionStatus)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus, false)
 
   kick.kickMomp = wadToDecimal(auctionInfo.kickMomp)
   kick.startingPrice = wadToDecimal(auctionStatus.price)
@@ -901,9 +888,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     const loan             = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
     const borrowerInfo     = getBorrowerInfo(accountId, pool.id)
     loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
-    loan.debt              = wadToDecimal(borrowerInfo.debt)
-    loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
-    loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
+    loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
 
     // update account loans if necessary
     updateAccountLoans(account, loan)
@@ -940,7 +925,6 @@ export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   reserveKick.transactionHash = event.transaction.hash
 
   reserveAuction.claimableReservesRemaining = reserveKick.claimableReserves
-  reserveAuction.auctionPrice = reserveKick.startingPrice
   reserveAuction.kick = reserveKick.id
 
   // update pool state
@@ -981,7 +965,7 @@ export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
   // since only one reserve auction can occur at a time, look at the difference since the last reserve auction
   reserveTake.ajnaBurned = wadToDecimal(burnInfo.totalBurned).minus(pool.totalAjnaBurned)
   reserveAuction.claimableReservesRemaining = reserveTake.claimableReservesRemaining
-  reserveAuction.auctionPrice               = reserveTake.auctionPrice
+  reserveAuction.lastTakePrice              = reserveTake.auctionPrice
   reserveAuction.ajnaBurned                 = reserveAuction.ajnaBurned.plus(reserveTake.ajnaBurned)
   reserveAuction.takes                      = reserveAuction.takes.concat([reserveTake.id])
 
@@ -1100,17 +1084,10 @@ export function handleTake(event: TakeEvent): void {
 
   // update loan state
   const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
-  const loan = Loan.load(loanId)!
-  loan.debt = loan.debt.minus(wadToDecimal(event.params.amount))
-  loan.collateralPledged = loan.collateralPledged.minus(wadToDecimal(event.params.collateral))
-  if (loan.debt.notEqual(ZERO_BD) && loan.collateralPledged.notEqual(ZERO_BD)) {
-    loan.collateralization = collateralizationAtLup(loan.debt, loan.collateralPledged, pool.lup)
-    loan.tp                = thresholdPrice(loan.debt, loan.collateralPledged)
-  } else {
-    // set collateralization and tp to zero if loan is fully repaid
-    loan.collateralization = ZERO_BD
-    loan.tp = ZERO_BD
-  }
+  const loan   = Loan.load(loanId)!
+  const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
+  loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+  loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
 
   // update liquidation auction state
   const auctionId = loan.liquidationAuction!
@@ -1183,7 +1160,7 @@ export function handleSettle(event: SettleEvent): void {
   const auction   = LiquidationAuction.load(auctionId)!
   const auctionInfo = getAuctionInfoERC20Pool(settle.borrower, pool)
   const auctionStatus = getAuctionStatus(pool, event.params.borrower)
-  updateLiquidationAuction(auction, auctionInfo, auctionStatus, true)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus, false, true)
   auction.settles = auction.settles.concat([settle.id])
 
   // update settle pointers

@@ -31,7 +31,7 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
         liquidationAuction.kick     = kick.id
 
         // write accumulators
-        liquidationAuction.auctionPrice        = ZERO_BD // FIXME: not exposed by contracts
+        liquidationAuction.lastTakePrice       = ZERO_BD // FIXME: not exposed by contracts
         liquidationAuction.collateral          = kick.collateral
         liquidationAuction.collateralRemaining = kick.collateral
         liquidationAuction.debt                = kick.debt
@@ -50,9 +50,10 @@ export function updateLiquidationAuction(
   liquidationAuction: LiquidationAuction, 
   auctionInfo: AuctionInfo, 
   auctionStatus: AuctionStatus,
+  isTake: bool = true,
   isSettle: bool = false): void {
     if (!isSettle) {
-      liquidationAuction.auctionPrice = wadToDecimal(auctionStatus.price)
+      if (isTake) liquidationAuction.lastTakePrice = wadToDecimal(auctionStatus.price)
       liquidationAuction.bondFactor   = wadToDecimal(auctionInfo.bondFactor)
       liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)
       liquidationAuction.kickTime     = auctionInfo.kickTime

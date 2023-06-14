@@ -5,7 +5,7 @@ services:
     image: ghcr.io/ajna-finance/ajna-testnet:rc5
     ports:
       - 8555:8555
-    container_name: ajna-testnet
+    container_name: ajna-testnet-subgraph
     networks:
       - ajna_test_network
   graph-node:
