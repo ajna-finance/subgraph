@@ -525,12 +525,12 @@ describe("ERC20Pool assertions", () => {
     // TODO: check bucket attributes updated -> requires handling liquidations
 
     // check pool attributes updated
-    // FIXME: only passes if I don't divide by inflator, which I should be doing
+    // not dividing by inflator because the PoolInfoUtils mock sets inflator to 1
     assert.fieldEquals(
       "Pool",
       `${addressToBytes(poolAddress).toHexString()}`,
       "t0debt",
-      `${wadToDecimal(wdiv(amountBorrowed, inflator))}`
+      `${wadToDecimal(amountBorrowed)}`
     )
     assert.fieldEquals(
       "Pool",
