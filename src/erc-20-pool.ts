@@ -357,8 +357,6 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   const auctionId = loan.liquidationAuction!
   const auction   = LiquidationAuction.load(auctionId)!
   updateLiquidationAuction(auction, auctionInfo, auctionStatus)
-  auction.debtRemaining = auction.debtRemaining.minus(wadToDecimal(event.params.amount))
-  auction.collateralRemaining = auction.collateralRemaining.minus(wadToDecimal(event.params.collateral))
   auction.bucketTakes = auction.bucketTakes.concat([bucketTake.id])
 
   bucketTake.auctionPrice = wadToDecimal(auctionStatus.price)
@@ -1097,12 +1095,10 @@ export function handleTake(event: TakeEvent): void {
   const auctionStatus = getAuctionStatus(pool, event.params.borrower)
   updateLiquidationAuction(auction, auctionInfo, auctionStatus)
 
-  const debtCovered           = wadToDecimal(event.params.amount)
-  auction.debtRemaining       = auction.debtRemaining.minus(debtCovered)
-  const collateralPurchased   = wadToDecimal(event.params.collateral)
-  auction.collateralRemaining = auction.collateralRemaining.minus(collateralPurchased)
-  pool.pledgedCollateral      = pool.pledgedCollateral.minus(collateralPurchased)
-  take.auctionPrice           = wadToDecimal(auctionStatus.price)
+  const debtCovered         = wadToDecimal(event.params.amount)
+  const collateralPurchased = wadToDecimal(event.params.collateral)
+  pool.pledgedCollateral    = pool.pledgedCollateral.minus(collateralPurchased)
+  take.auctionPrice         = wadToDecimal(auctionStatus.price)
 
   // update kick and pool for the change in bond as a result of the take
   const kick = Kick.load(auction.kick)!
