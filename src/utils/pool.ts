@@ -174,7 +174,6 @@ export function updatePool(pool: Pool): void {
     
     // update amount of debt in pool
     const debtInfo = getDebtInfo(pool)
-    pool.debt = wadToDecimal(debtInfo.pendingDebt)
     pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
 
     // update pool prices information
@@ -192,13 +191,10 @@ export function updatePool(pool: Pool): void {
     pool.reserves = wadToDecimal(poolReservesInfo.reserves)
     pool.claimableReserves = wadToDecimal(poolReservesInfo.claimableReserves)
     pool.claimableReservesRemaining = wadToDecimal(poolReservesInfo.claimableReservesRemaining)
-    pool.reserveAuctionPrice = wadToDecimal(poolReservesInfo.reserveAuctionPrice)
-    pool.reserveAuctionTimeRemaining = poolReservesInfo.reserveAuctionTimeRemaining
 
     // update pool utilization information
     const poolUtilizationInfo = getPoolUtilizationInfo(pool)
     pool.minDebtAmount     = wadToDecimal(poolUtilizationInfo.minDebtAmount)
-    pool.collateralization = wadToDecimal(poolUtilizationInfo.collateralization)
     pool.actualUtilization = wadToDecimal(poolUtilizationInfo.actualUtilization)
     pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
 

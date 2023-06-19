@@ -91,7 +91,7 @@ describe("ERC20PoolFactory assertions", () => {
     assert.fieldEquals(
       "Pool",
       "0x0000000000000000000000000000000000000001",
-      "debt",
+      "t0debt",
       `${ZERO_BI}`
     )
     assert.fieldEquals(

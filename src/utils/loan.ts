@@ -3,6 +3,7 @@ import { PoolInfoUtils } from "../../generated/templates/ERC20Pool/PoolInfoUtils
 
 import { Loan }    from "../../generated/schema"
 import { poolInfoUtilsAddressTable, ZERO_BD, ZERO_BI } from "./constants"
+import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 
 export function getLoanId(poolId: Bytes, accountId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|').concat(accountId))
@@ -18,9 +19,7 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
       loan.pool                = poolId
       loan.poolAddress         = poolId.toHexString()
       loan.collateralPledged   = ZERO_BD
-      loan.collateralization   = ZERO_BD
-      loan.debt                = ZERO_BD
-      loan.tp                  = ZERO_BD
+      loan.t0debt                = ZERO_BD
       loan.inLiquidation       = false
       loan.liquidationAuction  = null
     }
@@ -29,19 +28,18 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
 }
 
 export class BorrowerInfo {
-  debt: BigInt
+  t0debt: BigInt
   collateral: BigInt
   t0Np: BigInt
-  constructor(debt: BigInt, collateral: BigInt, t0Np: BigInt) {
-    this.debt = debt
+  constructor(t0debt: BigInt, collateral: BigInt, t0Np: BigInt) {
+    this.t0debt = t0debt
     this.collateral = collateral
     this.t0Np = t0Np
   }
 }
 export function getBorrowerInfo(borrower: Bytes, poolId: Bytes): BorrowerInfo {
-  const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
-  const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
-  const borrowerInfoResult = poolInfoUtilsContract.borrowerInfo(Address.fromBytes(poolId), Address.fromBytes(borrower))
+  const poolContract = ERC20Pool.bind(Address.fromBytes(poolId))
+  const borrowerInfoResult = poolContract.borrowerInfo(Address.fromBytes(borrower))
 
   return new BorrowerInfo(
     borrowerInfoResult.value0,

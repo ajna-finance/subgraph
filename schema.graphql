@@ -48,8 +48,6 @@ type Pool @entity {
   feeRate: BigDecimal!
   # amount of deposit in the pool
   poolSize: BigDecimal! 
-  # total debt in the pool
-  debt: BigDecimal!
   # debt in T0 terms, useful when the caller knows the pending inflator
   t0debt: BigDecimal!
   # pool inflator snapshot
@@ -88,10 +86,6 @@ type Pool @entity {
   claimableReserves: BigDecimal!
   # remaining claimable reserves not yet taken
   claimableReservesRemaining: BigDecimal!
-  # current reserve auction auctionPrice
-  reserveAuctionPrice: BigDecimal!
-  # current reserve auction timeRemaining
-  reserveAuctionTimeRemaining: BigInt!
   # current burn epoch
   burnEpoch: BigInt!
   # total ajna burned in the pool
@@ -102,8 +96,6 @@ type Pool @entity {
   # UTILIZATION INFORMATION
   # current pool minimum debt amount for a new borrow
   minDebtAmount: BigDecimal!
-  # current pool collateralization ratio across all borrowers
-  collateralization: BigDecimal!
   # current pool utilization across all borrowers
   actualUtilization: BigDecimal!
   # current pool target utilization rate
@@ -173,12 +165,8 @@ type Loan @entity {
   liquidationAuction: LiquidationAuction
   # collateral tokens deposited in a pool by the borrower
   collateralPledged: BigDecimal!
-  # collateralization of the borrow position in the pool
-  collateralization: BigDecimal!
-  # total quote drawn from the pool in the loan
-  debt: BigDecimal!
-  # borrowers threshold price
-  tp: BigDecimal!
+  # debt in T0 terms, useful when the caller knows the pending inflator
+  t0debt: BigDecimal!
 }
 
 type Account @entity {
@@ -207,7 +195,7 @@ type LiquidationAuction @entity {
   id: Bytes!                       # $poolAddress + '|' + $loanId + '|' + blockNumber
   pool: Pool!                      # pool in which the liquidation occurred
   borrower: Bytes!                 # address of the borrower being liquidated
-  auctionPrice: BigDecimal!        # price of auction upon kick or last take
+  lastTakePrice: BigDecimal!       # price of auction upon most recent take
   collateral: BigDecimal!          # initial collateral up for auction
   collateralRemaining: BigDecimal! # collateral which has not been taken
   debt: BigDecimal!                # initial debt to be covered by the auction
@@ -230,11 +218,11 @@ type LiquidationAuction @entity {
 # tracks the reserve auction process across multiple takes in a single auction
 # used as start and take events are emitted as ReserveAuction
 type ReserveAuction @entity {
-  id: Bytes! # $poolAddress + '|' + $burnEpoch
-  pool: Pool! # Pool in which the reserve auction occurred
+  id: Bytes!                    # $poolAddress + '|' + $burnEpoch
+  pool: Pool!                   # Pool in which the reserve auction occurred
   claimableReservesRemaining: BigDecimal! # uint256 claimable reserves remaining at start or at latest take
-  auctionPrice: BigDecimal! # uint256 price at start or at latest take
-  burnEpoch: BigInt! # uint256 burn epoch at which the reserve auction was started
+  lastTakePrice: BigDecimal!    # uint256 price of auction upon most recent take, denominated in AJNA
+  burnEpoch: BigInt!            # uint256 burn epoch at which the reserve auction was started
   kick: ReserveAuctionKick!     # kick information
   takes: [ReserveAuctionTake!]! # list of reserve auction takes that occured during this auction process
   ajnaBurned: BigDecimal!       # total amount of ajna burned across all takes in the reserve auction
