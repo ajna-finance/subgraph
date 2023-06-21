@@ -21,3 +21,8 @@ export function wdiv(lhs: BigInt, rhs: BigInt): BigInt {
   if (rhs.equals(ZERO_BI)) return ZERO_BI
   return lhs.times(ONE_WAD_BI).plus(rhs.div(BigInt.fromU32(2))).div(rhs)
 }
+
+// return smaller of two BigInts
+export function wmin(lhs: BigInt, rhs: BigInt): BigInt {
+  return rhs.gt(lhs) ? rhs : lhs;
+}
