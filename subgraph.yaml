@@ -66,6 +66,8 @@ dataSources:
           file: ./abis/ERC20Pool.json
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: PoolInfoUtils
+          file: ./abis/PoolInfoUtils.json
       eventHandlers:
         - event: PoolCreated(address)
           handler: handlePoolCreated
