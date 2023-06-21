@@ -2,9 +2,10 @@ version: '3.7'
 
 services:
   ajna-testnet:
-    image: ghcr.io/ajna-finance/ajna-testnet:rc5
+    image: ghcr.io/ajna-finance/ajna-testnet:rc5b
     ports:
       - 8555:8555
+    command: --db /app/data --accounts 16 --wallet.seed 20070213 --port 8555 --fork ${MAINNET_FORK_URL} -v
     container_name: ajna-testnet-subgraph
     networks:
       - ajna_test_network
