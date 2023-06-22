@@ -7,7 +7,7 @@ dataSources:
     source:
       abi: PositionManager
       address: "0x6548dF23A854f72335902e58a1e59B50bb3f11F1"
-      startBlock: 17528550
+      startBlock: 17522590
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -52,7 +52,7 @@ dataSources:
     source:
       abi: ERC20PoolFactory
       address: "0x9617ABE221F9A9c492D5348be56aef4Db75A692d"
-      startBlock: 17528550
+      startBlock: 17522590
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -76,7 +76,7 @@ dataSources:
     source:
       abi: RewardsManager
       address: "0xdF7403003a16c49ebA5883bB5890d474794cea5a"
-      startBlock: 17528550
+      startBlock: 17522590
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -111,7 +111,7 @@ dataSources:
     source:
       abi: ERC721PoolFactory
       address: "0x4f05DA51eAAB00e5812c54e370fB95D4C9c51F21"
-      startBlock: 17528550
+      startBlock: 17522590
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -135,7 +135,7 @@ dataSources:
     source:
       abi: GrantFund
       address: "0xE340B87CEd1af1AbE1CE8D617c84B7f168e3b18b"
-      startBlock: 17528550
+      startBlock: 17522590
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

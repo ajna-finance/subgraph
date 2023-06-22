@@ -29,6 +29,8 @@ services:
       postgres_db: graph-node
       ipfs: 'ipfs:5001'
       ethereum: ganache:http://ajna-testnet:8555
+      ETHEREUM_REORG_THRESHOLD: 1
+      ETHEREUM_ANCESTOR_COUNT: 1
       GRAPH_LOG: info
     networks:
       - ajna_test_network
