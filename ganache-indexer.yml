@@ -2,10 +2,9 @@ version: '3.7'
 
 services:
   ajna-testnet:
-    image: ghcr.io/ajna-finance/ajna-testnet:rc5b
+    image: ghcr.io/ajna-finance/ajna-testnet:rc5c
     ports:
       - 8555:8555
-    command: --db /app/data --accounts 16 --wallet.seed 20070213 --port 8555 --fork ${MAINNET_FORK_URL} -v
     container_name: ajna-testnet-subgraph
     networks:
       - ajna_test_network
@@ -31,7 +30,7 @@ services:
       ethereum: ganache:http://ajna-testnet:8555
       ETHEREUM_REORG_THRESHOLD: 1
       ETHEREUM_ANCESTOR_COUNT: 1
-      GRAPH_ETHEREUM_GENESIS_BLOCK_NUMBER: 17522590
+      GRAPH_ETHEREUM_GENESIS_BLOCK_NUMBER: 0
       GRAPH_LOG: info
     networks:
       - ajna_test_network
@@ -45,8 +44,8 @@ services:
       - ./data/ipfs:/data/ipfs
   postgres:
     image: postgres
-    ports:
-      - '5432:5432'
+    expose:
+      - '5432'
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
     environment:
       POSTGRES_USER: graph-node
