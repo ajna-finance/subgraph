@@ -5,10 +5,11 @@ import {
   clearStore,
   beforeAll,
   afterAll,
-  logStore
+  logStore,
+  dataSourceMock
 } from "matchstick-as/assembly/index"
-import { Address, dataSource } from "@graphprotocol/graph-ts"
-import { createPool } from "./utils/common"
+import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts"
+import { createPool, mockGetRatesAndFees } from "./utils/common"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI, erc20FactoryAddressTable } from "../src/utils/constants"
 
@@ -18,11 +19,16 @@ import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI, erc20FactoryAddressTable }
 describe("ERC20PoolFactory assertions", () => {
 
   beforeAll(() => {
+    // set dataSource.network() return value to "goerli" so constant mapping for poolInfoUtils can be accessed
+    dataSourceMock.setNetwork("goerli")
+
     const pool_ = Address.fromString("0x0000000000000000000000000000000000000001")
     const expectedCollateralToken = Address.fromString("0x0000000000000000000000000000000000000002")
     const expectedQuoteToken      = Address.fromString("0x0000000000000000000000000000000000000003")
     const expectedInitialInterestRate = FIVE_PERCENT_BI
     const expectedInitialFeeRate = ZERO_BI
+
+    mockGetRatesAndFees(pool_, BigInt.fromString("980000000000000000"), BigInt.fromString("60000000000000000"))
 
     createPool(pool_, expectedCollateralToken, expectedQuoteToken, expectedInitialInterestRate, expectedInitialFeeRate)
   })

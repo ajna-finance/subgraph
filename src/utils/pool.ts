@@ -39,11 +39,26 @@ export function getMomp(poolId: Bytes): BigDecimal {
   return wadToDecimal(poolInfoUtilsContract.momp(Address.fromBytes(poolId)))
 }
 
-export function getLenderInterestMargin(poolId: Bytes): BigInt {
+export class RatesAndFees {
+  lenderInterestMargin: BigInt
+  borrowFeeRate: BigInt
+  depositFeeRate: BigInt
+  constructor(lenderInterestMargin: BigInt, borrowFeeRate: BigInt, depositFeeRate: BigInt) {
+    this.lenderInterestMargin = lenderInterestMargin
+    this.borrowFeeRate = borrowFeeRate
+    this.depositFeeRate = depositFeeRate
+  }
+}
+
+export function getRatesAndFees(poolId: Bytes): RatesAndFees {
   const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
   const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
-  const pool = Pool.load(poolId)
-  return poolInfoUtilsContract.lenderInterestMargin(Address.fromBytes(poolId))
+  const poolAddress = Address.fromBytes(poolId)
+
+  const lim = poolInfoUtilsContract.lenderInterestMargin(poolAddress)
+  const bfr = poolInfoUtilsContract.borrowFeeRate(poolAddress)
+  const dfr = poolInfoUtilsContract.unutilizedDepositFeeRate(poolAddress)
+  return new RatesAndFees(lim, bfr, dfr);
 }
 
 export class LoansInfo {
@@ -209,10 +224,11 @@ export function updatePool(pool: Pool): void {
     unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
     pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 
-    // update lend rate, since lender interest margin changes irrespective of borrow rate
-    const lenderInterestMargin = getLenderInterestMargin(poolAddress)
+    // update lend rate and borrow fee, which change irrespective of borrow rate
+    const ratesAndFees = getRatesAndFees(poolAddress)
     const borrowRate = decimalToWad(pool.borrowRate)
-    pool.lendRate = wadToDecimal(wmul(borrowRate, lenderInterestMargin))
+    pool.lendRate = wadToDecimal(wmul(borrowRate, ratesAndFees.lenderInterestMargin))
+    pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
 }
 
 // if absent, add a liquidation auction to the pool's collection of active liquidations

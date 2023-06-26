@@ -44,8 +44,6 @@ type Pool @entity {
   collateralToken: Token!
   # address of the pool's quote token
   quoteToken: Token!
-  # fee rate of the pool
-  feeRate: BigDecimal!
   # amount of deposit in the pool
   poolSize: BigDecimal! 
   # debt in T0 terms, useful when the caller knows the pending inflator
@@ -56,6 +54,10 @@ type Pool @entity {
   borrowRate: BigDecimal!
   # interest rate awarded to lenders, excluding fees
   lendRate: BigDecimal!
+  # origination fee paid by borrower on newly drawn debt
+  borrowFeeRate: BigDecimal!
+  # fee charged to lenders depositing below the highest threshold price
+  depositFeeRate: BigDecimal!
   # total collateral pledged to the pool
   pledgedCollateral: BigDecimal!
   # total interest earned by all lenders in the pool
@@ -543,11 +545,18 @@ type TransferLP @entity(immutable: true) {
 
 type UpdateInterestRate @entity(immutable: true) {
   id: Bytes!
-  pool: Pool!                # Pool whose interest rate was updated
-  oldBorrowRate: BigDecimal! # uint256
-  newBorrowRate: BigDecimal! # uint256
-  oldLendRate: BigDecimal!   # uint256
-  newLendRate: BigDecimal!   # uint256
+  pool: Pool!                    # Pool whose interest rate was updated
+  # interest rates    
+  oldBorrowRate: BigDecimal!     # uint256
+  newBorrowRate: BigDecimal!     # uint256
+  oldLendRate: BigDecimal!       # uint256
+  newLendRate: BigDecimal!       # uint256
+  # fees
+  oldBorrowFeeRate: BigDecimal!  # uint256
+  newBorrowFeeRate: BigDecimal!  # uint256
+  oldDepositFeeRate: BigDecimal! # uint256
+  newDepositFeeRate: BigDecimal! # uint256
+  # event
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

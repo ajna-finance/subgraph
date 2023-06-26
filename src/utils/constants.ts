@@ -27,7 +27,6 @@ export const MAX_BUCKET_INDEX = 4156;
 export const erc20FactoryAddressTable = new TypedMap<string, Address>()
 erc20FactoryAddressTable.set('goerli', Address.fromString('0xb54FE3ee12926e63FF4A5163766fb93eDbADd5f3'))
 erc20FactoryAddressTable.set('ganache', Address.fromString('0xD86c4A8b172170Da0d5C0C1F12455bA80Eaa42AD'))
-erc20FactoryAddressTable.set('mainnet', Address.fromString('0x0000000000000000000000000000000010000001'))  // faked for unit testing
 export const poolInfoUtilsAddressTable = new TypedMap<string, Address>()
 poolInfoUtilsAddressTable.set('goerli', Address.fromString('0x28ef92e694d1044917981837b21e5eA994931c71'))
 poolInfoUtilsAddressTable.set('ganache', Address.fromString('0x4f05DA51eAAB00e5812c54e370fB95D4C9c51F21'))

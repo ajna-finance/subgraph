@@ -18,6 +18,7 @@ import {
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
 import { wmul } from "./utils/math"
+import { getRatesAndFees } from "./utils/pool"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
@@ -49,8 +50,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // get pool initial interest rate
   const interestRateResults = poolContract.interestRateInfo()
-  // upon pool creation, MAU=0, so NIM=0.15, and LIM=0.85
-  const lenderInterestMargin = BigInt.fromString("850000000000000000")
+  const ratesAndFees        = getRatesAndFees(event.params.pool_)
 
   // create Token entites associated with the pool
   const collateralTokenAddress      = poolContract.collateralAddress()
@@ -94,10 +94,11 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.collateralToken = collateralToken.id
   pool.quoteToken = quoteToken.id
   pool.t0debt = ZERO_BD
-  pool.feeRate = wadToDecimal(interestRateResults.value1)
   pool.inflator = ONE_BD
   pool.borrowRate = wadToDecimal(interestRateResults.value0)
-  pool.lendRate = wadToDecimal(wmul(interestRateResults.value0, lenderInterestMargin))
+  pool.lendRate = wadToDecimal(wmul(interestRateResults.value0, ratesAndFees.lenderInterestMargin))
+  pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
+  pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
   pool.pledgedCollateral = ZERO_BD
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI

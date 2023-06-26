@@ -10,6 +10,7 @@ import { grantFundAddressTable, positionManagerAddressTable, poolInfoUtilsAddres
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo, AuctionStatus } from "../../src/utils/liquidation"
 import { BorrowerInfo } from "../../src/utils/loan"
+import { wdiv, wmin } from "../../src/utils/math"
 
 /*************************/
 /*** Bucket Assertions ***/
@@ -376,10 +377,20 @@ export function mockGetDebtInfo(pool: Address, expectInfo: DebtInfo): void {
         ])
 }
 
-export function mockGetLenderInterestMargin(pool: Address, expectedValue: BigInt): void {
+export function mockGetRatesAndFees(pool: Address, expectedLenderInterestMargin: BigInt, borrowRate: BigInt): void {
+  // return Maths.max(Maths.wdiv(interestRate_, 52 * 1e18), 0.0005 * 1e18);
+  const expectedBorrowFeeRate = wmin(wdiv(borrowRate, BigInt.fromString("52000000000000000000")), BigInt.fromString("500000000000000"));
+  // return Maths.min(Maths.wdiv(interestRate_, 365 * 1e18), 0.1 * 1e18);
+  const expectedDepositFeeRate = wmin(wdiv(borrowRate, BigInt.fromString("365000000000000000000")), BigInt.fromString("100000000000000000"));
   createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'lenderInterestMargin', 'lenderInterestMargin(address):(uint256)')
       .withArgs([ethereum.Value.fromAddress(pool)])
-      .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
+      .returns([ethereum.Value.fromUnsignedBigInt(expectedLenderInterestMargin)])
+  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'borrowFeeRate', 'borrowFeeRate(address):(uint256)')
+      .withArgs([ethereum.Value.fromAddress(pool)])
+      .returns([ethereum.Value.fromUnsignedBigInt(expectedBorrowFeeRate)])
+  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'unutilizedDepositFeeRate', 'unutilizedDepositFeeRate(address):(uint256)')
+      .withArgs([ethereum.Value.fromAddress(pool)])
+      .returns([ethereum.Value.fromUnsignedBigInt(expectedDepositFeeRate)])
 }
 
 // mock getLPBValueInQuote contract calls
@@ -587,7 +598,11 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
     )
     mockGetPoolUtilizationInfo(pool, expectedPoolUtilizationInfo)
 
-    mockGetLenderInterestMargin(pool, BigInt.fromString("850000000000000000")) // 0.85 * 1e18
+    mockGetRatesAndFees(
+      pool, 
+      BigInt.fromString("850000000000000000"), // 0.85 * 1e18
+      BigInt.fromString("50000000000000000"),  // 0.05 * 1e18
+    )
 }
 
 /****************************/

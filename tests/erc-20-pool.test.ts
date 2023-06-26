@@ -24,7 +24,7 @@ import {
   mockGetCurrentBurnEpoch,
   mockGetDebtInfo,
   mockGetLPBValueInQuote,
-  mockGetLenderInterestMargin,
+  mockGetRatesAndFees,
   mockPoolInfoUtilsPoolUpdateCalls,
   mockTokenBalance
 } from "./utils/common"
@@ -56,6 +56,9 @@ describe("ERC20Pool assertions", () => {
     const quoteToken = Address.fromString("0x0000000000000000000000000000000000000012")
     const expectedInitialInterestRate = FIVE_PERCENT_BI
     const expectedInitialFeeRate = ZERO_BI
+
+    mockGetRatesAndFees(pool, BigInt.fromString("970000000000000000"), BigInt.fromString("55000000000000000"))
+
     createPool(pool, collateralToken, quoteToken, expectedInitialInterestRate, expectedInitialFeeRate)
   })
 
@@ -1599,7 +1602,7 @@ describe("ERC20Pool assertions", () => {
     )
 
     // mock required contract calls
-    mockGetLenderInterestMargin(poolAddress, BigInt.fromString("920000000000000000"))
+    mockGetRatesAndFees(poolAddress, BigInt.fromString("920000000000000000"), newInterestRate)
 
     // mock update interest rate event
     const newUpdateInterestRateEvent = createUpdateInterestRateEvent(
