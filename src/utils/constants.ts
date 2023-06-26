@@ -26,16 +26,16 @@ export const MAX_BUCKET_INDEX = 4156;
 // Pool addresses per network
 export const erc20FactoryAddressTable = new TypedMap<string, Address>()
 erc20FactoryAddressTable.set('goerli', Address.fromString('0xb54FE3ee12926e63FF4A5163766fb93eDbADd5f3'))
-erc20FactoryAddressTable.set('ganache', Address.fromString('0xE135E89909717DA4fDe24143F509118ceA5fc3f7'))
+erc20FactoryAddressTable.set('ganache', Address.fromString('0x9617ABE221F9A9c492D5348be56aef4Db75A692d'))
 export const poolInfoUtilsAddressTable = new TypedMap<string, Address>()
 poolInfoUtilsAddressTable.set('goerli', Address.fromString('0x28ef92e694d1044917981837b21e5eA994931c71'))
-poolInfoUtilsAddressTable.set('ganache', Address.fromString('0x9a56e5e70373E4965AAAFB994CB58eDC577031D7'))
+poolInfoUtilsAddressTable.set('ganache', Address.fromString('0x6c5c7fD98415168ada1930d44447790959097482'))
 export const positionManagerAddressTable = new TypedMap<string, Address>()
 positionManagerAddressTable.set('goerli', Address.fromString('0x31E3B448cAFF35e9eEb232053f4d5e76776a1C83'))
-positionManagerAddressTable.set('ganache', Address.fromString('0x73c8605EDE83C7CfB148e7190375350019043Ff7'))
+positionManagerAddressTable.set('ganache', Address.fromString('0x6548dF23A854f72335902e58a1e59B50bb3f11F1'))
 export const grantFundAddressTable = new TypedMap<string, Address>()
 grantFundAddressTable.set('goerli', Address.fromString('0xd364766E1D431e0bb99705c8eb0e6665C3b32eB5'))
-grantFundAddressTable.set('ganache', Address.fromString('0xC01c2D208ebaA1678F14818Db7A698F11cd0B6AB'))
+grantFundAddressTable.set('ganache', Address.fromString('0xE340B87CEd1af1AbE1CE8D617c84B7f168e3b18b'))
 
 // GrantFund constants
 export const CHALLENGE_PERIOD_LENGTH    = BigInt.fromI32(50400)

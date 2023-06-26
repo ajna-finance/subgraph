@@ -23,23 +23,23 @@
   },
   "ganache": {
     "ERC20PoolFactory": {
-      "address": "0xE135E89909717DA4fDe24143F509118ceA5fc3f7",
+      "address": "0x9617ABE221F9A9c492D5348be56aef4Db75A692d",
       "startBlock": 0
     },
     "ERC721PoolFactory": {
-      "address": "0x19156129c660883435Cad95100D025022443EDb2",
+      "address": "0x4f05DA51eAAB00e5812c54e370fB95D4C9c51F21",
       "startBlock": 0
     },
     "PositionManager": {
-      "address": "0x73c8605EDE83C7CfB148e7190375350019043Ff7",
+      "address": "0x6548dF23A854f72335902e58a1e59B50bb3f11F1",
       "startBlock": 0
     },
     "RewardsManager": {
-      "address": "0x3BA8d8EFD242ADD1e785A6a4be363B1E62039e9d",
+      "address": "0xdF7403003a16c49ebA5883bB5890d474794cea5a",
       "startBlock": 0
     },
     "GrantFund": {
-      "address": "0xC01c2D208ebaA1678F14818Db7A698F11cd0B6AB",
+      "address": "0xE340B87CEd1af1AbE1CE8D617c84B7f168e3b18b",
       "startBlock": 0
     }
   }
