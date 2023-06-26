@@ -31,11 +31,12 @@ services:
       ethereum: ganache:http://ajna-testnet:8555
       ETHEREUM_REORG_THRESHOLD: 1
       ETHEREUM_ANCESTOR_COUNT: 1
+      GRAPH_ETHEREUM_GENESIS_BLOCK_NUMBER: 17522590
       GRAPH_LOG: info
     networks:
       - ajna_test_network
   ipfs:
-    image: ipfs/kubo:master-latest
+    image: ipfs/kubo:v0.20.0
     ports:
       - '5001:5001'
     networks:
