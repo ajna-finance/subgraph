@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   ajna-testnet:
-    image: ghcr.io/ajna-finance/ajna-testnet:rc5
+    image: ghcr.io/ajna-finance/ajna-testnet:rc5d
     ports:
       - 8555:8555
     container_name: ajna-testnet-subgraph
@@ -28,11 +28,14 @@ services:
       postgres_db: graph-node
       ipfs: 'ipfs:5001'
       ethereum: ganache:http://ajna-testnet:8555
+      ETHEREUM_REORG_THRESHOLD: 1
+      ETHEREUM_ANCESTOR_COUNT: 1
+      GRAPH_ETHEREUM_GENESIS_BLOCK_NUMBER: 0
       GRAPH_LOG: info
     networks:
       - ajna_test_network
   ipfs:
-    image: ipfs/kubo:master-latest
+    image: ipfs/kubo:v0.20.0
     ports:
       - '5001:5001'
     networks:
@@ -41,8 +44,8 @@ services:
       - ./data/ipfs:/data/ipfs
   postgres:
     image: postgres
-    ports:
-      - '5432:5432'
+    expose:
+      - '5432'
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
     environment:
       POSTGRES_USER: graph-node
