@@ -5,7 +5,7 @@ services:
     image: ghcr.io/ajna-finance/ajna-testnet:rc5d
     ports:
       - 8555:8555
-    container_name: ajna-testnet-subgraph
+    container_name: ajna-testnet-devenv
     networks:
       - ajna_test_network
   graph-node:
@@ -35,7 +35,7 @@ services:
     networks:
       - ajna_test_network
   ipfs:
-    image: ipfs/kubo:v0.20.0
+    image: ipfs/kubo:master-latest
     ports:
       - '5001:5001'
     networks:
