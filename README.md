@@ -135,7 +135,7 @@ yarn create-local
 yarn deploy-local
 ```
 
-To index a public network, it takes roughly ~15 minutes to index each month of data from an empty container (stored locally in `data/` folder).
+Indexing a public network from takes roughly ~15 minutes for each month of data.
 
 Instructions on creating your own deployment are available in the [Graph Protocols Documentation](https://thegraph.com/docs/en/cookbook/quick-start/).
 
