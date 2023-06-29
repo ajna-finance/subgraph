@@ -4,6 +4,13 @@ This folder contains a dockerized environment which sets up a local ganache test
 ## Prerequisites
 `docker` and `compose` plugin are required. Tooling assumes your user is a member of `docker` group.
 
+## Installation
+Install using `yarn`, because `npm` has an issue installing [Gluegun](https://github.com/infinitered/gluegun).
+```
+sudo yarn global add @graphprotocol/graph-cli
+yarn install
+```
+
 ## Usage
 Utility scripts have been provided to facilitate setup:
 - `start-dev-env.sh` - Handles first-time setup and starts the containers.
