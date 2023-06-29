@@ -35,7 +35,7 @@ services:
     networks:
       - ajna_test_network
   ipfs:
-    image: ipfs/kubo:v0.20.0
+    image: ipfs/kubo:master-latest
     ports:
       - '5001:5001'
     networks:
