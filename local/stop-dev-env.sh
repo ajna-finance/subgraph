@@ -1,4 +1,5 @@
 #!/bin/bash
+pushd "$(dirname "$0")"
 
 if docker compose version ; then
     compose="docker compose" # use docker plugin, newer preferred method
@@ -9,4 +10,4 @@ else
     exit 1
 fi
 
-$compose -f ganache-indexer.yml down
+$compose down

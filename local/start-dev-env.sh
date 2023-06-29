@@ -1,4 +1,5 @@
 #!/bin/bash
+pushd "$(dirname "$0")"
 
 if docker compose version ; then
     compose="docker compose" # use docker plugin, newer preferred method
@@ -11,7 +12,7 @@ fi
 
 subgraph_url=http://0.0.0.0:8000/subgraphs/name/ajna
 
-$compose -f ganache-indexer.yml up -d
+$compose up -d
 echo Waiting for container to start...
 sleep 9
 
@@ -31,7 +32,9 @@ else
     echo Subgraph already deployed.
 fi
 
+echo
 echo "=========================================================="
 echo "Ganache endpoint:  http://0.0.0.0:8555"
 echo "Subgraph endpoint: $subgraph_url"
 echo "=========================================================="
+echo
