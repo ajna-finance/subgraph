@@ -17,12 +17,10 @@ echo Waiting for container to start...
 sleep 9
 
 echo Checking whether subgraph deployment needed...
-# set -x
-curl -g -s ${subgraph_url} \
+curl_response=$(curl -v -g -s ${subgraph_url} \
     --header "content-type: application/json" \
-    --data "{\"query\": \"{pools{id}}\"}" > /dev/null
-if [ $? -ne 0 ]; then
-    echo Building and deploying subgraph...
+    --data "{\"query\": \"{pools{id}}\"}") > /dev/null
+if [[ $? -ne 0 || $curl_response =~ "does not exist" ]]; then
     yarn codegen
     yarn build --network ganache
     yarn remove-local
