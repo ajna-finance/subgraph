@@ -1,41 +1,41 @@
 {
   "goerli": {
     "ERC20PoolFactory": {
-      "address": "0xb54FE3ee12926e63FF4A5163766fb93eDbADd5f3",
-      "startBlock": 9129648
+      "address": "0x01Da8a85A5B525D476cA2b51e44fe7087fFafaFF",
+      "startBlock": 9289397
     },
     "ERC721PoolFactory": {
-      "address": "0x87c2B348F487955e58F75B8Ca72c1345f0bA6906",
-      "startBlock": 9129648
+      "address": "0x37048D43A65748409B04f4051eEd9480BEf68c82",
+      "startBlock": 9289397
     },
     "PositionManager": {
-      "address": "0x31E3B448cAFF35e9eEb232053f4d5e76776a1C83",
-      "startBlock": 9129648
+      "address": "0x37048D43A65748409B04f4051eEd9480BEf68c82",
+      "startBlock": 9289397
     },
     "RewardsManager": {
-      "address": "0x015441062c2aad707629D9A1f2029074F58ad5aE",
-      "startBlock": 9129648
+      "address": "0x994dE190dd763Af3126FcC8EdC139275937d800b",
+      "startBlock": 9289397
     },
     "GrantFund": {
-      "address": "0xd364766E1D431e0bb99705c8eb0e6665C3b32eB5",
-      "startBlock": 9129753
+      "address": "0x58f4bF080F674c1aEeBA409B8C445D8db94C18cF",
+      "startBlock": 9289570
     }
   },
   "ganache": {
     "ERC20PoolFactory": {
-      "address": "0x9617ABE221F9A9c492D5348be56aef4Db75A692d",
+      "address": "0xD86c4A8b172170Da0d5C0C1F12455bA80Eaa42AD",
       "startBlock": 0
     },
     "ERC721PoolFactory": {
-      "address": "0x4f05DA51eAAB00e5812c54e370fB95D4C9c51F21",
+      "address": "0x9617ABE221F9A9c492D5348be56aef4Db75A692d",
       "startBlock": 0
     },
     "PositionManager": {
-      "address": "0x6548dF23A854f72335902e58a1e59B50bb3f11F1",
+      "address": "0x6c5c7fD98415168ada1930d44447790959097482",
       "startBlock": 0
     },
     "RewardsManager": {
-      "address": "0xdF7403003a16c49ebA5883bB5890d474794cea5a",
+      "address": "0x6548dF23A854f72335902e58a1e59B50bb3f11F1",
       "startBlock": 0
     },
     "GrantFund": {

@@ -6,7 +6,7 @@ dataSources:
     name: PositionManager
     source:
       abi: PositionManager
-      address: "0x6548dF23A854f72335902e58a1e59B50bb3f11F1"
+      address: "0x6c5c7fD98415168ada1930d44447790959097482"
       startBlock: 0
     mapping:
       kind: ethereum/events
@@ -51,7 +51,7 @@ dataSources:
     name: ERC20PoolFactory
     source:
       abi: ERC20PoolFactory
-      address: "0x9617ABE221F9A9c492D5348be56aef4Db75A692d"
+      address: "0xD86c4A8b172170Da0d5C0C1F12455bA80Eaa42AD"
       startBlock: 0
     mapping:
       kind: ethereum/events
@@ -77,7 +77,7 @@ dataSources:
     name: RewardsManager
     source:
       abi: RewardsManager
-      address: "0xdF7403003a16c49ebA5883bB5890d474794cea5a"
+      address: "0x6548dF23A854f72335902e58a1e59B50bb3f11F1"
       startBlock: 0
     mapping:
       kind: ethereum/events
@@ -112,7 +112,7 @@ dataSources:
     name: ERC721PoolFactory
     source:
       abi: ERC721PoolFactory
-      address: "0x4f05DA51eAAB00e5812c54e370fB95D4C9c51F21"
+      address: "0x9617ABE221F9A9c492D5348be56aef4Db75A692d"
       startBlock: 0
     mapping:
       kind: ethereum/events

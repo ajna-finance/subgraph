@@ -148,11 +148,6 @@
   },
   {
     "inputs": [],
-    "name": "TransferLocked",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "WrongPool",
     "type": "error"
   },
@@ -733,6 +728,11 @@
         "internalType": "uint256",
         "name": "expiry_",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "revertIfBelowLup_",
+        "type": "bool"
       }
     ],
     "name": "moveLiquidity",
