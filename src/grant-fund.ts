@@ -124,7 +124,6 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   const proposalCreated = new ProposalCreated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  proposalCreated.proposalId  = event.params.proposalId
   proposalCreated.proposer    = event.params.proposer
   proposalCreated.targets     = addressArrayToBytesArray(event.params.targets)
   proposalCreated.values      = event.params.values
@@ -181,6 +180,8 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
     proposalParams.save()
   }
 
+  proposalCreated.proposal = proposal.id
+
   // load GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
 
@@ -201,8 +202,8 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
 
   // save entities to the store
   grantFund.save()
-  proposalCreated.save()
   proposal.save()
+  proposalCreated.save()
 }
 
 export function handleProposalExecuted(event: ProposalExecutedEvent): void {

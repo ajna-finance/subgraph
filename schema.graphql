@@ -886,7 +886,7 @@ type FundedSlateUpdated @entity(immutable: true) {
 
 type ProposalCreated @entity(immutable: true) {
   id: Bytes!
-  proposalId: BigInt! # uint256
+  proposal: Bytes!
   proposer: Bytes! # address
   targets: [Bytes!]! # address[]
   values: [BigInt!]! # uint256[]
