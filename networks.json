@@ -8,9 +8,18 @@
       "address": "0xb8DA113516bfb986B7b8738a76C136D1c16c5609",
       "startBlock": 17622995
     },
-    "PositionManager": {},
-    "RewardsManager": {},
-    "GrantFund": {}
+    "PositionManager": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 17622995
+    },
+    "RewardsManager": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 17622995
+    },
+    "GrantFund": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 17622995
+    }
   },
   "goerli": {
     "ERC20PoolFactory": {

@@ -6,6 +6,8 @@ dataSources:
     name: PositionManager
     source:
       abi: PositionManager
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 17622995
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -75,6 +77,8 @@ dataSources:
     name: RewardsManager
     source:
       abi: RewardsManager
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 17622995
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -132,6 +136,8 @@ dataSources:
     name: GrantFund
     source:
       abi: GrantFund
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 17622995
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
