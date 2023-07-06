@@ -1,4 +1,17 @@
 {
+  "mainnet": {
+    "ERC20PoolFactory": {
+      "address": "0xe6F4d9711121e5304b30aC2Aae57E3b085ad3c4d",
+      "startBlock": 17622995
+    },
+    "ERC721PoolFactory": {
+      "address": "0xb8DA113516bfb986B7b8738a76C136D1c16c5609",
+      "startBlock": 17622995
+    },
+    "PositionManager": {},
+    "RewardsManager": {},
+    "GrantFund": {}
+  },
   "goerli": {
     "ERC20PoolFactory": {
       "address": "0x01Da8a85A5B525D476cA2b51e44fe7087fFafaFF",
