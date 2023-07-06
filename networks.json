@@ -17,8 +17,8 @@
       "startBlock": 9289397
     },
     "GrantFund": {
-      "address": "0x58f4bF080F674c1aEeBA409B8C445D8db94C18cF",
-      "startBlock": 9289570
+      "address": "0x881b4dFF6C72babA6f5eA60f34A61410c1EA1ec2",
+      "startBlock": 9297080
     }
   },
   "ganache": {
