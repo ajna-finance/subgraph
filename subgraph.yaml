@@ -6,8 +6,8 @@ dataSources:
     name: PositionManager
     source:
       abi: PositionManager
-      address: "0x6c5c7fD98415168ada1930d44447790959097482"
-      startBlock: 0
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 17622995
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -46,13 +46,13 @@ dataSources:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
       file: ./src/position-manager.ts
-    network: ganache
+    network: mainnet
   - kind: ethereum
     name: ERC20PoolFactory
     source:
       abi: ERC20PoolFactory
-      address: "0xD86c4A8b172170Da0d5C0C1F12455bA80Eaa42AD"
-      startBlock: 0
+      address: "0xe6F4d9711121e5304b30aC2Aae57E3b085ad3c4d"
+      startBlock: 17622995
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -72,13 +72,13 @@ dataSources:
         - event: PoolCreated(address)
           handler: handlePoolCreated
       file: ./src/erc-20-pool-factory.ts
-    network: ganache
+    network: mainnet
   - kind: ethereum
     name: RewardsManager
     source:
       abi: RewardsManager
-      address: "0x6548dF23A854f72335902e58a1e59B50bb3f11F1"
-      startBlock: 0
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 17622995
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -107,13 +107,13 @@ dataSources:
         - event: UpdateExchangeRates(indexed address,indexed address,uint256[],uint256)
           handler: handleUpdateExchangeRates
       file: ./src/rewards-manager.ts
-    network: ganache
+    network: mainnet
   - kind: ethereum
     name: ERC721PoolFactory
     source:
       abi: ERC721PoolFactory
-      address: "0x9617ABE221F9A9c492D5348be56aef4Db75A692d"
-      startBlock: 0
+      address: "0xb8DA113516bfb986B7b8738a76C136D1c16c5609"
+      startBlock: 17622995
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -131,13 +131,13 @@ dataSources:
         - event: PoolCreated(address)
           handler: handlePoolCreated
       file: ./src/erc-721-pool-factory.ts
-    network: ganache
+    network: mainnet
   - kind: ethereum
     name: GrantFund
     source:
       abi: GrantFund
-      address: "0xE340B87CEd1af1AbE1CE8D617c84B7f168e3b18b"
-      startBlock: 0
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 17622995
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -169,7 +169,7 @@ dataSources:
         - event: VoteCast(indexed address,uint256,uint8,uint256,string)
           handler: handleVoteCast
       file: ./src/grant-fund.ts
-    network: ganache
+    network: mainnet
 templates:
   - kind: ethereum
     name: ERC20Pool
@@ -273,4 +273,4 @@ templates:
         - event: UpdateInterestRate(uint256,uint256)
           handler: handleUpdateInterestRate
       file: ./src/erc-20-pool.ts
-    network: ganache
+    network: mainnet
