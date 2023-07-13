@@ -1,5 +1,4 @@
-import { BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
-import { log } from "matchstick-as/assembly/log";
+import { BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
 import {
   AddCollateral as AddCollateralEvent,
@@ -315,7 +314,6 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
 
 export function handleBucketTake(event: BucketTakeEvent): void {
   const bucketTakeId    = event.transaction.hash.concatI32(event.logIndex.toI32());
-  log.info("looking up bucketTake {}", [bucketTakeId.toHexString()]);
   const bucketTake      = BucketTake.load(bucketTakeId)!
   bucketTake.borrower   = event.params.borrower
   bucketTake.taker      = event.transaction.from
@@ -410,10 +408,10 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   // save entities to the store
   account.save()
   auction.save()
+  bucket.save()
+  bucketTake.save()
   loan.save()
   pool.save()
-  bucketTake.save()
-  bucket.save()
   kickerAccount.save()
   kickerLend.save()
   takerLend.save()
@@ -434,7 +432,6 @@ export function handleBucketTakeLPAwarded(
   bucketTakeLpAwarded.blockTimestamp  = event.block.timestamp
   bucketTakeLpAwarded.transactionHash = event.transaction.hash
   bucketTakeLpAwarded.save()
-  log.info("saved bucketTakeLpAwarded {}", [lpAwardedId.toHexString()]);
 
 
   // since this is emitted immediately before BucketTakeEvent, create BucketTake entity to associate it with this LP award
@@ -442,7 +439,6 @@ export function handleBucketTakeLPAwarded(
   const bucketTake     = loadOrCreateBucketTake(bucketTakeId)
   bucketTake.lpAwarded = lpAwardedId
   bucketTake.save()
-  log.info("saved placeholder bucketTake {}", [bucketTakeId.toHexString()]);
 }
 
 export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {

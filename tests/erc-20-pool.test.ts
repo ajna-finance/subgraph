@@ -1111,8 +1111,9 @@ describe("ERC20Pool assertions", () => {
       bondChange,
       isReward
     )
+    // implementation assumes these events happen in succession
+    newBucketTakeEvent.transaction.hash = newBucketTakeLPAwardedEvent.transaction.hash
     newBucketTakeEvent.logIndex = newBucketTakeLPAwardedEvent.logIndex.plus(ONE_BI)
-    // FIXME: cannot find this event id
     handleBucketTake(newBucketTakeEvent)
 
     /********************/
@@ -1123,25 +1124,25 @@ describe("ERC20Pool assertions", () => {
     assert.entityCount("BucketTake", 1)
     assert.fieldEquals(
       "BucketTake",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a02000000",
       "taker",
       `${taker.toHexString()}`
     )
     assert.fieldEquals(
       "BucketTake",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a02000000",
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
       "BucketTake",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a02000000",
       "amount",
       `${wadToDecimal(amountToTake)}`
     )
     assert.fieldEquals(
       "BucketTake",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a02000000",
       "collateral",
       `${wadToDecimal(collateral)}`
     )
