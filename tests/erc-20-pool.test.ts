@@ -1072,19 +1072,6 @@ describe("ERC20Pool assertions", () => {
     )
     mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
 
-    // mock bucket take event
-    const newBucketTakeEvent = createBucketTakeEvent(
-      poolAddress,
-      taker,
-      borrower,
-      takeIndex,
-      amountToTake,
-      collateral,
-      bondChange,
-      isReward
-    )
-    handleBucketTake(newBucketTakeEvent)
-
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
       takeIndex.toU32(),
@@ -1102,7 +1089,7 @@ describe("ERC20Pool assertions", () => {
 
     const expectedTakerLPBValueInQuote = lpAwardedTaker
     mockGetLPBValueInQuote(poolAddress, lpAwardedTaker, takeIndex, expectedTakerLPBValueInQuote)
-
+    
     // mock createBucketTakeLPAwardedEvent
     const newBucketTakeLPAwardedEvent = createBucketTakeLPAwardedEvent(
       poolAddress,
@@ -1113,6 +1100,22 @@ describe("ERC20Pool assertions", () => {
     )
     handleBucketTakeLPAwarded(newBucketTakeLPAwardedEvent)
 
+    // mock bucket take event
+    const newBucketTakeEvent = createBucketTakeEvent(
+      poolAddress,
+      taker,
+      borrower,
+      takeIndex,
+      amountToTake,
+      collateral,
+      bondChange,
+      isReward
+    )
+    // implementation assumes these events happen in succession
+    newBucketTakeEvent.transaction.hash = newBucketTakeLPAwardedEvent.transaction.hash
+    newBucketTakeEvent.logIndex = newBucketTakeLPAwardedEvent.logIndex.plus(ONE_BI)
+    handleBucketTake(newBucketTakeEvent)
+
     /********************/
     /*** Assert State ***/
     /********************/
@@ -1121,25 +1124,25 @@ describe("ERC20Pool assertions", () => {
     assert.entityCount("BucketTake", 1)
     assert.fieldEquals(
       "BucketTake",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a02000000",
       "taker",
       `${taker.toHexString()}`
     )
     assert.fieldEquals(
       "BucketTake",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a02000000",
       "pool",
       `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
       "BucketTake",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a02000000",
       "amount",
       `${wadToDecimal(amountToTake)}`
     )
     assert.fieldEquals(
       "BucketTake",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a02000000",
       "collateral",
       `${wadToDecimal(collateral)}`
     )

@@ -331,17 +331,18 @@ type BucketBankruptcy @entity(immutable: true) {
 
 type BucketTake @entity(immutable: true) {
   id: Bytes!
+  borrower: Bytes!          # address
   taker: Bytes!             # address of the taker
   liquidationAuction: LiquidationAuction! # liquidation auction in which the take is occuring
   loan: Loan!               # loan which was taken
   pool: Pool!               # pool in which the take is occuring
-  borrower: Bytes!          # address
   index: Int!               # uint256
   auctionPrice: BigDecimal! # price of auction when taken
   amount: BigDecimal!       # uint256
   collateral: BigDecimal!   # uint256
   bondChange: BigDecimal!   # uint256
   isReward: Boolean!        # bool
+  lpAwarded: BucketTakeLPAwarded!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

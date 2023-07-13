@@ -1,20 +1,14 @@
 import { Address, BigDecimal, BigInt, Bytes, Value, dataSource } from "@graphprotocol/graph-ts"
 
-import { LiquidationAuction, Kick, Loan, Pool } from "../../generated/schema"
+import { LiquidationAuction, Kick, Loan, Pool, BucketTake } from "../../generated/schema"
 import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
 
 import { wadToDecimal } from "./convert"
-import { ONE_BI, ZERO_BD, poolInfoUtilsAddressTable } from "./constants"
+import { ONE_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI, poolInfoUtilsAddressTable } from "./constants"
 import { PoolInfoUtils } from "../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, kickBlock: BigInt): Bytes {
     return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + kickBlock.toString()))
-}
-
-export function getBucketTakeLPAwardedId(transactionHash: Bytes, logIndex: BigInt): Bytes {
-    // assume that the logIndex is always one greater given the order of emitted events
-    // should handle case where multiple BucketTakes are performed in a single multicall TX
-    return transactionHash.concatI32(logIndex.toI32())
 }
 
 export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuctionId: Bytes, kick: Kick, loan: Loan): LiquidationAuction {
@@ -134,4 +128,29 @@ export function getAuctionStatus(pool: Pool, borrower: Address): AuctionStatus {
       result.value4,
       result.value5
     )
+}
+
+export function loadOrCreateBucketTake(id: Bytes): BucketTake {
+  let bucketTake = BucketTake.load(id)
+  if (bucketTake == null) {
+    // create new account if account hasn't already been stored
+    bucketTake = new BucketTake(id) as BucketTake
+
+    bucketTake.borrower = ZERO_ADDRESS
+    bucketTake.taker = ZERO_ADDRESS
+    bucketTake.liquidationAuction = Bytes.fromI32(0)
+    bucketTake.loan = Bytes.fromI32(0)
+    bucketTake.pool = Bytes.fromI32(0)
+    bucketTake.index = 0
+    bucketTake.auctionPrice = ZERO_BD
+    bucketTake.amount = ZERO_BD
+    bucketTake.collateral = ZERO_BD
+    bucketTake.bondChange = ZERO_BD
+    bucketTake.isReward = false
+    bucketTake.lpAwarded = Bytes.fromI32(0)
+    bucketTake.blockNumber = ZERO_BI
+    bucketTake.blockTimestamp = ZERO_BI
+    bucketTake.transactionHash = Bytes.fromI32(0)
+  }
+  return bucketTake;
 }

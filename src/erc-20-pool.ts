@@ -69,7 +69,7 @@ import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAcco
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/loan"
-import { getBucketTakeLPAwardedId, getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus } from "./utils/liquidation"
+import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "./utils/liquidation"
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees } from "./utils/pool"
 import { lpbValueInQuote } from "./utils/common"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/reserve-auction"
@@ -313,9 +313,8 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
 }
 
 export function handleBucketTake(event: BucketTakeEvent): void {
-  const bucketTake = new BucketTake(
-    event.transaction.hash.concatI32(event.block.number.toI32())
-  )
+  const bucketTakeId    = event.transaction.hash.concatI32(event.logIndex.toI32());
+  const bucketTake      = BucketTake.load(bucketTakeId)!
   bucketTake.borrower   = event.params.borrower
   bucketTake.taker      = event.transaction.from
   bucketTake.index      = event.params.index.toU32()
@@ -373,6 +372,34 @@ export function handleBucketTake(event: BucketTakeEvent): void {
     kick.locked = kick.locked.minus(wadToDecimal(event.params.bondChange))
   }
 
+  // update bucket state
+  const bucketId      = getBucketId(pool.id, bucketTake.index)
+  const bucket        = loadOrCreateBucket(pool.id, bucketId, bucketTake.index)
+  const bucketInfo    = getBucketInfo(pool.id, bucket.bucketIndex)
+  bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+  bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+  bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+  bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+
+  // update lend state for kicker
+  const lpAwardedId          = event.transaction.hash.concatI32(event.logIndex.toI32() - 1);
+  const bucketTakeLpAwarded  = BucketTakeLPAwarded.load(lpAwardedId)!
+  const kickerLendId         = getLendId(bucketId, bucketTakeLpAwarded.kicker)
+  const kickerLend           = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucketTakeLpAwarded.kicker)
+  kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
+  kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
+
+  // update kicker account state if they weren't a lender already
+  const kickerAccountId = bucketTakeLpAwarded.kicker
+  const kickerAccount   = loadOrCreateAccount(kickerAccountId)
+  updateAccountLends(kickerAccount, kickerLend)
+
+  // update lend state for taker
+  const takerLendId         = getLendId(bucketId, bucketTakeLpAwarded.taker)
+  const takerLend           = loadOrCreateLend(bucketId, takerLendId, pool.id, bucketTakeLpAwarded.taker)
+  takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
+  takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, takerLend.lpb)
+
   // update bucketTake pointers
   bucketTake.liquidationAuction = auction.id
   bucketTake.loan = loanId
@@ -381,72 +408,37 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   // save entities to the store
   account.save()
   auction.save()
+  bucket.save()
+  bucketTake.save()
   loan.save()
   pool.save()
-  bucketTake.save()
+  kickerAccount.save()
+  kickerLend.save()
+  takerLend.save()
 }
 
 export function handleBucketTakeLPAwarded(
   event: BucketTakeLPAwardedEvent
 ): void {
-  const bucketTakeLpAwarded = new BucketTakeLPAwarded(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  bucketTakeLpAwarded.taker = event.params.taker
-  bucketTakeLpAwarded.kicker = event.params.kicker
-  bucketTakeLpAwarded.lpAwardedTaker = wadToDecimal(event.params.lpAwardedTaker)
+  const lpAwardedId                   = event.transaction.hash.concatI32(event.logIndex.toI32());
+  const bucketTakeLpAwarded           = new BucketTakeLPAwarded(lpAwardedId)
+  bucketTakeLpAwarded.taker           = event.params.taker
+  bucketTakeLpAwarded.pool            = addressToBytes(event.address)
+  bucketTakeLpAwarded.kicker          = event.params.kicker
+  bucketTakeLpAwarded.lpAwardedTaker  = wadToDecimal(event.params.lpAwardedTaker)
   bucketTakeLpAwarded.lpAwardedKicker = wadToDecimal(event.params.lpAwardedKicker)
 
-  bucketTakeLpAwarded.blockNumber = event.block.number
-  bucketTakeLpAwarded.blockTimestamp = event.block.timestamp
+  bucketTakeLpAwarded.blockNumber     = event.block.number
+  bucketTakeLpAwarded.blockTimestamp  = event.block.timestamp
   bucketTakeLpAwarded.transactionHash = event.transaction.hash
-
-  // update entities
-  const pool = Pool.load(addressToBytes(event.address))
-  if (pool != null) {
-    // pool doesn't need to be updated as it was already updated in the concurrent BucketTake event
-
-    // load BucketTake entity to access the index used for bucketTake
-    const bucketTakeId = getBucketTakeLPAwardedId(event.transaction.hash, event.logIndex)
-    const bucketTake = BucketTake.load(bucketTakeId)!
-
-    // update bucket state
-    const bucketId   = getBucketId(pool.id, bucketTake.index)
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, bucketTake.index)
-    const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
-    bucket.collateral   = wadToDecimal(bucketInfo.collateral)
-    bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
-    bucket.lpb          = wadToDecimal(bucketInfo.lpb)
-    bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
-
-    // update lend state for kicker
-    const kickerLendId = getLendId(bucketId, bucketTakeLpAwarded.kicker)
-    const kickerLend = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucketTakeLpAwarded.kicker)
-    kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
-    kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
-
-    // update kicker account state if they weren't a lender already
-    const kickerAccountId = bucketTakeLpAwarded.kicker
-    const kickerAccount   = loadOrCreateAccount(kickerAccountId)
-    updateAccountLends(kickerAccount, kickerLend)
-
-    // update lend state for taker
-    const takerLendId = getLendId(bucketId, bucketTakeLpAwarded.taker)
-    const takerLend = loadOrCreateLend(bucketId, takerLendId, pool.id, bucketTakeLpAwarded.taker)
-    takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
-    takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, takerLend.lpb)
-
-    // save entities to store
-    bucket.save()
-    kickerAccount.save()
-    kickerLend.save()
-    takerLend.save()
-    pool.save()
-
-    bucketTakeLpAwarded.pool = pool.id
-  }
-
   bucketTakeLpAwarded.save()
+
+
+  // since this is emitted immediately before BucketTakeEvent, create BucketTake entity to associate it with this LP award
+  const bucketTakeId   = event.transaction.hash.concatI32(event.logIndex.toI32() + 1)
+  const bucketTake     = loadOrCreateBucketTake(bucketTakeId)
+  bucketTake.lpAwarded = lpAwardedId
+  bucketTake.save()
 }
 
 export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
@@ -901,7 +893,6 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
 
   repayDebt.save()
 }
-
 
 // called on both start and take reserves
 export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
