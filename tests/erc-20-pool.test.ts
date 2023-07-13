@@ -1072,19 +1072,6 @@ describe("ERC20Pool assertions", () => {
     )
     mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
 
-    // mock bucket take event
-    const newBucketTakeEvent = createBucketTakeEvent(
-      poolAddress,
-      taker,
-      borrower,
-      takeIndex,
-      amountToTake,
-      collateral,
-      bondChange,
-      isReward
-    )
-    handleBucketTake(newBucketTakeEvent)
-
     // mock required contract calls
     const expectedBucketInfo = new BucketInfo(
       takeIndex.toU32(),
@@ -1102,7 +1089,7 @@ describe("ERC20Pool assertions", () => {
 
     const expectedTakerLPBValueInQuote = lpAwardedTaker
     mockGetLPBValueInQuote(poolAddress, lpAwardedTaker, takeIndex, expectedTakerLPBValueInQuote)
-
+    
     // mock createBucketTakeLPAwardedEvent
     const newBucketTakeLPAwardedEvent = createBucketTakeLPAwardedEvent(
       poolAddress,
@@ -1112,6 +1099,21 @@ describe("ERC20Pool assertions", () => {
       lpAwardedKicker
     )
     handleBucketTakeLPAwarded(newBucketTakeLPAwardedEvent)
+
+    // mock bucket take event
+    const newBucketTakeEvent = createBucketTakeEvent(
+      poolAddress,
+      taker,
+      borrower,
+      takeIndex,
+      amountToTake,
+      collateral,
+      bondChange,
+      isReward
+    )
+    newBucketTakeEvent.logIndex = newBucketTakeLPAwardedEvent.logIndex.plus(ONE_BI)
+    // FIXME: cannot find this event id
+    handleBucketTake(newBucketTakeEvent)
 
     /********************/
     /*** Assert State ***/
