@@ -153,4 +153,4 @@ export function loadOrCreateBucketTake(id: Bytes): BucketTake {
     bucketTake.transactionHash = Bytes.fromI32(0)
   }
   return bucketTake;
-}1
+}
