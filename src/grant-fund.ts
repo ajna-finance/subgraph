@@ -109,10 +109,12 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
 
   // get the list of proposals in the slate
   const proposalsInSlate = getProposalsInSlate(fundedSlateUpdated.distributionId_)
+  const proposals = fundedSlate.proposals
   for (let i = 0; i < proposalsInSlate.length; i++) {
     const proposalId = proposalsInSlate[i]
-    fundedSlate.proposals.push(bigIntToBytes(proposalId))
+    proposals.push(bigIntToBytes(proposalId))
   }
+  fundedSlate.proposals = proposals
 
   // save entities to the store
   distributionPeriod.save()
@@ -173,7 +175,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
     }
 
     // add proposalParams information to proposal
-    proposal.params.push(proposalParams.id)
+    proposal.params = proposal.params.concat([proposalParams.id])
     proposal.totalTokensRequested = totalTokensRequested
 
     // save each proposalParams entity to the store
@@ -189,7 +191,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   const distributionId = getCurrentDistributionId()
   const distributionPeriod = loadOrCreateDistributionPeriod(bigIntToBytes(distributionId))
   if (distributionPeriod != null) {
-    distributionPeriod.proposals.push(proposal.id)
+    distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
     distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
     distributionPeriod.save()
   }
@@ -198,7 +200,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   proposal.distribution = distributionPeriod.id
 
   // record proposal in GrantFund entity
-  grantFund.standardProposals.push(proposal.id)
+  grantFund.standardProposals = grantFund.standardProposals.concat([proposal.id])
 
   // save entities to the store
   grantFund.save()
@@ -224,7 +226,7 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
 
     // record proposal in GrantFund entity
     const grantFund = loadOrCreateGrantFund(event.address)
-    grantFund.standardProposalsExecuted.push(proposal.id)
+    grantFund.standardProposalsExecuted = grantFund.standardProposalsExecuted.concat([proposal.id])
     grantFund.standardProposals = removeProposalFromList(proposal.id, grantFund.standardProposals)
 
     // save entities to the store
@@ -265,7 +267,7 @@ export function handleDistributionPeriodStarted(
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
-  grantFund.distributionPeriods.push(distributionPeriod.id)
+  grantFund.distributionPeriods = grantFund.distributionPeriods.concat([distributionPeriod.id])
 
   // save entities to store
   distributionPeriod.save()
@@ -325,7 +327,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       }
 
       // add additional screening votes to voter's distributionPeriodVote entity
-      distributionPeriodVote.screeningVotes.push(screeningVote.id)
+      distributionPeriodVote.screeningVotes = distributionPeriodVote.screeningVotes.concat([screeningVote.id])
 
       // save screeningVote to the store
       screeningVote.save()
@@ -349,7 +351,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       fundingVote.save()
     }
 
-    voter.distributionPeriodVotes.push(distributionPeriodVote.id)
+    voter.distributionPeriodVotes = voter.distributionPeriodVotes.concat([distributionPeriodVote.id])
 
     // save entities to the store
     distributionPeriod.save()

@@ -35,6 +35,7 @@ poolInfoUtilsAddressTable.set('ganache', Address.fromString('0x4f05DA51eAAB00e58
 export const positionManagerAddressTable = new TypedMap<string, Address>()
 positionManagerAddressTable.set('goerli', Address.fromString('0x23E2EFF19bd50BfCF0364B7dCA01004D5cce41f9'))
 positionManagerAddressTable.set('ganache', Address.fromString('0x6c5c7fD98415168ada1930d44447790959097482'))
+// TODO: eliminate; should be able to get from event
 export const grantFundAddressTable = new TypedMap<string, Address>()
 grantFundAddressTable.set('goerli', Address.fromString('0x881b4dFF6C72babA6f5eA60f34A61410c1EA1ec2'))
 grantFundAddressTable.set('ganache', Address.fromString('0xE340B87CEd1af1AbE1CE8D617c84B7f168e3b18b'))
