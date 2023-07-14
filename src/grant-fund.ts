@@ -190,11 +190,9 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   // update distribution entity
   const distributionId = getCurrentDistributionId()
   const distributionPeriod = loadOrCreateDistributionPeriod(bigIntToBytes(distributionId))
-  if (distributionPeriod != null) {
-    distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
-    distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
-    distributionPeriod.save()
-  }
+  distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
+  distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
+  log.info("saved distribution period {} with proposal {}", [distributionId.toString(), proposalId.toHexString()])
 
   // record proposals distributionId
   proposal.distribution = distributionPeriod.id
