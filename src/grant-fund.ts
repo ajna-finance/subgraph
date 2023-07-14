@@ -204,6 +204,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
 
   // save entities to the store
   grantFund.save()
+  distributionPeriod.save()
   proposal.save()
   proposalCreated.save()
 }
@@ -256,7 +257,7 @@ export function handleDistributionPeriodStarted(
 
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
-  distributionPeriod.topSlate = Bytes.empty()
+  distributionPeriod.topSlate = null
   distributionPeriod.delegationRewardsClaimed = ZERO_BD
   distributionPeriod.totalTokensRequested = ZERO_BD
   distributionPeriod.fundingVotesCast = ZERO_BD

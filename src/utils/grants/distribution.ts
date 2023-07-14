@@ -41,7 +41,7 @@ export function loadOrCreateDistributionPeriod(distributionId: Bytes): Distribut
         distributionPeriod = new DistributionPeriod(distributionId) as DistributionPeriod
         distributionPeriod.startBlock = ZERO_BI
         distributionPeriod.endBlock = ZERO_BI
-        distributionPeriod.topSlate = Bytes.empty()
+        distributionPeriod.topSlate = null
         distributionPeriod.slatesSubmitted = []
         distributionPeriod.delegationRewardsClaimed = ZERO_BD
         distributionPeriod.fundingVotesCast = ZERO_BD
