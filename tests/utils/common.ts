@@ -340,6 +340,7 @@ export function createPool(pool_: Address, collateral: Address, quote: Address, 
 
     // mock PoolCreated event
     const newPoolCreatedEvent = createPoolCreatedEvent(pool_)
+    newPoolCreatedEvent.address = Address.fromString("0x0000000000000000000000000000000000002020")
     handlePoolCreated(newPoolCreatedEvent)
 }
 

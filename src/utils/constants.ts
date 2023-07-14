@@ -24,10 +24,6 @@ export const MIN_BUCKET_INDEX = -3232;
 export const MAX_BUCKET_INDEX = 4156;
 
 // Pool addresses per network
-export const erc20FactoryAddressTable = new TypedMap<string, Address>()
-erc20FactoryAddressTable.set('mainnet', Address.fromString('0xe6F4d9711121e5304b30aC2Aae57E3b085ad3c4d'))
-erc20FactoryAddressTable.set('goerli', Address.fromString('0x01Da8a85A5B525D476cA2b51e44fe7087fFafaFF'))
-erc20FactoryAddressTable.set('ganache', Address.fromString('0xD86c4A8b172170Da0d5C0C1F12455bA80Eaa42AD'))
 export const poolInfoUtilsAddressTable = new TypedMap<string, Address>()
 poolInfoUtilsAddressTable.set('mainnet', Address.fromString('0x154FFf344f426F99E328bacf70f4Eb632210ecdc'))
 poolInfoUtilsAddressTable.set('goerli', Address.fromString('0xBB61407715cDf92b2784E9d2F1675c4B8505cBd8'))

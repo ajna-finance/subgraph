@@ -1,5 +1,4 @@
 # TODO: track approvals?
-# TODO: finish expanding this schema -> ERC20 / ERC721?
 # TODO: track token liquidity across all Ajna pools
 # this supports both ERC20 and ERC721 tokens, as union types aren't currently supported
 type Token @entity {
@@ -11,9 +10,8 @@ type Token @entity {
   name: String!
   # token decimals
   decimals: Int!
-  # flag for whether the token is an ERC721
-  # TODO: make this a string, enabling new pool types (such as ERC1155)
-  isERC721: Boolean!
+  # indicates whether the token is ERC20 or ERC721
+  tokenType: String!
   # number of pools including this token
   poolCount: BigInt!
   # total supply of the token
@@ -22,9 +20,11 @@ type Token @entity {
   txCount: BigInt!
 }
 
-type ERC20PoolFactory @entity {
+type PoolFactory @entity {
   # factory address
   id: Bytes!
+  # indicates type of collateral (ERC20 or ERC721)
+  poolType: String!
   # number of pools deployed by the factory
   poolCount: BigInt!
   # list of pools deployed by the factory
@@ -609,7 +609,9 @@ type Transfer @entity(immutable: true) {
 
 type PoolCreated @entity(immutable: true) {
   id: Bytes!
-  pool: Bytes!        # address
+  pool: Pool!           # pool which was created
+  poolType: String!     # ERC20 or ERC721
+  factory: PoolFactory! # address of factory contract used to create pool
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
