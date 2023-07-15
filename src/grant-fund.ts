@@ -192,7 +192,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   const distributionPeriod = loadOrCreateDistributionPeriod(bigIntToBytes(distributionId))
   distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
   distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
-  log.info("saved distribution period {} with proposal {}", [distributionId.toString(), proposalId.toHexString()])
+  log.info("saved distribution period {} with proposal {}", [distributionId.toString(), proposal.id.toHexString()])
   log.info("there are now {} proposals in the list", [distributionPeriod.proposals.length.toString()])
 
   // record proposals distributionId
@@ -252,18 +252,7 @@ export function handleDistributionPeriodStarted(
   distributionStarted.transactionHash = event.transaction.hash
 
   // create DistributionPeriod entities
-  const distributionPeriod = new DistributionPeriod(distributionId) as DistributionPeriod
-
-  distributionPeriod.startBlock = distributionStarted.startBlock
-  distributionPeriod.endBlock = distributionStarted.endBlock
-  distributionPeriod.topSlate = Bytes.empty()
-  distributionPeriod.delegationRewardsClaimed = ZERO_BD
-  distributionPeriod.totalTokensRequested = ZERO_BD
-  distributionPeriod.fundingVotesCast = ZERO_BD
-  distributionPeriod.fundingVotePowerUsed = ZERO_BD
-  distributionPeriod.screeningVotesCast = ZERO_BD
-  distributionPeriod.proposals = []
-  distributionPeriod.slatesSubmitted = []
+  const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
