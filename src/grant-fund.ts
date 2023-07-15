@@ -193,6 +193,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
   distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
   log.info("saved distribution period {} with proposal {}", [distributionId.toString(), proposalId.toHexString()])
+  log.info("there are now {} proposals in the list", [distributionPeriod.proposals.length.toString()])
 
   // record proposals distributionId
   proposal.distribution = distributionPeriod.id
