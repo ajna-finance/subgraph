@@ -764,12 +764,11 @@ type UpdateExchangeRates @entity(immutable: true) {
   # GRANT FUND ENTITIES #
   # # # # # # # # # # # #
 
-# TODO: rename standardProposals to proposals
 type GrantFund @entity {
   id: Bytes! # address of the grant fund
   treasury: BigDecimal! # Total ajna tokens in the grant fund treasure
-  standardProposals: [Proposal!]! # List of standard proposals submitted to the grant fund
-  standardProposalsExecuted: [Proposal!]! # List of standard proposals executed by the grant fund
+  proposals: [Proposal!]! # List of standard proposals submitted to the grant fund
+  proposalsExecuted: [Proposal!]! # List of standard proposals executed by the grant fund
   distributionPeriods: [DistributionPeriod!]! # List of distribution periods
   totalDelegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed across all distribution periods
 }

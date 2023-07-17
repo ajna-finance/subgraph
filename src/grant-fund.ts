@@ -199,11 +199,11 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   proposal.distribution = distributionPeriod.id
 
   // record proposal in GrantFund entity
-  grantFund.standardProposals = grantFund.standardProposals.concat([proposal.id])
+  grantFund.proposals = grantFund.proposals.concat([proposal.id])
 
   // save entities to the store
-  grantFund.save()
   distributionPeriod.save()
+  grantFund.save()
   proposal.save()
   proposalCreated.save()
 }
@@ -226,8 +226,8 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
 
     // record proposal in GrantFund entity
     const grantFund = loadOrCreateGrantFund(event.address)
-    grantFund.standardProposalsExecuted = grantFund.standardProposalsExecuted.concat([proposal.id])
-    grantFund.standardProposals = removeProposalFromList(proposal.id, grantFund.standardProposals)
+    grantFund.proposalsExecuted = grantFund.proposalsExecuted.concat([proposal.id])
+    grantFund.proposals = removeProposalFromList(proposal.id, grantFund.proposals)
 
     // save entities to the store
     grantFund.save()
@@ -253,7 +253,9 @@ export function handleDistributionPeriodStarted(
 
   // create DistributionPeriod entities
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
-
+  distributionPeriod.startBlock = distributionStarted.startBlock
+  distributionPeriod.endBlock = distributionStarted.endBlock
+  
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
   grantFund.distributionPeriods = grantFund.distributionPeriods.concat([distributionPeriod.id])
