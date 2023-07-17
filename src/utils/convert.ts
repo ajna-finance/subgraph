@@ -1,4 +1,4 @@
-import { BigInt, BigDecimal, Bytes, Address, log } from '@graphprotocol/graph-ts'
+import { BigInt, BigDecimal, Bytes, Address, ByteArray } from '@graphprotocol/graph-ts'
 
 import { EXP_18_BD, MAX_BUCKET_INDEX, MIN_BUCKET_INDEX, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
 import { prices } from './prices'
@@ -23,7 +23,8 @@ export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
 }
 
   export function bigIntToBytes(bi: BigInt): Bytes {
-    return Bytes.fromByteArray(Bytes.fromBigInt(bi))
+    // return Bytes.fromByteArray(Bytes.fromBigInt(bi))
+    return Bytes.fromByteArray(ByteArray.fromBigInt(bi))
 }
 
 /***************************/

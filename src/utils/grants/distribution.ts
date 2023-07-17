@@ -1,4 +1,5 @@
 import { Address, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
+// import { log } from "matchstick-as"
 
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 import { DistributionPeriod } from "../../../generated/schema"
@@ -20,11 +21,19 @@ export function getDistributionIdAtBlock(blockNumber: BigInt, grantFundAddress: 
 
 export function getCurrentDistributionId(grantFundAddress: Address): BigInt {
     const grantFundContract = GrantFund.bind(grantFundAddress)
-    const distributionIdResult = grantFundContract.getDistributionId()
-    log.info("current distribution id is {} as BigInt {} as bytes {}", [
-        distributionIdResult.toString(), BigInt.fromI32(distributionIdResult).toString(), bigIntToBytes(BigInt.fromI32(distributionIdResult)).toHexString()])
-    return BigInt.fromI32(distributionIdResult)
+    const distributionIdResult = BigInt.fromI32(grantFundContract.getDistributionId())
+    log.info("current distribution id is {} as bytes {}", [
+        distributionIdResult.toString(), bigIntToBytes(distributionIdResult).toHexString()])
+    return distributionIdResult
 }
+
+// export function getCurrentDistributionPeriod(grantFundAddress: Address): DistributionPeriod {
+//     const grantFundContract = GrantFund.bind(grantFundAddress)
+//     const distributionIdResult = grantFundContract.getDistributionId()
+//     const distributionId = bigIntToBytes(BigInt.fromI32(distributionIdResult))
+//     log.info("looking up distribution period {}", [distributionId.toHexString()])
+//     return DistributionPeriod.load(distributionId)!
+// }
 
 export function getCurrentStage(currentBlockNumber: BigInt, distributionPeriod: DistributionPeriod): String {
     if (currentBlockNumber.lt(distributionPeriod.endBlock - FUNDING_PERIOD_LENGTH)) {

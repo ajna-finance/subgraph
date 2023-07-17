@@ -1,4 +1,5 @@
 import { Address, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
+// import { log } from "matchstick-as"
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,
@@ -188,12 +189,11 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   const grantFund = loadOrCreateGrantFund(event.address)
 
   // update distribution entity
-  const distributionId = getCurrentDistributionId(event.address)
-  const distributionPeriod = loadOrCreateDistributionPeriod(bigIntToBytes(distributionId))
+  const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
+  log.info("handleProposalCreated looking up current distributionId {}", [distributionId.toHexString()])
+  const distributionPeriod = DistributionPeriod.load(distributionId)!
   distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
   distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
-  log.info("saved distribution period {} with proposal {}", [distributionId.toString(), proposal.id.toHexString()])
-  log.info("there are now {} proposals in the list", [distributionPeriod.proposals.length.toString()])
 
   // record proposals distributionId
   proposal.distribution = distributionPeriod.id
@@ -255,6 +255,7 @@ export function handleDistributionPeriodStarted(
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
+  log.info("distribution period {} started", [distributionId.toHexString()])
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
