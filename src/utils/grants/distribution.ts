@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 import { DistributionPeriod } from "../../../generated/schema"
@@ -49,6 +49,7 @@ export function loadOrCreateDistributionPeriod(distributionId: Bytes): Distribut
         distributionPeriod.screeningVotesCast = ZERO_BD
         distributionPeriod.proposals = []
         distributionPeriod.totalTokensRequested = ZERO_BD
+        log.info("created new distribution period {}", [distributionId.toString()])
     }
     return distributionPeriod
 }

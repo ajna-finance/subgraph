@@ -255,10 +255,12 @@ export function handleDistributionPeriodStarted(
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
-  
+
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
   grantFund.distributionPeriods = grantFund.distributionPeriods.concat([distributionPeriod.id])
+
+  log.info("distribution period {} started", [distributionId.toString()])
 
   // save entities to store
   distributionPeriod.save()
