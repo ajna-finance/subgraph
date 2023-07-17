@@ -21,7 +21,8 @@ export function getDistributionIdAtBlock(blockNumber: BigInt, grantFundAddress: 
 export function getCurrentDistributionId(grantFundAddress: Address): BigInt {
     const grantFundContract = GrantFund.bind(grantFundAddress)
     const distributionIdResult = grantFundContract.getDistributionId()
-    log.info("current distribution id is {}", [distributionIdResult.toString()])
+    log.info("current distribution id is {} as BigInt {} as bytes {}", [
+        distributionIdResult.toString(), BigInt.fromI32(distributionIdResult).toString(), bigIntToBytes(BigInt.fromI32(distributionIdResult)).toHexString()])
     return BigInt.fromI32(distributionIdResult)
 }
 
