@@ -1,12 +1,12 @@
-import { Address, BigDecimal, BigInt, Bytes, ethereum, dataSource, log } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, ethereum, dataSource, log } from "@graphprotocol/graph-ts"
 import { assert, createMockedFunction } from "matchstick-as"
 
 import { handlePoolCreated } from "../../src/erc-20-pool-factory"
 import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
-import { BucketInfo, getBucketId } from "../../src/utils/bucket"
-import { addressToBytes, wadToDecimal } from "../../src/utils/convert"
-import { grantFundAddressTable, positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
+import { BucketInfo } from "../../src/utils/bucket"
+import { wadToDecimal } from "../../src/utils/convert"
+import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
 import { AuctionInfo, AuctionStatus } from "../../src/utils/liquidation"
 import { BorrowerInfo } from "../../src/utils/loan"
@@ -249,19 +249,6 @@ export function assertPoolUpdate(params: PoolUpdatedParams): void {
 /*********************************/
 /*** Grant Fund Mock Functions ***/
 /*********************************/
-
-// Mocks a contract function call to findMechanismOfProposal for testing purposes
-// @param proposalId: The ID of the proposal
-// @param expectedMechanism: The expected mechanism of the proposal
-export function mockFindMechanismOfProposal(proposalId: BigInt, expectedMechanism: BigInt): void {
-    createMockedFunction(
-      grantFundAddressTable.get(dataSource.network())!,
-      'findMechanismOfProposal',
-      'findMechanismOfProposal(uint256):(uint8)'
-    )
-    .withArgs([ethereum.Value.fromUnsignedBigInt(proposalId)])
-    .returns([ethereum.Value.fromUnsignedBigInt(expectedMechanism)]);
-  }
 
 // mock burnInfo contract calls
 export function mockGetDistributionId(grantFund: Address, expectedDistributionId: BigInt): void {
