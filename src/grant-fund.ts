@@ -189,7 +189,6 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
 
   // update distribution entity
   const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
-  log.info("handleProposalCreated looking up current distributionId {}", [distributionId.toHexString()])
   const distributionPeriod = DistributionPeriod.load(distributionId)!
   distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
   distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
@@ -254,13 +253,10 @@ export function handleDistributionPeriodStarted(
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
-  log.info("distribution period {} started", [distributionId.toHexString()])
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
   grantFund.distributionPeriods = grantFund.distributionPeriods.concat([distributionPeriod.id])
-
-  log.info("distribution period {} started", [distributionId.toHexString()])
 
   // save entities to store
   distributionPeriod.save()

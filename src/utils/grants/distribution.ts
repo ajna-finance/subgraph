@@ -21,18 +21,8 @@ export function getDistributionIdAtBlock(blockNumber: BigInt, grantFundAddress: 
 export function getCurrentDistributionId(grantFundAddress: Address): BigInt {
     const grantFundContract = GrantFund.bind(grantFundAddress)
     const distributionIdResult = BigInt.fromI32(grantFundContract.getDistributionId())
-    log.info("current distribution id is {} as bytes {}", [
-        distributionIdResult.toString(), bigIntToBytes(distributionIdResult).toHexString()])
     return distributionIdResult
 }
-
-// export function getCurrentDistributionPeriod(grantFundAddress: Address): DistributionPeriod {
-//     const grantFundContract = GrantFund.bind(grantFundAddress)
-//     const distributionIdResult = grantFundContract.getDistributionId()
-//     const distributionId = bigIntToBytes(BigInt.fromI32(distributionIdResult))
-//     log.info("looking up distribution period {}", [distributionId.toHexString()])
-//     return DistributionPeriod.load(distributionId)!
-// }
 
 export function getCurrentStage(currentBlockNumber: BigInt, distributionPeriod: DistributionPeriod): String {
     if (currentBlockNumber.lt(distributionPeriod.endBlock - FUNDING_PERIOD_LENGTH)) {
@@ -59,7 +49,6 @@ export function loadOrCreateDistributionPeriod(distributionId: Bytes): Distribut
         distributionPeriod.screeningVotesCast = ZERO_BD
         distributionPeriod.proposals = []
         distributionPeriod.totalTokensRequested = ZERO_BD
-        log.info("created new distribution period {}", [distributionId.toHexString()])
     }
     return distributionPeriod
 }
