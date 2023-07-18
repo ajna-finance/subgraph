@@ -180,12 +180,19 @@ describe("Grant Fund assertions", () => {
       Bytes.fromHexString("0x000000"),
       Bytes.fromHexString("0x000000"),
     ];
+    const distributionId = BigInt.fromI32(234);
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
     const description = "test proposal";
 
     // mock GrantFund contract calls
-    const distributionId = BigInt.fromI32(234);
+    const newDistributionPeriodStartedEvent = createDistributionPeriodStartedEvent(
+      distributionId,
+      startBlock,
+      endBlock
+    );
+    newDistributionPeriodStartedEvent.address = grantFundAddress
+    handleDistributionPeriodStarted(newDistributionPeriodStartedEvent);
     mockGetDistributionId(grantFundAddress, distributionId);
 
     // create mock event
@@ -235,12 +242,19 @@ describe("Grant Fund assertions", () => {
       Bytes.fromHexString("0x000000"),
       Bytes.fromHexString("0x000000"),
     ];
+    const distributionId = BigInt.fromI32(234);
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
     const description = "test proposal";
 
     // mock GrantFund contract calls
-    const distributionId = BigInt.fromI32(234);
+    const newDistributionPeriodStartedEvent = createDistributionPeriodStartedEvent(
+      distributionId,
+      startBlock,
+      endBlock
+    );
+    newDistributionPeriodStartedEvent.address = grantFundAddress
+    handleDistributionPeriodStarted(newDistributionPeriodStartedEvent);
     mockGetDistributionId(grantFundAddress, distributionId);
 
     // create mock event

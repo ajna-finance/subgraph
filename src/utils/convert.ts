@@ -23,7 +23,7 @@ export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
 }
 
   export function bigIntToBytes(bi: BigInt): Bytes {
-    if (bi.isI32())
+    if (bi.isI32()) // HACK: handle padding oddities when converting BigInt which came from a signed number
         return Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(bi.toI32())))
     else
         return Bytes.fromByteArray(Bytes.fromBigInt(bi))
