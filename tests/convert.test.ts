@@ -13,4 +13,11 @@ import { bigIntToBytes, bytesToBigInt } from "../src/utils/convert";
         const one_bytes_from_number = bigIntToBytes(BigInt.fromI32(one_number));
         assert.bytesEquals(one_bytes_from_bi, one_bytes_from_number);
     });
+
+    test("Convert values which exceed 64 bits to bytes and back", () => {
+        const actually_big_number = BigInt.fromI32(2).pow(64)
+        const as_bytes = bigIntToBytes(actually_big_number);
+        const back_to_bigint = bytesToBigInt(as_bytes)
+        assert.bigIntEquals(actually_big_number, back_to_bigint);
+    });
   });

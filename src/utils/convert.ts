@@ -23,8 +23,10 @@ export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
 }
 
   export function bigIntToBytes(bi: BigInt): Bytes {
-    const unsigned = BigInt.fromU64(bi.toU64())
-    return Bytes.fromByteArray(Bytes.fromBigInt(unsigned))
+    if (bi.isI32())
+        return Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(bi.toI32())))
+    else
+        return Bytes.fromByteArray(Bytes.fromBigInt(bi))
 }
 
 /***************************/
