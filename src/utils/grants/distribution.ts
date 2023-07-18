@@ -1,5 +1,4 @@
 import { Address, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
-// import { log } from "matchstick-as"
 
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 import { DistributionPeriod } from "../../../generated/schema"

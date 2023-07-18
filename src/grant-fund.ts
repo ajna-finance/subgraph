@@ -1,5 +1,4 @@
 import { Address, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
-// import { log } from "matchstick-as"
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,

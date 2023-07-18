@@ -23,8 +23,8 @@ export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
 }
 
   export function bigIntToBytes(bi: BigInt): Bytes {
-    // return Bytes.fromByteArray(Bytes.fromBigInt(bi))
-    return Bytes.fromByteArray(ByteArray.fromBigInt(bi))
+    const unsigned = BigInt.fromU64(bi.toU64())
+    return Bytes.fromByteArray(Bytes.fromBigInt(unsigned))
 }
 
 /***************************/
@@ -32,8 +32,7 @@ export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
 /***************************/
 
 export function bytesToBigInt(bytes: Bytes): BigInt {
-    // return BigInt.fromUnsignedBytes(bytes)
-    return BigInt.fromSignedBytes(bytes)
+    return BigInt.fromUnsignedBytes(bytes)
 }
 
 // converts a BigDecimal to a BigInt scaled to WAD precision
