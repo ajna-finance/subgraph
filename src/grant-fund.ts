@@ -59,6 +59,8 @@ export function handleDelegateRewardClaimed(
 
   delegateRewardClaimed.distribution = distributionId
 
+  // TODO: update Voter.rewardsClaimed
+
   // save entities to the store
   grantFund.save()
   delegateRewardClaimed.save()

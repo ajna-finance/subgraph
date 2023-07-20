@@ -189,6 +189,9 @@ type Account @entity {
   # reserve auctions which the account has interacted in
   reserveAuctions: [ReserveAuction!]!
 
+  # voting delegation
+  delegate: Voter
+
   # total number of transactions sent by the account
   txCount: BigInt!
 }
@@ -815,6 +818,7 @@ type Voter @entity {
   proposalsCreated: [Proposal!]! # Proposal[]
   proposalsExecuted: [Proposal!]! # Proposal[]
   distributionPeriodVotes: [DistributionPeriodVote!]! # DistributionPeriodVote[]
+  rewardsClaimed: BigDecimal!
 }
 
 # TODO: record voting power used?
@@ -857,12 +861,31 @@ type FundedSlate @entity {
   # GRANT FUND EVENTS #
   # # # # # # # # # # #
 
-# TODO: should we be able to track the distribution period for which the rewards have accrued?
+type DelegateChanged @entity(immutable: true) {
+  id: Bytes!
+  delegator: Bytes! # address
+  fromDelegate: Bytes! # address
+  toDelegate: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type DelegateVotesChanged @entity(immutable: true) {
+  id: Bytes!
+  delegate: Bytes! # address
+  previousBalance: BigInt! # uint256
+  newBalance: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type DelegateRewardClaimed @entity(immutable: true) {
   id: Bytes!
   delegateeAddress_: Bytes! # address
   distribution: DistributionPeriod! # distribution period the rewards were claimed in
-  rewardClaimed_: BigInt! # uint256
+  rewardClaimed_: BigInt! # uint256  TODO: remove trailing underscore
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

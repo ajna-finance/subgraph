@@ -31,7 +31,7 @@ export function loadOrCreateVoter(voterId: Bytes): Voter {
     if (voter == null) {
         // create new voter if one hasn't already been stored
         voter = new Voter(voterId) as Voter
-
+        voter.rewardsClaimed = ZERO_BD
     }
     return voter
 }
