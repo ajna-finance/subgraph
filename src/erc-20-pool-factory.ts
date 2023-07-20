@@ -1,7 +1,5 @@
-import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts"
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
-import { PoolCreated, Token } from "../generated/schema"
-import { ERC20PoolFactory, Pool } from "../generated/schema"
+import { Pool, PoolCreated, Token } from "../generated/schema"
 import { ERC20Pool } from "../generated/templates"
 import { ERC20Pool as ERC20PoolContract } from "../generated/templates/ERC20Pool/ERC20Pool"
 
@@ -12,36 +10,28 @@ import {
   ZERO_BI,
   ZERO_BD,
   ZERO_ADDRESS,
-  ONE_BD,
-  erc20FactoryAddressTable
+  ONE_BD
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
 import { wmul } from "./utils/math"
 import { getRatesAndFees } from "./utils/pool"
+import { loadOrCreateFactory } from "./utils/pool-factory"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   poolCreated.pool = event.params.pool_
+  poolCreated.poolType = "ERC20"
+  poolCreated.factory = event.address;
 
   poolCreated.blockNumber = event.block.number
   poolCreated.blockTimestamp = event.block.timestamp
   poolCreated.transactionHash = event.transaction.hash
 
   // record factory information
-  const erc20factoryAddress = erc20FactoryAddressTable.get(dataSource.network())!
-  let factory = ERC20PoolFactory.load(erc20factoryAddress)
-  if (factory == null) {
-    // create new factory
-    factory = new ERC20PoolFactory(erc20factoryAddress) as ERC20PoolFactory
-    factory.poolCount = ZERO_BI
-    factory.pools     = []
-    factory.txCount   = ZERO_BI
-  }
-
-  // increment pool count
+  let factory = loadOrCreateFactory(event.address, "ERC20")
   factory.poolCount = factory.poolCount.plus(ONE_BI)
   factory.txCount   = factory.txCount.plus(ONE_BI)
 
@@ -68,7 +58,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     collateralToken.decimals = getTokenDecimals(collateralTokenAddress)
     collateralToken.totalSupply = getTokenTotalSupply(collateralTokenAddress)
     collateralToken.txCount = ZERO_BI
-    collateralToken.isERC721 = false
+    collateralToken.tokenType = "ERC20"
     collateralToken.poolCount = ONE_BI
   }
   let quoteToken = Token.load(quoteTokenAddressBytes)
@@ -80,7 +70,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     quoteToken.decimals = getTokenDecimals(quoteTokenAddress)
     quoteToken.totalSupply = getTokenTotalSupply(quoteTokenAddress)
     quoteToken.txCount = ZERO_BI
-    quoteToken.isERC721 = false
+    quoteToken.tokenType = "ERC20"
     quoteToken.poolCount = ONE_BI
   }
 

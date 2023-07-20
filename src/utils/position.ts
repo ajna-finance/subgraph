@@ -17,7 +17,7 @@ export function loadOrCreateLPToken(tokenAddress: Address): Token {
     token.decimals    = 0
     token.symbol      = getTokenSymbol(tokenAddress)
     token.txCount     = ZERO_BI
-    token.isERC721    = true
+    token.tokenType   = "ERC721"
     token.poolCount   = ONE_BI
     token.totalSupply = ONE_BI
   }
