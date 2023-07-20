@@ -2,7 +2,7 @@ import { Address, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts
 import { Proposal, ProposalParams } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
-import { ZERO_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI, grantFundAddressTable } from "../constants"
+import { ZERO_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI } from "../constants"
 import { bytesToBigInt } from "../convert"
 
 export function getProposalParamsId(proposalId: Bytes, paramIndex: number): Bytes {
@@ -41,8 +41,7 @@ export function removeProposalFromList(proposalId: Bytes, proposalList: Array<By
 /*** Contract Calls ***/
 /**********************/
 
-export function getProposalsInSlate(distributionId: BigInt): Array<BigInt> {
-    const grantFundAddress  = grantFundAddressTable.get(dataSource.network())!
+export function getProposalsInSlate(grantFundAddress: Address, distributionId: BigInt): Array<BigInt> {
     const grantFundContract = GrantFund.bind(grantFundAddress)
     const getProposalsInSlateResult = grantFundContract.getTopTenProposals(distributionId.toI32())
 

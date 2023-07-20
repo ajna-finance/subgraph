@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
+import { Address, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,
@@ -27,9 +27,9 @@ import {
 
 import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
-import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
+import { getProposalParamsId, getProposalsInSlate, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
-import { getDistributionPeriodVoteId, getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
+import { getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
 import { loadOrCreateGrantFund } from './utils/grants/fund'
 
 export function handleDelegateRewardClaimed(
@@ -48,7 +48,7 @@ export function handleDelegateRewardClaimed(
   const rewardsClaimed = wadToDecimal(event.params.rewardClaimed)
 
   // update DistributionPeriod entity
-  const distributionId = bigIntToBytes(getCurrentDistributionId())
+  const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
   distributionPeriod.delegationRewardsClaimed = distributionPeriod.delegationRewardsClaimed.plus(rewardsClaimed)
 
@@ -108,11 +108,13 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
   fundedSlate.updateBlock = event.block.number
 
   // get the list of proposals in the slate
-  const proposalsInSlate = getProposalsInSlate(fundedSlateUpdated.distributionId_)
+  const proposalsInSlate = getProposalsInSlate(event.address, fundedSlateUpdated.distributionId_)
+  const proposals = fundedSlate.proposals
   for (let i = 0; i < proposalsInSlate.length; i++) {
     const proposalId = proposalsInSlate[i]
-    fundedSlate.proposals.push(bigIntToBytes(proposalId))
+    proposals.push(bigIntToBytes(proposalId))
   }
+  fundedSlate.proposals = proposals
 
   // save entities to the store
   distributionPeriod.save()
@@ -173,7 +175,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
     }
 
     // add proposalParams information to proposal
-    proposal.params.push(proposalParams.id)
+    proposal.params = proposal.params.concat([proposalParams.id])
     proposal.totalTokensRequested = totalTokensRequested
 
     // save each proposalParams entity to the store
@@ -186,21 +188,19 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   const grantFund = loadOrCreateGrantFund(event.address)
 
   // update distribution entity
-  const distributionId = getCurrentDistributionId()
-  const distributionPeriod = loadOrCreateDistributionPeriod(bigIntToBytes(distributionId))
-  if (distributionPeriod != null) {
-    distributionPeriod.proposals.push(proposal.id)
-    distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
-    distributionPeriod.save()
-  }
+  const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
+  const distributionPeriod = DistributionPeriod.load(distributionId)!
+  distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
+  distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
 
   // record proposals distributionId
   proposal.distribution = distributionPeriod.id
 
   // record proposal in GrantFund entity
-  grantFund.standardProposals.push(proposal.id)
+  grantFund.proposals = grantFund.proposals.concat([proposal.id])
 
   // save entities to the store
+  distributionPeriod.save()
   grantFund.save()
   proposal.save()
   proposalCreated.save()
@@ -224,8 +224,8 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
 
     // record proposal in GrantFund entity
     const grantFund = loadOrCreateGrantFund(event.address)
-    grantFund.standardProposalsExecuted.push(proposal.id)
-    grantFund.standardProposals = removeProposalFromList(proposal.id, grantFund.standardProposals)
+    grantFund.proposalsExecuted = grantFund.proposalsExecuted.concat([proposal.id])
+    grantFund.proposals = removeProposalFromList(proposal.id, grantFund.proposals)
 
     // save entities to the store
     grantFund.save()
@@ -250,22 +250,13 @@ export function handleDistributionPeriodStarted(
   distributionStarted.transactionHash = event.transaction.hash
 
   // create DistributionPeriod entities
-  const distributionPeriod = new DistributionPeriod(distributionId) as DistributionPeriod
-
+  const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
-  distributionPeriod.topSlate = Bytes.empty()
-  distributionPeriod.delegationRewardsClaimed = ZERO_BD
-  distributionPeriod.totalTokensRequested = ZERO_BD
-  distributionPeriod.fundingVotesCast = ZERO_BD
-  distributionPeriod.fundingVotePowerUsed = ZERO_BD
-  distributionPeriod.screeningVotesCast = ZERO_BD
-  distributionPeriod.proposals = []
-  distributionPeriod.slatesSubmitted = []
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
-  grantFund.distributionPeriods.push(distributionPeriod.id)
+  grantFund.distributionPeriods = grantFund.distributionPeriods.concat([distributionPeriod.id])
 
   // save entities to store
   distributionPeriod.save()
@@ -296,7 +287,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
   if (proposal != null) {
     // TODO: need to be able to access the distributionId at that block height or call getDistributionIdAtBlock()?
     // load distribution entity
-    const distributionId = bigIntToBytes(getCurrentDistributionId())
+    const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
     const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
 
     // load voter's distributionPeriodVotes
@@ -321,11 +312,11 @@ export function handleVoteCast(event: VoteCastEvent): void {
 
       // update voter's distributionPeriodVote entity if it hasn't been recorded yet
       if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-        distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+        distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
 
       // add additional screening votes to voter's distributionPeriodVote entity
-      distributionPeriodVote.screeningVotes.push(screeningVote.id)
+      distributionPeriodVote.screeningVotes = distributionPeriodVote.screeningVotes.concat([screeningVote.id])
 
       // save screeningVote to the store
       screeningVote.save()
@@ -342,14 +333,14 @@ export function handleVoteCast(event: VoteCastEvent): void {
 
       // update voter's distributionPeriodVote entity if it hasn't been recorded yet
       if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-        distributionPeriodVote.fundingStageVotingPower = getFundingStageVotingPower(bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+        distributionPeriodVote.fundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
 
       // save fundingVote to the store
       fundingVote.save()
     }
 
-    voter.distributionPeriodVotes.push(distributionPeriodVote.id)
+    voter.distributionPeriodVotes = voter.distributionPeriodVotes.concat([distributionPeriodVote.id])
 
     // save entities to the store
     distributionPeriod.save()

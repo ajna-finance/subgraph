@@ -10,7 +10,7 @@ import {
   RedeemPosition,
   Transfer
 } from "../../generated/PositionManager/PositionManager"
-import { mockFindMechanismOfProposal, mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./common"
+import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./common"
 import { handleMint } from "../../src/position-manager"
 import { bigIntToBytes } from "../../src/utils/convert"
 

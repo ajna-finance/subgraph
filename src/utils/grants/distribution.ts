@@ -1,13 +1,13 @@
-import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 import { DistributionPeriod } from "../../../generated/schema"
 
-import { FUNDING_PERIOD_LENGTH, ONE_BI, ZERO_BD, ZERO_BI, grantFundAddressTable } from "../constants"
+import { FUNDING_PERIOD_LENGTH, ONE_BI, ZERO_BD, ZERO_BI } from "../constants"
 import { bigIntToBytes } from "../convert"
 
-export function getDistributionIdAtBlock(blockNumber: BigInt): BigInt {
-    const currentDistributionId = getCurrentDistributionId()
+export function getDistributionIdAtBlock(blockNumber: BigInt, grantFundAddress: Address): BigInt | null {
+    const currentDistributionId = getCurrentDistributionId(grantFundAddress)
     for (let i = currentDistributionId.toI32(); i > 0; i--) {
         const distributionPeriod = DistributionPeriod.load(Bytes.fromI32(i))!
 
@@ -15,13 +15,13 @@ export function getDistributionIdAtBlock(blockNumber: BigInt): BigInt {
             return BigInt.fromI32(i)
         }
     }
+    return null
 }
 
-export function getCurrentDistributionId(): BigInt {
-    const grantFundAddress  = grantFundAddressTable.get(dataSource.network())!
+export function getCurrentDistributionId(grantFundAddress: Address): BigInt {
     const grantFundContract = GrantFund.bind(grantFundAddress)
-    const distributionIdResult = grantFundContract.getDistributionId()
-    return BigInt.fromI32(distributionIdResult)
+    const distributionIdResult = BigInt.fromI32(grantFundContract.getDistributionId())
+    return distributionIdResult
 }
 
 export function getCurrentStage(currentBlockNumber: BigInt, distributionPeriod: DistributionPeriod): String {

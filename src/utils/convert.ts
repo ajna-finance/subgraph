@@ -1,4 +1,4 @@
-import { BigInt, BigDecimal, Bytes, Address, log } from '@graphprotocol/graph-ts'
+import { BigInt, BigDecimal, Bytes, Address, ByteArray } from '@graphprotocol/graph-ts'
 
 import { EXP_18_BD, MAX_BUCKET_INDEX, MIN_BUCKET_INDEX, ONE_BI, ZERO_BD, ZERO_BI } from './constants'
 import { prices } from './prices'
@@ -22,8 +22,11 @@ export function addressArrayToBytesArray(addresses: Address[]): Bytes[] {
     return retval
 }
 
-  export function bigIntToBytes(bi: BigInt): Bytes {
-    return Bytes.fromByteArray(Bytes.fromBigInt(bi))
+export function bigIntToBytes(bi: BigInt): Bytes {
+    if (bi.isI32()) // HACK: handle padding oddities when converting BigInt which came from a signed number
+        return Bytes.fromByteArray(Bytes.fromBigInt(BigInt.fromI32(bi.toI32())))
+    else
+        return Bytes.fromByteArray(Bytes.fromBigInt(bi))
 }
 
 /***************************/
