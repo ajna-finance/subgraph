@@ -183,14 +183,24 @@ type Account @entity {
   lends: [Lend!]!
   # loans which the account has taken from pools
   loans: [Loan!]!
+  # liquidation auctions settled
   settles: [Settle!]!
+  # liquidation auctions taken
   takes: [Take!]!
 
   # reserve auctions which the account has interacted in
   reserveAuctions: [ReserveAuction!]!
 
+  # ecosystem coordination proposals created
+  proposalsCreated: [Proposal!]!
+  # ecosystem coordination proposals passed and funded 
+  proposalsExecuted: [Proposal!]!
   # voting delegation
-  delegate: Voter
+  delegate: Account
+  # delegation rewards claimed across all distribution periods
+  rewardsClaimed: BigDecimal!
+  # voting state for each distribution period
+  distributionPeriodVotes: [DistributionPeriodVote!]!
 
   # total number of transactions sent by the account
   txCount: BigInt!
@@ -772,8 +782,8 @@ type UpdateExchangeRates @entity(immutable: true) {
 type GrantFund @entity {
   id: Bytes! # address of the grant fund
   treasury: BigDecimal! # Total ajna tokens in the grant fund treasure
-  proposals: [Proposal!]! # List of standard proposals submitted to the grant fund
-  proposalsExecuted: [Proposal!]! # List of standard proposals executed by the grant fund
+  proposals: [Proposal!]! # List of standard proposals submitted to the grant fund  # TODO: remove, redundant
+  proposalsExecuted: [Proposal!]! # List of standard proposals executed by the grant fund  # TODO: remove, redundant
   distributionPeriods: [DistributionPeriod!]! # List of distribution periods
   totalDelegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed across all distribution periods
 }
@@ -813,17 +823,10 @@ type ProposalParams @entity {
   tokensRequested: BigDecimal! # uint256
 }
 
-type Voter @entity {
-  id: Bytes! # voter address
-  proposalsCreated: [Proposal!]! # Proposal[]
-  proposalsExecuted: [Proposal!]! # Proposal[]
-  distributionPeriodVotes: [DistributionPeriodVote!]! # DistributionPeriodVote[]
-  rewardsClaimed: BigDecimal!
-}
-
-# TODO: record voting power used?
+# TODO: record voting power used? - shouldn't that be in Voter, not here?
+# It's not per-distribution period.
 type DistributionPeriodVote @entity {
-  id: Bytes! # $voterId + '|'' + $distributionId
+  id: Bytes! # $accountId + '|'' + $distributionId
   distribution: DistributionPeriod! # uint256
   screeningStageVotingPower: BigDecimal! # uint256
   fundingStageVotingPower: BigDecimal! # uint256
@@ -832,18 +835,18 @@ type DistributionPeriodVote @entity {
 }
 
 type ScreeningVote @entity {
-  id: Bytes! # $proposalId + 'screening' + $Voter.id + $logIndex
+  id: Bytes! # $proposalId + 'screening' + $account.id + $logIndex
   distribution: DistributionPeriod! # distribution period the vote was cast in
-  voter: Voter! # Voter
+  voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on
   votesCast: BigDecimal! # uint256
   blockNumber: BigInt! # block number the vote was cast
 }
 
 type FundingVote @entity {
-  id: Bytes! # $proposalId + 'funding' + $Voter.id + $logIndex
+  id: Bytes! # $proposalId + 'funding' + $account.id + $logIndex
   distribution: DistributionPeriod! # distribution period the vote was cast in
-  voter: Voter! # Voter
+  voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on
   votesCast: BigDecimal! # uint256 # TODO: can this be negative?
   votingPowerUsed: BigDecimal! # uint256
@@ -945,7 +948,7 @@ type DistributionPeriodStarted @entity(immutable: true) {
 
 type VoteCast @entity(immutable: true) {
   id: Bytes!
-  voter: Bytes! # address
+  voter: Bytes! # address # TODO: should be Account
   proposalId: BigInt! # uint256
   support: Int! # uint8
   weight: BigInt! # uint256

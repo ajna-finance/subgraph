@@ -29,8 +29,9 @@ import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getProposalParamsId, getProposalsInSlate, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
-import { getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateVoter } from './utils/grants/voter'
+import { getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
 import { loadOrCreateGrantFund } from './utils/grants/fund'
+import { loadOrCreateAccount } from './utils/account'
 
 export function handleDelegateRewardClaimed(
   event: DelegateRewardClaimedEvent
@@ -59,7 +60,7 @@ export function handleDelegateRewardClaimed(
 
   delegateRewardClaimed.distribution = distributionId
 
-  // TODO: update Voter.rewardsClaimed
+  // TODO: update Account.rewardsClaimed
 
   // save entities to the store
   grantFund.save()
@@ -281,7 +282,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
   voteCast.transactionHash = event.transaction.hash
 
   // load voter entity
-  const voter = loadOrCreateVoter(addressToBytes(event.params.voter))
+  const voter = loadOrCreateAccount(addressToBytes(event.params.voter))
 
   // update proposal entity
   const proposalId = bigIntToBytes(event.params.proposalId)

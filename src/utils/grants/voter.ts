@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
 
-import { DistributionPeriodVote, Voter } from "../../../generated/schema"
+import { DistributionPeriodVote } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
 import { ZERO_BD, ZERO_BI } from "../constants"
@@ -24,16 +24,6 @@ export function getScreeningVoteId(proposalId: Bytes, voterId: Bytes, logIndex: 
         .concat(Bytes.fromUTF8('screening'))
         .concat(voterId)
         .concat(Bytes.fromUTF8(logIndex.toString()))
-}
-
-export function loadOrCreateVoter(voterId: Bytes): Voter {
-    let voter = Voter.load(voterId)
-    if (voter == null) {
-        // create new voter if one hasn't already been stored
-        voter = new Voter(voterId) as Voter
-        voter.rewardsClaimed = ZERO_BD
-    }
-    return voter
 }
 
 export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, voterId: Bytes): DistributionPeriodVote {

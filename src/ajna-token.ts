@@ -6,6 +6,8 @@ import {
   DelegateChanged,
   DelegateVotesChanged,
 } from "../generated/schema"
+import { loadOrCreateAccount } from "./utils/account"
+import { addressToBytes } from "./utils/convert"
 
 export function handleDelegateChanged(event: DelegateChangedEvent): void {
   let entity = new DelegateChanged(
@@ -19,8 +21,12 @@ export function handleDelegateChanged(event: DelegateChangedEvent): void {
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
 
-  // TODO: update Account.delegate to point to Voter
+  // update Account.delegate to point to the new voting delegate
+  const delegatorId = addressToBytes(event.params.delegator)
+  const delegator = loadOrCreateAccount(delegatorId)
+  delegator.delegate = addressToBytes(event.params.toDelegate)
 
+  delegator.save()
   entity.save()
 }
 
@@ -38,7 +44,10 @@ export function handleDelegateVotesChanged(
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
 
-  // TODO: update Voter entity
+  // TODO: update entities; unsure what to do here
+  const delegateId = addressToBytes(event.params.delegate)
+  const delegate = loadOrCreateAccount(delegateId)
+  // ???
 
   entity.save()
 }
