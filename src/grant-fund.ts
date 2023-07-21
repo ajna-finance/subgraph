@@ -60,12 +60,16 @@ export function handleDelegateRewardClaimed(
 
   delegateRewardClaimed.distribution = distributionId
 
-  // TODO: update Account.rewardsClaimed
+  // update Account entity
+  const accountId = addressToBytes(event.params.delegateeAddress)
+  const account   = loadOrCreateAccount(accountId)
+  account.rewardsClaimed = account.rewardsClaimed.plus(rewardsClaimed)
 
   // save entities to the store
   grantFund.save()
   delegateRewardClaimed.save()
   distributionPeriod.save()
+  account.save()
 }
 
 export function handleFundTreasury(event: FundTreasuryEvent): void {
