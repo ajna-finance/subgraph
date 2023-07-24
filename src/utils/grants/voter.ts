@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
 
-import { DistributionPeriodVote } from "../../../generated/schema"
+import { DistributionPeriodVote, FundingVote } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
 import { ZERO_BD, ZERO_BI } from "../constants"
@@ -27,6 +27,54 @@ export function getScreeningVoteId(proposalId: Bytes, voterId: Bytes, logIndex: 
         .concat(Bytes.fromUTF8(logIndex.toString()))
 }
 
+export function getFundingVotesByProposalId(distributionPeriodVote: DistributionPeriodVote, proposalId: Bytes): Bytes[] {
+    const filteredVotes: Bytes[] = [];
+    const fundingVotes = distributionPeriodVote.fundingVotes;
+
+    for (let i = 0; i < fundingVotes.length; i++) {
+        const proposal = loadOrCreateFundingVote(fundingVotes[i]).proposal;
+        if (proposal === proposalId) {
+            filteredVotes.push(fundingVotes[i]);
+        }
+    }
+    return filteredVotes;
+}
+
+// calculate the amount of funding voting power used on an individual FundingVote
+export function getFundingVotingPowerUsed(distributionPeriodVote: DistributionPeriodVote, proposalId: Bytes): BigDecimal {
+    const votes = getFundingVotesByProposalId(distributionPeriodVote, proposalId);
+
+    // accumulate the squared votes from each separate vote on the proposal
+    const squaredAmount: BigDecimal[] = [];
+    for (let i = 0; i < votes.length; i++) {
+        const vote = loadOrCreateFundingVote(votes[i]);
+        squaredAmount.push(vote.votesCast.times(vote.votesCast));
+    }
+
+    // sum the squared amounts
+    let sum = ZERO_BD;
+    for (let i = 0; i < squaredAmount.length; i++) {
+        sum = sum.plus(squaredAmount[i]);
+    }
+
+    return sum;
+}
+
+export function loadOrCreateFundingVote(fundingVoteId: Bytes): FundingVote {
+    let fundingVote = FundingVote.load(fundingVoteId)
+    if (fundingVote == null) {
+        // create new fundingVote if one hasn't already been stored
+        fundingVote = new FundingVote(fundingVoteId) as FundingVote
+        fundingVote.distribution = Bytes.empty()
+        fundingVote.voter = Bytes.empty()
+        fundingVote.proposal = Bytes.empty()
+        fundingVote.votesCast = ZERO_BD
+        fundingVote.votingPowerUsed = ZERO_BD
+        fundingVote.blockNumber = ZERO_BI
+    }
+    return fundingVote
+}
+
 export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, voterId: Bytes): DistributionPeriodVote {
     const distributionPeriodVotesId = getDistributionPeriodVoteId(distributionPeriodId, voterId)
     let distributionPeriodVotes = DistributionPeriodVote.load(distributionPeriodVotesId)
@@ -36,7 +84,8 @@ export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, 
         distributionPeriodVotes.voter = voterId
         distributionPeriodVotes.distribution = distributionPeriodId
         distributionPeriodVotes.screeningStageVotingPower = ZERO_BD
-        distributionPeriodVotes.fundingStageVotingPower = ZERO_BD
+        distributionPeriodVotes.initialFundingStageVotingPower = ZERO_BD
+        distributionPeriodVotes.remainingFundingStageVotingPower = ZERO_BD
         distributionPeriodVotes.screeningVotes = []
         distributionPeriodVotes.fundingVotes = []
 
