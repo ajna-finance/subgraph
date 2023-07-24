@@ -5,6 +5,7 @@ import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
 import { ZERO_BD, ZERO_BI } from "../constants"
 import { wadToDecimal } from "../convert"
+import { loadOrCreateDistributionPeriod } from "./distribution"
 
 export function getDistributionPeriodVoteId(distributionPeriodId: Bytes, voterId: Bytes): Bytes {
     return voterId
@@ -38,7 +39,11 @@ export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, 
         distributionPeriodVotes.fundingStageVotingPower = ZERO_BD
         distributionPeriodVotes.screeningVotes = []
         distributionPeriodVotes.fundingVotes = []
-        // TODO: add to DistributionPeriod entity
+
+        // add to DistributionPeriod entity
+        const distributionPeriod = loadOrCreateDistributionPeriod(distributionPeriodId)
+        distributionPeriod.votes = distributionPeriod.votes.concat([distributionPeriodVotesId])
+        distributionPeriod.save()
     }
     return distributionPeriodVotes
 }
