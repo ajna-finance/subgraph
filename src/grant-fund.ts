@@ -285,9 +285,8 @@ export function handleVoteCast(event: VoteCastEvent): void {
   const proposalId = bigIntToBytes(event.params.proposalId)
   const proposal = Proposal.load(proposalId) as Proposal
   if (proposal != null) {
-    // TODO: need to be able to access the distributionId at that block height or call getDistributionIdAtBlock()?
-    // load distribution entity
-    const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
+    // load distribution entity using the distributionId from the proposal
+    const distributionId = proposal.distribution!
     const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
 
     // load voter's distributionPeriodVotes
