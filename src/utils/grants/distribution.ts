@@ -24,6 +24,7 @@ export function getCurrentDistributionId(grantFundAddress: Address): BigInt {
     return distributionIdResult
 }
 
+// FIXME: update this for the latest version of the contract
 export function getCurrentStage(currentBlockNumber: BigInt, distributionPeriod: DistributionPeriod): String {
     if (currentBlockNumber.lt(distributionPeriod.endBlock.minus(FUNDING_PERIOD_LENGTH))) {
         return "SCREENING"

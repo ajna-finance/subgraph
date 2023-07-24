@@ -13,6 +13,7 @@ import {
   handleProposalCreated,
   handleProposalExecuted,
   handleDistributionPeriodStarted,
+  handleVoteCast,
 } from "../src/grant-fund";
 import {
   createDelegateRewardClaimedEvent,
@@ -20,6 +21,7 @@ import {
   createProposalCreatedEvent,
   createProposalExecutedEvent,
   createDistributionPeriodStartedEvent,
+  createVoteCastEvent,
 } from "./utils/grant-fund-utils";
 import {
   DISTRIBUTION_PERIOD_LENGTH,
@@ -292,6 +294,81 @@ describe("Grant Fund assertions", () => {
 
     // check ProposalExecuted attributes
     assert.entityCount("ProposalExecuted", 1);
+  });
+
+  test("ScreeningVote", () => {
+    /***********************/
+    /*** Submit Proposal ***/
+    /***********************/
+
+    // mock parameters
+    const ajnaTokenAddress = Address.fromString("0x0000000000000000000000000000000000000035");
+    const grantFundAddress = Address.fromString("0x00000000000000000000006772616E7466756E64")
+    const proposalId = BigInt.fromI32(234);
+    const proposer = Address.fromString(
+      "0x0000000000000000000000000000000000000025"
+    );
+    const targets = [ajnaTokenAddress, ajnaTokenAddress];
+    const values = [ZERO_BI, ZERO_BI];
+    const signatures = [
+      "transfer(address,uint256)",
+      "transfer(address,uint256)",
+    ];
+    const calldatas = [
+      Bytes.fromHexString("0x000000"),
+      Bytes.fromHexString("0x000000"),
+    ];
+    const distributionId = BigInt.fromI32(234);
+    const startBlock = ONE_BI;
+    const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
+    const description = "test proposal";
+
+    // mock GrantFund contract calls
+    const newDistributionPeriodStartedEvent = createDistributionPeriodStartedEvent(
+      distributionId,
+      startBlock,
+      endBlock
+    );
+    newDistributionPeriodStartedEvent.address = grantFundAddress
+    handleDistributionPeriodStarted(newDistributionPeriodStartedEvent);
+    mockGetDistributionId(grantFundAddress, distributionId);
+
+    // create mock event
+    const newProposalCreatedEvent = createProposalCreatedEvent(
+      proposalId,
+      proposer,
+      targets,
+      values,
+      signatures,
+      calldatas,
+      startBlock,
+      endBlock,
+      description
+    );
+    newProposalCreatedEvent.address = grantFundAddress
+    handleProposalCreated(newProposalCreatedEvent);
+
+    /*******************************/
+    /*** Screening Vote Proposal ***/
+    /*******************************/
+
+    // mock parameters
+    const voter = Address.fromString("0x0000000000000000000000000000000000000050");
+    const votesCast = BigInt.fromI32(234);
+    const reason = ""
+
+    const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason);
+    handleVoteCast(screeningVoteCastEvent);
+
+  });
+
+  test("getFundingVotingPowerUsed", () => {
+
+  });
+
+
+  test("FundingVote", () => {
+
   });
 
   test("FundedSlateUpdated", () => {});
