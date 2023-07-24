@@ -18,21 +18,3 @@ export function loadOrCreateGrantFund(grantFundAddress: Address): GrantFund {
   }
   return grantFund
 }
-
-export function getVotesScreening(
-  grantFundAddress: Address, 
-  distributionPeriodId: BigInt, 
-  voterId: Address) : BigInt
-{
-  const grantFundContract = GrantFundContract.bind(grantFundAddress)
-  return grantFundContract.getVotesScreening(distributionPeriodId.toU32(), voterId)
-}
-
-export function getVotesFunding(
-  grantFundAddress: Address, 
-  distributionPeriodId: BigInt, 
-  voterId: Address) : BigInt
-{
-  const grantFundContract = GrantFundContract.bind(grantFundAddress)
-  return grantFundContract.getVotesFunding(distributionPeriodId.toU32(), voterId)
-}

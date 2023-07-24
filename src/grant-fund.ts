@@ -31,7 +31,7 @@ import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt,
 import { getProposalParamsId, getProposalsInSlate, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
 import { getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
-import { getVotesFunding, getVotesScreening, loadOrCreateGrantFund } from './utils/grants/fund'
+import { loadOrCreateGrantFund } from './utils/grants/fund'
 import { loadOrCreateAccount } from './utils/account'
 
 export function handleDelegateRewardClaimed(
@@ -266,8 +266,8 @@ export function handleDistributionPeriodStarted(
   const votes = distributionPeriod.votes
   for (var i=0; i<votes.length; ++i) {
     const vote = DistributionPeriodVote.load(votes[i])!
-    vote.screeningStageVotingPower = wadToDecimal(getVotesScreening(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter)))
-    vote.fundingStageVotingPower = wadToDecimal(getVotesFunding(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter)))
+    vote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
+    vote.fundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
     vote.save()
   }
 
