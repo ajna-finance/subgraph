@@ -11,8 +11,6 @@ export function loadOrCreateGrantFund(grantFundAddress: Address): GrantFund {
     // create new grantFund if one hasn't already been stored
     grantFund = new GrantFund(addressToBytes(grantFundAddress)) as GrantFund
     grantFund.treasury = ZERO_BD
-    grantFund.proposals = []
-    grantFund.proposalsExecuted = []
     grantFund.distributionPeriods = []
     grantFund.totalDelegationRewardsClaimed = ZERO_BD
   }

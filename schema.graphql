@@ -784,9 +784,6 @@ type UpdateExchangeRates @entity(immutable: true) {
 type GrantFund @entity {
   id: Bytes! # address of the grant fund
   treasury: BigDecimal! # Total ajna tokens in the grant fund treasure
-  # TODO: delete these two redundant collections
-  proposals: [Proposal!]! # List of standard proposals submitted to the grant fund  # TODO: remove, redundant
-  proposalsExecuted: [Proposal!]! # List of standard proposals executed by the grant fund  # TODO: remove, redundant
   distributionPeriods: [DistributionPeriod!]! # List of distribution periods
   totalDelegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed across all distribution periods
 }

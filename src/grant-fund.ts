@@ -192,9 +192,6 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
 
   proposalCreated.proposal = proposal.id
 
-  // load GrantFund entity
-  const grantFund = loadOrCreateGrantFund(event.address)
-
   // update distribution entity
   const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
   const distributionPeriod = DistributionPeriod.load(distributionId)!
@@ -204,12 +201,8 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   // record proposals distributionId
   proposal.distribution = distributionPeriod.id
 
-  // record proposal in GrantFund entity
-  grantFund.proposals = grantFund.proposals.concat([proposal.id])
-
   // save entities to the store
   distributionPeriod.save()
-  grantFund.save()
   proposal.save()
   proposalCreated.save()
 }
@@ -230,13 +223,7 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
     proposal.executed = true
     proposal.successful = true
 
-    // record proposal in GrantFund entity
-    const grantFund = loadOrCreateGrantFund(event.address)
-    grantFund.proposalsExecuted = grantFund.proposalsExecuted.concat([proposal.id])
-    grantFund.proposals = removeProposalFromList(proposal.id, grantFund.proposals)
-
     // save entities to the store
-    grantFund.save()
     proposal.save()
   }
   proposalExecuted.save()
