@@ -22,7 +22,8 @@ import {
   ProposalParams,
   DistributionPeriodStarted,
   ScreeningVote,
-  VoteCast
+  VoteCast,
+  DistributionPeriodVote
 } from "../generated/schema"
 
 import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
@@ -30,7 +31,7 @@ import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt,
 import { getProposalParamsId, getProposalsInSlate, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
 import { getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
-import { loadOrCreateGrantFund } from './utils/grants/fund'
+import { getVotesFunding, getVotesScreening, loadOrCreateGrantFund } from './utils/grants/fund'
 import { loadOrCreateAccount } from './utils/account'
 
 export function handleDelegateRewardClaimed(
@@ -260,6 +261,15 @@ export function handleDistributionPeriodStarted(
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
+
+  // loop through DistributionPeriodVotes for the current period and update voting power
+  const votes = distributionPeriod.votes
+  for (var i=0; i<votes.length; ++i) {
+    const vote = DistributionPeriodVote.load(votes[i])!
+    vote.screeningStageVotingPower = wadToDecimal(getVotesScreening(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter)))
+    vote.fundingStageVotingPower = wadToDecimal(getVotesFunding(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter)))
+    vote.save()
+  }
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)

@@ -32,11 +32,13 @@ export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, 
     if (distributionPeriodVotes == null) {
         // create new distributionPeriodVotes if one hasn't already been stored
         distributionPeriodVotes = new DistributionPeriodVote(distributionPeriodVotesId) as DistributionPeriodVote
+        distributionPeriodVotes.voter = voterId
         distributionPeriodVotes.distribution = distributionPeriodId
         distributionPeriodVotes.screeningStageVotingPower = ZERO_BD
         distributionPeriodVotes.fundingStageVotingPower = ZERO_BD
         distributionPeriodVotes.screeningVotes = []
         distributionPeriodVotes.fundingVotes = []
+        // TODO: add to DistributionPeriod entity
     }
     return distributionPeriodVotes
 }

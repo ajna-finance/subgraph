@@ -25,9 +25,9 @@ export function getCurrentDistributionId(grantFundAddress: Address): BigInt {
 }
 
 export function getCurrentStage(currentBlockNumber: BigInt, distributionPeriod: DistributionPeriod): String {
-    if (currentBlockNumber.lt(distributionPeriod.endBlock - FUNDING_PERIOD_LENGTH)) {
+    if (currentBlockNumber.lt(distributionPeriod.endBlock.minus(FUNDING_PERIOD_LENGTH))) {
         return "SCREENING"
-    } else if (currentBlockNumber.gt(distributionPeriod.endBlock - FUNDING_PERIOD_LENGTH) && currentBlockNumber.lt(distributionPeriod.endBlock)) {
+    } else if (currentBlockNumber.gt(distributionPeriod.endBlock.minus(FUNDING_PERIOD_LENGTH)) && currentBlockNumber.lt(distributionPeriod.endBlock)) {
         return "FUNDING"
     } else {
         return "CHALLENGE"
@@ -47,6 +47,7 @@ export function loadOrCreateDistributionPeriod(distributionId: Bytes): Distribut
         distributionPeriod.fundingVotesCast = ZERO_BD
         distributionPeriod.fundingVotePowerUsed = ZERO_BD
         distributionPeriod.screeningVotesCast = ZERO_BD
+        distributionPeriod.votes = []
         distributionPeriod.proposals = []
         distributionPeriod.totalTokensRequested = ZERO_BD
     }

@@ -7,7 +7,7 @@ import {
   DelegateVotesChanged,
 } from "../generated/schema"
 import { loadOrCreateAccount } from "./utils/account"
-import { addressToBytes, bigIntToBytes } from "./utils/convert"
+import { addressToBytes, bigIntToBytes, wadToDecimal } from "./utils/convert"
 import { getCurrentDistributionId } from "./utils/grants/distribution"
 import { loadOrCreateDistributionPeriodVote } from "./utils/grants/voter"
 
@@ -41,18 +41,16 @@ export function handleDelegateVotesChanged(
   entity.delegate = event.params.delegate
   entity.previousBalance = event.params.previousBalance
   entity.newBalance = event.params.newBalance
+  const changeInBalance = wadToDecimal(event.params.newBalance.minus(event.params.previousBalance))
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
 
-  // TODO: update entities; unsure what to do here
   const delegateId = addressToBytes(event.params.delegate)
   const delegate = loadOrCreateAccount(delegateId)
-  const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
-  // const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod 
-  const distributionPeriodVotes = loadOrCreateDistributionPeriodVote(distributionId, event.params.delegate)
-  // distributionPeriodVotes.???
+  delegate.tokensDelegated = delegate.tokensDelegated.plus(changeInBalance)
 
+  delegate.save()
   entity.save()
 }

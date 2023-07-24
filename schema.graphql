@@ -201,6 +201,8 @@ type Account @entity {
   rewardsClaimed: BigDecimal!
   # voting state for each distribution period
   distributionPeriodVotes: [DistributionPeriodVote!]!
+  # amount of tokens delegated to this account
+  tokensDelegated: BigDecimal!
 
   # total number of transactions sent by the account
   txCount: BigInt!
@@ -782,6 +784,7 @@ type UpdateExchangeRates @entity(immutable: true) {
 type GrantFund @entity {
   id: Bytes! # address of the grant fund
   treasury: BigDecimal! # Total ajna tokens in the grant fund treasure
+  # TODO: delete these two redundant collections
   proposals: [Proposal!]! # List of standard proposals submitted to the grant fund  # TODO: remove, redundant
   proposalsExecuted: [Proposal!]! # List of standard proposals executed by the grant fund  # TODO: remove, redundant
   distributionPeriods: [DistributionPeriod!]! # List of distribution periods
@@ -798,6 +801,7 @@ type DistributionPeriod @entity {
   fundingVotesCast: BigDecimal! # number of funding votes cast
   fundingVotePowerUsed: BigDecimal! # Total funding vote power used
   screeningVotesCast: BigDecimal! # number of screening votes cast
+  votes: [DistributionPeriodVote!]! # Voter info for the distribution period
   proposals: [Proposal!]! # List of proposals submitted in the distribution period
   totalTokensRequested: BigDecimal! # Total ajna tokens requested by all proposals in the distribution period
 }
@@ -823,10 +827,9 @@ type ProposalParams @entity {
   tokensRequested: BigDecimal! # uint256
 }
 
-# TODO: record voting power used? - shouldn't that be in Voter, not here?
-# It's not per-distribution period.
 type DistributionPeriodVote @entity {
   id: Bytes! # $accountId + '|'' + $distributionId
+  voter: Account!
   distribution: DistributionPeriod! # uint256
   screeningStageVotingPower: BigDecimal! # uint256
   fundingStageVotingPower: BigDecimal! # uint256

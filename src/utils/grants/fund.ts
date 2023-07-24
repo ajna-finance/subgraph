@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
 
 import { GrantFund } from "../../../generated/schema"
+import { GrantFund as GrantFundContract } from "../../../generated/GrantFund/GrantFund"
 import { addressToBytes } from "../convert"
 import { ZERO_BD } from "../constants"
 
@@ -16,4 +17,22 @@ export function loadOrCreateGrantFund(grantFundAddress: Address): GrantFund {
     grantFund.totalDelegationRewardsClaimed = ZERO_BD
   }
   return grantFund
+}
+
+export function getVotesScreening(
+  grantFundAddress: Address, 
+  distributionPeriodId: BigInt, 
+  voterId: Address) : BigInt
+{
+  const grantFundContract = GrantFundContract.bind(grantFundAddress)
+  return grantFundContract.getVotesScreening(distributionPeriodId.toU32(), voterId)
+}
+
+export function getVotesFunding(
+  grantFundAddress: Address, 
+  distributionPeriodId: BigInt, 
+  voterId: Address) : BigInt
+{
+  const grantFundContract = GrantFundContract.bind(grantFundAddress)
+  return grantFundContract.getVotesFunding(distributionPeriodId.toU32(), voterId)
 }
