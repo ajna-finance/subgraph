@@ -32,7 +32,7 @@ import {
   ZERO_BD,
   ZERO_BI,
 } from "../src/utils/constants";
-import { addressToBytes, bigIntToBytes, wadToDecimal } from "../src/utils/convert";
+import { addressToBytes, bigIntToBytes, decimalToWad, wadToDecimal } from "../src/utils/convert";
 import { mockGetDistributionId, mockGetVotesFunding, mockGetVotesScreening } from "./utils/common";
 import { getDistributionPeriodVoteId } from "../src/utils/grants/voter";
 
@@ -508,12 +508,19 @@ describe("Grant Fund assertions", () => {
       `${wadToDecimal(votesCast.times(BigInt.fromI32(-1)))}`
     );
 
-    // assert.fieldEquals(
-    //   "DistributionPeriodVote",
-    //   `${distributionPeriodVoteId.toHexString()}`,
-    //   "initialFundingStageVotingPower",
-    //   `${wadToDecimal(votesCast.times(votesCast))}`
-    // );
+    assert.fieldEquals(
+      "DistributionPeriodVote",
+      `${distributionPeriodVoteId.toHexString()}`,
+      "initialFundingStageVotingPower",
+      `${wadToDecimal(votesCast.times(votesCast))}`
+    );
+
+    assert.fieldEquals(
+      "DistributionPeriodVote",
+      `${distributionPeriodVoteId.toHexString()}`,
+      "remainingFundingStageVotingPower",
+      `${0}`
+    );
   });
 
   test("FundedSlateUpdated", () => {});

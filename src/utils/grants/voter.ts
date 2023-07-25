@@ -1,9 +1,9 @@
-import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
 import { DistributionPeriodVote, FundingVote } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
-import { ZERO_BD, ZERO_BI } from "../constants"
+import { EXP_18_BD, ZERO_BD, ZERO_BI } from "../constants"
 import { wadToDecimal } from "../convert"
 import { loadOrCreateDistributionPeriod } from "./distribution"
 
@@ -31,9 +31,11 @@ export function getFundingVotesByProposalId(distributionPeriodVote: Distribution
     const filteredVotes: Bytes[] = [];
     const fundingVotes = distributionPeriodVote.fundingVotes;
 
+    log.info("getFundingVotesByProposalId: {} {}", [distributionPeriodVote.fundingVotes.length.toString(), proposalId.toString()])
+
     for (let i = 0; i < fundingVotes.length; i++) {
         const proposal = loadOrCreateFundingVote(fundingVotes[i]).proposal;
-        if (proposal === proposalId) {
+        if (proposal.equals(proposalId)) {
             filteredVotes.push(fundingVotes[i]);
         }
     }
@@ -48,7 +50,9 @@ export function getFundingVotingPowerUsed(distributionPeriodVote: DistributionPe
     const squaredAmount: BigDecimal[] = [];
     for (let i = 0; i < votes.length; i++) {
         const vote = loadOrCreateFundingVote(votes[i]);
-        squaredAmount.push(vote.votesCast.times(vote.votesCast));
+        // convert back from wad before squaring
+        const decimalVotesCast = vote.votesCast.times(EXP_18_BD)
+        squaredAmount.push(decimalVotesCast.times(decimalVotesCast).div(EXP_18_BD));
     }
 
     // sum the squared amounts

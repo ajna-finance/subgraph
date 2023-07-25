@@ -854,6 +854,7 @@ type FundingVote @entity {
   blockNumber: BigInt! # block number the vote was cast
 }
 
+# TODO: add totalTokensRequested and totalFundingVotesReceived
 type FundedSlate @entity {
   id: Bytes! # bytes32 hash of slate proposalIds
   distribution: DistributionPeriod! # distribution period the vote was cast in
