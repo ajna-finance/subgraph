@@ -70,13 +70,12 @@ import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/bucket"
 import { getLendId, loadOrCreateLend } from "./utils/lend"
 import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/loan"
 import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "./utils/liquidation"
-import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees } from "./utils/pool"
+import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, calculateLendRate } from "./utils/pool"
 import { lpbValueInQuote } from "./utils/common"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/lp-transferors"
 import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "./utils/lp-allowances"
-import { wmul } from "./utils/math"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -991,6 +990,7 @@ export function handleResetInterestRate(event: ResetInterestRateEvent): void {
   const poolAddress = addressToBytes(event.address)
   const pool = Pool.load(poolAddress)!
   const ratesAndFees = getRatesAndFees(poolAddress)
+  updatePool(pool)
 
   resetInterestRate.pool = pool.id
   resetInterestRate.oldBorrowRate = pool.borrowRate
@@ -998,7 +998,7 @@ export function handleResetInterestRate(event: ResetInterestRateEvent): void {
   resetInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
   resetInterestRate.oldDepositFeeRate = pool.depositFeeRate
   resetInterestRate.newBorrowRate = wadToDecimal(event.params.newRate)
-  resetInterestRate.newLendRate = wadToDecimal(wmul(event.params.newRate, ratesAndFees.lenderInterestMargin))
+  resetInterestRate.newLendRate = pool.lendRate
   resetInterestRate.newBorrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
   resetInterestRate.newDepositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
 
@@ -1007,7 +1007,6 @@ export function handleResetInterestRate(event: ResetInterestRateEvent): void {
   resetInterestRate.transactionHash = event.transaction.hash
 
   // update pool state
-  updatePool(pool)
   pool.borrowRate = resetInterestRate.newBorrowRate
   pool.lendRate = resetInterestRate.newLendRate
   pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
@@ -1236,6 +1235,7 @@ export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   const poolAddress = addressToBytes(event.address)
   const pool = Pool.load(poolAddress)!
   const ratesAndFees = getRatesAndFees(poolAddress)
+  updatePool(pool)
 
   updateInterestRate.pool = pool.id
   updateInterestRate.oldBorrowRate = pool.borrowRate
@@ -1243,7 +1243,7 @@ export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   updateInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
   updateInterestRate.oldDepositFeeRate = pool.depositFeeRate
   updateInterestRate.newBorrowRate = wadToDecimal(event.params.newRate)
-  updateInterestRate.newLendRate = wadToDecimal(wmul(event.params.newRate, ratesAndFees.lenderInterestMargin))
+  updateInterestRate.newLendRate = pool.lendRate
   updateInterestRate.newBorrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
   updateInterestRate.newDepositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
 
@@ -1252,7 +1252,6 @@ export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   updateInterestRate.transactionHash = event.transaction.hash
 
   // update pool state
-  updatePool(pool)
   pool.borrowRate = updateInterestRate.newBorrowRate
   pool.lendRate = updateInterestRate.newLendRate
   pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
