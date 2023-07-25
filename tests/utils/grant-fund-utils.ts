@@ -211,7 +211,8 @@ export function createVoteCastEvent(
   support: i32,
   weight: BigInt,
   reason: string,
-  blockNumber: BigInt
+  blockNumber: BigInt,
+  logIndex: BigInt
 ): VoteCast {
   let voteCastEvent = changetype<VoteCast>(newMockEvent())
 
@@ -239,7 +240,9 @@ export function createVoteCastEvent(
     new ethereum.EventParam("reason", ethereum.Value.fromString(reason))
   )
 
+  // override event logIndex as well to multiple voting in single test as well as moving between stages
   voteCastEvent.block.number = blockNumber
+  voteCastEvent.logIndex = logIndex
 
   return voteCastEvent
 }

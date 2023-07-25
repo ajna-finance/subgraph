@@ -33,7 +33,7 @@ import {
   ZERO_BI,
 } from "../src/utils/constants";
 import { addressToBytes, bigIntToBytes, wadToDecimal } from "../src/utils/convert";
-import { mockGetDistributionId, mockGetVotesScreening } from "./utils/common";
+import { mockGetDistributionId, mockGetVotesFunding, mockGetVotesScreening } from "./utils/common";
 import { getDistributionPeriodVoteId } from "../src/utils/grants/voter";
 
 // Tests structure (matchstick-as >=0.5.0)
@@ -365,7 +365,7 @@ describe("Grant Fund assertions", () => {
     // mock contract calls
     mockGetVotesScreening(grantFundAddress, distributionId, voter, votesCast);
 
-    const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock);
+    const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock, BigInt.fromI32(1));
     handleVoteCast(screeningVoteCastEvent);
 
     /********************/
@@ -464,7 +464,7 @@ describe("Grant Fund assertions", () => {
     // mock contract calls
     mockGetVotesScreening(grantFundAddress, distributionId, voter, votesCast);
 
-    const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock);
+    const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock, BigInt.fromI32(1));
     handleVoteCast(screeningVoteCastEvent);
 
     // TODO: advance state to funding stage
@@ -473,8 +473,13 @@ describe("Grant Fund assertions", () => {
     /*** Funding Vote Proposal ***/
     /*****************************/
 
+    // TODO: need to convert back from WAD
+    const fundingVotingPower = votesCast.times(votesCast);
+
+    mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);
+
     votesCast = BigInt.fromI32(-234);
-    const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 0, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)));
+    const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 0, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(2));
     handleVoteCast(fundingVoteCastEvent);
 
     /********************/
@@ -487,8 +492,9 @@ describe("Grant Fund assertions", () => {
     // check Proposal attributes
     assert.entityCount("Proposal", 1);
 
-    // assert.entityCount("VoteCast", 2);
-    // assert.entityCount("ScreeningVote", 1);
+    assert.entityCount("VoteCast", 2);
+    assert.entityCount("FundingVote", 1);
+    assert.entityCount("ScreeningVote", 1);
     assert.entityCount("DistributionPeriodVote", 1);
 
     const distributionPeriodVoteId = getDistributionPeriodVoteId(bigIntToBytes(distributionId), addressToBytes(voter));

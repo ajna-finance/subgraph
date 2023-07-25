@@ -270,6 +270,17 @@ export function mockGetVotesScreening(grantFund: Address, distributionId: BigInt
         ])
 }
 
+export function mockGetVotesFunding(grantFund: Address, distributionId: BigInt, voter: Address, expectedVotes: BigInt): void {
+    createMockedFunction(grantFund, 'getVotesFunding', 'getVotesFunding(uint24,address):(uint256)')
+        .withArgs([
+            ethereum.Value.fromUnsignedBigInt(distributionId),
+            ethereum.Value.fromAddress(voter)
+        ])
+        .returns([
+            ethereum.Value.fromUnsignedBigInt(expectedVotes),
+        ])
+}
+
 /*******************************/
 /*** Position Mock Functions ***/
 /*******************************/

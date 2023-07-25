@@ -26,12 +26,13 @@ export function getCurrentDistributionId(grantFundAddress: Address): BigInt {
 
 // FIXME: update this for the latest version of the contract
 export function getCurrentStage(currentBlockNumber: BigInt, distributionPeriod: DistributionPeriod): String {
+    log.info("getCurrentStage: {} {} {} {}", [currentBlockNumber.toString(), currentBlockNumber.ge(distributionPeriod.startBlock.plus(SCREENING_PERIOD_LENGTH)).toString(), currentBlockNumber.le(distributionPeriod.endBlock.minus(FUNDING_PERIOD_LENGTH.plus(CHALLENGE_PERIOD_LENGTH))).toString(), distributionPeriod.endBlock.minus(FUNDING_PERIOD_LENGTH.plus(CHALLENGE_PERIOD_LENGTH)).toString()])
     if (currentBlockNumber.lt(distributionPeriod.startBlock.plus(SCREENING_PERIOD_LENGTH))) {
         return "SCREENING"
     } else if (
-        currentBlockNumber.gt(distributionPeriod.startBlock.plus(SCREENING_PERIOD_LENGTH)) 
+        currentBlockNumber.ge(distributionPeriod.startBlock.plus(SCREENING_PERIOD_LENGTH))
         &&
-        currentBlockNumber.lt(distributionPeriod.endBlock.minus(FUNDING_PERIOD_LENGTH).minus(CHALLENGE_PERIOD_LENGTH))
+        currentBlockNumber.le(distributionPeriod.endBlock.minus(CHALLENGE_PERIOD_LENGTH))
         ) {
         return "FUNDING"
     } else {
