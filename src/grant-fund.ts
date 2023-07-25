@@ -249,14 +249,15 @@ export function handleDistributionPeriodStarted(
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
 
-  // loop through DistributionPeriodVotes for the current period and update voting power
-  const votes = distributionPeriod.votes
-  for (var i=0; i<votes.length; ++i) {
-    const vote = DistributionPeriodVote.load(votes[i])!
-    vote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
-    vote.fundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
-    vote.save()
-  }
+  // // loop through DistributionPeriodVotes for the current period and update voting power
+  // const votes = distributionPeriod.votes
+  // for (var i=0; i<votes.length; ++i) {
+  //   const vote = DistributionPeriodVote.load(votes[i])!
+  //   vote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
+  //   // vote.fundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
+  //   vote.initialFundingStageVotingPower =
+  //   vote.save()
+  // }
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)

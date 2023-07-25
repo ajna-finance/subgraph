@@ -5,6 +5,7 @@ import {
   clearStore,
   afterEach,
   log,
+  logStore,
 } from "matchstick-as/assembly/index";
 import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts";
 import {
@@ -27,11 +28,13 @@ import {
   DISTRIBUTION_PERIOD_LENGTH,
   ONE_BI,
   ONE_WAD_BI,
+  SCREENING_PERIOD_LENGTH,
   ZERO_BD,
   ZERO_BI,
 } from "../src/utils/constants";
-import { bigIntToBytes, wadToDecimal } from "../src/utils/convert";
-import { mockGetDistributionId } from "./utils/common";
+import { addressToBytes, bigIntToBytes, wadToDecimal } from "../src/utils/convert";
+import { mockGetDistributionId, mockGetVotesScreening } from "./utils/common";
+import { getDistributionPeriodVoteId } from "../src/utils/grants/voter";
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -303,7 +306,7 @@ describe("Grant Fund assertions", () => {
 
     // mock parameters
     const ajnaTokenAddress = Address.fromString("0x0000000000000000000000000000000000000035");
-    const grantFundAddress = Address.fromString("0x00000000000000000000006772616E7466756E64")
+    const grantFundAddress = Address.fromString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a")
     const proposalId = BigInt.fromI32(234);
     const proposer = Address.fromString(
       "0x0000000000000000000000000000000000000025"
@@ -318,11 +321,12 @@ describe("Grant Fund assertions", () => {
       Bytes.fromHexString("0x000000"),
       Bytes.fromHexString("0x000000"),
     ];
-    const distributionId = BigInt.fromI32(234);
+    const distributionId = ONE_BI;
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
     const description = "test proposal";
 
+    // start distribution period
     // mock GrantFund contract calls
     const newDistributionPeriodStartedEvent = createDistributionPeriodStartedEvent(
       distributionId,
@@ -333,6 +337,7 @@ describe("Grant Fund assertions", () => {
     handleDistributionPeriodStarted(newDistributionPeriodStartedEvent);
     mockGetDistributionId(grantFundAddress, distributionId);
 
+    // submit proposal
     // create mock event
     const newProposalCreatedEvent = createProposalCreatedEvent(
       proposalId,
@@ -357,9 +362,35 @@ describe("Grant Fund assertions", () => {
     const votesCast = BigInt.fromI32(234);
     const reason = ""
 
-    const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason);
+    // mock contract calls
+    mockGetVotesScreening(grantFundAddress, distributionId, voter, votesCast);
+
+    const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock);
     handleVoteCast(screeningVoteCastEvent);
 
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // check GrantFund attributes
+    assert.entityCount("GrantFund", 1);
+
+    // check Proposal attributes
+    assert.entityCount("Proposal", 1);
+
+    // check Proposal attributes
+    assert.entityCount("DistributionPeriodVote", 1);
+
+    assert.entityCount("ScreeningVote", 1);
+
+    const distributionPeriodVoteId = getDistributionPeriodVoteId(bigIntToBytes(distributionId), addressToBytes(voter));
+
+    assert.fieldEquals(
+      "DistributionPeriodVote",
+      `${distributionPeriodVoteId.toHexString()}`,
+      "screeningStageVotingPower",
+      `${wadToDecimal(votesCast)}`
+    );
   });
 
   test("getFundingVotingPowerUsed", () => {
@@ -368,7 +399,115 @@ describe("Grant Fund assertions", () => {
 
 
   test("FundingVote", () => {
+    /***********************/
+    /*** Submit Proposal ***/
+    /***********************/
 
+    // mock parameters
+    const ajnaTokenAddress = Address.fromString("0x0000000000000000000000000000000000000035");
+    const grantFundAddress = Address.fromString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a")
+    const proposalId = BigInt.fromI32(234);
+    const proposer = Address.fromString(
+      "0x0000000000000000000000000000000000000025"
+    );
+    const targets = [ajnaTokenAddress, ajnaTokenAddress];
+    const values = [ZERO_BI, ZERO_BI];
+    const signatures = [
+      "transfer(address,uint256)",
+      "transfer(address,uint256)",
+    ];
+    const calldatas = [
+      Bytes.fromHexString("0x000000"),
+      Bytes.fromHexString("0x000000"),
+    ];
+    const distributionId = ONE_BI;
+    const startBlock = ONE_BI;
+    const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
+    const description = "test proposal";
+
+    // start distribution period
+    // mock GrantFund contract calls
+    const newDistributionPeriodStartedEvent = createDistributionPeriodStartedEvent(
+      distributionId,
+      startBlock,
+      endBlock
+    );
+    newDistributionPeriodStartedEvent.address = grantFundAddress
+    handleDistributionPeriodStarted(newDistributionPeriodStartedEvent);
+    mockGetDistributionId(grantFundAddress, distributionId);
+
+    // submit proposal
+    // create mock event
+    const newProposalCreatedEvent = createProposalCreatedEvent(
+      proposalId,
+      proposer,
+      targets,
+      values,
+      signatures,
+      calldatas,
+      startBlock,
+      endBlock,
+      description
+    );
+    newProposalCreatedEvent.address = grantFundAddress
+    handleProposalCreated(newProposalCreatedEvent);
+
+    /*******************************/
+    /*** Screening Vote Proposal ***/
+    /*******************************/
+
+    // mock parameters
+    const voter = Address.fromString("0x0000000000000000000000000000000000000050");
+    let votesCast = BigInt.fromI32(234);
+    const reason = ""
+
+    // mock contract calls
+    mockGetVotesScreening(grantFundAddress, distributionId, voter, votesCast);
+
+    const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock);
+    handleVoteCast(screeningVoteCastEvent);
+
+    // TODO: advance state to funding stage
+
+    /*****************************/
+    /*** Funding Vote Proposal ***/
+    /*****************************/
+
+    votesCast = BigInt.fromI32(-234);
+    const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 0, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)));
+    handleVoteCast(fundingVoteCastEvent);
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // check GrantFund attributes
+    assert.entityCount("GrantFund", 1);
+
+    // check Proposal attributes
+    assert.entityCount("Proposal", 1);
+
+    // assert.entityCount("VoteCast", 2);
+    // assert.entityCount("ScreeningVote", 1);
+    assert.entityCount("DistributionPeriodVote", 1);
+
+    const distributionPeriodVoteId = getDistributionPeriodVoteId(bigIntToBytes(distributionId), addressToBytes(voter));
+
+    logStore();
+
+    assert.fieldEquals(
+      "DistributionPeriodVote",
+      `${distributionPeriodVoteId.toHexString()}`,
+      "screeningStageVotingPower",
+      `${wadToDecimal(votesCast.times(BigInt.fromI32(-1)))}`
+    );
+
+    // assert.fieldEquals(
+    //   "DistributionPeriodVote",
+    //   `${distributionPeriodVoteId.toHexString()}`,
+    //   "initialFundingStageVotingPower",
+    //   `${wadToDecimal(votesCast.times(votesCast))}`
+    // );
   });
 
   test("FundedSlateUpdated", () => {});

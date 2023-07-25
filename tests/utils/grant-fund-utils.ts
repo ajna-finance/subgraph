@@ -210,7 +210,8 @@ export function createVoteCastEvent(
   proposalId: BigInt,
   support: i32,
   weight: BigInt,
-  reason: string
+  reason: string,
+  blockNumber: BigInt
 ): VoteCast {
   let voteCastEvent = changetype<VoteCast>(newMockEvent())
 
@@ -237,6 +238,8 @@ export function createVoteCastEvent(
   voteCastEvent.parameters.push(
     new ethereum.EventParam("reason", ethereum.Value.fromString(reason))
   )
+
+  voteCastEvent.block.number = blockNumber
 
   return voteCastEvent
 }

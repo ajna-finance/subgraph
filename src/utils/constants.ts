@@ -36,4 +36,4 @@ positionManagerAddressTable.set('ganache', Address.fromString('0x6c5c7fD98415168
 export const CHALLENGE_PERIOD_LENGTH    = BigInt.fromI32(50400)
 export const DISTRIBUTION_PERIOD_LENGTH = BigInt.fromI32(648000)
 export const FUNDING_PERIOD_LENGTH      = BigInt.fromI32(72000)
-export const MAX_EFM_PROPOSAL_LENGTH    = BigInt.fromI32(216000)
+export const SCREENING_PERIOD_LENGTH    = BigInt.fromI32(525600)
