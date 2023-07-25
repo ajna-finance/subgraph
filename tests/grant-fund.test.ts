@@ -34,7 +34,7 @@ import {
 } from "../src/utils/constants";
 import { addressToBytes, bigIntToBytes, decimalToWad, wadToDecimal } from "../src/utils/convert";
 import { mockGetDistributionId, mockGetVotesFunding, mockGetVotesScreening } from "./utils/common";
-import { getDistributionPeriodVoteId } from "../src/utils/grants/voter";
+import { getDistributionPeriodVoteId, getFundingVoteId } from "../src/utils/grants/voter";
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -498,8 +498,16 @@ describe("Grant Fund assertions", () => {
     assert.entityCount("DistributionPeriodVote", 1);
 
     const distributionPeriodVoteId = getDistributionPeriodVoteId(bigIntToBytes(distributionId), addressToBytes(voter));
+    const fundingVoteId = getFundingVoteId(bigIntToBytes(proposalId), addressToBytes(voter), BigInt.fromI32(2));
     const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
     const expectedVotingPowerUsed = wadToDecimal(votesCast.times(votesCast));
+
+    assert.fieldEquals(
+      "DistributionPeriodVote",
+      `${distributionPeriodVoteId.toHexString()}`,
+      "distribution",
+      `${expectedDistributionId}`
+    );
 
     assert.fieldEquals(
       "DistributionPeriodVote",
@@ -522,7 +530,31 @@ describe("Grant Fund assertions", () => {
       `${0}`
     );
 
-    // TODO: check funding vote attributes
+    // check FundingVote attributes
+    assert.fieldEquals(
+      "FundingVote",
+      `${fundingVoteId.toHexString()}`,
+      "distribution",
+      `${expectedDistributionId}`
+    );
+    assert.fieldEquals(
+      "FundingVote",
+      `${fundingVoteId.toHexString()}`,
+      "voter",
+      `${voter.toHexString()}`
+    );
+    assert.fieldEquals(
+      "FundingVote",
+      `${fundingVoteId.toHexString()}`,
+      "votesCast",
+      `${wadToDecimal(votesCast)}`
+    );
+    assert.fieldEquals(
+      "FundingVote",
+      `${fundingVoteId.toHexString()}`,
+      "votingPowerUsed",
+      `${expectedVotingPowerUsed}`
+    );
 
     // check DistributionPeriod attributes
     assert.fieldEquals(
