@@ -14,7 +14,6 @@ import {
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
-import { wmul } from "./utils/math"
 import { getRatesAndFees } from "./utils/pool"
 import { loadOrCreateFactory } from "./utils/pool-factory"
 
@@ -86,7 +85,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.t0debt = ZERO_BD
   pool.inflator = ONE_BD
   pool.borrowRate = wadToDecimal(interestRateResults.value0)
-  pool.lendRate = wadToDecimal(wmul(interestRateResults.value0, ratesAndFees.lenderInterestMargin))
+  pool.lendRate = ZERO_BD
   pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
   pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
   pool.pledgedCollateral = ZERO_BD
