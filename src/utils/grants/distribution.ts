@@ -24,9 +24,7 @@ export function getCurrentDistributionId(grantFundAddress: Address): BigInt {
     return distributionIdResult
 }
 
-// FIXME: update this for the latest version of the contract
 export function getCurrentStage(currentBlockNumber: BigInt, distributionPeriod: DistributionPeriod): String {
-    log.info("getCurrentStage: {} {} {} {}", [currentBlockNumber.toString(), currentBlockNumber.ge(distributionPeriod.startBlock.plus(SCREENING_PERIOD_LENGTH)).toString(), currentBlockNumber.le(distributionPeriod.endBlock.minus(FUNDING_PERIOD_LENGTH.plus(CHALLENGE_PERIOD_LENGTH))).toString(), distributionPeriod.endBlock.minus(FUNDING_PERIOD_LENGTH.plus(CHALLENGE_PERIOD_LENGTH)).toString()])
     if (currentBlockNumber.lt(distributionPeriod.startBlock.plus(SCREENING_PERIOD_LENGTH))) {
         return "SCREENING"
     } else if (
@@ -50,7 +48,6 @@ export function loadOrCreateDistributionPeriod(distributionId: Bytes): Distribut
         distributionPeriod.topSlate = Bytes.empty()
         distributionPeriod.slatesSubmitted = []
         distributionPeriod.delegationRewardsClaimed = ZERO_BD
-        distributionPeriod.fundingVotesCast = ZERO_BD
         distributionPeriod.fundingVotePowerUsed = ZERO_BD
         distributionPeriod.screeningVotesCast = ZERO_BD
         distributionPeriod.votes = []

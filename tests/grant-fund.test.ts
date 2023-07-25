@@ -498,8 +498,8 @@ describe("Grant Fund assertions", () => {
     assert.entityCount("DistributionPeriodVote", 1);
 
     const distributionPeriodVoteId = getDistributionPeriodVoteId(bigIntToBytes(distributionId), addressToBytes(voter));
-
-    logStore();
+    const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
+    const expectedVotingPowerUsed = wadToDecimal(votesCast.times(votesCast));
 
     assert.fieldEquals(
       "DistributionPeriodVote",
@@ -512,7 +512,7 @@ describe("Grant Fund assertions", () => {
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
       "initialFundingStageVotingPower",
-      `${wadToDecimal(votesCast.times(votesCast))}`
+      `${expectedVotingPowerUsed}`
     );
 
     assert.fieldEquals(
@@ -521,6 +521,24 @@ describe("Grant Fund assertions", () => {
       "remainingFundingStageVotingPower",
       `${0}`
     );
+
+    // TODO: check funding vote attributes
+
+    // check DistributionPeriod attributes
+    assert.fieldEquals(
+      "DistributionPeriod",
+      `${expectedDistributionId}`,
+      "startBlock",
+      `${startBlock}`
+    );
+    // check DistributionPeriod attributes
+    assert.fieldEquals(
+      "DistributionPeriod",
+      `${expectedDistributionId}`,
+      "fundingVotePowerUsed",
+      `${expectedVotingPowerUsed}`
+    );
+
   });
 
   test("FundedSlateUpdated", () => {});
