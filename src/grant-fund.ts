@@ -1,4 +1,4 @@
-import { Address, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
+import { Address, Bytes, ethereum } from '@graphprotocol/graph-ts'
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,
@@ -26,7 +26,7 @@ import {
   DistributionPeriodVote
 } from "../generated/schema"
 
-import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
+import { ONE_BI, ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getProposalParamsId, getProposalsInSlate, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
@@ -249,15 +249,21 @@ export function handleDistributionPeriodStarted(
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
 
-  // // loop through DistributionPeriodVotes for the current period and update voting power
-  // const votes = distributionPeriod.votes
-  // for (var i=0; i<votes.length; ++i) {
-  //   const vote = DistributionPeriodVote.load(votes[i])!
-  //   vote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
-  //   // vote.fundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
-  //   vote.initialFundingStageVotingPower =
-  //   vote.save()
-  // }
+  // loop through DistributionPeriodVotes of the previous period, create new entities, and set their screening stage voting power
+  if (event.params.distributionId != ONE_BI) {
+    const prevDistributionPeriod = loadOrCreateDistributionPeriod(distributionId)
+    const votes = prevDistributionPeriod.votes
+    for (var i=0; i<votes.length; ++i) {
+      const prevVote = DistributionPeriodVote.load(votes[i])!
+      const prevVoter = prevVote.voter
+      const newDistributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.id, prevVoter)
+      newDistributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(prevVoter))
+      newDistributionPeriodVote.save()
+    }
+  }
+  else {
+    distributionPeriod.votes = []
+  }
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)

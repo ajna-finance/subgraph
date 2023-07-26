@@ -492,10 +492,11 @@ describe("Grant Fund assertions", () => {
     // check Proposal attributes
     assert.entityCount("Proposal", 1);
 
-    assert.entityCount("VoteCast", 2);
+    assert.entityCount("DistributionPeriod", 1);
+    assert.entityCount("DistributionPeriodVote", 1);
     assert.entityCount("FundingVote", 1);
     assert.entityCount("ScreeningVote", 1);
-    assert.entityCount("DistributionPeriodVote", 1);
+    assert.entityCount("VoteCast", 2);
 
     const distributionPeriodVoteId = getDistributionPeriodVoteId(bigIntToBytes(distributionId), addressToBytes(voter));
     const fundingVoteId = getFundingVoteId(bigIntToBytes(proposalId), addressToBytes(voter), BigInt.fromI32(2));
