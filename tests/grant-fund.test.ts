@@ -264,7 +264,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${bigIntToBytes(proposalId).toHexString()}`,
       "totalTokensRequested",
-      `${BigInt.fromI32(2)}`
+      `${wadToDecimal(BigInt.fromI32(2))}`
     );
 
   });
@@ -367,7 +367,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${bigIntToBytes(proposalId).toHexString()}`,
       "totalTokensRequested",
-      `${BigInt.fromI32(2)}`
+      `${wadToDecimal(BigInt.fromI32(2))}`
     );
 
     assert.fieldEquals(
@@ -822,7 +822,7 @@ describe("Grant Fund assertions", () => {
       "FundedSlate",
       `${fundedSlateHash.toHexString()}`,
       "totalTokensRequested",
-      `${BigInt.fromI32(2)}`
+      `${wadToDecimal(BigInt.fromI32(2))}`
     );
   });
 });
