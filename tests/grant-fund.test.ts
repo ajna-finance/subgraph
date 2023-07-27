@@ -33,7 +33,7 @@ import {
   ZERO_BI,
 } from "../src/utils/constants";
 import { addressToBytes, bigIntToBytes, decimalToWad, wadToDecimal } from "../src/utils/convert";
-import { mockGetDistributionId, mockGetVotesFunding, mockGetVotesScreening } from "./utils/common";
+import { mockGetDistributionId, mockGetTreasury, mockGetVotesFunding, mockGetVotesScreening } from "./utils/common";
 import { getDistributionPeriodVoteId, getFundingVoteId } from "../src/utils/grants/voter";
 
 // Tests structure (matchstick-as >=0.5.0)
@@ -94,6 +94,9 @@ describe("Grant Fund assertions", () => {
     const distributionId = ONE_BI;
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
+    const grantFundAddress = Address.fromString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a")
+
+    mockGetTreasury(grantFundAddress, ONE_WAD_BI);
 
     const newDistributionPeriodStartedEvent = createDistributionPeriodStartedEvent(
       distributionId,
@@ -148,6 +151,9 @@ describe("Grant Fund assertions", () => {
     // mock parameters
     const amount = ONE_WAD_BI;
     const treasuryBalance = ONE_WAD_BI;
+    const grantFundAddress = Address.fromString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a")
+
+    mockGetTreasury(grantFundAddress, treasuryBalance)
 
     const newFundTreasuryEvent = createFundTreasuryEvent(
       amount,
@@ -197,6 +203,8 @@ describe("Grant Fund assertions", () => {
       endBlock
     );
     newDistributionPeriodStartedEvent.address = grantFundAddress
+    mockGetTreasury(grantFundAddress, ONE_WAD_BI);
+
     handleDistributionPeriodStarted(newDistributionPeriodStartedEvent);
     mockGetDistributionId(grantFundAddress, distributionId);
 
@@ -259,6 +267,9 @@ describe("Grant Fund assertions", () => {
       endBlock
     );
     newDistributionPeriodStartedEvent.address = grantFundAddress
+
+    mockGetTreasury(grantFundAddress, ONE_WAD_BI);
+
     handleDistributionPeriodStarted(newDistributionPeriodStartedEvent);
     mockGetDistributionId(grantFundAddress, distributionId);
 

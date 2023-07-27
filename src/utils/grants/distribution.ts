@@ -48,6 +48,7 @@ export function loadOrCreateDistributionPeriod(distributionId: Bytes): Distribut
         distributionPeriod.topSlate = Bytes.empty()
         distributionPeriod.slatesSubmitted = []
         distributionPeriod.delegationRewardsClaimed = ZERO_BD
+        distributionPeriod.fundsAvailable = ZERO_BD
         distributionPeriod.fundingVotePowerUsed = ZERO_BD
         distributionPeriod.screeningVotesCast = ZERO_BD
         distributionPeriod.votes = []

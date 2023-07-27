@@ -281,6 +281,14 @@ export function mockGetVotesFunding(grantFund: Address, distributionId: BigInt, 
         ])
 }
 
+export function mockGetTreasury(grantFund: Address, expectedTreasury: BigInt): void {
+    createMockedFunction(grantFund, 'treasury', 'treasury():(uint256)')
+        .withArgs([])
+        .returns([
+            ethereum.Value.fromUnsignedBigInt(expectedTreasury),
+        ])
+}
+
 /*******************************/
 /*** Position Mock Functions ***/
 /*******************************/

@@ -794,6 +794,7 @@ type DistributionPeriod @entity {
   endBlock: BigInt! # block number the distribution period ends
   topSlate: FundedSlate # The current top FundedSlate
   slatesSubmitted: [FundedSlate!]! # FundedSlate[] slates submitted in the distribution period
+  fundsAvailable: BigDecimal! # Total ajna tokens available for distribution in the distribution period
   delegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed in the distribution period
   fundingVotePowerUsed: BigDecimal! # Total funding vote power used
   screeningVotesCast: BigDecimal! # number of screening votes cast

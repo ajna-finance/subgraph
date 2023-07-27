@@ -16,3 +16,10 @@ export function loadOrCreateGrantFund(grantFundAddress: Address): GrantFund {
   }
   return grantFund
 }
+
+export function getTreasury(grantFundAddress: Address): BigInt {
+  const grantFundContract = GrantFundContract.bind(grantFundAddress)
+  const getTreasuryResult = grantFundContract.treasury()
+
+  return getTreasuryResult
+}

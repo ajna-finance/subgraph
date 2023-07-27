@@ -1,4 +1,4 @@
-import { Address, Bytes, ethereum } from '@graphprotocol/graph-ts'
+import { Address, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts'
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,
@@ -26,12 +26,12 @@ import {
   DistributionPeriodVote
 } from "../generated/schema"
 
-import { ONE_BI, ZERO_ADDRESS, ZERO_BD } from './utils/constants'
+import { ONE_BI, THREE_PERCENT_BI, ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
 import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
-import { loadOrCreateGrantFund } from './utils/grants/fund'
+import { getTreasury, loadOrCreateGrantFund } from './utils/grants/fund'
 import { loadOrCreateAccount } from './utils/account'
 
 export function handleDelegateRewardClaimed(
@@ -86,8 +86,7 @@ export function handleFundTreasury(event: FundTreasuryEvent): void {
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
-  // TODO: simply set this to treasuryBalance?
-  grantFund.treasury = grantFund.treasury.plus(wadToDecimal(event.params.amount))
+  grantFund.treasury = wadToDecimal(getTreasury(event.address))
 
   // save entities to the store
   grantFund.save()
@@ -280,7 +279,11 @@ export function handleDistributionPeriodStarted(
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
+  const treasury = getTreasury(event.address)
   grantFund.distributionPeriods = grantFund.distributionPeriods.concat([distributionPeriod.id])
+  grantFund.treasury = wadToDecimal(treasury)
+
+  distributionPeriod.fundsAvailable = wadToDecimal(treasury.times(THREE_PERCENT_BI))
 
   // save entities to store
   distributionPeriod.save()
