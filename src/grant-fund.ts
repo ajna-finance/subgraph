@@ -1,4 +1,4 @@
-import { Address, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
+import { Address, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts'
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,
@@ -26,13 +26,14 @@ import {
   DistributionPeriodVote
 } from "../generated/schema"
 
-import { ZERO_ADDRESS, ZERO_BD } from './utils/constants'
+import { ONE_BI, THREE_PERCENT_BI, ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
-import { getProposalParamsId, getProposalsInSlate, removeProposalFromList } from './utils/grants/proposal'
+import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
-import { getFundingStageVotingPower, getFundingVoteId, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
-import { loadOrCreateGrantFund } from './utils/grants/fund'
+import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
+import { getTreasury, loadOrCreateGrantFund } from './utils/grants/fund'
 import { loadOrCreateAccount } from './utils/account'
+import { wmul } from './utils/math'
 
 export function handleDelegateRewardClaimed(
   event: DelegateRewardClaimedEvent
@@ -86,8 +87,7 @@ export function handleFundTreasury(event: FundTreasuryEvent): void {
 
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
-  // TODO: simply set this to treasuryBalance?
-  grantFund.treasury = grantFund.treasury.plus(wadToDecimal(event.params.amount))
+  grantFund.treasury = wadToDecimal(getTreasury(event.address))
 
   // save entities to the store
   grantFund.save()
@@ -111,17 +111,30 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
   distributionPeriod.topSlate = event.params.fundedSlateHash
 
   // create FundedSlate entity
-  const fundedSlate = new FundedSlate(distributionId) as FundedSlate
+  const fundedSlate = new FundedSlate(fundedSlateUpdated.fundedSlateHash_) as FundedSlate
   fundedSlate.distribution = distributionId
   fundedSlate.updateBlock = event.block.number
 
   // get the list of proposals in the slate
-  const proposalsInSlate = getProposalsInSlate(event.address, fundedSlateUpdated.distributionId_)
-  const proposals = fundedSlate.proposals
+  const proposalsInSlate = getProposalsInSlate(event.address, fundedSlateUpdated.fundedSlateHash_)
+  const proposals: Bytes[] = []
+  let totalTokensRequested = ZERO_BD
+  let totalFundingVotesReceived = ZERO_BD
+
   for (let i = 0; i < proposalsInSlate.length; i++) {
     const proposalId = proposalsInSlate[i]
+    const proposal = loadOrCreateProposal(bigIntToBytes(proposalId))
+
+    totalTokensRequested = totalTokensRequested.plus(proposal.totalTokensRequested)
+    totalFundingVotesReceived = totalFundingVotesReceived.plus(proposal.fundingVotesReceived)
+
+    // add proposal information to fundedSlate
     proposals.push(bigIntToBytes(proposalId))
   }
+
+  // record proposal information in fundedSlate entity
+  fundedSlate.totalTokensRequested = totalTokensRequested
+  fundedSlate.totalFundingVotesReceived = totalFundingVotesReceived
   fundedSlate.proposals = proposals
 
   // save entities to the store
@@ -249,18 +262,13 @@ export function handleDistributionPeriodStarted(
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
 
-  // loop through DistributionPeriodVotes for the current period and update voting power
-  const votes = distributionPeriod.votes
-  for (var i=0; i<votes.length; ++i) {
-    const vote = DistributionPeriodVote.load(votes[i])!
-    vote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
-    vote.fundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(vote.voter))
-    vote.save()
-  }
-
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
+  const treasury = getTreasury(event.address)
   grantFund.distributionPeriods = grantFund.distributionPeriods.concat([distributionPeriod.id])
+  grantFund.treasury = wadToDecimal(treasury)
+
+  distributionPeriod.fundsAvailable = wadToDecimal(wmul(treasury, THREE_PERCENT_BI))
 
   // save entities to store
   distributionPeriod.save()
@@ -289,9 +297,8 @@ export function handleVoteCast(event: VoteCastEvent): void {
   const proposalId = bigIntToBytes(event.params.proposalId)
   const proposal = Proposal.load(proposalId) as Proposal
   if (proposal != null) {
-    // TODO: need to be able to access the distributionId at that block height or call getDistributionIdAtBlock()?
-    // load distribution entity
-    const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
+    // load distribution entity using the distributionId from the proposal
+    const distributionId = proposal.distribution!
     const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
 
     // load voter's distributionPeriodVotes
@@ -314,11 +321,6 @@ export function handleVoteCast(event: VoteCastEvent): void {
       screeningVote.votesCast = screeningVotesCast
       screeningVote.blockNumber = voteCast.blockNumber
 
-      // update voter's distributionPeriodVote entity if it hasn't been recorded yet
-      if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-        distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
-      }
-
       // add additional screening votes to voter's distributionPeriodVote entity
       distributionPeriodVote.screeningVotes = distributionPeriodVote.screeningVotes.concat([screeningVote.id])
 
@@ -332,19 +334,37 @@ export function handleVoteCast(event: VoteCastEvent): void {
       fundingVote.voter = voter.id
       fundingVote.proposal = proposalId
       fundingVote.votesCast = wadToDecimal(event.params.weight)
-      // fundingVote.votingPowerUsed = ZERO_BD TODO: need to calculate this
       fundingVote.blockNumber = voteCast.blockNumber
 
-      // update voter's distributionPeriodVote entity if it hasn't been recorded yet
-      if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-        distributionPeriodVote.fundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+      // save initial fundingVote information to enable usage in calculation of votingPowerUsed
+      fundingVote.votingPowerUsed = ZERO_BD
+      fundingVote.save()
+
+      // add additional funding votes to voter's distributionPeriodVote entity
+      distributionPeriodVote.fundingVotes = distributionPeriodVote.fundingVotes.concat([fundingVote.id])
+
+      // calculate and record the voting power cost of this funding vote
+      fundingVote.votingPowerUsed = getFundingVotingPowerUsed(distributionPeriodVote, proposalId);
+      distributionPeriod.fundingVotePowerUsed = distributionPeriod.fundingVotePowerUsed.plus(fundingVote.votingPowerUsed)
+
+      // update voter's distributionPeriodVote entity voting power tracking if it hasn't been recorded yet
+      if (distributionPeriodVote.estimatedInitialFundingStageVotingPowerForCalculatingRewards.equals(ZERO_BD)) {
+        distributionPeriodVote.estimatedInitialFundingStageVotingPowerForCalculatingRewards = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+        distributionPeriodVote.estimatedRemainingFundingStageVotingPowerForCalculatingRewards = distributionPeriodVote.estimatedInitialFundingStageVotingPowerForCalculatingRewards.minus(fundingVote.votingPowerUsed)
+      }
+      else {
+        distributionPeriodVote.estimatedRemainingFundingStageVotingPowerForCalculatingRewards = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
 
       // save fundingVote to the store
       fundingVote.save()
     }
 
-    voter.distributionPeriodVotes = voter.distributionPeriodVotes.concat([distributionPeriodVote.id])
+    // check if the account has already voted in this distribution period
+    if (!voter.distributionPeriodVotes.includes(distributionPeriodVote.id)) {
+        // associate the distributionPeriodVote entity with the voter
+      voter.distributionPeriodVotes = voter.distributionPeriodVotes.concat([distributionPeriodVote.id])
+    }
 
     // save entities to the store
     distributionPeriod.save()

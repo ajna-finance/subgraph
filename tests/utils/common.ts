@@ -259,6 +259,46 @@ export function mockGetDistributionId(grantFund: Address, expectedDistributionId
         ])
 }
 
+export function mockGetVotesScreening(grantFund: Address, distributionId: BigInt, voter: Address, expectedVotes: BigInt): void {
+    createMockedFunction(grantFund, 'getVotesScreening', 'getVotesScreening(uint24,address):(uint256)')
+        .withArgs([
+            ethereum.Value.fromUnsignedBigInt(distributionId),
+            ethereum.Value.fromAddress(voter)
+        ])
+        .returns([
+            ethereum.Value.fromUnsignedBigInt(expectedVotes),
+        ])
+}
+
+export function mockGetVotesFunding(grantFund: Address, distributionId: BigInt, voter: Address, expectedVotes: BigInt): void {
+    createMockedFunction(grantFund, 'getVotesFunding', 'getVotesFunding(uint24,address):(uint256)')
+        .withArgs([
+            ethereum.Value.fromUnsignedBigInt(distributionId),
+            ethereum.Value.fromAddress(voter)
+        ])
+        .returns([
+            ethereum.Value.fromUnsignedBigInt(expectedVotes),
+        ])
+}
+
+export function mockGetTreasury(grantFund: Address, expectedTreasury: BigInt): void {
+    createMockedFunction(grantFund, 'treasury', 'treasury():(uint256)')
+        .withArgs([])
+        .returns([
+            ethereum.Value.fromUnsignedBigInt(expectedTreasury),
+        ])
+}
+
+export function mockGetFundedProposalSlate(grantFund: Address, slateHash: Bytes, expectedProposals: Array<BigInt>): void {
+    createMockedFunction(grantFund, 'getFundedProposalSlate', 'getFundedProposalSlate(bytes32):(uint256[])')
+        .withArgs([
+            ethereum.Value.fromFixedBytes(slateHash)
+        ])
+        .returns([
+            ethereum.Value.fromUnsignedBigIntArray(expectedProposals),
+        ])
+}
+
 /*******************************/
 /*** Position Mock Functions ***/
 /*******************************/

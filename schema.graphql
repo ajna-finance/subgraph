@@ -794,8 +794,8 @@ type DistributionPeriod @entity {
   endBlock: BigInt! # block number the distribution period ends
   topSlate: FundedSlate # The current top FundedSlate
   slatesSubmitted: [FundedSlate!]! # FundedSlate[] slates submitted in the distribution period
+  fundsAvailable: BigDecimal! # Total ajna tokens available for distribution in the distribution period
   delegationRewardsClaimed: BigDecimal! # Total delegation rewards claimed in the distribution period
-  fundingVotesCast: BigDecimal! # number of funding votes cast
   fundingVotePowerUsed: BigDecimal! # Total funding vote power used
   screeningVotesCast: BigDecimal! # number of screening votes cast
   votes: [DistributionPeriodVote!]! # Voter info for the distribution period
@@ -828,8 +828,8 @@ type DistributionPeriodVote @entity {
   id: Bytes! # $accountId + '|'' + $distributionId
   voter: Account!
   distribution: DistributionPeriod! # uint256
-  screeningStageVotingPower: BigDecimal! # uint256
-  fundingStageVotingPower: BigDecimal! # uint256
+  estimatedInitialFundingStageVotingPowerForCalculatingRewards: BigDecimal! # uint256
+  estimatedRemainingFundingStageVotingPowerForCalculatingRewards: BigDecimal! # uint256
   screeningVotes: [ScreeningVote!]! # ScreeningVote[]
   fundingVotes: [FundingVote!]! # FundingVote[]
 }
@@ -848,8 +848,8 @@ type FundingVote @entity {
   distribution: DistributionPeriod! # distribution period the vote was cast in
   voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on
-  votesCast: BigDecimal! # uint256 # TODO: can this be negative?
-  votingPowerUsed: BigDecimal! # uint256
+  votesCast: BigDecimal! # uint256
+  votingPowerUsed: BigDecimal! # uint256 # cost of the incremetnal funding vote to the voter's voting power
   blockNumber: BigInt! # block number the vote was cast
 }
 
@@ -857,6 +857,8 @@ type FundedSlate @entity {
   id: Bytes! # bytes32 hash of slate proposalIds
   distribution: DistributionPeriod! # distribution period the vote was cast in
   proposals: [Proposal!]! # uint256[] list of proposalIds
+  totalTokensRequested: BigDecimal! # total number of tokens requested by all proposals in the slate
+  totalFundingVotesReceived: BigDecimal! # net funding votes received by all proposals in the slate
   updateBlock: BigInt! # block number the slate was updated
 }
 
