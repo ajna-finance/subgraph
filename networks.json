@@ -19,6 +19,10 @@
     "GrantFund": {
       "address": "0x0000000000000000000000000000000000000000",
       "startBlock": 17622995
+    },
+    "AjnaToken": {
+      "address": "0x9a96ec9B57Fb64FbC60B423d1f4da7691Bd35079",
+      "startBlock": 17622995
     }
   },
   "goerli": {
@@ -40,6 +44,10 @@
     },
     "GrantFund": {
       "address": "0x881b4dFF6C72babA6f5eA60f34A61410c1EA1ec2",
+      "startBlock": 9297080
+    },
+    "AjnaToken": {
+      "address": "0xaadebCF61AA7Da0573b524DE57c67aDa797D46c5",
       "startBlock": 9297080
     }
   },
@@ -63,6 +71,9 @@
     "GrantFund": {
       "address": "0xE340B87CEd1af1AbE1CE8D617c84B7f168e3b18b",
       "startBlock": 0
+    },
+    "AjnaToken": {
+      "address": "0xaadebCF61AA7Da0573b524DE57c67aDa797D46c5"
     }
   }
 }

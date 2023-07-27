@@ -170,6 +170,28 @@ dataSources:
           handler: handleVoteCast
       file: ./src/grant-fund.ts
     network: ganache
+  - kind: ethereum
+    name: AjnaToken
+    network: ganache
+    source:
+      address: "0xaadebCF61AA7Da0573b524DE57c67aDa797D46c5"
+      abi: AjnaToken
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DelegateChanged
+        - DelegateVotesChanged
+      abis:
+        - name: AjnaToken
+          file: ./abis/AjnaToken.json
+      eventHandlers:
+        - event: DelegateChanged(indexed address,indexed address,indexed address)
+          handler: handleDelegateChanged
+        - event: DelegateVotesChanged(indexed address,uint256,uint256)
+          handler: handleDelegateVotesChanged
+      file: ./src/ajna-token.ts
 templates:
   - kind: ethereum
     name: ERC20Pool

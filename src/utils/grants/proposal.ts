@@ -41,9 +41,9 @@ export function removeProposalFromList(proposalId: Bytes, proposalList: Array<By
 /*** Contract Calls ***/
 /**********************/
 
-export function getProposalsInSlate(grantFundAddress: Address, distributionId: BigInt): Array<BigInt> {
+export function getProposalsInSlate(grantFundAddress: Address, slateHash: Bytes): Array<BigInt> {
     const grantFundContract = GrantFund.bind(grantFundAddress)
-    const getProposalsInSlateResult = grantFundContract.getTopTenProposals(distributionId.toI32())
+    const getProposalsInSlateResult = grantFundContract.getFundedProposalSlate(slateHash)
 
     return getProposalsInSlateResult
 }

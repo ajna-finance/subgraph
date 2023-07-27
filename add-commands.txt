@@ -15,3 +15,6 @@ graph add 0xEd6890d748e62ddbb3f80e7256Deeb2fBb853476 --abi ../contracts/forge_ou
 
 # Goerli GrantFund
 graph add 0xaeB91e664A49829FaBf06BE35d4447938d83A271 --abi ../ecosystem-coordination/out/GrantFund.sol/GrantFund.json --contract-name GrantFund
+
+# Goerli AjnaToken
+graph add 0xaadebCF61AA7Da0573b524DE57c67aDa797D46c5 --abi ../ecosystem-coordination/out/AjnaToken.sol/AjnaToken.json --contract-name AjnaToken
