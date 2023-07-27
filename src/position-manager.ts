@@ -22,11 +22,11 @@ import {
   RedeemPosition,
   Transfer
 } from "../generated/schema"
-import { getBucketId } from "./utils/bucket"
+import { getBucketId } from "./utils/pool/bucket"
 import { lpbValueInQuote } from "./utils/common"
 import { ONE_BI, ZERO_BD } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
-import { getLendId, loadOrCreateLend } from "./utils/lend"
+import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { deletePosition, getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "./utils/position"
 
 export function handleApproval(event: ApprovalEvent): void {

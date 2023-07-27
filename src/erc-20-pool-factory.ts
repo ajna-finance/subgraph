@@ -14,8 +14,8 @@ import {
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
-import { getRatesAndFees } from "./utils/pool"
-import { loadOrCreateFactory } from "./utils/pool-factory"
+import { getRatesAndFees } from "./utils/pool/pool"
+import { loadOrCreateFactory } from "./utils/pool/pool-factory"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(

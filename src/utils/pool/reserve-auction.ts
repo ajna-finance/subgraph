@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { Pool, ReserveAuction } from "../../generated/schema"
-import { EXP_18_BD, ONE_BI, ZERO_BD, ZERO_BI } from "./constants"
+import { Pool, ReserveAuction } from "../../../generated/schema"
+import { EXP_18_BD, ONE_BI, ZERO_BD, ZERO_BI } from "../constants"
 
 export function getReserveAuctionId(poolId: Bytes, burnEpoch: BigInt): Bytes {
     return poolId.concat(Bytes.fromUTF8('|' + burnEpoch.toHexString()))

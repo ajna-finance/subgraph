@@ -1,10 +1,10 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
-import { Bucket } from "../../generated/schema"
-import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
+import { Bucket } from "../../../generated/schema"
+import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsAddressTable, ONE_BD, ZERO_BD } from "./constants"
-import { indexToPrice, wadToDecimal } from "./convert"
+import { poolInfoUtilsAddressTable, ONE_BD, ZERO_BD } from "../constants"
+import { indexToPrice, wadToDecimal } from "../convert"
 
 export function getBucketId(pool: Bytes, index: u32): Bytes {
     return pool.concat(Bytes.fromUTF8('#' + index.toString()))

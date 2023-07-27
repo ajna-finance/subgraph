@@ -4,12 +4,12 @@ import { assert, createMockedFunction } from "matchstick-as"
 import { handlePoolCreated } from "../../src/erc-20-pool-factory"
 import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 
-import { BucketInfo } from "../../src/utils/bucket"
+import { BucketInfo } from "../../src/utils/pool/bucket"
 import { wadToDecimal } from "../../src/utils/convert"
 import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
-import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool"
-import { AuctionInfo, AuctionStatus } from "../../src/utils/liquidation"
-import { BorrowerInfo } from "../../src/utils/loan"
+import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool/pool"
+import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
+import { BorrowerInfo } from "../../src/utils/pool/loan"
 import { wdiv, wmin } from "../../src/utils/math"
 
 /*************************/

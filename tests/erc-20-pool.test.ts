@@ -28,15 +28,15 @@ import {
   mockPoolInfoUtilsPoolUpdateCalls,
   mockTokenBalance
 } from "./utils/common"
-import { BucketInfo, getBucketId } from "../src/utils/bucket"
+import { BucketInfo, getBucketId } from "../src/utils/pool/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan, Pool } from "../generated/schema"
-import { getLendId } from "../src/utils/lend"
-import { BorrowerInfo, getLoanId } from "../src/utils/loan"
-import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/liquidation"
-import { BurnInfo, DebtInfo } from "../src/utils/pool"
-import { getReserveAuctionId } from "../src/utils/reserve-auction"
+import { getLendId } from "../src/utils/pool/lend"
+import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
+import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/pool/liquidation"
+import { BurnInfo, DebtInfo } from "../src/utils/pool/pool"
+import { getReserveAuctionId } from "../src/utils/pool/reserve-auction"
 import { wdiv, wmul } from "../src/utils/math"
 
 // Tests structure (matchstick-as >=0.5.0)

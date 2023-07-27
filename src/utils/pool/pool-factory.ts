@@ -1,7 +1,7 @@
 import { Address } from "@graphprotocol/graph-ts"
-import { PoolFactory } from "../../generated/schema"
+import { PoolFactory } from "../../../generated/schema"
 
-import { ZERO_BI } from "./constants"
+import { ZERO_BI } from "../constants"
 
 export function loadOrCreateFactory(address: Address, poolType: string): PoolFactory {
   let factory = PoolFactory.load(address)

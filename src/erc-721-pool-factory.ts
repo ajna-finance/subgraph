@@ -1,7 +1,7 @@
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC721PoolFactory/ERC721PoolFactory"
 import { Pool, PoolCreated, Token } from "../generated/schema"
 import { ONE_BI } from "./utils/constants"
-import { loadOrCreateFactory } from "./utils/pool-factory"
+import { loadOrCreateFactory } from "./utils/pool/pool-factory"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
