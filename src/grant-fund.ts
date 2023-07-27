@@ -33,6 +33,7 @@ import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeri
 import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
 import { getTreasury, loadOrCreateGrantFund } from './utils/grants/fund'
 import { loadOrCreateAccount } from './utils/account'
+import { wmul } from './utils/math'
 
 export function handleDelegateRewardClaimed(
   event: DelegateRewardClaimedEvent
@@ -267,7 +268,7 @@ export function handleDistributionPeriodStarted(
   grantFund.distributionPeriods = grantFund.distributionPeriods.concat([distributionPeriod.id])
   grantFund.treasury = wadToDecimal(treasury)
 
-  distributionPeriod.fundsAvailable = wadToDecimal(treasury.times(THREE_PERCENT_BI))
+  distributionPeriod.fundsAvailable = wadToDecimal(wmul(treasury, THREE_PERCENT_BI))
 
   // save entities to store
   distributionPeriod.save()
