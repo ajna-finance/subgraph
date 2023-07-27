@@ -15,6 +15,7 @@ import {
   handleProposalExecuted,
   handleDistributionPeriodStarted,
   handleVoteCast,
+  handleFundedSlateUpdated,
 } from "../src/grant-fund";
 import {
   createDelegateRewardClaimedEvent,
@@ -23,6 +24,7 @@ import {
   createProposalExecutedEvent,
   createDistributionPeriodStartedEvent,
   createVoteCastEvent,
+  createFundedSlateUpdatedEvent,
 } from "./utils/grant-fund-utils";
 import {
   DISTRIBUTION_PERIOD_LENGTH,
@@ -33,7 +35,7 @@ import {
   ZERO_BI,
 } from "../src/utils/constants";
 import { addressToBytes, bigIntToBytes, decimalToWad, wadToDecimal } from "../src/utils/convert";
-import { mockGetDistributionId, mockGetTreasury, mockGetVotesFunding, mockGetVotesScreening } from "./utils/common";
+import { mockGetDistributionId, mockGetFundedProposalSlate, mockGetTreasury, mockGetVotesFunding, mockGetVotesScreening } from "./utils/common";
 import { getDistributionPeriodVoteId, getFundingVoteId, getScreeningVoteId } from "../src/utils/grants/voter";
 
 // Tests structure (matchstick-as >=0.5.0)
@@ -481,8 +483,6 @@ describe("Grant Fund assertions", () => {
     const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock, BigInt.fromI32(1));
     handleVoteCast(screeningVoteCastEvent);
 
-    // TODO: advance state to funding stage
-
     /*****************************/
     /*** Funding Vote Proposal ***/
     /*****************************/
@@ -591,5 +591,115 @@ describe("Grant Fund assertions", () => {
 
   });
 
-  test("FundedSlateUpdated", () => {});
+  test("FundedSlateUpdated", () => {
+
+    /***********************/
+    /*** Submit Proposal ***/
+    /***********************/
+
+    // mock parameters
+    const ajnaTokenAddress = Address.fromString("0x0000000000000000000000000000000000000035");
+    const grantFundAddress = Address.fromString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a")
+    const proposalId = BigInt.fromI32(234);
+    const proposer = Address.fromString(
+      "0x0000000000000000000000000000000000000025"
+    );
+    const targets = [ajnaTokenAddress, ajnaTokenAddress];
+    const values = [ZERO_BI, ZERO_BI];
+    const signatures = [
+      "transfer(address,uint256)",
+      "transfer(address,uint256)",
+    ];
+    const calldatas = [
+      Bytes.fromHexString("0x000000"),
+      Bytes.fromHexString("0x000000"),
+    ];
+    const distributionId = ONE_BI;
+    const startBlock = ONE_BI;
+    const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
+    const description = "test proposal";
+
+    // start distribution period
+    // mock GrantFund contract calls
+    const newDistributionPeriodStartedEvent = createDistributionPeriodStartedEvent(
+      distributionId,
+      startBlock,
+      endBlock
+    );
+    newDistributionPeriodStartedEvent.address = grantFundAddress
+    handleDistributionPeriodStarted(newDistributionPeriodStartedEvent);
+    mockGetDistributionId(grantFundAddress, distributionId);
+
+    // submit proposal
+    // create mock event
+    const newProposalCreatedEvent = createProposalCreatedEvent(
+      proposalId,
+      proposer,
+      targets,
+      values,
+      signatures,
+      calldatas,
+      startBlock,
+      endBlock,
+      description
+    );
+    newProposalCreatedEvent.address = grantFundAddress
+    handleProposalCreated(newProposalCreatedEvent);
+
+    /*****************************/
+    /*** Funding Vote Proposal ***/
+    /*****************************/
+
+    // mock parameters
+    const voter = Address.fromString("0x0000000000000000000000000000000000000050");
+    let votesCast = BigInt.fromI32(-234);
+    const reason = ""
+
+    // TODO: need to convert back from WAD
+    const fundingVotingPower = votesCast.times(votesCast);
+
+    mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);
+
+    votesCast = BigInt.fromI32(-234);
+    const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 0, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(1));
+    handleVoteCast(fundingVoteCastEvent);
+
+    /********************/
+    /*** Update Slate ***/
+    /********************/
+
+    const fundedProposalSlate = [proposalId]
+
+    // TODO: need to determine how to best hash the proposalId array
+    const fundedSlateHash = Bytes.fromHexString("0x000010")
+
+    mockGetFundedProposalSlate(grantFundAddress, fundedSlateHash, fundedProposalSlate);
+
+    const updateSlateEvent = createFundedSlateUpdatedEvent(distributionId, fundedSlateHash)
+    handleFundedSlateUpdated(updateSlateEvent);
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // check GrantFund attributes
+    assert.entityCount("GrantFund", 1);
+
+    // check Proposal attributes
+    assert.entityCount("Proposal", 1);
+
+    assert.entityCount("DistributionPeriod", 1);
+    assert.entityCount("FundedSlate", 1);
+
+    logStore();
+
+    // // check FundedSlate attributes
+    // assert.fieldEquals(
+    //   "FundedSlate",
+    //   `${fundedSlateHash.toHexString()}`,
+    //   "totalFundingVotesReceived",
+    //   `${votesCast}`
+    // );
+
+  });
 });

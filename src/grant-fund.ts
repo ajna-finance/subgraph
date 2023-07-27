@@ -111,13 +111,13 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
   distributionPeriod.topSlate = event.params.fundedSlateHash
 
   // create FundedSlate entity
-  const fundedSlate = new FundedSlate(distributionId) as FundedSlate
+  const fundedSlate = new FundedSlate(fundedSlateUpdated.fundedSlateHash_) as FundedSlate
   fundedSlate.distribution = distributionId
   fundedSlate.updateBlock = event.block.number
 
   // get the list of proposals in the slate
-  const proposalsInSlate = getProposalsInSlate(event.address, fundedSlateUpdated.distributionId_)
-  const proposals = fundedSlate.proposals
+  const proposalsInSlate = getProposalsInSlate(event.address, fundedSlateUpdated.fundedSlateHash_)
+  const proposals: Bytes[] = []
   let totalTokensRequested = ZERO_BD
   let totalFundingVotesReceived = ZERO_BD
 

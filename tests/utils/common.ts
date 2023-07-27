@@ -289,6 +289,16 @@ export function mockGetTreasury(grantFund: Address, expectedTreasury: BigInt): v
         ])
 }
 
+export function mockGetFundedProposalSlate(grantFund: Address, slateHash: Bytes, expectedProposals: Array<BigInt>): void {
+    createMockedFunction(grantFund, 'getFundedProposalSlate', 'getFundedProposalSlate(bytes32):(uint256[])')
+        .withArgs([
+            ethereum.Value.fromFixedBytes(slateHash)
+        ])
+        .returns([
+            ethereum.Value.fromUnsignedBigIntArray(expectedProposals),
+        ])
+}
+
 /*******************************/
 /*** Position Mock Functions ***/
 /*******************************/
