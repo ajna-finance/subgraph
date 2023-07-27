@@ -733,7 +733,7 @@ describe("Grant Fund assertions", () => {
     ];
     const paramsArray: Array<ethereum.Value> = [
       ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("1000000000000000000000")), // 1000 * 1e18
     ];
     const params = changetype<ethereum.Tuple>(paramsArray)
     const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
@@ -780,7 +780,7 @@ describe("Grant Fund assertions", () => {
 
     // mock parameters
     const voter = Address.fromString("0x0000000000000000000000000000000000000050");
-    let votesCast = BigInt.fromI32(-234);
+    const votesCast = BigInt.fromString("-234000000000000000000")
     const reason = ""
 
     // TODO: need to convert back from WAD
@@ -788,7 +788,6 @@ describe("Grant Fund assertions", () => {
 
     mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);
 
-    votesCast = BigInt.fromI32(-234);
     const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 0, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(1));
     handleVoteCast(fundingVoteCastEvent);
 
@@ -803,6 +802,8 @@ describe("Grant Fund assertions", () => {
 
     const updateSlateEvent = createFundedSlateUpdatedEvent(distributionId, fundedSlateHash)
     handleFundedSlateUpdated(updateSlateEvent);
+
+    logStore();
 
     /********************/
     /*** Assert State ***/
@@ -829,7 +830,7 @@ describe("Grant Fund assertions", () => {
       "FundedSlate",
       `${fundedSlateHash.toHexString()}`,
       "totalTokensRequested",
-      `${wadToDecimal(BigInt.fromI32(2))}`
+      `${wadToDecimal(BigInt.fromString("2000000000000000000000"))}` // 1000 * 1e18
     );
   });
 });
