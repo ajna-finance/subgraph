@@ -162,14 +162,8 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
 
   // create Proposal entity
   const proposalId = bigIntToBytes(event.params.proposalId)
-  const proposal = new Proposal(proposalId) as Proposal
+  const proposal = loadOrCreateProposal(proposalId)
   proposal.description  = event.params.description
-  proposal.distribution = Bytes.empty()
-  proposal.executed     = false
-  proposal.successful   = false
-  proposal.screeningVotesReceived = ZERO_BD
-  proposal.fundingVotesReceived = ZERO_BD
-  proposal.params = []
 
   let totalTokensRequested = ZERO_BD
 
@@ -224,14 +218,11 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
   proposalExecuted.transactionHash = event.transaction.hash
 
   // update proposal entity
-  const proposal = Proposal.load(bigIntToBytes(event.params.proposalId)) as Proposal
-  if (proposal != null) {
-    proposal.executed = true
-    proposal.successful = true
+  const proposal = loadOrCreateProposal(bigIntToBytes(event.params.proposalId))
+  proposal.executed = true
 
-    // save entities to the store
-    proposal.save()
-  }
+  // save entities to the store
+  proposal.save()
   proposalExecuted.save()
 }
 

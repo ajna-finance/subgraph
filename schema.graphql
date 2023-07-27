@@ -808,7 +808,6 @@ type Proposal @entity {
   description: String! # proposal description hashed as part of proposalId
   distribution: DistributionPeriod # distributionPeriod in which the proposal was submitted if Standard, null otherwise
   executed: Boolean! # bool
-  successful: Boolean! # bool
   screeningVotesReceived: BigDecimal! # uint256
   fundingVotesReceived: BigDecimal! # uint256
   totalTokensRequested: BigDecimal! # uint256

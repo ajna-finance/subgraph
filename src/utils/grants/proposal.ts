@@ -19,7 +19,6 @@ export function loadOrCreateProposal(proposalId: Bytes): Proposal {
         proposal.description  = ""
         proposal.distribution = Bytes.empty()
         proposal.executed     = false
-        proposal.successful   = false
         proposal.screeningVotesReceived = ZERO_BD
         proposal.fundingVotesReceived = ZERO_BD
         proposal.totalTokensRequested = ZERO_BD

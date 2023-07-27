@@ -349,6 +349,28 @@ describe("Grant Fund assertions", () => {
 
     // check ProposalExecuted attributes
     assert.entityCount("ProposalExecuted", 1);
+
+    assert.fieldEquals(
+      "Proposal",
+      `${bigIntToBytes(proposalId).toHexString()}`,
+      "totalTokensRequested",
+      `${BigInt.fromI32(2)}`
+    );
+
+    assert.fieldEquals(
+      "Proposal",
+      `${bigIntToBytes(proposalId).toHexString()}`,
+      "executed",
+      `${true}`
+    );
+
+    assert.fieldEquals(
+      "ProposalExecuted",
+      `0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000`,
+      "proposalId",
+      `${proposalId}`
+    );
+
   });
 
   test("ScreeningVote", () => {
@@ -762,7 +784,7 @@ describe("Grant Fund assertions", () => {
     assert.entityCount("DistributionPeriod", 1);
     assert.entityCount("FundedSlate", 1);
 
-    logStore();
+    // logStore();
 
     // check FundedSlate attributes
     // assert.fieldEquals(
