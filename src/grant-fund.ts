@@ -28,7 +28,7 @@ import {
 
 import { ONE_BI, ZERO_ADDRESS, ZERO_BD } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
-import { getProposalParamsId, getProposalsInSlate, removeProposalFromList } from './utils/grants/proposal'
+import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
 import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
 import { loadOrCreateGrantFund } from './utils/grants/fund'
@@ -118,10 +118,23 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
   // get the list of proposals in the slate
   const proposalsInSlate = getProposalsInSlate(event.address, fundedSlateUpdated.distributionId_)
   const proposals = fundedSlate.proposals
+  let totalTokensRequested = ZERO_BD
+  let totalFundingVotesReceived = ZERO_BD
+
   for (let i = 0; i < proposalsInSlate.length; i++) {
     const proposalId = proposalsInSlate[i]
+    const proposal = loadOrCreateProposal(bigIntToBytes(proposalId))
+
+    totalTokensRequested = totalTokensRequested.plus(proposal.totalTokensRequested)
+    totalFundingVotesReceived = totalFundingVotesReceived.plus(proposal.fundingVotesReceived)
+
+    // add proposal information to fundedSlate
     proposals.push(bigIntToBytes(proposalId))
   }
+
+  // record proposal information in fundedSlate entity
+  fundedSlate.totalTokensRequested = totalTokensRequested
+  fundedSlate.totalFundingVotesReceived = totalFundingVotesReceived
   fundedSlate.proposals = proposals
 
   // save entities to the store
