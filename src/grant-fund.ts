@@ -340,6 +340,9 @@ export function handleVoteCast(event: VoteCastEvent): void {
         distributionPeriodVote.estimatedRemainingFundingStageVotingPowerForCalculatingRewards = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
 
+      // record votes cast on the Proposal entity
+      proposal.fundingVotesReceived = proposal.fundingVotesReceived.plus(fundingVote.votesCast)
+
       // save fundingVote to the store
       fundingVote.save()
     }

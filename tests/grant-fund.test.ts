@@ -353,6 +353,13 @@ describe("Grant Fund assertions", () => {
     assert.fieldEquals(
       "Proposal",
       `${bigIntToBytes(proposalId).toHexString()}`,
+      "description",
+      `${description}`
+    );
+
+    assert.fieldEquals(
+      "Proposal",
+      `${bigIntToBytes(proposalId).toHexString()}`,
       "totalTokensRequested",
       `${BigInt.fromI32(2)}`
     );
@@ -598,8 +605,24 @@ describe("Grant Fund assertions", () => {
     const distributionPeriodVoteId = getDistributionPeriodVoteId(bigIntToBytes(distributionId), addressToBytes(voter));
     const fundingVoteId = getFundingVoteId(bigIntToBytes(proposalId), addressToBytes(voter), BigInt.fromI32(2));
     const screeningVoteId = getScreeningVoteId(bigIntToBytes(proposalId), addressToBytes(voter), BigInt.fromI32(1));
+    const expectedProposalId = bigIntToBytes(proposalId).toHexString();
     const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
     const expectedVotingPowerUsed = wadToDecimal(votesCast.times(votesCast));
+    const expectedScreeningVotesReceived = wadToDecimal(votesCast.times(BigInt.fromI32(-1)));
+
+    assert.fieldEquals(
+      "Proposal",
+      `${expectedProposalId}`,
+      "screeningVotesReceived",
+      `${expectedScreeningVotesReceived}`
+    );
+
+    assert.fieldEquals(
+      "Proposal",
+      `${expectedProposalId}`,
+      "fundingVotesReceived",
+      `${wadToDecimal(votesCast)}`
+    );
 
     assert.fieldEquals(
       "DistributionPeriodVote",
@@ -613,7 +636,7 @@ describe("Grant Fund assertions", () => {
       "ScreeningVote",
       `${screeningVoteId.toHexString()}`,
       "votesCast",
-      `${wadToDecimal(votesCast.times(BigInt.fromI32(-1)))}`
+      `${expectedScreeningVotesReceived}`
     );
 
     // check DistributionPeriodVote attributes
@@ -761,8 +784,6 @@ describe("Grant Fund assertions", () => {
     /********************/
 
     const fundedProposalSlate = [proposalId]
-
-    // TODO: need to determine how to best hash the proposalId array
     const fundedSlateHash = Bytes.fromHexString("0x000010")
 
     mockGetFundedProposalSlate(grantFundAddress, fundedSlateHash, fundedProposalSlate);
@@ -784,15 +805,13 @@ describe("Grant Fund assertions", () => {
     assert.entityCount("DistributionPeriod", 1);
     assert.entityCount("FundedSlate", 1);
 
-    // logStore();
-
     // check FundedSlate attributes
-    // assert.fieldEquals(
-    //   "FundedSlate",
-    //   `${fundedSlateHash.toHexString()}`,
-    //   "totalFundingVotesReceived",
-    //   `${votesCast}`
-    // );
+    assert.fieldEquals(
+      "FundedSlate",
+      `${fundedSlateHash.toHexString()}`,
+      "totalFundingVotesReceived",
+      `${wadToDecimal(votesCast)}`
+    );
     assert.fieldEquals(
       "FundedSlate",
       `${fundedSlateHash.toHexString()}`,
