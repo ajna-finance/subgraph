@@ -1,7 +1,7 @@
 import { BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { Lend } from "../../generated/schema"
+import { Lend } from "../../../generated/schema"
 
-import { ZERO_BD, ZERO_BI } from "./constants"
+import { ZERO_BD, ZERO_BI } from "../constants"
 
 
 export function getLendId(bucketId: Bytes, accountId: Bytes): Bytes {

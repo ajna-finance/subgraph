@@ -14,8 +14,8 @@ import { assertPosition, createApprovalEvent, createBurnEvent, createMemorialize
 import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
 import { mockGetLPBValueInQuote, mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./utils/common"
 import { Lend } from "../generated/schema"
-import { getLendId, loadOrCreateLend } from "../src/utils/lend"
-import { getBucketId } from "../src/utils/bucket"
+import { getLendId, loadOrCreateLend } from "../src/utils/pool/lend"
+import { getBucketId } from "../src/utils/pool/bucket"
 import { ZERO_BI } from "../src/utils/constants"
 
 // Tests structure (matchstick-as >=0.5.0)

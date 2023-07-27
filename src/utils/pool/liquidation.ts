@@ -1,11 +1,11 @@
 import { Address, BigDecimal, BigInt, Bytes, Value, dataSource } from "@graphprotocol/graph-ts"
 
-import { LiquidationAuction, Kick, Loan, Pool, BucketTake } from "../../generated/schema"
-import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
+import { LiquidationAuction, Kick, Loan, Pool, BucketTake } from "../../../generated/schema"
+import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 
-import { wadToDecimal } from "./convert"
-import { ONE_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI, poolInfoUtilsAddressTable } from "./constants"
-import { PoolInfoUtils } from "../../generated/templates/ERC20Pool/PoolInfoUtils"
+import { wadToDecimal } from "../convert"
+import { ONE_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI, poolInfoUtilsAddressTable } from "../constants"
+import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, kickBlock: BigInt): Bytes {
     return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + kickBlock.toString()))

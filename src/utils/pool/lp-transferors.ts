@@ -1,5 +1,5 @@
 import { Address, Bytes } from "@graphprotocol/graph-ts"
-import { LPTransferorList, Pool } from "../../generated/schema";
+import { LPTransferorList, Pool } from "../../../generated/schema";
 
 export function getTransferorId(poolId: Bytes, lenderId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|' + lenderId.toString()));

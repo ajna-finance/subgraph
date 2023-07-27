@@ -1,13 +1,13 @@
 import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
 
-import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../generated/schema"
-import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
-import { PoolInfoUtils } from '../../generated/templates/ERC20Pool/PoolInfoUtils'
+import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
+import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
+import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsAddressTable, TEN_BI } from "./constants"
-import { decimalToWad, wadToDecimal } from './convert'
-import { getTokenBalance } from './token-erc20'
-import { wmul, wdiv } from './math'
+import { poolInfoUtilsAddressTable, TEN_BI } from "../constants"
+import { decimalToWad, wadToDecimal } from '../convert'
+import { getTokenBalance } from '../token-erc20'
+import { wmul, wdiv } from '../math'
 
 export function getPoolAddress(poolId: Bytes): Address {
   return Address.fromBytes(poolId)

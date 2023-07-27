@@ -1,9 +1,9 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
-import { PoolInfoUtils } from "../../generated/templates/ERC20Pool/PoolInfoUtils"
+import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
 
-import { Loan }    from "../../generated/schema"
-import { poolInfoUtilsAddressTable, ZERO_BD, ZERO_BI } from "./constants"
-import { ERC20Pool } from '../../generated/templates/ERC20Pool/ERC20Pool'
+import { Loan }    from "../../../generated/schema"
+import { poolInfoUtilsAddressTable, ZERO_BD, ZERO_BI } from "../constants"
+import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 
 export function getLoanId(poolId: Bytes, accountId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|').concat(accountId))

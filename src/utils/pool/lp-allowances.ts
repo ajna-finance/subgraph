@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { LPAllowance, LPAllowances } from "../../generated/schema";
-import { wadToDecimal } from "./convert";
+import { LPAllowance, LPAllowances } from "../../../generated/schema";
+import { wadToDecimal } from "../convert";
 
 export function getAllowancesId(poolId: Bytes, lenderId: Bytes, spenderId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|' + lenderId.toString() + '|' + spenderId.toString()))
