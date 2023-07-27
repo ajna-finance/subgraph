@@ -197,7 +197,6 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
   const distributionPeriod = DistributionPeriod.load(distributionId)!
   distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
-  distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
 
   // record proposals distributionId
   proposal.distribution = distributionPeriod.id
@@ -222,7 +221,11 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
   const proposal = loadOrCreateProposal(bigIntToBytes(event.params.proposalId))
   proposal.executed = true
 
+  const distributionPeriod = DistributionPeriod.load(proposal.distribution!)!
+  distributionPeriod.totalTokensDistributed = distributionPeriod.totalTokensDistributed.plus(proposal.totalTokensRequested)
+
   // save entities to the store
+  distributionPeriod.save()
   proposal.save()
   proposalExecuted.save()
 }

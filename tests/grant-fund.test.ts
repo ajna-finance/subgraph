@@ -126,7 +126,7 @@ describe("Grant Fund assertions", () => {
     assert.fieldEquals(
       "DistributionPeriod",
       `${expectedDistributionId}`,
-      "totalTokensRequested",
+      "totalTokensDistributed",
       `${ZERO_BD}`
     );
 
@@ -346,6 +346,8 @@ describe("Grant Fund assertions", () => {
     /*** Assert State ***/
     /********************/
 
+    const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
+
     // check GrantFund attributes
     assert.entityCount("GrantFund", 1);
 
@@ -382,6 +384,12 @@ describe("Grant Fund assertions", () => {
       `0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000`,
       "proposalId",
       `${proposalId}`
+    );
+    assert.fieldEquals(
+      "DistributionPeriod",
+      `${expectedDistributionId}`,
+      "totalTokensDistributed",
+      `${wadToDecimal(BigInt.fromI32(2))}`
     );
 
   });
@@ -582,7 +590,6 @@ describe("Grant Fund assertions", () => {
     /*** Funding Vote Proposal ***/
     /*****************************/
 
-    // TODO: need to convert back from WAD
     const fundingVotingPower = votesCast.times(votesCast);
 
     mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);

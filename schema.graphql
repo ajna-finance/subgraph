@@ -800,7 +800,7 @@ type DistributionPeriod @entity {
   screeningVotesCast: BigDecimal! # number of screening votes cast
   votes: [DistributionPeriodVote!]! # Voter info for the distribution period
   proposals: [Proposal!]! # List of proposals submitted in the distribution period
-  totalTokensRequested: BigDecimal! # Total ajna tokens requested by all proposals in the distribution period
+  totalTokensDistributed: BigDecimal! # Total ajna tokens distributed to executed proposals in a distribution period
 }
 
 type Proposal @entity {
