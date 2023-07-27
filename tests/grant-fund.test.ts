@@ -7,7 +7,7 @@ import {
   log,
   logStore,
 } from "matchstick-as/assembly/index";
-import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, dataSource, ethereum } from "@graphprotocol/graph-ts";
 import {
   handleDelegateRewardClaimed,
   handleFundTreasury,
@@ -183,16 +183,26 @@ describe("Grant Fund assertions", () => {
     const proposer = Address.fromString(
       "0x0000000000000000000000000000000000000025"
     );
+
+    // encode mock calldatas
     const targets = [ajnaTokenAddress, ajnaTokenAddress];
     const values = [ZERO_BI, ZERO_BI];
     const signatures = [
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const calldatas = [
-      Bytes.fromHexString("0x000000"),
-      Bytes.fromHexString("0x000000"),
+    const paramsArray: Array<ethereum.Value> = [
+      ethereum.Value.fromAddress(proposer),
+      ethereum.Value.fromUnsignedBigInt(ONE_BI),
     ];
+    const params = changetype<ethereum.Tuple>(paramsArray)
+    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
+    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
+    const calldatas = [
+      encodedparamsOne,
+      encodedparamsTwo,
+    ];
+
     const distributionId = BigInt.fromI32(234);
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
@@ -227,12 +237,30 @@ describe("Grant Fund assertions", () => {
 
     // check Proposal attributes
     assert.entityCount("Proposal", 1);
+    assert.entityCount("ProposalParams", 2);
 
     // check DistributionPeriod attributes
     assert.entityCount("DistributionPeriod", 1);
 
     // check DistributionPeriod attributes
     assert.entityCount("GrantFund", 1);
+
+    const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
+
+    assert.fieldEquals(
+      "Proposal",
+      `${bigIntToBytes(proposalId).toHexString()}`,
+      "distribution",
+      `${expectedDistributionId}`
+    );
+
+    assert.fieldEquals(
+      "Proposal",
+      `${bigIntToBytes(proposalId).toHexString()}`,
+      "totalTokensRequested",
+      `${BigInt.fromI32(2)}`
+    );
+
   });
 
   test("ProposalExecuted", () => {
@@ -247,16 +275,26 @@ describe("Grant Fund assertions", () => {
     const proposer = Address.fromString(
       "0x0000000000000000000000000000000000000025"
     );
+
+    // encode mock calldatas
     const targets = [ajnaTokenAddress, ajnaTokenAddress];
     const values = [ZERO_BI, ZERO_BI];
     const signatures = [
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const calldatas = [
-      Bytes.fromHexString("0x000000"),
-      Bytes.fromHexString("0x000000"),
+    const paramsArray: Array<ethereum.Value> = [
+      ethereum.Value.fromAddress(proposer),
+      ethereum.Value.fromUnsignedBigInt(ONE_BI),
     ];
+    const params = changetype<ethereum.Tuple>(paramsArray)
+    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
+    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
+    const calldatas = [
+      encodedparamsOne,
+      encodedparamsTwo,
+    ];
+
     const distributionId = BigInt.fromI32(234);
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
@@ -307,6 +345,7 @@ describe("Grant Fund assertions", () => {
 
     // check Proposal attributes
     assert.entityCount("Proposal", 1);
+    assert.entityCount("ProposalParams", 2);
 
     // check ProposalExecuted attributes
     assert.entityCount("ProposalExecuted", 1);
@@ -324,16 +363,26 @@ describe("Grant Fund assertions", () => {
     const proposer = Address.fromString(
       "0x0000000000000000000000000000000000000025"
     );
+
+    // encode mock calldatas
     const targets = [ajnaTokenAddress, ajnaTokenAddress];
     const values = [ZERO_BI, ZERO_BI];
     const signatures = [
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const calldatas = [
-      Bytes.fromHexString("0x000000"),
-      Bytes.fromHexString("0x000000"),
+    const paramsArray: Array<ethereum.Value> = [
+      ethereum.Value.fromAddress(proposer),
+      ethereum.Value.fromUnsignedBigInt(ONE_BI),
     ];
+    const params = changetype<ethereum.Tuple>(paramsArray)
+    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
+    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
+    const calldatas = [
+      encodedparamsOne,
+      encodedparamsTwo,
+    ];
+
     const distributionId = ONE_BI;
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
@@ -390,6 +439,7 @@ describe("Grant Fund assertions", () => {
 
     // check Proposal attributes
     assert.entityCount("Proposal", 1);
+    assert.entityCount("ProposalParams", 2);
 
     // check Proposal attributes
     assert.entityCount("DistributionPeriodVote", 1);
@@ -426,16 +476,26 @@ describe("Grant Fund assertions", () => {
     const proposer = Address.fromString(
       "0x0000000000000000000000000000000000000025"
     );
+
+    // encode mock calldatas
     const targets = [ajnaTokenAddress, ajnaTokenAddress];
     const values = [ZERO_BI, ZERO_BI];
     const signatures = [
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const calldatas = [
-      Bytes.fromHexString("0x000000"),
-      Bytes.fromHexString("0x000000"),
+    const paramsArray: Array<ethereum.Value> = [
+      ethereum.Value.fromAddress(proposer),
+      ethereum.Value.fromUnsignedBigInt(ONE_BI),
     ];
+    const params = changetype<ethereum.Tuple>(paramsArray)
+    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
+    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
+    const calldatas = [
+      encodedparamsOne,
+      encodedparamsTwo,
+    ];
+
     const distributionId = ONE_BI;
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
@@ -505,6 +565,7 @@ describe("Grant Fund assertions", () => {
 
     // check Proposal attributes
     assert.entityCount("Proposal", 1);
+    assert.entityCount("ProposalParams", 2);
 
     assert.entityCount("DistributionPeriod", 1);
     assert.entityCount("DistributionPeriodVote", 1);
@@ -604,15 +665,24 @@ describe("Grant Fund assertions", () => {
     const proposer = Address.fromString(
       "0x0000000000000000000000000000000000000025"
     );
+
+    // encode mock calldatas
     const targets = [ajnaTokenAddress, ajnaTokenAddress];
     const values = [ZERO_BI, ZERO_BI];
     const signatures = [
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
+    const paramsArray: Array<ethereum.Value> = [
+      ethereum.Value.fromAddress(proposer),
+      ethereum.Value.fromUnsignedBigInt(ONE_BI),
+    ];
+    const params = changetype<ethereum.Tuple>(paramsArray)
+    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
+    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
     const calldatas = [
-      Bytes.fromHexString("0x000000"),
-      Bytes.fromHexString("0x000000"),
+      encodedparamsOne,
+      encodedparamsTwo,
     ];
     const distributionId = ONE_BI;
     const startBlock = ONE_BI;
@@ -687,19 +757,25 @@ describe("Grant Fund assertions", () => {
 
     // check Proposal attributes
     assert.entityCount("Proposal", 1);
+    assert.entityCount("ProposalParams", 2);
 
     assert.entityCount("DistributionPeriod", 1);
     assert.entityCount("FundedSlate", 1);
 
     logStore();
 
-    // // check FundedSlate attributes
+    // check FundedSlate attributes
     // assert.fieldEquals(
     //   "FundedSlate",
     //   `${fundedSlateHash.toHexString()}`,
     //   "totalFundingVotesReceived",
     //   `${votesCast}`
     // );
-
+    assert.fieldEquals(
+      "FundedSlate",
+      `${fundedSlateHash.toHexString()}`,
+      "totalTokensRequested",
+      `${BigInt.fromI32(2)}`
+    );
   });
 });

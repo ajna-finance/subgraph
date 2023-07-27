@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts'
+import { Address, BigInt, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,
@@ -182,18 +182,11 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
     proposalParams.calldata = event.params.calldatas[i]
 
     // decode the calldata to get the recipient and tokens requested
-    const dataWithoutFunctionSelector = Bytes.fromUint8Array(proposalParams.calldata.subarray(3))
-    const decoded = ethereum.decode('(address,uint256)', dataWithoutFunctionSelector)
-    if (decoded != null) {
-      proposalParams.recipient = decoded.toTuple()[0].toAddress()
-      const tokensRequested = decoded.toTuple()[1].toBigInt().toBigDecimal()
-      proposalParams.tokensRequested = tokensRequested
-      totalTokensRequested = totalTokensRequested.plus(tokensRequested)
-    }
-    else {
-      proposalParams.recipient = ZERO_ADDRESS
-      proposalParams.tokensRequested = ZERO_BD
-    }
+    const decoded = ethereum.decode('(address,uint256)', proposalParams.calldata)!
+    proposalParams.recipient = decoded.toTuple()[0].toAddress()
+    const tokensRequested = decoded.toTuple()[1].toBigInt().toBigDecimal()
+    proposalParams.tokensRequested = tokensRequested
+    totalTokensRequested = totalTokensRequested.plus(tokensRequested)
 
     // add proposalParams information to proposal
     proposal.params = proposal.params.concat([proposalParams.id])
