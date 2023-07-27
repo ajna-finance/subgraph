@@ -31,8 +31,6 @@ export function getFundingVotesByProposalId(distributionPeriodVote: Distribution
     const filteredVotes: Bytes[] = [];
     const fundingVotes = distributionPeriodVote.fundingVotes;
 
-    log.info("getFundingVotesByProposalId: {} {}", [distributionPeriodVote.fundingVotes.length.toString(), proposalId.toString()])
-
     for (let i = 0; i < fundingVotes.length; i++) {
         const proposal = loadOrCreateFundingVote(fundingVotes[i]).proposal;
         if (proposal.equals(proposalId)) {

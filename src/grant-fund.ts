@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts'
+import { Address, BigInt, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
 
 import {
   DelegateRewardClaimed as DelegateRewardClaimedEvent,
@@ -162,14 +162,8 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
 
   // create Proposal entity
   const proposalId = bigIntToBytes(event.params.proposalId)
-  const proposal = new Proposal(proposalId) as Proposal
+  const proposal = loadOrCreateProposal(proposalId)
   proposal.description  = event.params.description
-  proposal.distribution = Bytes.empty()
-  proposal.executed     = false
-  proposal.successful   = false
-  proposal.screeningVotesReceived = ZERO_BD
-  proposal.fundingVotesReceived = ZERO_BD
-  proposal.params = []
 
   let totalTokensRequested = ZERO_BD
 
@@ -182,18 +176,11 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
     proposalParams.calldata = event.params.calldatas[i]
 
     // decode the calldata to get the recipient and tokens requested
-    const dataWithoutFunctionSelector = Bytes.fromUint8Array(proposalParams.calldata.subarray(3))
-    const decoded = ethereum.decode('(address,uint256)', dataWithoutFunctionSelector)
-    if (decoded != null) {
-      proposalParams.recipient = decoded.toTuple()[0].toAddress()
-      const tokensRequested = decoded.toTuple()[1].toBigInt().toBigDecimal()
-      proposalParams.tokensRequested = tokensRequested
-      totalTokensRequested = totalTokensRequested.plus(tokensRequested)
-    }
-    else {
-      proposalParams.recipient = ZERO_ADDRESS
-      proposalParams.tokensRequested = ZERO_BD
-    }
+    const decoded = ethereum.decode('(address,uint256)', proposalParams.calldata)!
+    proposalParams.recipient = decoded.toTuple()[0].toAddress()
+    const tokensRequested = decoded.toTuple()[1].toBigInt().toBigDecimal()
+    proposalParams.tokensRequested = tokensRequested
+    totalTokensRequested = totalTokensRequested.plus(tokensRequested)
 
     // add proposalParams information to proposal
     proposal.params = proposal.params.concat([proposalParams.id])
@@ -231,14 +218,11 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
   proposalExecuted.transactionHash = event.transaction.hash
 
   // update proposal entity
-  const proposal = Proposal.load(bigIntToBytes(event.params.proposalId)) as Proposal
-  if (proposal != null) {
-    proposal.executed = true
-    proposal.successful = true
+  const proposal = loadOrCreateProposal(bigIntToBytes(event.params.proposalId))
+  proposal.executed = true
 
-    // save entities to the store
-    proposal.save()
-  }
+  // save entities to the store
+  proposal.save()
   proposalExecuted.save()
 }
 
@@ -355,6 +339,9 @@ export function handleVoteCast(event: VoteCastEvent): void {
       else {
         distributionPeriodVote.estimatedRemainingFundingStageVotingPowerForCalculatingRewards = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
+
+      // record votes cast on the Proposal entity
+      proposal.fundingVotesReceived = proposal.fundingVotesReceived.plus(fundingVote.votesCast)
 
       // save fundingVote to the store
       fundingVote.save()
