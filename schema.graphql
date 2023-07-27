@@ -828,9 +828,8 @@ type DistributionPeriodVote @entity {
   id: Bytes! # $accountId + '|'' + $distributionId
   voter: Account!
   distribution: DistributionPeriod! # uint256
-  screeningStageVotingPower: BigDecimal! # uint256
-  initialFundingStageVotingPower: BigDecimal! # uint256
-  remainingFundingStageVotingPower: BigDecimal! # uint256
+  estimatedInitialFundingStageVotingPowerForCalculatingRewards: BigDecimal! # uint256
+  estimatedRemainingFundingStageVotingPowerForCalculatingRewards: BigDecimal! # uint256
   screeningVotes: [ScreeningVote!]! # ScreeningVote[]
   fundingVotes: [FundingVote!]! # FundingVote[]
 }

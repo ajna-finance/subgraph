@@ -261,22 +261,6 @@ export function handleDistributionPeriodStarted(
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
 
-  // loop through DistributionPeriodVotes of the previous period, create new entities, and set their screening stage voting power
-  if (event.params.distributionId != ONE_BI) {
-    const prevDistributionPeriod = loadOrCreateDistributionPeriod(distributionId)
-    const votes = prevDistributionPeriod.votes
-    for (var i=0; i<votes.length; ++i) {
-      const prevVote = DistributionPeriodVote.load(votes[i])!
-      const prevVoter = prevVote.voter
-      const newDistributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.id, prevVoter)
-      newDistributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(prevVoter))
-      newDistributionPeriodVote.save()
-    }
-  }
-  else {
-    distributionPeriod.votes = []
-  }
-
   // update GrantFund entity
   const grantFund = loadOrCreateGrantFund(event.address)
   const treasury = getTreasury(event.address)
@@ -336,11 +320,6 @@ export function handleVoteCast(event: VoteCastEvent): void {
       screeningVote.votesCast = screeningVotesCast
       screeningVote.blockNumber = voteCast.blockNumber
 
-      // update voter's distributionPeriodVote entity if it hasn't been recorded yet
-      if (distributionPeriodVote.screeningStageVotingPower === ZERO_BD) {
-        distributionPeriodVote.screeningStageVotingPower = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
-      }
-
       // add additional screening votes to voter's distributionPeriodVote entity
       distributionPeriodVote.screeningVotes = distributionPeriodVote.screeningVotes.concat([screeningVote.id])
 
@@ -368,12 +347,12 @@ export function handleVoteCast(event: VoteCastEvent): void {
       distributionPeriod.fundingVotePowerUsed = distributionPeriod.fundingVotePowerUsed.plus(fundingVote.votingPowerUsed)
 
       // update voter's distributionPeriodVote entity voting power tracking if it hasn't been recorded yet
-      if (distributionPeriodVote.initialFundingStageVotingPower.equals(ZERO_BD)) {
-        distributionPeriodVote.initialFundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
-        distributionPeriodVote.remainingFundingStageVotingPower = distributionPeriodVote.initialFundingStageVotingPower.minus(fundingVote.votingPowerUsed)
+      if (distributionPeriodVote.estimatedInitialFundingStageVotingPowerForCalculatingRewards.equals(ZERO_BD)) {
+        distributionPeriodVote.estimatedInitialFundingStageVotingPowerForCalculatingRewards = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+        distributionPeriodVote.estimatedRemainingFundingStageVotingPowerForCalculatingRewards = distributionPeriodVote.estimatedInitialFundingStageVotingPowerForCalculatingRewards.minus(fundingVote.votingPowerUsed)
       }
       else {
-        distributionPeriodVote.remainingFundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+        distributionPeriodVote.estimatedRemainingFundingStageVotingPowerForCalculatingRewards = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
 
       // save fundingVote to the store

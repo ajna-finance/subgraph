@@ -34,7 +34,7 @@ import {
 } from "../src/utils/constants";
 import { addressToBytes, bigIntToBytes, decimalToWad, wadToDecimal } from "../src/utils/convert";
 import { mockGetDistributionId, mockGetTreasury, mockGetVotesFunding, mockGetVotesScreening } from "./utils/common";
-import { getDistributionPeriodVoteId, getFundingVoteId } from "../src/utils/grants/voter";
+import { getDistributionPeriodVoteId, getFundingVoteId, getScreeningVoteId } from "../src/utils/grants/voter";
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -395,19 +395,22 @@ describe("Grant Fund assertions", () => {
     assert.entityCount("ScreeningVote", 1);
 
     const distributionPeriodVoteId = getDistributionPeriodVoteId(bigIntToBytes(distributionId), addressToBytes(voter));
+    const screeningVoteId = getScreeningVoteId(bigIntToBytes(proposalId), addressToBytes(voter), BigInt.fromI32(1));
 
     assert.fieldEquals(
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
-      "screeningStageVotingPower",
+      "distribution",
+      `${bigIntToBytes(distributionId).toHexString()}`
+    );
+
+    assert.fieldEquals(
+      "ScreeningVote",
+      `${screeningVoteId.toHexString()}`,
+      "votesCast",
       `${wadToDecimal(votesCast)}`
     );
   });
-
-  test("getFundingVotingPowerUsed", () => {
-
-  });
-
 
   test("FundingVote", () => {
     /***********************/
@@ -511,6 +514,7 @@ describe("Grant Fund assertions", () => {
 
     const distributionPeriodVoteId = getDistributionPeriodVoteId(bigIntToBytes(distributionId), addressToBytes(voter));
     const fundingVoteId = getFundingVoteId(bigIntToBytes(proposalId), addressToBytes(voter), BigInt.fromI32(2));
+    const screeningVoteId = getScreeningVoteId(bigIntToBytes(proposalId), addressToBytes(voter), BigInt.fromI32(1));
     const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
     const expectedVotingPowerUsed = wadToDecimal(votesCast.times(votesCast));
 
@@ -521,24 +525,26 @@ describe("Grant Fund assertions", () => {
       `${expectedDistributionId}`
     );
 
+    // access ScreeningVote entity and attributes
     assert.fieldEquals(
-      "DistributionPeriodVote",
-      `${distributionPeriodVoteId.toHexString()}`,
-      "screeningStageVotingPower",
+      "ScreeningVote",
+      `${screeningVoteId.toHexString()}`,
+      "votesCast",
       `${wadToDecimal(votesCast.times(BigInt.fromI32(-1)))}`
     );
 
+    // check DistributionPeriodVote attributes
     assert.fieldEquals(
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
-      "initialFundingStageVotingPower",
+      "estimatedInitialFundingStageVotingPowerForCalculatingRewards",
       `${expectedVotingPowerUsed}`
     );
 
     assert.fieldEquals(
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
-      "remainingFundingStageVotingPower",
+      "estimatedRemainingFundingStageVotingPowerForCalculatingRewards",
       `${0}`
     );
 
