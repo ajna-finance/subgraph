@@ -175,8 +175,11 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
     proposalParams.value = event.params.values[i]
     proposalParams.calldata = event.params.calldatas[i]
 
+    // https://discord.com/channels/438038660412342282/438070183794573313/948230275886878740
+    // https://discord.com/channels/438038660412342282/438070183794573313/948241208277364756
     // decode the calldata to get the recipient and tokens requested
-    const decoded = ethereum.decode('(address,uint256)', proposalParams.calldata)!
+    const dataWithoutSelector = Bytes.fromUint8Array(proposalParams.calldata.subarray(4))
+    const decoded = ethereum.decode('(address,uint256)', dataWithoutSelector)!
     proposalParams.recipient = decoded.toTuple()[0].toAddress()
     const tokensRequested = decoded.toTuple()[1].toBigInt()
     proposalParams.tokensRequested = wadToDecimal(tokensRequested)
