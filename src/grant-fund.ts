@@ -175,6 +175,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
     proposalParams.value = event.params.values[i]
     proposalParams.calldata = event.params.calldatas[i]
 
+    // LINKS TO GRAPH DISCORD MESSAGES WITH SOLUTION TO DECODING CALLDATA:
     // https://discord.com/channels/438038660412342282/438070183794573313/948230275886878740
     // https://discord.com/channels/438038660412342282/438070183794573313/948241208277364756
     // decode the calldata to get the recipient and tokens requested
