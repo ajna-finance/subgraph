@@ -197,16 +197,9 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
 
     const distributionId = BigInt.fromI32(234);
@@ -264,7 +257,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${bigIntToBytes(proposalId).toHexString()}`,
       "totalTokensRequested",
-      `${wadToDecimal(BigInt.fromI32(2))}`
+      `${wadToDecimal(BigInt.fromString("2000000000000000000000"))}` // 2000 * 1e18
     );
 
   });
@@ -289,16 +282,9 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
 
     const distributionId = BigInt.fromI32(234);
@@ -369,7 +355,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${bigIntToBytes(proposalId).toHexString()}`,
       "totalTokensRequested",
-      `${wadToDecimal(BigInt.fromI32(2))}`
+      `${wadToDecimal(BigInt.fromString("2000000000000000000000"))}` // 2000 * 1e18
     );
 
     assert.fieldEquals(
@@ -389,7 +375,7 @@ describe("Grant Fund assertions", () => {
       "DistributionPeriod",
       `${expectedDistributionId}`,
       "totalTokensDistributed",
-      `${wadToDecimal(BigInt.fromI32(2))}`
+      `${wadToDecimal(BigInt.fromString("2000000000000000000000"))}` // 2000 * 1e18
     );
 
   });
@@ -414,16 +400,9 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
 
     const distributionId = ONE_BI;
@@ -527,16 +506,9 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
 
     const distributionId = ONE_BI;
@@ -731,16 +703,9 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("1000000000000000000000")), // 1000 * 1e18
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
     const distributionId = ONE_BI;
     const startBlock = ONE_BI;
@@ -802,8 +767,6 @@ describe("Grant Fund assertions", () => {
 
     const updateSlateEvent = createFundedSlateUpdatedEvent(distributionId, fundedSlateHash)
     handleFundedSlateUpdated(updateSlateEvent);
-
-    logStore();
 
     /********************/
     /*** Assert State ***/
