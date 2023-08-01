@@ -197,6 +197,12 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
@@ -282,6 +288,12 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
@@ -400,6 +412,12 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
@@ -506,6 +524,12 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
@@ -703,10 +727,17 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
       Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
+
     const distributionId = ONE_BI;
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
@@ -748,7 +779,6 @@ describe("Grant Fund assertions", () => {
     const votesCast = BigInt.fromString("-234000000000000000000")
     const reason = ""
 
-    // TODO: need to convert back from WAD
     const fundingVotingPower = votesCast.times(votesCast);
 
     mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);
