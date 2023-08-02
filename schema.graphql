@@ -123,6 +123,8 @@ type Bucket @entity {
   bucketPrice: BigDecimal!
   # current exchange rate of the bucket
   exchangeRate: BigDecimal!
+  # pool address
+  poolAddress: String!
   # pool in which the bucket belongs
   pool: Pool!
   # total collateral available in the bucket
