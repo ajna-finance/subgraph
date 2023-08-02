@@ -53,7 +53,7 @@ export function loadOrCreateDistributionPeriod(distributionId: Bytes): Distribut
         distributionPeriod.screeningVotesCast = ZERO_BD
         distributionPeriod.votes = []
         distributionPeriod.proposals = []
-        distributionPeriod.totalTokensRequested = ZERO_BD
+        distributionPeriod.totalTokensDistributed = ZERO_BD
     }
     return distributionPeriod
 }

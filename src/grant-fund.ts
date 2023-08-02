@@ -26,7 +26,7 @@ import {
   DistributionPeriodVote
 } from "../generated/schema"
 
-import { ONE_BI, THREE_PERCENT_BI, ZERO_ADDRESS, ZERO_BD } from './utils/constants'
+import { EXP_18_BD, ONE_BI, THREE_PERCENT_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
@@ -165,7 +165,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   const proposal = loadOrCreateProposal(proposalId)
   proposal.description  = event.params.description
 
-  let totalTokensRequested = ZERO_BD
+  let totalTokensRequested = ZERO_BI
 
   // create ProposalParams entities for each separate proposal param
   for (let i = 0; i < event.params.targets.length; i++) {
@@ -175,20 +175,25 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
     proposalParams.value = event.params.values[i]
     proposalParams.calldata = event.params.calldatas[i]
 
+    // LINKS TO GRAPH DISCORD MESSAGES WITH SOLUTION TO DECODING CALLDATA:
+    // https://discord.com/channels/438038660412342282/438070183794573313/948230275886878740
+    // https://discord.com/channels/438038660412342282/438070183794573313/948241208277364756
     // decode the calldata to get the recipient and tokens requested
-    const decoded = ethereum.decode('(address,uint256)', proposalParams.calldata)!
+    const dataWithoutSelector = Bytes.fromUint8Array(proposalParams.calldata.subarray(4))
+    const decoded = ethereum.decode('(address,uint256)', dataWithoutSelector)!
     proposalParams.recipient = decoded.toTuple()[0].toAddress()
-    const tokensRequested = decoded.toTuple()[1].toBigInt().toBigDecimal()
-    proposalParams.tokensRequested = tokensRequested
+    const tokensRequested = decoded.toTuple()[1].toBigInt()
+    proposalParams.tokensRequested = wadToDecimal(tokensRequested)
     totalTokensRequested = totalTokensRequested.plus(tokensRequested)
 
     // add proposalParams information to proposal
     proposal.params = proposal.params.concat([proposalParams.id])
-    proposal.totalTokensRequested = totalTokensRequested
 
     // save each proposalParams entity to the store
     proposalParams.save()
   }
+
+  proposal.totalTokensRequested = wadToDecimal(totalTokensRequested)
 
   proposalCreated.proposal = proposal.id
 
@@ -196,7 +201,6 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
   const distributionPeriod = DistributionPeriod.load(distributionId)!
   distributionPeriod.proposals = distributionPeriod.proposals.concat([proposal.id])
-  distributionPeriod.totalTokensRequested = distributionPeriod.totalTokensRequested.plus(proposal.totalTokensRequested)
 
   // record proposals distributionId
   proposal.distribution = distributionPeriod.id
@@ -221,7 +225,11 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
   const proposal = loadOrCreateProposal(bigIntToBytes(event.params.proposalId))
   proposal.executed = true
 
+  const distributionPeriod = DistributionPeriod.load(proposal.distribution!)!
+  distributionPeriod.totalTokensDistributed = distributionPeriod.totalTokensDistributed.plus(proposal.totalTokensRequested)
+
   // save entities to the store
+  distributionPeriod.save()
   proposal.save()
   proposalExecuted.save()
 }

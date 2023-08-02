@@ -126,7 +126,7 @@ describe("Grant Fund assertions", () => {
     assert.fieldEquals(
       "DistributionPeriod",
       `${expectedDistributionId}`,
-      "totalTokensRequested",
+      "totalTokensDistributed",
       `${ZERO_BD}`
     );
 
@@ -197,16 +197,15 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
 
     const distributionId = BigInt.fromI32(234);
@@ -264,7 +263,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${bigIntToBytes(proposalId).toHexString()}`,
       "totalTokensRequested",
-      `${BigInt.fromI32(2)}`
+      `${wadToDecimal(BigInt.fromString("2000000000000000000000"))}` // 2000 * 1e18
     );
 
   });
@@ -289,16 +288,15 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
 
     const distributionId = BigInt.fromI32(234);
@@ -346,6 +344,8 @@ describe("Grant Fund assertions", () => {
     /*** Assert State ***/
     /********************/
 
+    const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
+
     // check GrantFund attributes
     assert.entityCount("GrantFund", 1);
 
@@ -367,7 +367,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${bigIntToBytes(proposalId).toHexString()}`,
       "totalTokensRequested",
-      `${BigInt.fromI32(2)}`
+      `${wadToDecimal(BigInt.fromString("2000000000000000000000"))}` // 2000 * 1e18
     );
 
     assert.fieldEquals(
@@ -382,6 +382,12 @@ describe("Grant Fund assertions", () => {
       `0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000`,
       "proposalId",
       `${proposalId}`
+    );
+    assert.fieldEquals(
+      "DistributionPeriod",
+      `${expectedDistributionId}`,
+      "totalTokensDistributed",
+      `${wadToDecimal(BigInt.fromString("2000000000000000000000"))}` // 2000 * 1e18
     );
 
   });
@@ -406,16 +412,15 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
 
     const distributionId = ONE_BI;
@@ -519,16 +524,15 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
 
     const distributionId = ONE_BI;
@@ -582,7 +586,6 @@ describe("Grant Fund assertions", () => {
     /*** Funding Vote Proposal ***/
     /*****************************/
 
-    // TODO: need to convert back from WAD
     const fundingVotingPower = votesCast.times(votesCast);
 
     mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);
@@ -724,17 +727,17 @@ describe("Grant Fund assertions", () => {
       "transfer(address,uint256)",
       "transfer(address,uint256)",
     ];
-    const paramsArray: Array<ethereum.Value> = [
-      ethereum.Value.fromAddress(proposer),
-      ethereum.Value.fromUnsignedBigInt(ONE_BI),
-    ];
-    const params = changetype<ethereum.Tuple>(paramsArray)
-    const encodedparamsOne = ethereum.encode(ethereum.Value.fromTuple(params))!;
-    const encodedparamsTwo = ethereum.encode(ethereum.Value.fromTuple(params))!;
+
+    // use hardcoded output of encode("transfer(address,uint256)")
+    // as assembly script doesn't support encodeWithSelector
+    // 0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000
+    // ==
+    // (0xc91f4871cfDd1947DF6C23771F230853E0e27407, 1000 * 1e18)
     const calldatas = [
-      encodedparamsOne,
-      encodedparamsTwo,
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000"),
+      Bytes.fromHexString("0xa9059cbb000000000000000000000000c91f4871cfdd1947df6c23771f230853e0e2740700000000000000000000000000000000000000000000003635c9adc5dea00000")
     ];
+
     const distributionId = ONE_BI;
     const startBlock = ONE_BI;
     const endBlock = startBlock.plus(DISTRIBUTION_PERIOD_LENGTH);
@@ -773,15 +776,13 @@ describe("Grant Fund assertions", () => {
 
     // mock parameters
     const voter = Address.fromString("0x0000000000000000000000000000000000000050");
-    let votesCast = BigInt.fromI32(-234);
+    const votesCast = BigInt.fromString("-234000000000000000000")
     const reason = ""
 
-    // TODO: need to convert back from WAD
     const fundingVotingPower = votesCast.times(votesCast);
 
     mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);
 
-    votesCast = BigInt.fromI32(-234);
     const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 0, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(1));
     handleVoteCast(fundingVoteCastEvent);
 
@@ -822,7 +823,7 @@ describe("Grant Fund assertions", () => {
       "FundedSlate",
       `${fundedSlateHash.toHexString()}`,
       "totalTokensRequested",
-      `${BigInt.fromI32(2)}`
+      `${wadToDecimal(BigInt.fromString("2000000000000000000000"))}` // 1000 * 1e18
     );
   });
 });
