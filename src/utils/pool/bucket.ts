@@ -56,6 +56,7 @@ export function loadOrCreateBucket(poolId: Bytes, bucketId: Bytes, index: u32): 
       bucket.bucketIndex  = index
       bucket.bucketPrice  = indexToPrice(index)
       bucket.poolAddress  = poolId.toHexString()
+      bucket.pool         = poolId
       bucket.collateral   = ZERO_BD
       bucket.deposit      = ZERO_BD
       bucket.exchangeRate = ONE_BD

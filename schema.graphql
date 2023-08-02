@@ -125,6 +125,8 @@ type Bucket @entity {
   exchangeRate: BigDecimal!
   # pool address
   poolAddress: String!
+  # pool in which the bucket belongs
+  pool: Pool!
   # total collateral available in the bucket
   collateral: BigDecimal!
   # total quote tokens deposited in the bucket, inclusive of interest
