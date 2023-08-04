@@ -138,7 +138,13 @@ Indexing a public network from takes roughly ~15 minutes for each month of data.
 
 Instructions on creating your own deployment are available in the [Graph Protocols Documentation](https://thegraph.com/docs/en/cookbook/quick-start/).
 
-To facilitate running multiple containers on a single machine, host port mappings have been parameterized.  To shift all ports, source `set-ports.sh` passing the offset as the only argument.  This script will export environment variables (read by docker-compose) with the new ports, and will update `package.json` such that deployment scripts target the correct port.
+### Multiple instances
+
+To facilitate running multiple containers on a single machine, host port mappings and data directories have been parameterized.
+
+To change the data directory of the host volume, set `GRAPHQL_DATADIR` to the desired path.
+
+To shift all ports, source `set-ports.sh` passing the offset as the only argument.  This script will export environment variables (read by docker-compose) with the new ports, and will update `package.json` such that deployment scripts target the correct port.
 
 Example:
 ```

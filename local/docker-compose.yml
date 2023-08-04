@@ -41,7 +41,7 @@ services:
     networks:
       - ajna_test_network
     volumes:
-      - ./data/ipfs:/data/ipfs
+      - ${GRAPHQL_DATADIR:-./data}/ipfs:/data/ipfs
   postgres:
     image: postgres
     expose:
@@ -55,7 +55,7 @@ services:
     networks:
       - ajna_test_network
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - ${GRAPHQL_DATADIR:-./data}/postgres:/var/lib/postgresql/data
 networks:
   ajna_test_network:
     name: ajna_test_network
