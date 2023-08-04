@@ -76,7 +76,6 @@ Details for a specific pool:
     quoteToken { symbol }
     collateralToken { symbol }
     poolSize
-    debt
     actualUtilization
     htp
     hpb
@@ -138,6 +137,21 @@ yarn deploy-local
 Indexing a public network from takes roughly ~15 minutes for each month of data.
 
 Instructions on creating your own deployment are available in the [Graph Protocols Documentation](https://thegraph.com/docs/en/cookbook/quick-start/).
+
+To facilitate running multiple containers on a single machine, host port mappings have been parameterized.  To shift all ports, source `set-ports.sh` passing the offset as the only argument.  This script will export environment variables (read by docker-compose) with the new ports, and will update `package.json` such that deployment scripts target the correct port.
+
+Example:
+```
+$ ./set-ports.sh 200
+Updated 0 paths from the index
+Set environment to use the following ports:
+GRAPHQL_HTTP    8200
+GRAPHQL_WSS     8201
+GRAPHQL_ADMIN   8220
+GRAPHQL_INDEXER 8230
+GRAPHQL_METRICS 8240
+GRAPHQL_IPFS    5201
+```
 
 ### Tests
 Unit tests are written using the [Matchstick unit testing framework](https://github.com/LimeChain/matchstick/blob/main/README.md).  Unit tests do not guarantee your subgraph is deployable or functional.

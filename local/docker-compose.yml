@@ -11,11 +11,11 @@ services:
   graph-node:
     image: graphprotocol/graph-node
     ports:
-      - '8000:8000'
-      - '8001:8001'
-      - '8020:8020'
-      - '8030:8030'
-      - '8040:8040'
+      - '8000:${GRAPHQL_HTTP:-8000}'
+      - '8001:${GRAPHQL_WSS:-8001}'
+      - '8020:${GRAPHQL_ADMIN:-8020}'
+      - '8030:${GRAPHQL_INDEXER:-8030}'
+      - '8040:${GRAPHQL_METRICS:-8040}'
     depends_on:
       - ipfs
       - postgres
@@ -37,7 +37,7 @@ services:
   ipfs:
     image: ipfs/kubo:master-latest
     ports:
-      - '5001:5001'
+      - '5001:${GRAPHQL_IPFS:-5001}'
     networks:
       - ajna_test_network
     volumes:
