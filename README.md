@@ -159,6 +159,11 @@ GRAPHQL_METRICS 8240
 GRAPHQL_IPFS    5201
 ```
 
+To start the container, be sure to specify the `-p` switch to define a unique container name:
+```
+docker compose -p subgraph-aditi up
+```
+
 ### Tests
 Unit tests are written using the [Matchstick unit testing framework](https://github.com/LimeChain/matchstick/blob/main/README.md).  Unit tests do not guarantee your subgraph is deployable or functional.
 
