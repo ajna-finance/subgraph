@@ -51,6 +51,32 @@
       "startBlock": 9297080
     }
   },
+  "mumbai": {
+    "ERC20PoolFactory": {
+      "address": "0x9f7f111c22a23fFD35E386a243F3780cb3ad0d23",
+      "startBlock": 38580888
+    },
+    "ERC721PoolFactory": {
+      "address": "0xBe8f4De14598e1Eb17FeE8df438AD484E56243F2",
+      "startBlock": 38580888
+    },
+    "PositionManager": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 38580888
+    },
+    "RewardsManager": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 38580888
+    },
+    "GrantFund": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 38580888
+    },
+    "AjnaToken": {
+      "address": "0x5BC519744f3f0b324E3D5c031e6D18326FD0e8ce",
+      "startBlock": 38580888
+    }
+  },
   "ganache": {
     "ERC20PoolFactory": {
       "address": "0xD86c4A8b172170Da0d5C0C1F12455bA80Eaa42AD",
