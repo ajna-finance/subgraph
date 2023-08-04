@@ -142,9 +142,9 @@ Instructions on creating your own deployment are available in the [Graph Protoco
 
 To facilitate running multiple containers on a single machine, host port mappings and data directories have been parameterized.
 
-To change the data directory of the host volume, set `GRAPHQL_DATADIR` to the desired path.
+To change the data directory of the host volume, set `GRAPHQL_DATADIR` to the desired path.  Ensure this variable starts with `./` or `../` or is an absolute path.
 
-To shift all ports, source `set-ports.sh` passing the offset as the only argument.  This script will export environment variables (read by docker-compose) with the new ports, and will update `package.json` such that deployment scripts target the correct port.
+To shift all ports, source `set-ports.sh` passing the network name and port offset as arguments.  This script will export environment variables (read by docker-compose), and will update `package.json` such that deployment scripts target the correct port.
 
 Example:
 ```

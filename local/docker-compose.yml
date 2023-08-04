@@ -6,16 +6,14 @@ services:
     ports:
       - 8555:8555
     container_name: ajna-testnet-devenv
-    networks:
-      - ajna_test_network
   graph-node:
     image: graphprotocol/graph-node
     ports:
-      - '8000:${GRAPHQL_HTTP:-8000}'
-      - '8001:${GRAPHQL_WSS:-8001}'
-      - '8020:${GRAPHQL_ADMIN:-8020}'
-      - '8030:${GRAPHQL_INDEXER:-8030}'
-      - '8040:${GRAPHQL_METRICS:-8040}'
+      - '${GRAPHQL_HTTP:-8000}:8000'
+      - '${GRAPHQL_WSS:-8001}:8001'
+      - '${GRAPHQL_ADMIN:-8020}:8020'
+      - '${GRAPHQL_INDEXER:-8030}:8030'
+      - '${GRAPHQL_METRICS:-8040}:8040'
     depends_on:
       - ipfs
       - postgres
@@ -32,14 +30,10 @@ services:
       ETHEREUM_ANCESTOR_COUNT: 1
       GRAPH_ETHEREUM_GENESIS_BLOCK_NUMBER: 0
       GRAPH_LOG: info
-    networks:
-      - ajna_test_network
   ipfs:
     image: ipfs/kubo:master-latest
     ports:
-      - '5001:${GRAPHQL_IPFS:-5001}'
-    networks:
-      - ajna_test_network
+      - '${GRAPHQL_IPFS:-5001}:5001'
     volumes:
       - ${GRAPHQL_DATADIR:-./data}/ipfs:/data/ipfs
   postgres:
@@ -52,10 +46,5 @@ services:
       POSTGRES_PASSWORD: let-me-in
       POSTGRES_DB: graph-node
       POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
-    networks:
-      - ajna_test_network
     volumes:
       - ${GRAPHQL_DATADIR:-./data}/postgres:/var/lib/postgresql/data
-networks:
-  ajna_test_network:
-    name: ajna_test_network
