@@ -1,13 +1,13 @@
-import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, Bytes, Address, dataSource, bigInt } from '@graphprotocol/graph-ts'
 
 import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsAddressTable, TEN_BI } from "../constants"
+import { poolInfoUtilsAddressTable, TEN_BI, ZERO_BD, ZERO_BI } from "../constants"
 import { decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
-import { wmul, wdiv } from '../math'
+import { wmul, wdiv, wmin } from '../math'
 
 export function getPoolAddress(poolId: Bytes): Address {
   return Address.fromBytes(poolId)
@@ -61,7 +61,17 @@ export function getRatesAndFees(poolId: Bytes): RatesAndFees {
   return new RatesAndFees(lim, bfr, dfr);
 }
 
-export function calculateLendRate(borrowRate: BigInt, lenderInterestMargin: BigInt, utilization: BigInt): BigDecimal {
+export function calculateLendRate(
+  poolAddress: Address, 
+  borrowRate: BigInt, 
+  lenderInterestMargin: BigInt, 
+  poolPricesInfo: PoolPricesInfo, 
+  debt: BigInt
+): BigDecimal {
+  const meaningfulPriceIndex = max(poolPricesInfo.lupIndex.toU32(), poolPricesInfo.htpIndex.toU32())
+  const meaningfulDeposit = depositUpToIndex(poolAddress, meaningfulPriceIndex)
+  if (meaningfulDeposit.equals(ZERO_BI)) return ZERO_BD
+  const utilization = wdiv(debt, meaningfulDeposit)
   return wadToDecimal(wmul(wmul(borrowRate,lenderInterestMargin), utilization))
 }
 
@@ -231,9 +241,11 @@ export function updatePool(pool: Pool): void {
     // update lend rate and borrow fee, which change irrespective of borrow rate
     const ratesAndFees = getRatesAndFees(poolAddress)
     pool.lendRate = calculateLendRate(
+      poolAddress,
       decimalToWad(pool.borrowRate), 
       ratesAndFees.lenderInterestMargin, 
-      poolUtilizationInfo.actualUtilization)
+      poolPricesInfo,
+      debtInfo.pendingDebt)
     pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
 }
 
@@ -315,4 +327,9 @@ export function getDebtInfo(pool: Pool): DebtInfo {
     debtInfoResult.value2,
     debtInfoResult.value3
   )
+}
+
+export function depositUpToIndex(poolAddress: Address, index: u32): BigInt {
+  const poolContract = ERC20Pool.bind(poolAddress)
+  return poolContract.depositUpToIndex(BigInt.fromU32(index));
 }
