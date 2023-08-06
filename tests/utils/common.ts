@@ -2,7 +2,10 @@ import { Address, BigInt, Bytes, ethereum, dataSource, log } from "@graphprotoco
 import { assert, createMockedFunction } from "matchstick-as"
 
 import { handlePoolCreated } from "../../src/erc-20-pool-factory"
+import { handlePoolCreated as handleERC721PoolCreated } from "../../src/erc-721-pool-factory"
+
 import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
+import { createERC721PoolFactoryPoolCreatedEvent } from "./erc-721-pool-factory-utils"
 
 import { BucketInfo } from "../../src/utils/pool/bucket"
 import { wadToDecimal } from "../../src/utils/convert"
@@ -343,6 +346,7 @@ export function mockGetPoolKey(tokenId: BigInt, expectedPoolAddress: Address): v
 /*** Pool Mock Functions ***/
 /***************************/
 
+// TODO: add mockGetRatesAndFees to this function
 // create a pool entity and save it to the store
 export function createPool(pool_: Address, collateral: Address, quote: Address, interestRate: BigInt, feeRate: BigInt): void {
     // mock interest rate info contract call
@@ -369,6 +373,38 @@ export function createPool(pool_: Address, collateral: Address, quote: Address, 
     const newPoolCreatedEvent = createPoolCreatedEvent(pool_)
     newPoolCreatedEvent.address = Address.fromString("0x0000000000000000000000000000000000002020")
     handlePoolCreated(newPoolCreatedEvent)
+}
+
+// create a 721 type pool entity and save it to the store
+export function create721Pool(pool: Address, collateral: Address, quote: Address, interestRate: BigInt, feeRate: BigInt): void {
+    // mock rates and fees contract calls
+    mockGetRatesAndFees(pool, BigInt.fromString("980000000000000000"), BigInt.fromString("60000000000000000"))
+
+    // mock interest rate info contract call
+    createMockedFunction(pool, 'interestRateInfo', 'interestRateInfo():(uint256,uint256)')
+        .withArgs([])
+        .returns([
+            ethereum.Value.fromUnsignedBigInt(interestRate),
+            ethereum.Value.fromUnsignedBigInt(feeRate)
+        ])
+
+    // mock get token address contract calls
+    createMockedFunction(pool, 'collateralAddress', 'collateralAddress():(address)')
+        .withArgs([])
+        .returns([ethereum.Value.fromAddress(collateral)])
+    createMockedFunction(pool, 'quoteTokenAddress', 'quoteTokenAddress():(address)')
+        .withArgs([])
+        .returns([ethereum.Value.fromAddress(quote)])
+
+    // mock get token info contract calls
+    mockGetERC721TokenInfo(collateral, 'collateral', 'C')
+    mockGetTokenInfo(quote, 'quote', 'Q', BigInt.fromI32(18), BigInt.fromI32(100))
+
+    // handlePoolCreated event
+    const newPoolCreatedEvent = createERC721PoolFactoryPoolCreatedEvent(pool)
+    // TODO: DYNAMICALLY SET THIS ADDRESS
+    newPoolCreatedEvent.address = Address.fromString("0x0000000000000000000000000000000000002020")
+    handleERC721PoolCreated(newPoolCreatedEvent)
 }
 
 export function mockGetBorrowerInfo(pool: Address, borrower: Address, expectedInfo: BorrowerInfo): void {
@@ -553,6 +589,15 @@ export function mockGetTokenInfo(token: Address, expectedName: string, expectedS
     createMockedFunction(token, 'totalSupply', 'totalSupply():(uint256)')
         .withArgs([])
         .returns([ethereum.Value.fromUnsignedBigInt(expectedTotalSupply)])
+}
+
+export function mockGetERC721TokenInfo(token: Address, expectedName: string, expectedSymbol: string): void {
+    createMockedFunction(token, 'name', 'name():(string)')
+        .withArgs([])
+        .returns([ethereum.Value.fromString(expectedName)])
+    createMockedFunction(token, 'symbol', 'symbol():(string)')
+        .withArgs([])
+        .returns([ethereum.Value.fromString(expectedSymbol)])
 }
 
 export class PoolMockParams {

@@ -6,20 +6,23 @@ import {
   beforeAll,
   afterAll
 } from "matchstick-as/assembly/index"
-import { Address } from "@graphprotocol/graph-ts"
-import { handlePoolCreated } from "../src/erc-721-pool-factory"
-import { createERC721PoolFactoryPoolCreatedEvent } from "./utils/erc-721-pool-factory-utils"
+import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts"
+
+import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"
+import { create721Pool } from "./utils/common"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
 
 describe("ERC721PoolFactory assertions", () => {
   beforeAll(() => {
-    let pool_ = Address.fromString("0x0000000000000000000000000000000000000001")
-    let newERC721PoolFactoryPoolCreatedEvent = createERC721PoolFactoryPoolCreatedEvent(
-      pool_
-    )
-    handlePoolCreated(newERC721PoolFactoryPoolCreatedEvent)
+    const pool_ = Address.fromString("0x0000000000000000000000000000000000000001")
+    const expectedCollateralToken = Address.fromString("0x0000000000000000000000000000000000000002")
+    const expectedQuoteToken      = Address.fromString("0x0000000000000000000000000000000000000003")
+    const expectedInitialInterestRate = FIVE_PERCENT_BI
+    const expectedInitialFeeRate = ZERO_BI
+
+    create721Pool(pool_, expectedCollateralToken, expectedQuoteToken, expectedInitialInterestRate, expectedInitialFeeRate)
   })
 
   afterAll(() => {
