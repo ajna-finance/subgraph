@@ -97,9 +97,6 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
 
-    // update tx count for a pools tokens
-    incrementTokenTxCount(pool)
-
     // update bucket state
     const bucketId   = getBucketId(pool.id, event.params.index.toU32())
     const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
@@ -129,6 +126,9 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     bucket.save()
     lend.save()
     pool.save()
+
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
 
     addCollateral.bucket = bucket.id
     addCollateral.pool = pool.id

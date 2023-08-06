@@ -98,6 +98,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.pledgedCollateral = ZERO_BD
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI
+  // TODO: add support subset pools
+  pool.poolType = "Collection"
 
   // pool loans information
   pool.poolSize = ZERO_BD

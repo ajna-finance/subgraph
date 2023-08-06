@@ -1,12 +1,13 @@
 import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
 
-import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
+import { ERC721Token, LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
 import { poolInfoUtilsAddressTable, TEN_BI } from "../constants"
 import { decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
+import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
 import { wmul, wdiv } from '../math'
 
 export function getPoolAddress(poolId: Bytes): Address {
@@ -223,9 +224,16 @@ export function updatePool(pool: Pool): void {
     let scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
     let unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
     pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
-    token = Token.load(pool.collateralToken)!
-    scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
-    unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+    // use the appropriate contract for querying balanceOf the pool
+    if (pool.poolType == 'Fungible') {
+      token = Token.load(pool.collateralToken)!
+      scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+      unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+    }
+    else {
+      scaleFactor = TEN_BI.pow(18) // assume 18 decimal factor for ERC721
+      unnormalizedTokenBalance = getERC721TokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+    }
     pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 
     // update lend rate and borrow fee, which change irrespective of borrow rate
@@ -316,3 +324,43 @@ export function getDebtInfo(pool: Pool): DebtInfo {
     debtInfoResult.value3
   )
 }
+
+/***************************/
+/*** Recording Functions ***/
+/***************************/
+
+// export function recordAddCollateral(pool: Pool, index: BigInt): Array<Bytes> {
+//     // update pool state
+//     updatePool(pool)
+//     pool.txCount = pool.txCount.plus(ONE_BI)
+
+//     // update bucket state
+//     const bucketId   = getBucketId(pool.id, event.params.index.toU32())
+//     const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
+//     const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
+//     bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+//     bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+//     bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+//     bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+
+//     // update account state
+//     const accountId = addressToBytes(event.params.actor)
+//     const account   = loadOrCreateAccount(accountId)
+//     account.txCount = account.txCount.plus(ONE_BI)
+
+//     // update lend state
+//     const lendId = getLendId(bucketId, accountId)
+//     const lend = loadOrCreateLend(bucketId, lendId, pool.id, addCollateral.actor)
+//     lend.lpb             = lend.lpb.plus(addCollateral.lpAwarded)
+//     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+
+//     // update account's list of pools and lends if necessary
+//     updateAccountPools(account, pool)
+//     updateAccountLends(account, lend)
+
+//     // save entities to store
+//     account.save()
+//     bucket.save()
+//     lend.save()
+//     pool.save()
+// }

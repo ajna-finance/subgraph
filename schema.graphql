@@ -78,6 +78,8 @@ type Pool @entity {
   totalInterestEarned: BigDecimal!
   # total number of transactions sent to the pool
   txCount: BigInt!
+  # type of pool: "Fungible", Collection", "Subset"
+  poolType: String!
 
   # LOANS INFORMATION
   loansCount: BigInt! # total number of loans in the pool
@@ -285,9 +287,9 @@ type LPAllowances @entity {
   allowances: [LPAllowance!]! # list of LP allowances
 }
 
-  # # # # # #
-  # EVENTS  #
-  # # # # # #
+  # # # # # # # # # # #
+  # ERC20 Pool Events #
+  # # # # # # # # # # #
 
 type AddCollateral @entity(immutable: true) {
   id: Bytes!
@@ -654,10 +656,12 @@ type PoolCreated @entity(immutable: true) {
 
 type AddCollateralNFT @entity(immutable: true) {
   id: Bytes!
-  actor: Bytes! # address
-  index: BigInt! # uint256
-  tokenIds: [BigInt!]! # uint256[]
-  lpAwarded: BigInt! # uint256
+  pool: Pool!            # Pool to which collateral was added
+  bucket: Bucket!        # Bucket to which collateral was added
+  actor: Bytes!          # address
+  index: BigInt!         # bucket index to which collateral was added
+  tokenIds: [BigInt!]!   # uint256[] list of tokenIds added as collateral
+  lpAwarded: BigDecimal! # lp awarded for adding collateral
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

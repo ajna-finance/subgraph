@@ -10,6 +10,7 @@ import {
 } from "../../generated/templates/ERC721Pool/ERC721Pool"
 
 export function createAddCollateralNFTEvent(
+  poolAddress: Address,
   actor: Address,
   index: BigInt,
   tokenIds: Array<BigInt>,
@@ -37,6 +38,9 @@ export function createAddCollateralNFTEvent(
       ethereum.Value.fromUnsignedBigInt(lpAwarded)
     )
   )
+
+  // update transaction target to the expected pool address
+  addCollateralNftEvent.address = poolAddress
 
   return addCollateralNftEvent
 }
