@@ -296,7 +296,6 @@ templates:
           handler: handleUpdateInterestRate
       file: ./src/erc-20-pool.ts
     network: ganache
-templates:
   - kind: ethereum
     name: ERC721Pool
     source:

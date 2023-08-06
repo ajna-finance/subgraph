@@ -638,6 +638,38 @@ type PoolCreated @entity(immutable: true) {
   # ERC721 Pool EVENTS #
   # # # # # # # # # #  #
 
+type AddCollateralNFT @entity(immutable: true) {
+  id: Bytes!
+  actor: Bytes! # address
+  index: BigInt! # uint256
+  tokenIds: [BigInt!]! # uint256[]
+  lpAwarded: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type DrawDebtNFT @entity(immutable: true) {
+  id: Bytes!
+  borrower: Bytes! # address
+  amountBorrowed: BigInt! # uint256
+  tokenIdsPledged: [BigInt!]! # uint256[]
+  lup: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MergeOrRemoveCollateralNFT @entity(immutable: true) {
+  id: Bytes!
+  actor: Bytes! # address
+  collateralMerged: BigInt! # uint256
+  toIndexLps: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
   # # # # # # # # # # # # # # #
   # POSITION MANAGER ENTITIES #
   # # # # # # # # # # # # # # #

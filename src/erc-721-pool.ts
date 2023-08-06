@@ -5,12 +5,12 @@ import {
   KickReserveAuction as KickReserveAuctionEvent,
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
   ReserveAuction as ReserveAuctionEvent
-} from "../generated/ERC721Pool/ERC721Pool"
+} from "../generated/templates/ERC721Pool/ERC721Pool"
 import {
   AddCollateralNFT,
   DrawDebtNFT,
   Flashloan,
-  KickReserveAuction,
+  // KickReserveAuction,
   MergeOrRemoveCollateralNFT,
   ReserveAuction
 } from "../generated/schema"
@@ -47,35 +47,20 @@ export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
   entity.save()
 }
 
-export function handleFlashloan(event: FlashloanEvent): void {
-  let entity = new Flashloan(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.receiver = event.params.receiver
-  entity.token = event.params.token
-  entity.amount = event.params.amount
+// export function handleKickReserveAuction(event: KickReserveAuctionEvent): void {
+//   let entity = new KickReserveAuction(
+//     event.transaction.hash.concatI32(event.logIndex.toI32())
+//   )
+//   entity.claimableReservesRemaining = event.params.claimableReservesRemaining
+//   entity.auctionPrice = event.params.auctionPrice
+//   entity.currentBurnEpoch = event.params.currentBurnEpoch
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+//   entity.blockNumber = event.block.number
+//   entity.blockTimestamp = event.block.timestamp
+//   entity.transactionHash = event.transaction.hash
 
-  entity.save()
-}
-
-export function handleKickReserveAuction(event: KickReserveAuctionEvent): void {
-  let entity = new KickReserveAuction(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.claimableReservesRemaining = event.params.claimableReservesRemaining
-  entity.auctionPrice = event.params.auctionPrice
-  entity.currentBurnEpoch = event.params.currentBurnEpoch
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
+//   entity.save()
+// }
 
 export function handleMergeOrRemoveCollateralNFT(
   event: MergeOrRemoveCollateralNFTEvent
@@ -94,17 +79,3 @@ export function handleMergeOrRemoveCollateralNFT(
   entity.save()
 }
 
-export function handleReserveAuction(event: ReserveAuctionEvent): void {
-  let entity = new ReserveAuction(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.claimableReservesRemaining = event.params.claimableReservesRemaining
-  entity.auctionPrice = event.params.auctionPrice
-  entity.currentBurnEpoch = event.params.currentBurnEpoch
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
