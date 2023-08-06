@@ -124,7 +124,6 @@ describe("ERC20PoolFactory assertions", () => {
     const expectedCollateralToken = Address.fromString("0x0000000000000000000000000000000000000002")
     const expectedQuoteToken      = Address.fromString("0x0000000000000000000000000000000000000003")
 
-    logStore()
     assert.entityCount("Token", 2)
 
     assert.fieldEquals(

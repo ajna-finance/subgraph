@@ -46,4 +46,103 @@ describe("ERC721PoolFactory assertions", () => {
     // More assert options:
     // https://thegraph.com/docs/en/developer/matchstick/#asserts
   })
+
+  test("Factory entity attributes", () => {
+    assert.entityCount("PoolFactory", 1)
+
+    const erc721factoryAddress = Address.fromString("0x0000000000000000000000000000000000002020")
+    assert.fieldEquals(
+      "PoolFactory",
+      erc721factoryAddress.toHexString(),
+      "poolType",
+      "ERC721"
+    )
+    assert.fieldEquals(
+      "PoolFactory",
+      erc721factoryAddress.toHexString(),
+      "poolCount",
+      `${ONE_BI}`
+    )
+    assert.fieldEquals(
+      "PoolFactory",
+      erc721factoryAddress.toHexString(),
+      "txCount",
+      `${ONE_BI}`
+    )
+  })
+
+  test("Pool entity attributes", () => {
+    assert.entityCount("Pool", 1)
+
+    assert.fieldEquals(
+      "Pool",
+      "0x0000000000000000000000000000000000000001",
+      "collateralToken",
+      "0x0000000000000000000000000000000000000002"
+    )
+    assert.fieldEquals(
+      "Pool",
+      "0x0000000000000000000000000000000000000001",
+      "quoteToken",
+      "0x0000000000000000000000000000000000000003"
+    )
+    assert.fieldEquals(
+      "Pool",
+      "0x0000000000000000000000000000000000000001",
+      "lup",
+      `${MAX_PRICE}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      "0x0000000000000000000000000000000000000001",
+      "t0debt",
+      `${ZERO_BI}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      "0x0000000000000000000000000000000000000001",
+      "reserves",
+      `${ZERO_BI}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      "0x0000000000000000000000000000000000000001",
+      "txCount",
+      `${ZERO_BI}`
+    )
+  })
+
+  test("Token entity attributes", () => {
+    const expectedCollateralToken = Address.fromString("0x0000000000000000000000000000000000000002")
+    const expectedQuoteToken      = Address.fromString("0x0000000000000000000000000000000000000003")
+
+    assert.entityCount("ERC721Token", 1)
+    assert.entityCount("Token", 1)
+
+    assert.fieldEquals(
+      "Token",
+      `${expectedQuoteToken.toHexString()}`,
+      "name",
+      "quote"
+    )
+    assert.fieldEquals(
+      "Token",
+      `${expectedQuoteToken.toHexString()}`,
+      "symbol",
+      "Q"
+    )
+    assert.fieldEquals(
+      "ERC721Token",
+      `${expectedCollateralToken.toHexString()}`,
+      "name",
+      "collateral"
+    )
+    assert.fieldEquals(
+      "ERC721Token",
+      `${expectedCollateralToken.toHexString()}`,
+      "symbol",
+      "C"
+    )
+  })
+
 })
