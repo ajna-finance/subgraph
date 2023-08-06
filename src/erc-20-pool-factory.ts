@@ -60,6 +60,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     collateralToken.tokenType = "ERC20"
     collateralToken.poolCount = ONE_BI
   }
+  else {
+    collateralToken.poolCount = collateralToken.poolCount.plus(ONE_BI)
+  }
   let quoteToken = Token.load(quoteTokenAddressBytes)
   if (quoteToken == null) {
     // create new token if it doesn't exist already
@@ -71,6 +74,9 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     quoteToken.txCount = ZERO_BI
     quoteToken.tokenType = "ERC20"
     quoteToken.poolCount = ONE_BI
+  }
+  else {
+    quoteToken.poolCount = quoteToken.poolCount.plus(ONE_BI)
   }
 
   // create entities

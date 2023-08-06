@@ -11,13 +11,27 @@ type Token @entity {
   # token decimals
   decimals: Int!
   # indicates whether the token is ERC20 or ERC721
-  tokenType: String!
+  tokenType: String! # TODO: REMOVE THIS IN FAVOR OF A SEPARATE ENTITY
   # number of pools including this token
   poolCount: BigInt!
   # total supply of the token
   totalSupply: BigInt!
   # transactions across all pools that include this token
   txCount: BigInt!
+}
+
+type ERC721Token @entity {
+  # token address
+  id: Bytes!
+  # token symbol
+  symbol: String!
+  # token name
+  name: String!
+  # number of pools including this token
+  poolCount: BigInt!
+  # transactions across all pools that include this token
+  txCount: BigInt!
+  # TODO: track which tokenIds have been used in pools?
 }
 
 type PoolFactory @entity {

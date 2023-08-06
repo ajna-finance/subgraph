@@ -23,6 +23,15 @@ export function getTokenSymbol(tokenAddress: Address): string {
     }
 }
 
+export function getTokenURI(tokenAddress: Address, tokenId: BigInt): string {
+    const tokenURICall = ERC721.bind(tokenAddress).try_tokenURI(tokenId)
+    if (tokenURICall.reverted) {
+        return "N/A"
+    } else {
+        return tokenURICall.value
+    }
+}
+
 export function incrementTokenTxCount(pool: Pool): void {
     // increment token tx count
     const collateralToken = Token.load(pool.collateralToken)!
