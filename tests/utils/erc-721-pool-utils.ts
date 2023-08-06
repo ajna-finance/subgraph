@@ -7,7 +7,7 @@ import {
   KickReserveAuction,
   MergeOrRemoveCollateralNFT,
   ReserveAuction
-} from "../generated/ERC721Pool/ERC721Pool"
+} from "../../generated/templates/ERC721Pool/ERC721Pool"
 
 export function createAddCollateralNFTEvent(
   actor: Address,

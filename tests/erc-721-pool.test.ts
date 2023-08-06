@@ -8,9 +8,9 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { AddCollateralNFT } from "../generated/schema"
-import { AddCollateralNFT as AddCollateralNFTEvent } from "../generated/ERC721Pool/ERC721Pool"
+import { AddCollateralNFT as AddCollateralNFTEvent } from "../generated/templates/ERC721Pool/ERC721Pool"
 import { handleAddCollateralNFT } from "../src/erc-721-pool"
-import { createAddCollateralNFTEvent } from "./erc-721-pool-utils"
+import { createAddCollateralNFTEvent } from "./utils/erc-721-pool-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -43,25 +43,25 @@ describe("Describe entity assertions", () => {
     // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a is the default address used in newMockEvent() function
     assert.fieldEquals(
       "AddCollateralNFT",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "actor",
       "0x0000000000000000000000000000000000000001"
     )
     assert.fieldEquals(
       "AddCollateralNFT",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "index",
       "234"
     )
     assert.fieldEquals(
       "AddCollateralNFT",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "tokenIds",
       "[234]"
     )
     assert.fieldEquals(
       "AddCollateralNFT",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "lpAwarded",
       "234"
     )
