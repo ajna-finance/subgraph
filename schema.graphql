@@ -634,6 +634,10 @@ type PoolCreated @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+  # # # # # # # # # #  #
+  # ERC721 Pool EVENTS #
+  # # # # # # # # # #  #
+
   # # # # # # # # # # # # # # #
   # POSITION MANAGER ENTITIES #
   # # # # # # # # # # # # # # #

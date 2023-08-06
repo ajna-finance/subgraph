@@ -296,3 +296,110 @@ templates:
           handler: handleUpdateInterestRate
       file: ./src/erc-20-pool.ts
     network: ganache
+templates:
+  - kind: ethereum
+    name: ERC721Pool
+    source:
+      abi: ERC721Pool
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AddCollateralNFT
+        - AddQuoteToken
+        - ApproveLPTransferors
+        - AuctionNFTSettle
+        - AuctionSettle
+        - BondWithdrawn
+        - BucketBankruptcy
+        - BucketTake
+        - BucketTakeLPAwarded
+        - DecreaseLPAllowance
+        - DrawDebtNFT
+        - IncreaseLPAllowance
+        - Kick
+        - LoanStamped
+        - MergeOrRemoveCollateralNFT
+        - MoveQuoteToken
+        - RemoveCollateral
+        - RemoveQuoteToken
+        - RepayDebt
+        - ReserveAuctionKick
+        - ReserveAuctionTake
+        - ResetInterestRate
+        - RevokeLPAllowance
+        - RevokeLPTransferors
+        - Settle
+        - Take
+        - TransferLP
+        - UpdateInterestRate
+      abis:
+        - name: ERC721
+          file: ./abis/ERC721.json
+        - name: ERC721Pool
+          file: ./abis/ERC721Pool.json
+        - name: PoolInfoUtils
+          file: ./abis/PoolInfoUtils.json
+      eventHandlers:
+        - event: AddCollateralNFT(indexed address,indexed uint256,uint256[],uint256)
+          handler: handleAddCollateralNFT
+        - event: AddQuoteToken(indexed address,indexed uint256,uint256,uint256,uint256)
+          handler: handleAddQuoteToken
+        - event: ApproveLPTransferors(indexed address,address[])
+          handler: handleApproveLPTransferors
+        - event: AuctionNFTSettle(indexed address,uint256,uint256,uint256)
+          handler: handleAuctionNFTSettle
+        - event: AuctionSettle(indexed address,uint256)
+          handler: handleAuctionSettle
+        - event: BondWithdrawn(indexed address,indexed address,uint256)
+          handler: handleBondWithdrawn
+        - event: BucketBankruptcy(indexed uint256,uint256)
+          handler: handleBucketBankruptcy
+        - event: BucketTake(indexed address,uint256,uint256,uint256,uint256,bool)
+          handler: handleBucketTake
+        - event: BucketTakeLPAwarded(indexed address,indexed address,uint256,uint256)
+          handler: handleBucketTakeLPAwarded
+        - event: DecreaseLPAllowance(indexed address,indexed address,uint256[],uint256[])
+          handler: handleDecreaseLPAllowance
+        - event: DrawDebtNFT(indexed address,uint256,uint256[],uint256)
+          handler: handleDrawDebtNFT
+        - event: Flashloan(indexed address,indexed address,uint256)
+          handler: handleFlashloan
+        - event: IncreaseLPAllowance(indexed address,indexed address,uint256[],uint256[])
+          handler: handleIncreaseLPAllowance
+        - event: Kick(indexed address,uint256,uint256,uint256)
+          handler: handleKick
+        - event: KickReserveAuction(uint256,uint256,uint256)
+          handler: handleReserveAuctionKick
+        - event: LoanStamped(indexed address)
+          handler: handleLoanStamped
+        - event: MergeOrRemoveCollateralNFT(indexed address,uint256,uint256)
+          handler: handleMergeOrRemoveCollateralNFT
+        - event: MoveQuoteToken(indexed address,indexed uint256,indexed
+            uint256,uint256,uint256,uint256,uint256)
+          handler: handleMoveQuoteToken
+        - event: RemoveCollateral(indexed address,indexed uint256,uint256,uint256)
+          handler: handleRemoveCollateral
+        - event: RemoveQuoteToken(indexed address,indexed uint256,uint256,uint256,uint256)
+          handler: handleRemoveQuoteToken
+        - event: RepayDebt(indexed address,uint256,uint256,uint256)
+          handler: handleRepayDebt
+        - event: ReserveAuction(uint256,uint256,uint256)
+          handler: handleReserveAuctionTake
+        - event: ResetInterestRate(uint256,uint256)
+          handler: handleResetInterestRate
+        - event: RevokeLPAllowance(indexed address,indexed address,uint256[])
+          handler: handleRevokeLPAllowance
+        - event: RevokeLPTransferors(indexed address,address[])
+          handler: handleRevokeLPTransferors
+        - event: Settle(indexed address,uint256)
+          handler: handleSettle
+        - event: Take(indexed address,uint256,uint256,uint256,bool)
+          handler: handleTake
+        - event: TransferLP(address,address,uint256[],uint256)
+          handler: handleTransferLP
+        - event: UpdateInterestRate(uint256,uint256)
+          handler: handleUpdateInterestRate
+      file: ./src/erc-721-pool.ts
+    network: ganache
