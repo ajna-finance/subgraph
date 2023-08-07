@@ -17,7 +17,7 @@ export function _handleAddQuoteToken(erc20Event: AddQuoteTokenERC20Event | null,
     // get pool based upon the event source
     const pool = erc20Event === null ? Pool.load(addressToBytes(erc721Event!.address))! : Pool.load(addressToBytes(erc20Event.address))!
 
-    // set event attribute types
+    // set event attribute types to local variables
     let logIndex: i32;
     let lender: Address;
     let index: u32;
@@ -28,7 +28,7 @@ export function _handleAddQuoteToken(erc20Event: AddQuoteTokenERC20Event | null,
     let blockTimestamp: BigInt;
     let transactionHash: Bytes;
 
-    // access event attributes
+    // access event attributes and write to local variables
     if (isERC20Pool(pool)) {
         incrementTokenTxCountERC20Pool(pool)
 
@@ -55,6 +55,7 @@ export function _handleAddQuoteToken(erc20Event: AddQuoteTokenERC20Event | null,
         transactionHash = erc721Event!.transaction.hash
     }
 
+    // use local variables to create shared AddQuoteToken entity
     const addQuoteToken = new AddQuoteToken(
         transactionHash.concatI32(logIndex)
     )
@@ -68,7 +69,7 @@ export function _handleAddQuoteToken(erc20Event: AddQuoteTokenERC20Event | null,
     addQuoteToken.blockTimestamp = blockTimestamp
     addQuoteToken.transactionHash = transactionHash
 
-    // update entities
+    // update pool entity
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
 
@@ -96,14 +97,15 @@ export function _handleAddQuoteToken(erc20Event: AddQuoteTokenERC20Event | null,
     updateAccountPools(account, pool)
     updateAccountLends(account, lend)
 
+    // associate entities
+    addQuoteToken.bucket = bucket.id
+    addQuoteToken.pool = pool.id
+
     // save entities to store
     account.save()
     bucket.save()
     lend.save()
     pool.save()
-
-    addQuoteToken.bucket = bucket.id
-    addQuoteToken.pool = pool.id
     addQuoteToken.save()
 }
-  
+
