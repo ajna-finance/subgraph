@@ -35,9 +35,10 @@ import { ZERO_BD, ONE_BI, TEN_BI } from "./utils/constants"
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "./utils/pool/liquidation"
-import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, calculateLendRate } from "./utils/pool/pool"
+import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, calculateLendRate, isERC20Pool } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
+import { _handleAddQuoteToken } from "./mappings/base/base-pool"
 
 // TODO:
 // - Figure out solution for accurate tracking of tokenIdsPledged
@@ -165,58 +166,9 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
 // TODO: ensure that the common events don't result in double counting state incrementation
 // TODO: potentially get around this by create or load and exiting the function if it's already been created
 export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
-  const addQuoteToken = new AddQuoteToken(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  addQuoteToken.lender    = event.params.lender
-  addQuoteToken.index     = event.params.index.toU32()
-  addQuoteToken.amount    = wadToDecimal(event.params.amount)
-  addQuoteToken.lpAwarded = wadToDecimal(event.params.lpAwarded)
-  addQuoteToken.lup       = wadToDecimal(event.params.lup)
-
-  addQuoteToken.blockNumber = event.block.number
-  addQuoteToken.blockTimestamp = event.block.timestamp
-  addQuoteToken.transactionHash = event.transaction.hash
-
-  // update pool entity
-  const pool = Pool.load(addressToBytes(event.address))!
-  updatePool(pool)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-  incrementTokenTxCount(pool)
-
-  // update bucket state
-  const bucketId      = getBucketId(pool.id, event.params.index.toU32())
-  const bucket        = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
-  const bucketInfo    = getBucketInfo(pool.id, bucket.bucketIndex)
-  bucket.collateral   = wadToDecimal(bucketInfo.collateral)
-  bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
-  bucket.lpb          = wadToDecimal(bucketInfo.lpb)
-  bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
-
-  // update account state
-  const accountId = addressToBytes(event.params.lender)
-  const account   = loadOrCreateAccount(accountId)
-  account.txCount = account.txCount.plus(ONE_BI)
-
-  // update lend state
-  const lendId         = getLendId(bucketId, accountId)
-  const lend           = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
-  lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
-  lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
-
-  // update account's list of pools and lends if necessary
-  updateAccountPools(account, pool)
-  updateAccountLends(account, lend)
-
-  // save entities to store
-  account.save()
-  bucket.save()
-  lend.save()
-  pool.save()
-
-  addQuoteToken.bucket = bucket.id
-  addQuoteToken.pool = pool.id
-  addQuoteToken.save()
+  // TODO: get compiler to ignore this line's INFO output
+  event = changetype<AddQuoteTokenEvent | null>(event)!
+  _handleAddQuoteToken(null, event)
 }
 
 // called by Account's with Lend(s) in a pool

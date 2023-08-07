@@ -368,3 +368,7 @@ export function getDebtInfoERC721Pool(pool: Pool): DebtInfo {
     debtInfoResult.value3
   )
 }
+
+export function isERC20Pool(pool: Pool): boolean {
+  return pool.poolType == 'Fungible'
+}

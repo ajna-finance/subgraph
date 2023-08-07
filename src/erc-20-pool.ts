@@ -76,6 +76,7 @@ import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/
 import { incrementTokenTxCount } from "./utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
 import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
+import { _handleAddQuoteToken } from "./mappings/base/base-pool"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -138,58 +139,9 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
 }
 
 export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
-  const addQuoteToken = new AddQuoteToken(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  addQuoteToken.lender    = event.params.lender
-  addQuoteToken.index     = event.params.index.toU32()
-  addQuoteToken.amount    = wadToDecimal(event.params.amount)
-  addQuoteToken.lpAwarded = wadToDecimal(event.params.lpAwarded)
-  addQuoteToken.lup       = wadToDecimal(event.params.lup)
-
-  addQuoteToken.blockNumber = event.block.number
-  addQuoteToken.blockTimestamp = event.block.timestamp
-  addQuoteToken.transactionHash = event.transaction.hash
-
-  // update entities
-  const pool = Pool.load(addressToBytes(event.address))!
-  updatePool(pool)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-  incrementTokenTxCount(pool)
-
-  // update bucket state
-  const bucketId      = getBucketId(pool.id, event.params.index.toU32())
-  const bucket        = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
-  const bucketInfo    = getBucketInfo(pool.id, bucket.bucketIndex)
-  bucket.collateral   = wadToDecimal(bucketInfo.collateral)
-  bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
-  bucket.lpb          = wadToDecimal(bucketInfo.lpb)
-  bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
-
-  // update account state
-  const accountId = addressToBytes(event.params.lender)
-  const account   = loadOrCreateAccount(accountId)
-  account.txCount = account.txCount.plus(ONE_BI)
-
-  // update lend state
-  const lendId         = getLendId(bucketId, accountId)
-  const lend           = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
-  lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
-  lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
-
-  // update account's list of pools and lends if necessary
-  updateAccountPools(account, pool)
-  updateAccountLends(account, lend)
-
-  // save entities to store
-  account.save()
-  bucket.save()
-  lend.save()
-  pool.save()
-
-  addQuoteToken.bucket = bucket.id
-  addQuoteToken.pool = pool.id
-  addQuoteToken.save()
+  // TODO: get compiler to ignore this line's INFO output
+  event = changetype<AddQuoteTokenEvent | null>(event)!
+  _handleAddQuoteToken(event, null)
 }
 
 export function handleApproveLPTransferors(
