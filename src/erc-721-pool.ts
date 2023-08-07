@@ -4,10 +4,12 @@ import {
   Flashloan as FlashloanEvent,
   KickReserveAuction as KickReserveAuctionEvent,
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
-  ReserveAuction as ReserveAuctionEvent
+  ReserveAuction as ReserveAuctionEvent,
+  AddQuoteToken as AddQuoteTokenEvent
 } from "../generated/templates/ERC721Pool/ERC721Pool"
 import {
   AddCollateralNFT,
+  AddQuoteToken,
   DrawDebtNFT,
   Flashloan,
   // KickReserveAuction,
@@ -90,20 +92,77 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
   addCollateralNFT.save()
 }
 
-export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
-  let entity = new DrawDebtNFT(
+// TODO: ensure that the common events don't result in double counting state incrementation
+// TODO: potentially get around this by create or load and exiting the function if it's already been created
+export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
+  const addQuoteToken = new AddQuoteToken(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.borrower = event.params.borrower
-  entity.amountBorrowed = event.params.amountBorrowed
-  entity.tokenIdsPledged = event.params.tokenIdsPledged
-  entity.lup = event.params.lup
+  addQuoteToken.lender    = event.params.lender
+  addQuoteToken.index     = event.params.index.toU32()
+  addQuoteToken.amount    = wadToDecimal(event.params.amount)
+  addQuoteToken.lpAwarded = wadToDecimal(event.params.lpAwarded)
+  addQuoteToken.lup       = wadToDecimal(event.params.lup)
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  addQuoteToken.blockNumber = event.block.number
+  addQuoteToken.blockTimestamp = event.block.timestamp
+  addQuoteToken.transactionHash = event.transaction.hash
 
-  entity.save()
+  // update pool entity
+  const pool = Pool.load(addressToBytes(event.address))!
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
+
+  // update bucket state
+  const bucketId      = getBucketId(pool.id, event.params.index.toU32())
+  const bucket        = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
+  const bucketInfo    = getBucketInfo(pool.id, bucket.bucketIndex)
+  bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+  bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+  bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+  bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+
+  // update account state
+  const accountId = addressToBytes(event.params.lender)
+  const account   = loadOrCreateAccount(accountId)
+  account.txCount = account.txCount.plus(ONE_BI)
+
+  // update lend state
+  const lendId         = getLendId(bucketId, accountId)
+  const lend           = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
+  lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
+  lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+
+  // update account's list of pools and lends if necessary
+  updateAccountPools(account, pool)
+  updateAccountLends(account, lend)
+
+  // save entities to store
+  account.save()
+  bucket.save()
+  lend.save()
+  pool.save()
+
+  addQuoteToken.bucket = bucket.id
+  addQuoteToken.pool = pool.id
+  addQuoteToken.save()
+}
+
+export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
+  const drawDebtNFT = new DrawDebtNFT(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  drawDebtNFT.borrower = event.params.borrower
+  drawDebtNFT.amountBorrowed = event.params.amountBorrowed
+  drawDebtNFT.tokenIdsPledged = event.params.tokenIdsPledged
+  drawDebtNFT.lup = event.params.lup
+
+  drawDebtNFT.blockNumber = event.block.number
+  drawDebtNFT.blockTimestamp = event.block.timestamp
+  drawDebtNFT.transactionHash = event.transaction.hash
+
+  drawDebtNFT.save()
 }
 
 // export function handleKickReserveAuction(event: KickReserveAuctionEvent): void {

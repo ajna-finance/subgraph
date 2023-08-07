@@ -2,6 +2,7 @@ import { newMockEvent } from "matchstick-as"
 import { ethereum, Address, BigInt } from "@graphprotocol/graph-ts"
 import {
   AddCollateralNFT,
+  AddQuoteToken,
   DrawDebtNFT,
   Flashloan,
   KickReserveAuction,
@@ -43,6 +44,43 @@ export function createAddCollateralNFTEvent(
   addCollateralNftEvent.address = poolAddress
 
   return addCollateralNftEvent
+}
+
+export function createAddQuoteTokenEvent(
+  pool: Address,
+  lender: Address,
+  index: BigInt,
+  amount: BigInt,
+  lpAwarded: BigInt,
+  lup: BigInt
+): AddQuoteToken {
+  let addQuoteTokenEvent = changetype<AddQuoteToken>(newMockEvent())
+
+  addQuoteTokenEvent.parameters = new Array()
+
+  addQuoteTokenEvent.parameters.push(
+    new ethereum.EventParam("lender", ethereum.Value.fromAddress(lender))
+  )
+  addQuoteTokenEvent.parameters.push(
+    new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
+  )
+  addQuoteTokenEvent.parameters.push(
+    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
+  )
+  addQuoteTokenEvent.parameters.push(
+    new ethereum.EventParam(
+      "lpAwarded",
+      ethereum.Value.fromUnsignedBigInt(lpAwarded)
+    )
+  )
+  addQuoteTokenEvent.parameters.push(
+    new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
+  )
+
+  // update transaction target to the expected pool address
+  addQuoteTokenEvent.address = pool
+
+  return addQuoteTokenEvent
 }
 
 export function createDrawDebtNFTEvent(
