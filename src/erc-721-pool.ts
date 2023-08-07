@@ -31,6 +31,7 @@ import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidati
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, calculateLendRate } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/common"
 
+// TODO: track tokenIds in the bucket entity?
 export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
   const addCollateralNFT = new AddCollateralNFT(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -162,6 +163,36 @@ export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
   drawDebtNFT.blockTimestamp = event.block.timestamp
   drawDebtNFT.transactionHash = event.transaction.hash
 
+  // update pool entity
+  const pool = Pool.load(addressToBytes(event.address))!
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  pool.tokenIdsPledged = pool.tokenIdsPledged.concat(event.params.tokenIdsPledged)
+  incrementTokenTxCount(pool)
+
+  // update account state
+  const accountId = addressToBytes(event.params.borrower)
+  const account   = loadOrCreateAccount(accountId)
+  account.txCount = account.txCount.plus(ONE_BI)
+
+  // update loan state
+  const loanId = getLoanId(pool.id, accountId)
+  const loan = loadOrCreateLoan(loanId, pool.id, drawDebtNFT.borrower)
+  const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
+  loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+  loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
+  loan.tokenIdsPledged   = loan.tokenIdsPledged.concat(event.params.tokenIdsPledged)
+
+  // update account's list of pools and loans if necessary
+  updateAccountPools(account, pool)
+  updateAccountLoans(account, loan)
+
+  drawDebtNFT.pool = pool.id
+
+  // save entities to store
+  pool.save()
+  account.save()
+  loan.save()
   drawDebtNFT.save()
 }
 
@@ -180,6 +211,7 @@ export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
 //   entity.save()
 // }
 
+// TODO: NEED TO FIND AND REMOVE TOKENIDS FROM THE ARRAYS OF LOANS AND POOL
 export function handleMergeOrRemoveCollateralNFT(
   event: MergeOrRemoveCollateralNFTEvent
 ): void {
@@ -197,3 +229,18 @@ export function handleMergeOrRemoveCollateralNFT(
   entity.save()
 }
 
+// export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
+//   const entity = new AuctionNFTSettle(
+//     event.transaction.hash.concatI32(event.logIndex.toI32())
+//   )
+//   entity.borrower = event.params.borrower
+//   entity.collateral = wadToDecimal(event.params.collateral)
+//   entity.lp = wadToDecimal(event.params.lp)
+//   entity.index = event.params.index.toU32()
+
+//   entity.blockNumber = event.block.number
+//   entity.blockTimestamp = event.block.timestamp
+//   entity.transactionHash = event.transaction.hash
+
+//   entity.save()
+// }

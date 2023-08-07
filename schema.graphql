@@ -128,6 +128,10 @@ type Pool @entity {
   # normalized contract balances, used for TVL
   quoteTokenBalance: BigDecimal!
   collateralBalance: BigDecimal!
+
+  # ERC721 POOL INFORMATION
+  # list of tokenIds pledged by the borrower
+  tokenIdsPledged: [BigInt!]!
 }
 
 type Bucket @entity {
@@ -185,6 +189,8 @@ type Loan @entity {
   liquidationAuction: LiquidationAuction
   # collateral tokens deposited in a pool by the borrower
   collateralPledged: BigDecimal!
+  # list of tokenIds pledged by the borrower
+  tokenIdsPledged: [BigInt!]!
   # debt in T0 terms, useful when the caller knows the pending inflator
   t0debt: BigDecimal!
 }
@@ -669,6 +675,7 @@ type AddCollateralNFT @entity(immutable: true) {
 
 type DrawDebtNFT @entity(immutable: true) {
   id: Bytes!
+  pool: Pool!                 # Pool from which quote was withdrawn
   borrower: Bytes! # address
   amountBorrowed: BigInt! # uint256
   tokenIdsPledged: [BigInt!]! # uint256[]
@@ -680,6 +687,7 @@ type DrawDebtNFT @entity(immutable: true) {
 
 type MergeOrRemoveCollateralNFT @entity(immutable: true) {
   id: Bytes!
+  pool: Pool!            # Pool in which NFT collateral was merged or removed
   actor: Bytes! # address
   collateralMerged: BigInt! # uint256
   toIndexLps: BigInt! # uint256

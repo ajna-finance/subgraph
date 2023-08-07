@@ -100,6 +100,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.txCount = ZERO_BI
   // TODO: add support subset pools
   pool.poolType = "Collection"
+  pool.tokenIdsPledged = []
 
   // pool loans information
   pool.poolSize = ZERO_BD

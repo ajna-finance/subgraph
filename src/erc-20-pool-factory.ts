@@ -98,6 +98,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI
   pool.poolType = "Fungible"
+  pool.tokenIdsPledged = []
 
   // pool loans information
   pool.poolSize = ZERO_BD
