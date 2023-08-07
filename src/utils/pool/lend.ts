@@ -1,7 +1,9 @@
-import { BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
 import { Lend } from "../../../generated/schema"
+import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
 
-import { ZERO_BD, ZERO_BI } from "../constants"
+import { poolInfoUtilsAddressTable, ZERO_BD, ZERO_BI } from "../constants"
+import { decimalToWad, wadToDecimal } from "../convert"
 
 
 export function getLendId(bucketId: Bytes, accountId: Bytes): Bytes {
@@ -23,4 +25,18 @@ export function loadOrCreateLend(bucketId: Bytes, lendId: Bytes, poolId: Bytes, 
         lend.lpbValueInQuote = ZERO_BD
     }
     return lend
+}
+
+export function lpbValueInQuote(pool: Bytes, bucketIndex: u32, lpAmount: BigDecimal): BigDecimal {
+    const poolAddress = Address.fromBytes(pool)
+    const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
+    const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
+
+    const quoteTokenAmount = poolInfoUtilsContract.lpToQuoteTokens(
+      poolAddress,
+      decimalToWad(lpAmount),
+      BigInt.fromU32(bucketIndex)
+    )
+
+    return wadToDecimal(quoteTokenAmount)
 }

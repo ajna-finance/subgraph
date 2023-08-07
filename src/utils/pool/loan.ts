@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/g
 import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 import { Loan }    from "../../../generated/schema"
-import { poolInfoUtilsAddressTable, ZERO_BD, ZERO_BI } from "../constants"
+import { poolInfoUtilsAddressTable, ONE_BD, ZERO_BD, ZERO_BI } from "../constants"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from "../../../generated/templates/ERC721Pool/ERC721Pool"
 
@@ -59,4 +59,20 @@ export function getBorrowerInfoERC721Pool(borrower: Bytes, poolId: Bytes): Borro
     borrowerInfoResult.value1,
     borrowerInfoResult.value2
   )
+}
+
+export function collateralizationAtLup(debt: BigDecimal, collateral: BigDecimal, lup: BigDecimal): BigDecimal {
+  if (debt > ZERO_BD && lup > ZERO_BD) {
+    return collateral.times(lup).div(debt)
+  } else {
+    return ONE_BD
+  }
+}
+
+export function thresholdPrice(debt: BigDecimal, collateral: BigDecimal): BigDecimal {
+  if (collateral > ZERO_BD) {
+    return debt.div(collateral)
+  } else {
+    return ZERO_BD;
+  }
 }
