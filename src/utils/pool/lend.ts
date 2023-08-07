@@ -15,6 +15,7 @@ export function loadOrCreateLend(bucketId: Bytes, lendId: Bytes, poolId: Bytes, 
         lend = new Lend(lendId) as Lend
 
         lend.bucket          = bucketId
+        lend.depositTime     = ZERO_BI
         lend.lender          = lender
         lend.pool            = poolId
         lend.poolAddress     = poolId.toHexString()

@@ -1,21 +1,28 @@
 import {
   AddCollateralNFT as AddCollateralNFTEvent,
+  AddQuoteToken as AddQuoteTokenEvent,
+  AuctionNFTSettle as AuctionNFTSettleEvent,
+  AuctionSettle as AuctionSettleEvent,
   DrawDebtNFT as DrawDebtNFTEvent,
   Flashloan as FlashloanEvent,
   KickReserveAuction as KickReserveAuctionEvent,
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
   ReserveAuction as ReserveAuctionEvent,
-  AddQuoteToken as AddQuoteTokenEvent
+  Settle as SettleEvent
 } from "../generated/templates/ERC721Pool/ERC721Pool"
 import {
   AddCollateralNFT,
   AddQuoteToken,
+  AuctionNFTSettle,
   DrawDebtNFT,
   Flashloan,
+  LiquidationAuction,
+  Loan,
   // KickReserveAuction,
   MergeOrRemoveCollateralNFT,
   Pool,
-  ReserveAuction
+  ReserveAuction,
+  Settle
 } from "../generated/schema"
 import { incrementTokenTxCount } from "./utils/token-erc721"
 import { Bytes } from "@graphprotocol/graph-ts"
@@ -31,6 +38,62 @@ import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidati
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, calculateLendRate } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/common"
 
+/*******************************/
+/*** Borrower Event Handlers ***/
+/*******************************/
+
+export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
+  const drawDebtNFT = new DrawDebtNFT(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  drawDebtNFT.borrower = event.params.borrower
+  drawDebtNFT.amountBorrowed = wadToDecimal(event.params.amountBorrowed)
+  drawDebtNFT.lup = wadToDecimal(event.params.lup)
+  drawDebtNFT.tokenIdsPledged = event.params.tokenIdsPledged
+
+  drawDebtNFT.blockNumber = event.block.number
+  drawDebtNFT.blockTimestamp = event.block.timestamp
+  drawDebtNFT.transactionHash = event.transaction.hash
+
+  // update pool entity
+  const pool = Pool.load(addressToBytes(event.address))!
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  // record the tokenIds added to the pool
+  pool.tokenIdsPledged = pool.tokenIdsPledged.concat(event.params.tokenIdsPledged)
+  incrementTokenTxCount(pool)
+
+  // update account state
+  const accountId = addressToBytes(event.params.borrower)
+  const account   = loadOrCreateAccount(accountId)
+  account.txCount = account.txCount.plus(ONE_BI)
+
+  // update loan state
+  const loanId = getLoanId(pool.id, accountId)
+  const loan = loadOrCreateLoan(loanId, pool.id, drawDebtNFT.borrower)
+  const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
+  loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+  loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
+  loan.tokenIdsPledged   = loan.tokenIdsPledged.concat(event.params.tokenIdsPledged)
+
+  // update account's list of pools and loans if necessary
+  updateAccountPools(account, pool)
+  updateAccountLoans(account, loan)
+
+  drawDebtNFT.pool = pool.id
+
+  // save entities to store
+  pool.save()
+  account.save()
+  loan.save()
+  drawDebtNFT.save()
+}
+
+/*****************************/
+/*** Lender Event Handlers ***/
+/*****************************/
+
+// lender adds collateral to a bucket in exchange for LPB
 export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
   const addCollateralNFT = new AddCollateralNFT(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -150,52 +213,6 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   addQuoteToken.save()
 }
 
-export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
-  const drawDebtNFT = new DrawDebtNFT(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  drawDebtNFT.borrower = event.params.borrower
-  drawDebtNFT.amountBorrowed = wadToDecimal(event.params.amountBorrowed)
-  drawDebtNFT.lup = wadToDecimal(event.params.lup)
-  drawDebtNFT.tokenIdsPledged = event.params.tokenIdsPledged
-
-  drawDebtNFT.blockNumber = event.block.number
-  drawDebtNFT.blockTimestamp = event.block.timestamp
-  drawDebtNFT.transactionHash = event.transaction.hash
-
-  // update pool entity
-  const pool = Pool.load(addressToBytes(event.address))!
-  updatePool(pool)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-  pool.tokenIdsPledged = pool.tokenIdsPledged.concat(event.params.tokenIdsPledged)
-  incrementTokenTxCount(pool)
-
-  // update account state
-  const accountId = addressToBytes(event.params.borrower)
-  const account   = loadOrCreateAccount(accountId)
-  account.txCount = account.txCount.plus(ONE_BI)
-
-  // update loan state
-  const loanId = getLoanId(pool.id, accountId)
-  const loan = loadOrCreateLoan(loanId, pool.id, drawDebtNFT.borrower)
-  const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
-  loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
-  loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
-  loan.tokenIdsPledged   = loan.tokenIdsPledged.concat(event.params.tokenIdsPledged)
-
-  // update account's list of pools and loans if necessary
-  updateAccountPools(account, pool)
-  updateAccountLoans(account, loan)
-
-  drawDebtNFT.pool = pool.id
-
-  // save entities to store
-  pool.save()
-  account.save()
-  loan.save()
-  drawDebtNFT.save()
-}
-
 // export function handleKickReserveAuction(event: KickReserveAuctionEvent): void {
 //   let entity = new KickReserveAuction(
 //     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -211,7 +228,7 @@ export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
 //   entity.save()
 // }
 
-// TODO: NEED TO FIND AND REMOVE TOKENIDS FROM THE ARRAYS OF LOANS AND POOL
+// called by Account's with Lend(s) in a pool
 export function handleMergeOrRemoveCollateralNFT(
   event: MergeOrRemoveCollateralNFTEvent
 ): void {
@@ -226,21 +243,118 @@ export function handleMergeOrRemoveCollateralNFT(
   mergeOrRemove.blockTimestamp = event.block.timestamp
   mergeOrRemove.transactionHash = event.transaction.hash
 
+  // update pool entity
+  const pool = Pool.load(addressToBytes(event.address))!
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
+
+  // update account state
+  const accountId = addressToBytes(event.params.actor)
+  const account   = loadOrCreateAccount(accountId)
+  account.txCount = account.txCount.plus(ONE_BI)
+
+  // TODO: iterate through the actors lends in this pool and update their lpb and lpbValueInQuote
+  // use multicall to get the lend lpb in the actors lends
+
+  // TODO: NEED TO FIND AND REMOVE TOKENIDS FROM THE ARRAYS OF LOANS AND POOL
+
   mergeOrRemove.save()
 }
 
-// export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
-//   const entity = new AuctionNFTSettle(
-//     event.transaction.hash.concatI32(event.logIndex.toI32())
-//   )
-//   entity.borrower = event.params.borrower
-//   entity.collateral = wadToDecimal(event.params.collateral)
-//   entity.lp = wadToDecimal(event.params.lp)
-//   entity.index = event.params.index.toU32()
+/**********************************/
+/*** Liquidation Event Handlers ***/
+/**********************************/
 
-//   entity.blockNumber = event.block.number
-//   entity.blockTimestamp = event.block.timestamp
-//   entity.transactionHash = event.transaction.hash
+// emitted concurrently with `Settle`
+export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
+  const auctionNFTSettle = new AuctionNFTSettle(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  auctionNFTSettle.borrower = event.params.borrower
+  auctionNFTSettle.collateral = wadToDecimal(event.params.collateral)
+  auctionNFTSettle.lp = wadToDecimal(event.params.lp)
+  auctionNFTSettle.index = event.params.index.toU32()
 
-//   entity.save()
-// }
+  auctionNFTSettle.blockNumber = event.block.number
+  auctionNFTSettle.blockTimestamp = event.block.timestamp
+  auctionNFTSettle.transactionHash = event.transaction.hash
+
+  // update entities
+  const pool = Pool.load(addressToBytes(event.address))!
+  // pool doesn't need to be updated here as it was already updated in the concurrent Settle event
+
+  // update auction state
+  const loanId       = getLoanId(pool.id, addressToBytes(event.params.borrower))
+  const loan         = Loan.load(loanId)!
+  const auctionId    = loan.liquidationAuction!
+  const auction      = LiquidationAuction.load(auctionId)!
+  auction.settle     = auctionNFTSettle.id
+  auction.settleTime = auctionNFTSettle.blockTimestamp
+  auction.settled    = true
+  auction.save()
+
+  // update loan state
+  loan.t0debt = ZERO_BD
+  loan.collateralPledged = auctionNFTSettle.collateral
+  // TODO: UPDATE LOAN TOKENIDS
+
+  loan.inLiquidation = false
+  loan.save()
+
+  // update auctionNFTSettle pointers
+  auctionNFTSettle.pool = pool.id
+  auctionNFTSettle.loan = loan.id
+
+  auctionNFTSettle.save()
+}
+
+// This is in the code path for ERC721Pools, but will never be emitted
+export function handleAuctionSettle(event: AuctionSettleEvent): void {}
+
+export function handleSettle(event: SettleEvent): void {
+  const settle = new Settle(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  settle.borrower = event.params.borrower
+  settle.settledDebt = wadToDecimal(event.params.settledDebt)
+
+  settle.blockNumber = event.block.number
+  settle.blockTimestamp = event.block.timestamp
+  settle.transactionHash = event.transaction.hash
+
+  // update pool state
+  const pool = Pool.load(addressToBytes(event.address))!
+  updatePool(pool)
+  pool.loansCount = pool.loansCount.minus(ONE_BI)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
+
+  // update settler account state
+  const account   = loadOrCreateAccount(event.transaction.from)
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountPools(account, pool)
+  updateAccountSettles(account, settle)
+
+  // update liquidation auction state
+  const loanId = getLoanId(pool.id, settle.borrower)
+  const loan = Loan.load(loanId)!
+  const auctionId = loan.liquidationAuction!
+  const auction   = LiquidationAuction.load(auctionId)!
+  const auctionInfo = getAuctionInfoERC20Pool(settle.borrower, pool)
+  const auctionStatus = getAuctionStatus(pool, event.params.borrower)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus, false, true)
+  auction.settles = auction.settles.concat([settle.id])
+
+  // update settle pointers
+  settle.pool = pool.id
+  settle.liquidationAuction = auctionId
+  settle.loan = loanId
+
+  // save entities to the store
+  account.save()
+  auction.save()
+  pool.save()
+
+  settle.save()
+}

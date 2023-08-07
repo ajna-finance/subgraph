@@ -173,6 +173,8 @@ type Lend @entity {
   lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket (regardless of available deposit in bucket)
   lpbValueInQuote: BigDecimal!
+  # time at which the lend was made
+  depositTime: BigInt!
 }
 
 # each borrower has only one loan with a pool
@@ -328,6 +330,8 @@ type AddQuoteToken @entity(immutable: true) {
 
 type AuctionNFTSettle @entity(immutable: true) {
   id: Bytes!
+  pool: Pool!             # Pool whose debt was settled
+  loan: Loan!             # Loan which was settled
   borrower: Bytes!        # address
   collateral: BigDecimal! # uint256
   lp: BigDecimal!         # uint256
@@ -659,7 +663,7 @@ type PoolCreated @entity(immutable: true) {
 }
 
   # # # # # # # # # #  #
-  # ERC721 Pool EVENTS #
+  # ERC721 POOL EVENTS #
   # # # # # # # # # #  #
 
 type AddCollateralNFT @entity(immutable: true) {

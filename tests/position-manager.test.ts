@@ -261,6 +261,7 @@ describe("Describe entity assertions", () => {
     const bucketId = getBucketId(pool, fromIndex.toU32())
     const lend = new Lend(getLendId(bucketId, lender))
     lend.bucket = bucketId
+    lend.depositTime = BigInt.fromI32(1000)
     lend.lender = lender
     lend.pool = pool
     lend.poolAddress = pool.toHexString()

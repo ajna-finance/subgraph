@@ -202,22 +202,8 @@ export function handleApproveLPTransferors(
   entity.save()
 }
 
-// TODO: ERC721Pool only (doesn't belong here)
-export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
-  const entity = new AuctionNFTSettle(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.borrower = event.params.borrower
-  entity.collateral = wadToDecimal(event.params.collateral)
-  entity.lp = wadToDecimal(event.params.lp)
-  entity.index = event.params.index.toU32()
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
+// This is in the code path for ERC20Pools, but will never be emitted
+export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {}
 
 // ERC20Pool only
 // emitted in conjunction with Settle
@@ -1202,10 +1188,10 @@ export function handleTransferLP(event: TransferLPEvent): void {
 
     // event does not reveal LP amounts transferred for each bucket, so query the pool and update
     // remove old lend
-    const oldLend = Lend.load(oldLendId)!
+    const oldLend = loadOrCreateLend(bucketId, oldLendId, poolId, entity.owner)
     oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
     oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
-    updateAccountLends(oldOwnerAccount, Lend.load(oldLendId)!)
+    updateAccountLends(oldOwnerAccount, oldLend)
     oldLend.save()
 
     // add new lend
