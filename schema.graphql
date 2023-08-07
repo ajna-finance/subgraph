@@ -149,6 +149,8 @@ type Bucket @entity {
   pool: Pool!
   # total collateral available in the bucket
   collateral: BigDecimal!
+  # tokenIds added to the bucket
+  tokenIds: [BigInt!]!
   # total quote tokens deposited in the bucket, inclusive of interest
   deposit: BigDecimal!
   # total LP for all lenders in the bucket
@@ -677,9 +679,9 @@ type DrawDebtNFT @entity(immutable: true) {
   id: Bytes!
   pool: Pool!                 # Pool from which quote was withdrawn
   borrower: Bytes! # address
-  amountBorrowed: BigInt! # uint256
+  amountBorrowed: BigDecimal! # uint256
   tokenIdsPledged: [BigInt!]! # uint256[]
-  lup: BigInt! # uint256
+  lup: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

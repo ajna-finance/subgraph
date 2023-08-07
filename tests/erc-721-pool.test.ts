@@ -10,15 +10,18 @@ import {
   logStore,
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts"
-import { AddCollateralNFT } from "../generated/schema"
+import { Account, AddCollateralNFT, Loan } from "../generated/schema"
 import { AddCollateralNFT as AddCollateralNFTEvent } from "../generated/templates/ERC721Pool/ERC721Pool"
-import { handleAddCollateralNFT, handleAddQuoteToken } from "../src/erc-721-pool"
-import { createAddCollateralNFTEvent, createAddQuoteTokenEvent } from "./utils/erc-721-pool-utils"
+import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT } from "../src/erc-721-pool"
+import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent } from "./utils/erc-721-pool-utils"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
-import { create721Pool, createPool, mockGetBucketInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
+import { create721Pool, createPool, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
 import { BucketInfo } from "../src/utils/pool/bucket"
-import { wadToDecimal } from "../src/utils/convert"
+import { addressToBytes, wadToDecimal } from "../src/utils/convert"
+import { DebtInfo } from "../src/utils/pool/pool"
+import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
+import { wdiv } from "../src/utils/math"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -238,5 +241,123 @@ describe("Describe entity assertions", () => {
       `${wadToDecimal(lup)}`
     )
   })
+
+  test("DrawDebtNFT", () => {
+    // check entity is unavailable prior to storage
+    assert.entityCount("DrawDebtNFT", 0)
+
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const borrower = Address.fromString("0x0000000000000000000000000000000000000003")
+    const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345)]
+    const amountPledged = BigInt.fromString("2000000000000000000")
+    const lup = BigInt.fromString("9529276179422528643") //   9.529276179422528643 * 1e18
+
+    // mock required contract calls
+    const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
+    mockGetDebtInfo(poolAddress, expectedPoolDebtInfo)
+
+    const inflator = BigInt.fromString("1002804000000000000")
+    const expectedBorrowerInfo = new BorrowerInfo(
+      wdiv(amountBorrowed, inflator),
+      amountPledged,
+      BigInt.fromString("8766934085068726351"))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
+
+    const newDrawDebtEvent = createDrawDebtNFTEvent(
+      poolAddress,
+      borrower,
+      amountBorrowed,
+      tokenIdsPledged,
+      lup
+    )
+    handleDrawDebtNFT(newDrawDebtEvent)
+
+    // check DrawDebtNFT entity
+    assert.entityCount("DrawDebtNFT", 1)
+    assert.fieldEquals(
+      "DrawDebtNFT",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "borrower",
+      "0x0000000000000000000000000000000000000003"
+    )
+    assert.fieldEquals(
+      "DrawDebtNFT",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lup",
+      `${wadToDecimal(lup)}`
+    )
+    assert.fieldEquals(
+      "DrawDebtNFT",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "tokenIdsPledged",
+      "[234, 345]"
+    )
+    assert.fieldEquals(
+      "DrawDebtNFT",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "amountBorrowed",
+      `${wadToDecimal(amountBorrowed)}`
+    )
+
+    // check Account attributes updated
+    const accountId = addressToBytes(borrower)
+    const loadedAccount = Account.load(accountId)!
+    assert.bytesEquals(addressToBytes(poolAddress), loadedAccount.pools[0])
+    assert.fieldEquals(
+      "Account",
+      `${accountId.toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
+    )
+
+    // check Loan entity
+    const loanId = getLoanId(addressToBytes(poolAddress), accountId)
+    const loadedLoan = Loan.load(loanId)!
+    assert.bytesEquals(addressToBytes(poolAddress), loadedLoan.pool)
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "collateralPledged",
+      `${wadToDecimal(amountPledged)}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345]"
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "t0debt",
+      `${wadToDecimal(wdiv(amountBorrowed, inflator))}`
+    )
+
+    // check pool attributes updated
+    // not dividing by inflator because the PoolInfoUtils mock sets inflator to 1
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "t0debt",
+      `${wadToDecimal(amountBorrowed)}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "lup",
+      "9.529276179422528643"
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
+    )
+
+  })
+
+  // TODO: test token and pool tx count incrementing in more thorough own unit test
 
 })

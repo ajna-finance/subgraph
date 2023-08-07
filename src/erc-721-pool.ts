@@ -31,7 +31,6 @@ import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidati
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, calculateLendRate } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/common"
 
-// TODO: track tokenIds in the bucket entity?
 export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
   const addCollateralNFT = new AddCollateralNFT(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -60,6 +59,8 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
     bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
     bucket.lpb          = wadToDecimal(bucketInfo.lpb)
     bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+    bucket.tokenIds     = bucket.tokenIds.concat(event.params.tokenIds)
+    // TODO: should these tokenIds be added to the pool entity here as well?
 
     // update account state
     const accountId = addressToBytes(event.params.actor)
@@ -82,7 +83,6 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
     lend.save()
     pool.save()
 
-    // BELOW LOGIC IS CUSTOM TO ERC721 POOLS
     // update tx count for a pools tokens
     incrementTokenTxCount(pool)
 
@@ -155,9 +155,9 @@ export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   drawDebtNFT.borrower = event.params.borrower
-  drawDebtNFT.amountBorrowed = event.params.amountBorrowed
+  drawDebtNFT.amountBorrowed = wadToDecimal(event.params.amountBorrowed)
+  drawDebtNFT.lup = wadToDecimal(event.params.lup)
   drawDebtNFT.tokenIdsPledged = event.params.tokenIdsPledged
-  drawDebtNFT.lup = event.params.lup
 
   drawDebtNFT.blockNumber = event.block.number
   drawDebtNFT.blockTimestamp = event.block.timestamp
@@ -215,18 +215,18 @@ export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
 export function handleMergeOrRemoveCollateralNFT(
   event: MergeOrRemoveCollateralNFTEvent
 ): void {
-  let entity = new MergeOrRemoveCollateralNFT(
+  const mergeOrRemove = new MergeOrRemoveCollateralNFT(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.actor = event.params.actor
-  entity.collateralMerged = event.params.collateralMerged
-  entity.toIndexLps = event.params.toIndexLps
+  mergeOrRemove.actor = event.params.actor
+  mergeOrRemove.collateralMerged = event.params.collateralMerged
+  mergeOrRemove.toIndexLps = event.params.toIndexLps
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  mergeOrRemove.blockNumber = event.block.number
+  mergeOrRemove.blockTimestamp = event.block.timestamp
+  mergeOrRemove.transactionHash = event.transaction.hash
 
-  entity.save()
+  mergeOrRemove.save()
 }
 
 // export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {

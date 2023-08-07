@@ -84,6 +84,7 @@ export function createAddQuoteTokenEvent(
 }
 
 export function createDrawDebtNFTEvent(
+  pool: Address,
   borrower: Address,
   amountBorrowed: BigInt,
   tokenIdsPledged: Array<BigInt>,
@@ -111,6 +112,9 @@ export function createDrawDebtNFTEvent(
   drawDebtNftEvent.parameters.push(
     new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
   )
+
+  // update transaction target to the expected pool address
+  drawDebtNftEvent.address = pool
 
   return drawDebtNftEvent
 }
