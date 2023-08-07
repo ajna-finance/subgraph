@@ -4,6 +4,7 @@ import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUt
 import { Loan }    from "../../../generated/schema"
 import { poolInfoUtilsAddressTable, ZERO_BD, ZERO_BI } from "../constants"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
+import { ERC721Pool } from "../../../generated/templates/ERC721Pool/ERC721Pool"
 
 export function getLoanId(poolId: Bytes, accountId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|').concat(accountId))
@@ -40,6 +41,17 @@ export class BorrowerInfo {
 }
 export function getBorrowerInfo(borrower: Bytes, poolId: Bytes): BorrowerInfo {
   const poolContract = ERC20Pool.bind(Address.fromBytes(poolId))
+  const borrowerInfoResult = poolContract.borrowerInfo(Address.fromBytes(borrower))
+
+  return new BorrowerInfo(
+    borrowerInfoResult.value0,
+    borrowerInfoResult.value1,
+    borrowerInfoResult.value2
+  )
+}
+
+export function getBorrowerInfoERC721Pool(borrower: Bytes, poolId: Bytes): BorrowerInfo {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(poolId))
   const borrowerInfoResult = poolContract.borrowerInfo(Address.fromBytes(borrower))
 
   return new BorrowerInfo(

@@ -879,7 +879,6 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   repayDebt.save()
 }
 
-// called on both start and take reserves
 export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
   const reserveKick = new ReserveAuctionKick(
@@ -919,7 +918,6 @@ export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   reserveKick.save()
 }
 
-// called on both start and take reserves
 export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
   const reserveTake = new ReserveAuctionTake(
     event.transaction.hash.concat(event.transaction.from)

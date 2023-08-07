@@ -18,7 +18,7 @@ import {
   Flashloan,
   LiquidationAuction,
   Loan,
-  // KickReserveAuction,
+  ReserveAuctionKick,
   MergeOrRemoveCollateralNFT,
   Pool,
   ReserveAuction,
@@ -33,10 +33,16 @@ import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/con
 import { ZERO_BD, ONE_BI, TEN_BI } from "./utils/constants"
 
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
-import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
-import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "./utils/pool/liquidation"
+import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
+import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "./utils/pool/liquidation"
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, calculateLendRate } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/common"
+import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
+
+// TODO:
+// - Figure out solution for accurate tracking of tokenIdsPledged
+// - Update getInfo functions to appropriate pool type
+// - Create base functions to reduce code duplication
 
 /*******************************/
 /*** Borrower Event Handlers ***/
@@ -71,7 +77,7 @@ export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
   // update loan state
   const loanId = getLoanId(pool.id, accountId)
   const loan = loadOrCreateLoan(loanId, pool.id, drawDebtNFT.borrower)
-  const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
+  const borrowerInfo     = getBorrowerInfoERC721Pool(addressToBytes(event.params.borrower), pool.id)
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
   loan.tokenIdsPledged   = loan.tokenIdsPledged.concat(event.params.tokenIdsPledged)
@@ -213,21 +219,6 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   addQuoteToken.save()
 }
 
-// export function handleKickReserveAuction(event: KickReserveAuctionEvent): void {
-//   let entity = new KickReserveAuction(
-//     event.transaction.hash.concatI32(event.logIndex.toI32())
-//   )
-//   entity.claimableReservesRemaining = event.params.claimableReservesRemaining
-//   entity.auctionPrice = event.params.auctionPrice
-//   entity.currentBurnEpoch = event.params.currentBurnEpoch
-
-//   entity.blockNumber = event.block.number
-//   entity.blockTimestamp = event.block.timestamp
-//   entity.transactionHash = event.transaction.hash
-
-//   entity.save()
-// }
-
 // called by Account's with Lend(s) in a pool
 export function handleMergeOrRemoveCollateralNFT(
   event: MergeOrRemoveCollateralNFTEvent
@@ -236,8 +227,8 @@ export function handleMergeOrRemoveCollateralNFT(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   mergeOrRemove.actor = event.params.actor
-  mergeOrRemove.collateralMerged = event.params.collateralMerged
-  mergeOrRemove.toIndexLps = event.params.toIndexLps
+  mergeOrRemove.collateralMerged = wadToDecimal(event.params.collateralMerged)
+  mergeOrRemove.toIndexLps = wadToDecimal(event.params.toIndexLps)
 
   mergeOrRemove.blockNumber = event.block.number
   mergeOrRemove.blockTimestamp = event.block.timestamp
@@ -341,7 +332,7 @@ export function handleSettle(event: SettleEvent): void {
   const loan = Loan.load(loanId)!
   const auctionId = loan.liquidationAuction!
   const auction   = LiquidationAuction.load(auctionId)!
-  const auctionInfo = getAuctionInfoERC20Pool(settle.borrower, pool)
+  const auctionInfo = getAuctionInfoERC721Pool(settle.borrower, pool)
   const auctionStatus = getAuctionStatus(pool, event.params.borrower)
   updateLiquidationAuction(auction, auctionInfo, auctionStatus, false, true)
   auction.settles = auction.settles.concat([settle.id])
@@ -357,4 +348,51 @@ export function handleSettle(event: SettleEvent): void {
   pool.save()
 
   settle.save()
+}
+
+/*******************************/
+/*** Reserves Event Handlers ***/
+/*******************************/
+
+// TODO: ABSTRACT THIS - THIS FUNCTION IS COPY PASTA FROM ERC20Pool
+export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
+  // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
+  const reserveKick = new ReserveAuctionKick(
+    event.transaction.hash.concat(event.transaction.from)
+  )
+
+  const pool           = Pool.load(addressToBytes(event.address))!
+  const reserveAuction = loadOrCreateReserveAuction(pool.id, event.params.currentBurnEpoch)
+
+  reserveKick.kicker            = event.transaction.from
+  reserveKick.reserveAuction    = reserveAuction.id
+  reserveKick.pool              = pool.id
+  reserveKick.claimableReserves = wadToDecimal(event.params.claimableReservesRemaining)
+  reserveKick.startingPrice     = wadToDecimal(event.params.auctionPrice)
+
+  reserveKick.blockNumber = event.block.number
+  reserveKick.blockTimestamp = event.block.timestamp
+  reserveKick.transactionHash = event.transaction.hash
+
+  reserveAuction.claimableReservesRemaining = reserveKick.claimableReserves
+  reserveAuction.kick = reserveKick.id
+
+  // update pool state
+  pool.burnEpoch = event.params.currentBurnEpoch
+  updatePool(pool)
+  addReserveAuctionToPool(pool, reserveAuction)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  reserveKick.kickerAward = reserveAuctionKickerReward(pool)
+
+  // update account state
+  const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountReserveAuctions(account, reserveAuction.id)
+
+  account.save()
+  pool.save()
+  reserveAuction.save()
+  reserveKick.save()
+
+  reserveKick.save()
 }

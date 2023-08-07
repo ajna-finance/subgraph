@@ -2,6 +2,7 @@ import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/g
 
 import { ERC721Token, LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
+import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
 import { poolInfoUtilsAddressTable, TEN_BI } from "../constants"
@@ -24,6 +25,16 @@ export class LenderInfo {
 }
 export function getLenderInfo(poolId: Bytes, bucketIndex: BigInt, lender: Address): LenderInfo {
   const poolContract = ERC20Pool.bind(Address.fromBytes(poolId))
+  const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
+
+  return new LenderInfo(
+    lenderInfoResult.value0,
+    lenderInfoResult.value1
+  )
+}
+
+export function getLenderInfoERC721Pool(poolId: Bytes, bucketIndex: BigInt, lender: Address): LenderInfo {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(poolId))
   const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
 
   return new LenderInfo(
@@ -192,6 +203,7 @@ export function updatePool(pool: Pool): void {
     pool.maxBorrower    = poolLoansInfo.maxBorrower
     pool.inflator       = wadToDecimal(poolLoansInfo.pendingInflator)
     
+    // TODO: NEED TO UPDATE THIS PER POOL TYPE
     // update amount of debt in pool
     const debtInfo = getDebtInfo(pool)
     pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
@@ -219,11 +231,13 @@ export function updatePool(pool: Pool): void {
     pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
 
     // update pool token balances
+    // update quote token balances, this is common between all pool types
     const poolAddress = Address.fromBytes(pool.id)
     let token = Token.load(pool.quoteToken)!
     let scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
     let unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
     pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
+    // update collateral token balances
     // use the appropriate contract for querying balanceOf the pool
     if (pool.poolType == 'Fungible') {
       token = Token.load(pool.collateralToken)!
@@ -279,6 +293,12 @@ export function getCurrentBurnEpoch(pool: Pool): BigInt {
     return ajnaBurnEpoch
 }
 
+export function getCurrentBurnEpochERC721Pool(pool: Pool): BigInt {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
+  const ajnaBurnEpoch = poolContract.currentBurnEpoch()
+  return ajnaBurnEpoch
+}
+
 export class BurnInfo {
     timestamp: BigInt
     totalInterest: BigInt
@@ -301,6 +321,18 @@ export function getBurnInfo(pool: Pool, burnEpoch: BigInt): BurnInfo {
     return burnInfo
 }
 
+export function getBurnInfoERC721Pool(pool: Pool, burnEpoch: BigInt): BurnInfo {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
+  const burnInfoResult = poolContract.burnInfo(burnEpoch)
+
+  const burnInfo = new BurnInfo(
+      burnInfoResult.value0,
+      burnInfoResult.value1,
+      burnInfoResult.value2
+  )
+  return burnInfo
+}
+
 export class DebtInfo {
     pendingDebt: BigInt
     accruedDebt: BigInt
@@ -315,6 +347,18 @@ export class DebtInfo {
 }
 export function getDebtInfo(pool: Pool): DebtInfo {
   const poolContract = ERC20Pool.bind(Address.fromBytes(pool.id))
+  const debtInfoResult = poolContract.debtInfo()
+
+  return new DebtInfo(
+    debtInfoResult.value0,
+    debtInfoResult.value1,
+    debtInfoResult.value2,
+    debtInfoResult.value3
+  )
+}
+
+export function getDebtInfoERC721Pool(pool: Pool): DebtInfo {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
   const debtInfoResult = poolContract.debtInfo()
 
   return new DebtInfo(

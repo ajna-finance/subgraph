@@ -695,8 +695,8 @@ type MergeOrRemoveCollateralNFT @entity(immutable: true) {
   id: Bytes!
   pool: Pool!            # Pool in which NFT collateral was merged or removed
   actor: Bytes! # address
-  collateralMerged: BigInt! # uint256
-  toIndexLps: BigInt! # uint256
+  collateralMerged: BigDecimal! # uint256
+  toIndexLps: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
