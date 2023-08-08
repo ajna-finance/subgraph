@@ -123,7 +123,7 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
 
   for (let i = 0; i < proposalsInSlate.length; i++) {
     const proposalId = proposalsInSlate[i]
-    const proposal = loadOrCreateProposal(bigIntToBytes(proposalId))
+    const proposal = loadOrCreateProposal(proposalId)
 
     totalTokensRequested = totalTokensRequested.plus(proposal.totalTokensRequested)
     totalFundingVotesReceived = totalFundingVotesReceived.plus(proposal.fundingVotesReceived)
@@ -162,7 +162,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
 
   // create Proposal entity
   const proposalId = bigIntToBytes(event.params.proposalId)
-  const proposal = loadOrCreateProposal(proposalId)
+  const proposal = loadOrCreateProposal(event.params.proposalId)
   proposal.description  = event.params.description
 
   let totalTokensRequested = ZERO_BI
@@ -222,7 +222,7 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
   proposalExecuted.transactionHash = event.transaction.hash
 
   // update proposal entity
-  const proposal = loadOrCreateProposal(bigIntToBytes(event.params.proposalId))
+  const proposal = loadOrCreateProposal(event.params.proposalId)
   proposal.executed = true
 
   const distributionPeriod = DistributionPeriod.load(proposal.distribution!)!

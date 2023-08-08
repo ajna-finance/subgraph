@@ -807,6 +807,7 @@ type DistributionPeriod @entity {
 
 type Proposal @entity {
   id: Bytes! # proposal id converted to Bytes from uint
+  proposalId: BigInt! # proposal id stored in original uint format
   description: String! # proposal description hashed as part of proposalId
   distribution: DistributionPeriod # distributionPeriod in which the proposal was submitted if Standard, null otherwise
   executed: Boolean! # bool
