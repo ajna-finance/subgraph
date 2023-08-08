@@ -323,6 +323,8 @@ export function handleMergeOrRemoveCollateralNFT(
 /*** Liquidation Event Handlers ***/
 /**********************************/
 
+// TODO: update lends on AuctionNFTSettle in case of lpb reward in any of the buckets?
+// TODO: retrieve bucket depth value from calldata to know how many lends to create?
 // emitted concurrently with `Settle`
 export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   const auctionNFTSettle = new AuctionNFTSettle(
