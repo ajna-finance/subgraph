@@ -16,6 +16,7 @@ import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
 import { getRatesAndFees } from "./utils/pool/pool"
 import { loadOrCreateFactory } from "./utils/pool/pool-factory"
+import { Bytes } from "@graphprotocol/graph-ts"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
@@ -98,6 +99,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI
   pool.poolType = "Fungible"
+  pool.subsetHash = Bytes.empty()
+  pool.tokenIdsAllowed = []
   pool.tokenIdsPledged = []
 
   // pool loans information

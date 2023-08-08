@@ -214,7 +214,7 @@ export function handleMergeOrRemoveCollateralNFT(
   const noNFTsToRemove = decoded.toTuple()[1].toBigInt()
   const toIndex        = decoded.toTuple()[2].toBigInt()
 
-  // TODO: NEED TO FIND AND REMOVE TOKENIDS FROM THE ARRAYS OF LOANS AND POOL
+  // TODO: NEED TO FIND AND REMOVE TOKENIDS FROM EACH BUCKET
   // TODO: find ways to reduce compute cost of this operation given potentially unbounded (to number of indexes) iteration
   // iterate through removalIndexes and update state
   for (let i = 0; i < removalIndexes.length; i++) {

@@ -130,8 +130,12 @@ type Pool @entity {
   collateralBalance: BigDecimal!
 
   # ERC721 POOL INFORMATION
+  # pool subsetHash
+  subsetHash: Bytes!
   # list of tokenIds pledged by the borrower
   tokenIdsPledged: [BigInt!]!
+  # list of tokenIds allowed by a subset pool
+  tokenIdsAllowed: [BigInt!]!
 }
 
 type Bucket @entity {

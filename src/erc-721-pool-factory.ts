@@ -14,9 +14,10 @@ import {
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { loadOrCreateFactory } from "./utils/pool/pool-factory"
-import { getRatesAndFees } from "./utils/pool/pool"
+import { getPoolSubsetHash, getRatesAndFees } from "./utils/pool/pool"
 import { getTokenName as getTokenNameERC721, getTokenSymbol as getTokenSymbolERC721} from "./utils/token-erc721"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
+import { ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
@@ -42,14 +43,28 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   const interestRateResults = poolContract.interestRateInfo()
   const ratesAndFees        = getRatesAndFees(event.params.pool_)
 
-  // create Token entites associated with the pool
-  const collateralTokenAddress      = poolContract.collateralAddress()
-  const collateralTokenAddressBytes = addressToBytes(collateralTokenAddress)
-  const quoteTokenAddress      = poolContract.quoteTokenAddress()
-  const quoteTokenAddressBytes = addressToBytes(quoteTokenAddress)
+  // https://ethereum.stackexchange.com/questions/114582/the-graph-nodes-cant-decode-abi-encoded-data-containing-arrays
+  const dataWithoutSelector = event.transaction.input.subarray(4)
 
-  // TODO: record subset hash and tokenIds allowed information
-  // THIS DOESN't CURRENTLY SEEM TO BE POSSIBLE WITH THE EXISTING SET OF CONTRACTS
+  //prepend a "tuple" prefix (function params are arrays, not tuples)
+  const tuplePrefix = ByteArray.fromHexString(
+    '0x0000000000000000000000000000000000000000000000000000000000000020'
+  );
+
+  const dataWithoutSelectorAsTuple = new Uint8Array(tuplePrefix.length + dataWithoutSelector.length);
+  dataWithoutSelectorAsTuple.set(tuplePrefix, 0);
+  dataWithoutSelectorAsTuple.set(dataWithoutSelector, tuplePrefix.length);
+
+  const decoded = ethereum.decode('(address,address,uint256[],uint256)', Bytes.fromUint8Array(dataWithoutSelectorAsTuple))!
+
+  const collateralTokenAddress = decoded.toTuple()[0].toAddress()
+  const quoteTokenAddress      = decoded.toTuple()[1].toAddress()
+  const tokenIds               = decoded.toTuple()[2].toBigIntArray()
+  const interestRate           = decoded.toTuple()[3].toBigInt()
+
+  // create Token entites associated with the pool
+  const collateralTokenAddressBytes = addressToBytes(collateralTokenAddress)
+  const quoteTokenAddressBytes = addressToBytes(quoteTokenAddress)
 
   // record token information
   let collateralToken = ERC721Token.load(collateralTokenAddressBytes)
@@ -98,8 +113,15 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.pledgedCollateral = ZERO_BD
   pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
   pool.txCount = ZERO_BI
-  // TODO: add support subset pools
-  pool.poolType = "Collection"
+  if (tokenIds.length > 0) {
+    pool.poolType = "Subset"
+    pool.subsetHash = getPoolSubsetHash(tokenIds)
+  } else {
+    pool.poolType = "Collection"
+    // TODO: hardcode the subset hash
+    pool.subsetHash = Bytes.empty()
+  }
+  pool.tokenIdsAllowed = tokenIds
   pool.tokenIdsPledged = []
 
   // pool loans information

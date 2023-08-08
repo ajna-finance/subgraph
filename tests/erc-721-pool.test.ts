@@ -9,7 +9,7 @@ import {
   dataSourceMock,
   logStore,
 } from "matchstick-as/assembly/index"
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Account, AddCollateralNFT, Loan } from "../generated/schema"
 import { AddCollateralNFT as AddCollateralNFTEvent } from "../generated/templates/ERC721Pool/ERC721Pool"
 import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT } from "../src/erc-721-pool"
@@ -37,12 +37,14 @@ describe("Describe entity assertions", () => {
     // deploy pool contract
     const pool = Address.fromString("0x0000000000000000000000000000000000000001")
     const erc20Pool = Address.fromString("0x0000000000000000000000000000000000000100")
-    const expectedCollateralToken = Address.fromString("0x0000000000000000000000000000000000000010")
-    const expectedQuoteToken      = Address.fromString("0x0000000000000000000000000000000000000012")
+    const expectedCollateralToken = Address.fromString("0xC9bCeeEA5288b2BE0b777F4F388F125F55aB5a81")
+    const expectedQuoteToken      = Address.fromString("0x10aA0Cf12AAb305bd77AD8F76c037E048B12513B")
     const expectedInitialInterestRate = FIVE_PERCENT_BI
     const expectedInitialFeeRate = ZERO_BI
 
-    create721Pool(pool, expectedCollateralToken, expectedQuoteToken, expectedInitialInterestRate, expectedInitialFeeRate)
+    const calldata = Bytes.fromHexString("0xb038d2e1000000000000000000000000c9bceeea5288b2be0b777f4f388f125f55ab5a8100000000000000000000000010aa0cf12aab305bd77ad8f76c037e048b12513b000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000b1a2bc2ec500000000000000000000000000000000000000000000000000000000000000000000")
+    create721Pool(pool, expectedCollateralToken, expectedQuoteToken, expectedInitialInterestRate, expectedInitialFeeRate, calldata)
+
     // DEPLOY ERC20 pool as well and ensure the templates don't collide
     mockGetRatesAndFees(erc20Pool, BigInt.fromString("970000000000000000"), BigInt.fromString("55000000000000000"))
     createPool(erc20Pool, expectedCollateralToken, expectedQuoteToken, expectedInitialInterestRate, expectedInitialFeeRate)
@@ -102,8 +104,8 @@ describe("Describe entity assertions", () => {
       targetUtilization: ONE_WAD_BI
     })
 
-    mockTokenBalance(Address.fromString("0x0000000000000000000000000000000000000012"), poolAddress, ZERO_BI)
-    mockTokenBalance(Address.fromString("0x0000000000000000000000000000000000000010"), poolAddress, ZERO_BI)
+    mockTokenBalance(Address.fromString("0x10aA0Cf12AAb305bd77AD8F76c037E048B12513B"), poolAddress, ZERO_BI)
+    mockTokenBalance(Address.fromString("0xC9bCeeEA5288b2BE0b777F4F388F125F55aB5a81"), poolAddress, ZERO_BI)
 
     const newAddCollateralNFTEvent = createAddCollateralNFTEvent(
       poolAddress,

@@ -9,7 +9,7 @@ import { createERC721PoolFactoryPoolCreatedEvent } from "./erc-721-pool-factory-
 
 import { BucketInfo } from "../../src/utils/pool/bucket"
 import { wadToDecimal } from "../../src/utils/convert"
-import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
+import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI, poolFactoryAddressTable } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool/pool"
 import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
 import { BorrowerInfo } from "../../src/utils/pool/loan"
@@ -376,7 +376,7 @@ export function createPool(pool_: Address, collateral: Address, quote: Address, 
 }
 
 // create a 721 type pool entity and save it to the store
-export function create721Pool(pool: Address, collateral: Address, quote: Address, interestRate: BigInt, feeRate: BigInt): void {
+export function create721Pool(pool: Address, collateral: Address, quote: Address, interestRate: BigInt, feeRate: BigInt, calldata: Bytes): void {
     // mock rates and fees contract calls
     mockGetRatesAndFees(pool, BigInt.fromString("980000000000000000"), BigInt.fromString("60000000000000000"))
 
@@ -388,20 +388,13 @@ export function create721Pool(pool: Address, collateral: Address, quote: Address
             ethereum.Value.fromUnsignedBigInt(feeRate)
         ])
 
-    // mock get token address contract calls
-    createMockedFunction(pool, 'collateralAddress', 'collateralAddress():(address)')
-        .withArgs([])
-        .returns([ethereum.Value.fromAddress(collateral)])
-    createMockedFunction(pool, 'quoteTokenAddress', 'quoteTokenAddress():(address)')
-        .withArgs([])
-        .returns([ethereum.Value.fromAddress(quote)])
-
     // mock get token info contract calls
     mockGetERC721TokenInfo(collateral, 'collateral', 'C')
     mockGetTokenInfo(quote, 'quote', 'Q', BigInt.fromI32(18), BigInt.fromI32(100))
 
     // handlePoolCreated event
-    const newPoolCreatedEvent = createERC721PoolFactoryPoolCreatedEvent(pool)
+    const erc721PoolFactoryAddress = poolFactoryAddressTable.get(dataSource.network())!
+    const newPoolCreatedEvent = createERC721PoolFactoryPoolCreatedEvent(erc721PoolFactoryAddress, pool, calldata)
     // TODO: DYNAMICALLY SET THIS ADDRESS
     newPoolCreatedEvent.address = Address.fromString("0x0000000000000000000000000000000000002020")
     handleERC721PoolCreated(newPoolCreatedEvent)

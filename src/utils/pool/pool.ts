@@ -5,14 +5,22 @@ import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsAddressTable, TEN_BI } from "../constants"
+import { poolFactoryAddressTable, poolInfoUtilsAddressTable, TEN_BI } from "../constants"
 import { decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
 import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
 import { wmul, wdiv } from '../math'
+import { ERC721PoolFactory } from '../../../generated/ERC721PoolFactory/ERC721PoolFactory'
 
 export function getPoolAddress(poolId: Bytes): Address {
   return Address.fromBytes(poolId)
+}
+
+export function getPoolSubsetHash(tokenIds: BigInt[]): Bytes {
+  const erc721PoolFactoryAddress = poolFactoryAddressTable.get(dataSource.network())!
+  const poolFactoryContract = ERC721PoolFactory.bind(erc721PoolFactoryAddress)
+
+  return poolFactoryContract.getNFTSubsetHash(tokenIds)
 }
 
 export class LenderInfo {
