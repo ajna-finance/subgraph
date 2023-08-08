@@ -12,8 +12,8 @@ import {
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Account, AddCollateralNFT, Loan } from "../generated/schema"
 import { AddCollateralNFT as AddCollateralNFTEvent } from "../generated/templates/ERC721Pool/ERC721Pool"
-import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT } from "../src/erc-721-pool"
-import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent } from "./utils/erc-721-pool-utils"
+import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleMergeOrRemoveCollateralNFT } from "../src/erc-721-pool"
+import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createMergeOrRemoveCollateralNFTEvent } from "./utils/erc-721-pool-utils"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { create721Pool, createPool, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
@@ -357,6 +357,25 @@ describe("Describe entity assertions", () => {
       "txCount",
       `${ONE_BI}`
     )
+
+  })
+
+  // TODO: finish implementing once a mergeOrRemoveCollateralNFT calldata becomes available
+  test("MergeOrRemoveCollateralNFT", () => {
+    // check entity is unavailable prior to storage
+    assert.entityCount("MergeOrRemoveCollateralNFT", 0)
+
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const actor = Address.fromString("0x0000000000000000000000000000000000000003")
+    const collateralMerged = BigInt.fromString("2000000000000000000") // 2 * 1e18
+    const toIndexLps = BigInt.fromI32(234)
+
+    // TODO: mock required contract calls
+
+    const calldata = Bytes.empty()
+    const newMergeOrRemoveCollateralNFTEvent = createMergeOrRemoveCollateralNFTEvent(poolAddress, actor, collateralMerged, toIndexLps, calldata)
+    // handleMergeOrRemoveCollateralNFT(newMergeOrRemoveCollateralNFTEvent)
 
   })
 

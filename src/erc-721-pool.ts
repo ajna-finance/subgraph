@@ -26,7 +26,7 @@ import {
   Settle
 } from "../generated/schema"
 import { incrementTokenTxCount } from "./utils/token-erc721"
-import { Bytes, ethereum } from "@graphprotocol/graph-ts"
+import { ByteArray, Bytes, ethereum } from "@graphprotocol/graph-ts"
 
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
@@ -204,11 +204,16 @@ export function handleMergeOrRemoveCollateralNFT(
   const account   = loadOrCreateAccount(accountId)
   account.txCount = account.txCount.plus(ONE_BI)
 
-  // TODO: use transaction metadata to access the list of removalIndexes
-  // https://discord.com/channels/438038660412342282/438070183794573313/1125272865353252984
-  // https://medium.com/@r2d2_68242/indexing-transaction-input-data-in-a-subgraph-6ff5c55abf20
-  const dataWithoutSelector = Bytes.fromUint8Array(event.transaction.input.subarray(4))
-  const decoded = ethereum.decode('(uint256[],uint256,uint256)', dataWithoutSelector)!
+  // use transaction metadata to access the list of removalIndexes
+  const dataWithoutSelector = event.transaction.input.subarray(4)
+  //prepend a "tuple" prefix (function params are arrays, not tuples)
+  const tuplePrefix = ByteArray.fromHexString(
+    '0x0000000000000000000000000000000000000000000000000000000000000020'
+  );
+  const dataWithoutSelectorAsTuple = new Uint8Array(tuplePrefix.length + dataWithoutSelector.length);
+  dataWithoutSelectorAsTuple.set(tuplePrefix, 0);
+  dataWithoutSelectorAsTuple.set(dataWithoutSelector, tuplePrefix.length);
+  const decoded = ethereum.decode('(uint256[],uint256,uint256)', Bytes.fromUint8Array(dataWithoutSelectorAsTuple))!
 
   const removalIndexes = decoded.toTuple()[0].toBigIntArray()
   const noNFTsToRemove = decoded.toTuple()[1].toBigInt()

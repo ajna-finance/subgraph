@@ -1,5 +1,5 @@
 import { newMockEvent } from "matchstick-as"
-import { ethereum, Address, BigInt } from "@graphprotocol/graph-ts"
+import { ethereum, Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import {
   AddCollateralNFT,
   AddQuoteToken,
@@ -173,13 +173,18 @@ export function createKickReserveAuctionEvent(
 }
 
 export function createMergeOrRemoveCollateralNFTEvent(
+  poolAddress: Address,
   actor: Address,
   collateralMerged: BigInt,
-  toIndexLps: BigInt
+  toIndexLps: BigInt,
+  calldata: Bytes
 ): MergeOrRemoveCollateralNFT {
   let mergeOrRemoveCollateralNftEvent = changetype<MergeOrRemoveCollateralNFT>(
     newMockEvent()
   )
+
+  // update event source address to the expected pool address
+  mergeOrRemoveCollateralNftEvent.address = poolAddress
 
   mergeOrRemoveCollateralNftEvent.parameters = new Array()
 
@@ -198,6 +203,9 @@ export function createMergeOrRemoveCollateralNFTEvent(
       ethereum.Value.fromUnsignedBigInt(toIndexLps)
     )
   )
+
+  // set calldata as input
+  mergeOrRemoveCollateralNftEvent.transaction.input = calldata
 
   return mergeOrRemoveCollateralNftEvent
 }
