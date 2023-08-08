@@ -5,8 +5,8 @@ import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolFactoryAddressTable, poolInfoUtilsAddressTable, TEN_BI } from "../constants"
-import { decimalToWad, wadToDecimal } from '../convert'
+import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, poolFactoryAddressTable, poolInfoUtilsAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
+import { addressToBytes, decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
 import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
 import { wmul, wdiv } from '../math'
@@ -40,7 +40,6 @@ export function getLenderInfo(poolId: Bytes, bucketIndex: BigInt, lender: Addres
     lenderInfoResult.value1
   )
 }
-
 export function getLenderInfoERC721Pool(poolId: Bytes, bucketIndex: BigInt, lender: Address): LenderInfo {
   const poolContract = ERC721Pool.bind(Address.fromBytes(poolId))
   const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
@@ -300,7 +299,6 @@ export function getCurrentBurnEpoch(pool: Pool): BigInt {
     const ajnaBurnEpoch = poolContract.currentBurnEpoch()
     return ajnaBurnEpoch
 }
-
 export function getCurrentBurnEpochERC721Pool(pool: Pool): BigInt {
   const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
   const ajnaBurnEpoch = poolContract.currentBurnEpoch()
@@ -328,7 +326,6 @@ export function getBurnInfo(pool: Pool, burnEpoch: BigInt): BurnInfo {
     )
     return burnInfo
 }
-
 export function getBurnInfoERC721Pool(pool: Pool, burnEpoch: BigInt): BurnInfo {
   const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
   const burnInfoResult = poolContract.burnInfo(burnEpoch)
@@ -364,7 +361,6 @@ export function getDebtInfo(pool: Pool): DebtInfo {
     debtInfoResult.value3
   )
 }
-
 export function getDebtInfoERC721Pool(pool: Pool): DebtInfo {
   const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
   const debtInfoResult = poolContract.debtInfo()
@@ -379,4 +375,79 @@ export function getDebtInfoERC721Pool(pool: Pool): DebtInfo {
 
 export function isERC20Pool(pool: Pool): boolean {
   return pool.poolType == 'Fungible'
+}
+
+// TODO: use this in erc-20-pool-factory
+export function loadOrCreatePool(id: Bytes): Pool {
+  let pool = Pool.load(id)
+  if (pool == null) {
+    pool = new Pool(id) as Pool
+
+    // pool global information
+    pool.txCount = ZERO_BI
+    pool.createdAtTimestamp = ZERO_BI
+    pool.createdAtBlockNumber = ZERO_BI
+    pool.poolType = 'NOT_SET'
+
+    // pool token information
+    pool.collateralToken = addressToBytes(ZERO_ADDRESS)
+    pool.quoteToken = addressToBytes(ZERO_ADDRESS)
+
+    // pool debt information
+    pool.t0debt = ZERO_BD
+    pool.inflator = ONE_BD
+    pool.lendRate = ZERO_BD
+    pool.pledgedCollateral = ZERO_BD
+
+    // pool rate information
+    pool.borrowRate = ZERO_BD
+    pool.borrowFeeRate = ZERO_BD
+    pool.depositFeeRate = ZERO_BD
+
+    // pool loans information
+    pool.poolSize = ZERO_BD
+    pool.loansCount = ZERO_BI
+    pool.maxBorrower = ZERO_ADDRESS
+    pool.quoteTokenFlashloaned = ZERO_BD
+    pool.collateralFlashloaned = ZERO_BD
+
+    // pool prices information
+    pool.hpb = ZERO_BD
+    pool.hpbIndex = 0
+    pool.htp = ZERO_BD
+    pool.htpIndex = 0
+    pool.lup = MAX_PRICE
+    pool.lupIndex = MAX_PRICE_INDEX
+    pool.momp = ZERO_BD
+
+    // reserve auction information
+    pool.reserves = ZERO_BD
+    pool.claimableReserves = ZERO_BD
+    pool.claimableReservesRemaining = ZERO_BD
+    pool.burnEpoch = ZERO_BI
+    pool.totalAjnaBurned = ZERO_BD
+    pool.reserveAuctions = []
+    pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
+
+    // utilization information
+    pool.minDebtAmount = ZERO_BD
+    pool.actualUtilization = ZERO_BD
+    pool.targetUtilization = ONE_BD
+
+    // liquidation information
+    pool.totalBondEscrowed = ZERO_BD
+    pool.liquidationAuctions = []
+
+    // TVL information
+    pool.quoteTokenBalance = ZERO_BD
+    pool.collateralBalance = ZERO_BD
+
+    // ERC721 Pool Information
+    pool.tokenIdsAllowed = []
+    pool.tokenIdsPledged = []
+    pool.subsetHash = Bytes.empty()
+
+    pool.save()
+  }
+  return pool
 }
