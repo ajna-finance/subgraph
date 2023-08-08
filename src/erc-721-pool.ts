@@ -7,6 +7,7 @@ import {
   Flashloan as FlashloanEvent,
   KickReserveAuction as KickReserveAuctionEvent,
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
+  RemoveQuoteToken as RemoveQuoteTokenEvent,
   ReserveAuction as ReserveAuctionEvent,
   Settle as SettleEvent
 } from "../generated/templates/ERC721Pool/ERC721Pool"
@@ -25,7 +26,7 @@ import {
   Settle
 } from "../generated/schema"
 import { incrementTokenTxCount } from "./utils/token-erc721"
-import { Bytes } from "@graphprotocol/graph-ts"
+import { Bytes, ethereum } from "@graphprotocol/graph-ts"
 
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
@@ -171,6 +172,12 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   _handleAddQuoteToken(null, event)
 }
 
+// TODO: implement handleRemoreQuoteToken in copy/paste approach to verify that also works
+export function handleRemoreQuoteToken(event: RemoveQuoteTokenEvent): void {
+
+}
+
+// TODO: in order to track tokenIds, need to be able to do before / after snapshot of tokenIds associated with a bucket
 // called by Account's with Lend(s) in a pool
 export function handleMergeOrRemoveCollateralNFT(
   event: MergeOrRemoveCollateralNFTEvent
@@ -178,7 +185,7 @@ export function handleMergeOrRemoveCollateralNFT(
   const mergeOrRemove = new MergeOrRemoveCollateralNFT(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  mergeOrRemove.actor = event.params.actor
+  mergeOrRemove.actor = addressToBytes(event.params.actor)
   mergeOrRemove.collateralMerged = wadToDecimal(event.params.collateralMerged)
   mergeOrRemove.toIndexLps = wadToDecimal(event.params.toIndexLps)
 
@@ -197,11 +204,50 @@ export function handleMergeOrRemoveCollateralNFT(
   const account   = loadOrCreateAccount(accountId)
   account.txCount = account.txCount.plus(ONE_BI)
 
-  // TODO: iterate through the actors lends in this pool and update their lpb and lpbValueInQuote
-  // use multicall to get the lend lpb in the actors lends
+  // TODO: use transaction metadata to access the list of removalIndexes
+  // https://discord.com/channels/438038660412342282/438070183794573313/1125272865353252984
+  // https://medium.com/@r2d2_68242/indexing-transaction-input-data-in-a-subgraph-6ff5c55abf20
+  const dataWithoutSelector = Bytes.fromUint8Array(event.transaction.input.subarray(4))
+  const decoded = ethereum.decode('(uint256[],uint256,uint256)', dataWithoutSelector)!
+
+  const removalIndexes = decoded.toTuple()[0].toBigIntArray()
+  const noNFTsToRemove = decoded.toTuple()[1].toBigInt()
+  const toIndex        = decoded.toTuple()[2].toBigInt()
 
   // TODO: NEED TO FIND AND REMOVE TOKENIDS FROM THE ARRAYS OF LOANS AND POOL
+  // TODO: find ways to reduce compute cost of this operation given potentially unbounded (to number of indexes) iteration
+  // iterate through removalIndexes and update state
+  for (let i = 0; i < removalIndexes.length; i++) {
+    const index = removalIndexes[i]
 
+    // update bucket state
+    const bucketId   = getBucketId(pool.id, index.toU32())
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, index.toU32())
+    const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
+    bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+    bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+    bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+    bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+
+    // update lend state
+    const lendId = getLendId(bucketId, accountId)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id, event.params.actor)
+    lend.lpb = wadToDecimal(getLenderInfo(pool.id, index, event.params.actor).lpBalance)
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+
+    updateAccountLends(account, lend)
+
+    // save entities to store
+    account.save()
+    bucket.save()
+    lend.save()
+  }
+
+  updateAccountPools(account, pool)
+
+  // save entities to store
+  account.save()
+  pool.save()
   mergeOrRemove.save()
 }
 
