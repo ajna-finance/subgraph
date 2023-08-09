@@ -4,7 +4,7 @@ import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 import { DistributionPeriod } from "../../../generated/schema"
 
 import { FUNDING_PERIOD_LENGTH, SCREENING_PERIOD_LENGTH, ONE_BI, ZERO_BD, ZERO_BI, CHALLENGE_PERIOD_LENGTH } from "../constants"
-import { bigIntToBytes } from "../convert"
+import { bigIntToBytes, bytesToBigInt } from "../convert"
 
 export function getDistributionIdAtBlock(blockNumber: BigInt, grantFundAddress: Address): BigInt | null {
     const currentDistributionId = getCurrentDistributionId(grantFundAddress)
@@ -43,6 +43,7 @@ export function loadOrCreateDistributionPeriod(distributionId: Bytes): Distribut
     if (distributionPeriod == null) {
         // create new distributionPeriod if one hasn't already been stored
         distributionPeriod = new DistributionPeriod(distributionId) as DistributionPeriod
+        distributionPeriod.distributionId = bytesToBigInt(distributionId)
         distributionPeriod.startBlock = ZERO_BI
         distributionPeriod.endBlock = ZERO_BI
         distributionPeriod.topSlate = Bytes.empty()

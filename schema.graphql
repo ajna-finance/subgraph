@@ -792,6 +792,7 @@ type GrantFund @entity {
 
 type DistributionPeriod @entity {
   id: Bytes! # distribution period id converted to Bytes from uint
+  distributionId: BigInt! # identifies the distribution period
   startBlock: BigInt! # block number the distribution period starts
   endBlock: BigInt! # block number the distribution period ends
   topSlate: FundedSlate # The current top FundedSlate
