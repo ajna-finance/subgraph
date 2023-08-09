@@ -881,8 +881,8 @@ type DelegateChanged @entity(immutable: true) {
 type DelegateVotesChanged @entity(immutable: true) {
   id: Bytes!
   delegate: Bytes! # address
-  previousBalance: BigInt! # uint256
-  newBalance: BigInt! # uint256
+  previousBalance: BigDecimal! # uint256
+  newBalance: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -901,7 +901,7 @@ type DelegateRewardClaimed @entity(immutable: true) {
 type FundTreasury @entity(immutable: true) {
   id: Bytes!
   amount: BigInt! # uint256
-  treasuryBalance: BigInt! # uint256
+  treasuryBalance: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -921,7 +921,7 @@ type ProposalCreated @entity(immutable: true) {
   proposal: Proposal!
   proposer: Bytes! # address
   targets: [Bytes!]! # address[]
-  values: [BigInt!]! # uint256[]
+  values: [BigDecimal!]! # uint256[]
   signatures: [String!]! # string[]
   calldatas: [Bytes!]! # bytes[]
   startBlock: BigInt! # uint256
@@ -955,7 +955,7 @@ type VoteCast @entity(immutable: true) {
   voter: Bytes! # address # TODO: should be Account
   proposalId: BigInt! # uint256
   support: Int! # uint8
-  weight: BigInt! # uint256
+  weight: BigDecimal! # uint256
   reason: String! # string
   blockNumber: BigInt!
   blockTimestamp: BigInt!

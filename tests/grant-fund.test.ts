@@ -175,7 +175,7 @@ describe("Grant Fund assertions", () => {
       "FundTreasury",
       `0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000`,
       "treasuryBalance",
-      `${treasuryBalance}`
+      `${wadToDecimal(treasuryBalance)}`
     );
   });
 

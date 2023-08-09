@@ -27,7 +27,7 @@ import {
 } from "../generated/schema"
 
 import { EXP_18_BD, ONE_BI, THREE_PERCENT_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from './utils/constants'
-import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
+import { addressArrayToBytesArray, addressToBytes, bigIntArrayToBigDecimalArray, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
 import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
@@ -79,7 +79,7 @@ export function handleFundTreasury(event: FundTreasuryEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   fundTreasury.amount = event.params.amount
-  fundTreasury.treasuryBalance = event.params.treasuryBalance
+  fundTreasury.treasuryBalance = wadToDecimal(event.params.treasuryBalance)
 
   fundTreasury.blockNumber = event.block.number
   fundTreasury.blockTimestamp = event.block.timestamp
@@ -149,7 +149,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   )
   proposalCreated.proposer    = event.params.proposer
   proposalCreated.targets     = addressArrayToBytesArray(event.params.targets)
-  proposalCreated.values      = event.params.values
+  proposalCreated.values      = bigIntArrayToBigDecimalArray(event.params.values)
   proposalCreated.signatures  = event.params.signatures
   proposalCreated.calldatas   = event.params.calldatas
   proposalCreated.startBlock  = event.params.startBlock
@@ -275,7 +275,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
   voteCast.voter = event.params.voter
   voteCast.proposalId = event.params.proposalId
   voteCast.support = event.params.support
-  voteCast.weight = event.params.weight
+  voteCast.weight = wadToDecimal(event.params.weight)
   voteCast.reason = event.params.reason
 
   voteCast.blockNumber = event.block.number
