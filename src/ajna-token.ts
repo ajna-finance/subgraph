@@ -8,8 +8,6 @@ import {
 } from "../generated/schema"
 import { loadOrCreateAccount } from "./utils/account"
 import { addressToBytes, bigIntToBytes, wadToDecimal } from "./utils/convert"
-import { getCurrentDistributionId } from "./utils/grants/distribution"
-import { loadOrCreateDistributionPeriodVote } from "./utils/grants/voter"
 
 export function handleDelegateChanged(event: DelegateChangedEvent): void {
   let entity = new DelegateChanged(
@@ -39,8 +37,8 @@ export function handleDelegateVotesChanged(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.delegate = event.params.delegate
-  entity.previousBalance = event.params.previousBalance
-  entity.newBalance = event.params.newBalance
+  entity.previousBalance = wadToDecimal(event.params.previousBalance)
+  entity.newBalance = wadToDecimal(event.params.newBalance)
   const changeInBalance = wadToDecimal(event.params.newBalance.minus(event.params.previousBalance))
 
   entity.blockNumber = event.block.number
