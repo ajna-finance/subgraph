@@ -1,5 +1,6 @@
 build/
 generated/
+data*/
 
 # Logs
 logs
