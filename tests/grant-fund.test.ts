@@ -255,6 +255,13 @@ describe("Grant Fund assertions", () => {
     assert.fieldEquals(
       "Proposal",
       `${bigIntToBytes(proposalId).toHexString()}`,
+      "proposalId",
+      `${proposalId}`
+    );
+
+    assert.fieldEquals(
+      "Proposal",
+      `${bigIntToBytes(proposalId).toHexString()}`,
       "distribution",
       `${expectedDistributionId}`
     );
