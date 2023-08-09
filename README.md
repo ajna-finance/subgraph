@@ -12,7 +12,7 @@ sudo yarn global add @graphprotocol/graph-cli
 yarn install
 ```
 
-Set `ETH_NETWORK` environment for your target network to `network:endpoint.  For example, 
+Set `ETH_NETWORK` environment for your target network to `network:endpoint.  For example,
  `ETH_NETWORK=goerli:https://eth-goerli.g.alchemy.com/v2/<your_api_key_here>` configures your environment for Goerli using an Alchemy node.
 
 If you will change ABIs, please install `jq`.
@@ -103,10 +103,10 @@ Details for a specific pool:
 | Value              | Type         |
 | ------------------ | ------------ |
 | Prices and amounts | `BigDecimal` |
-| Bucket indicies    | `Int` (*u32* in AssemblyScript, *number* in TypeScript) |
+| Bucket indices     | `Int` (*u32* in AssemblyScript, *number* in TypeScript) |
 | Counts and timestamps | `BigInt`  |
 
-### Persistence / Rentention Policy
+### Persistence / Retention Policy
 
 This subgraph does not retain a history of `Lends` and `Loans`.  `Lends` are discarded when all LP balance has been redeemed.  `Loans` are discarded when the lender has no debt and no collateral.
 
@@ -118,7 +118,7 @@ This subgraph will retain a list of `Pools`, even if they have no liquidity. Poo
 ## Development and Deployment
 Commands for adding new data sources to the subgraph are listed in the [add-commands.txt](./add-commands.txt) file.
 
-Once data sources have been added, entites can be modified in the [schema.graphql](./schema.graphql) file. After any update, the following commands must be run to ensure the new types are available for the event handlers.  Before running, ensure `ETH_NETWORK` is set as prescribed above. `[NETWORK_NAME]` should be defined in `networks.json` and specified by `ETH_NETWORK`.
+Once data sources have been added, entities can be modified in the [schema.graphql](./schema.graphql) file. After any update, the following commands must be run to ensure the new types are available for the event handlers.  Before running, ensure `ETH_NETWORK` is set as prescribed above. `[NETWORK_NAME]` should be defined in `networks.json` and specified by `ETH_NETWORK`.
 
 ```
 yarn codegen
@@ -142,7 +142,7 @@ Instructions on creating your own deployment are available in the [Graph Protoco
 ### Tests
 Unit tests are written using the [Matchstick unit testing framework](https://github.com/LimeChain/matchstick/blob/main/README.md).  Unit tests do not guarantee your subgraph is deployable or functional.
 
-Run the Matchstick tests by executing: 
+Run the Matchstick tests by executing:
 ```
 yarn test
 ```
@@ -153,7 +153,7 @@ To update for new release candidates:
 2. Update addresses in `networks.json` and `src/utils/constants.ts`.
 3. Run `yarn codegen` to find and resolve errors in code generation.
 4. Review contract changes, adjusting subgraph and schema accordingly.  
-5. Run `yarn build --network [NETWORK_NAME]` to update `subgraph.yaml`.  Resolve compliation errors.  
+5. Run `yarn build --network [NETWORK_NAME]` to update `subgraph.yaml`.  Resolve compilation errors.  
 6. Update handlers, test mocks, and unit tests.  Run `yarn test` to find and resolve issues.
 7. Start the dockerized environment and perform a local deployment to confirm functionality.
 
@@ -194,7 +194,7 @@ To check health, visit http://localhost:8030/graphql/playground and paste the fo
 ```
 Replace `Qm...` with the `subgraph_id` from logs, and query.  If the indexer has failed, this may reveal the error.
 
-The following red herrings occassionally appear in logs:
+The following red herrings occasionally appear in logs:
 - `ERRO registering metric [deployment_handler_execution_time] failed because it was already registered`
 - `WARN Bytes contain invalid UTF8. This may be caused by attempting to convert a value such as an address that cannot be parsed to a unicode string. You may want to use 'toHexString()' instead.`
 These sometimes disappear upon redeployment with no changes.
