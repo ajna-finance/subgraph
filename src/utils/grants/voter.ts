@@ -4,7 +4,7 @@ import { DistributionPeriodVote, FundingVote } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
 import { EXP_18_BD, ZERO_BD, ZERO_BI } from "../constants"
-import { wadToDecimal } from "../convert"
+import { bigIntToBytes, wadToDecimal } from "../convert"
 import { loadOrCreateDistributionPeriod } from "./distribution"
 
 export function getDistributionPeriodVoteId(distributionPeriodId: Bytes, voterId: Bytes): Bytes {
@@ -77,7 +77,8 @@ export function loadOrCreateFundingVote(fundingVoteId: Bytes): FundingVote {
     return fundingVote
 }
 
-export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, voterId: Bytes): DistributionPeriodVote {
+export function loadOrCreateDistributionPeriodVote(distributionId: BigInt, voterId: Bytes): DistributionPeriodVote {
+    const distributionPeriodId = bigIntToBytes(distributionId)
     const distributionPeriodVotesId = getDistributionPeriodVoteId(distributionPeriodId, voterId)
     let distributionPeriodVotes = DistributionPeriodVote.load(distributionPeriodVotesId)
     if (distributionPeriodVotes == null) {
@@ -91,7 +92,7 @@ export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, 
         distributionPeriodVotes.fundingVotes = []
 
         // add to DistributionPeriod entity
-        const distributionPeriod = loadOrCreateDistributionPeriod(distributionPeriodId)
+        const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
         distributionPeriod.votes = distributionPeriod.votes.concat([distributionPeriodVotesId])
         distributionPeriod.save()
     }
