@@ -38,12 +38,13 @@ export function getCurrentStage(currentBlockNumber: BigInt, distributionPeriod: 
     }
 }
 
-export function loadOrCreateDistributionPeriod(distributionId: Bytes): DistributionPeriod {
-    let distributionPeriod = DistributionPeriod.load(distributionId)
+export function loadOrCreateDistributionPeriod(distributionId: BigInt): DistributionPeriod {
+    let id = bigIntToBytes(distributionId)
+    let distributionPeriod = DistributionPeriod.load(id)
     if (distributionPeriod == null) {
         // create new distributionPeriod if one hasn't already been stored
-        distributionPeriod = new DistributionPeriod(distributionId) as DistributionPeriod
-        distributionPeriod.distributionId = bytesToBigInt(distributionId)
+        distributionPeriod = new DistributionPeriod(id) as DistributionPeriod
+        distributionPeriod.distributionId = distributionId
         distributionPeriod.startBlock = ZERO_BI
         distributionPeriod.endBlock = ZERO_BI
         distributionPeriod.topSlate = Bytes.empty()

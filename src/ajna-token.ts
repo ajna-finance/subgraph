@@ -8,8 +8,6 @@ import {
 } from "../generated/schema"
 import { loadOrCreateAccount } from "./utils/account"
 import { addressToBytes, bigIntToBytes, wadToDecimal } from "./utils/convert"
-import { getCurrentDistributionId } from "./utils/grants/distribution"
-import { loadOrCreateDistributionPeriodVote } from "./utils/grants/voter"
 
 export function handleDelegateChanged(event: DelegateChangedEvent): void {
   let entity = new DelegateChanged(

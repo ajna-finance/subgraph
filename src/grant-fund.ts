@@ -51,7 +51,7 @@ export function handleDelegateRewardClaimed(
   const rewardsClaimed = wadToDecimal(event.params.rewardClaimed)
 
   // update DistributionPeriod entity
-  const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
+  const distributionId = getCurrentDistributionId(event.address)
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
   distributionPeriod.delegationRewardsClaimed = distributionPeriod.delegationRewardsClaimed.plus(rewardsClaimed)
 
@@ -60,7 +60,7 @@ export function handleDelegateRewardClaimed(
   grantFund.treasury = grantFund.treasury.minus(rewardsClaimed)
   grantFund.totalDelegationRewardsClaimed = grantFund.totalDelegationRewardsClaimed.plus(rewardsClaimed)
 
-  delegateRewardClaimed.distribution = distributionId
+  delegateRewardClaimed.distribution = distributionPeriod.id
 
   // update Account entity
   const accountId = addressToBytes(event.params.delegateeAddress)
@@ -106,13 +106,12 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
   fundedSlateUpdated.transactionHash = event.transaction.hash
 
   // update DistributionPeriod entity
-  const distributionId = bigIntToBytes(event.params.distributionId)
-  const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
+  const distributionPeriod = loadOrCreateDistributionPeriod(event.params.distributionId)
   distributionPeriod.topSlate = event.params.fundedSlateHash
 
   // create FundedSlate entity
   const fundedSlate = new FundedSlate(fundedSlateUpdated.fundedSlateHash_) as FundedSlate
-  fundedSlate.distribution = distributionId
+  fundedSlate.distribution = distributionPeriod.id
   fundedSlate.updateBlock = event.block.number
 
   // get the list of proposals in the slate
@@ -240,8 +239,7 @@ export function handleDistributionPeriodStarted(
   const distributionStarted = new DistributionPeriodStarted(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  const distributionId = bigIntToBytes(event.params.distributionId)
-  distributionStarted.distribution = distributionId
+  distributionStarted.distribution = bigIntToBytes(event.params.distributionId)
   distributionStarted.startBlock = event.params.startBlock
   distributionStarted.endBlock = event.params.endBlock
 
@@ -250,7 +248,7 @@ export function handleDistributionPeriodStarted(
   distributionStarted.transactionHash = event.transaction.hash
 
   // create DistributionPeriod entities
-  const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
+  const distributionPeriod = loadOrCreateDistributionPeriod(event.params.distributionId)
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
 
@@ -294,7 +292,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
     const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
 
     // load voter's distributionPeriodVotes
-    const distributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.id, voter.id)
+    const distributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.distributionId, voter.id)
 
     // check stage of proposal
     const stage = getCurrentStage(voteCast.blockNumber, distributionPeriod)
