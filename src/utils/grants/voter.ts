@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
-import { DistributionPeriodVote, FundingVote } from "../../../generated/schema"
+import { Account, DistributionPeriodVote, FundingVote } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
 import { EXP_18_BD, ZERO_BD, ZERO_BI } from "../constants"
@@ -115,4 +115,19 @@ export function getScreeningStageVotingPower(grantFundAddress: Address, distribu
     const votingPower = grantFundContract.getVotesScreening(distributionId.toI32(), voter)
 
     return wadToDecimal(votingPower)
+}
+
+export function addDelegator(delegator: Account, delegate: Account): void {
+    // prevent duplicate delegatedFroms
+    const index = delegate.delegatedFrom.indexOf(delegator.id)
+    if (index != -1) return
+
+    delegate.delegatedFrom = delegate.delegatedFrom.concat([delegator.id])
+}
+
+export function removeDelegator(oldDelegator: Account, delegate: Account): void {
+    const removalIndex = delegate.delegatedFrom.indexOf(oldDelegator.id)
+    if (removalIndex != -1) {
+        delegate.delegatedFrom = delegate.delegatedFrom.splice(removalIndex, 1)
+    }
 }

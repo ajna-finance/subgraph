@@ -197,8 +197,10 @@ type Account @entity {
   proposalsCreated: [Proposal!]!
   # ecosystem coordination proposals passed and funded 
   proposalsExecuted: [Proposal!]!
-  # voting delegation
-  delegate: Account
+  # account to which this account is delegating votes
+  delegatedTo: Account
+  # accounts from which votes are delegated
+  delegatedFrom: [Account!]!
   # delegation rewards claimed across all distribution periods
   rewardsClaimed: BigDecimal!
   # voting state for each distribution period
