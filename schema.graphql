@@ -856,7 +856,7 @@ type FundingVote @entity {
   voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on
   votesCast: BigDecimal! # uint256
-  votingPowerUsed: BigDecimal! # uint256 # cost of the incremetnal funding vote to the voter's voting power
+  votingPowerUsed: BigDecimal! # uint256 # cost of the incremental funding vote to the voter's voting power
   blockNumber: BigInt! # block number the vote was cast
 }
 

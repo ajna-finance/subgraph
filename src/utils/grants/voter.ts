@@ -3,7 +3,7 @@ import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphproto
 import { Account, DistributionPeriodVote, FundingVote } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
-import { EXP_18_BD, ZERO_BD, ZERO_BI } from "../constants"
+import { ZERO_BD, ZERO_BI } from "../constants"
 import { bigIntToBytes, wadToDecimal } from "../convert"
 import { loadOrCreateDistributionPeriod } from "./distribution"
 
@@ -48,9 +48,7 @@ export function getFundingVotingPowerUsed(distributionPeriodVote: DistributionPe
     const squaredAmount: BigDecimal[] = [];
     for (let i = 0; i < votes.length; i++) {
         const vote = loadOrCreateFundingVote(votes[i]);
-        // convert back from wad before squaring
-        const decimalVotesCast = vote.votesCast.times(EXP_18_BD)
-        squaredAmount.push(decimalVotesCast.times(decimalVotesCast).div(EXP_18_BD));
+        squaredAmount.push(vote.votesCast.times(vote.votesCast));
     }
 
     // sum the squared amounts
