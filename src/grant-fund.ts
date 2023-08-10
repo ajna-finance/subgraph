@@ -348,6 +348,10 @@ export function handleVoteCast(event: VoteCastEvent): void {
 
       // record votes cast on the Proposal entity
       proposal.fundingVotesReceived = proposal.fundingVotesReceived.plus(fundingVote.votesCast)
+      if (fundingVote.votesCast > ZERO_BD)
+        proposal.fundingVotesPositive = proposal.fundingVotesPositive.plus(fundingVote.votesCast)
+      else
+        proposal.fundingVotesNegative = proposal.fundingVotesNegative.plus(fundingVote.votesCast)
 
       // save fundingVote to the store
       fundingVote.save()

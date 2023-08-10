@@ -816,6 +816,8 @@ type Proposal @entity {
   executed: Boolean! # bool
   screeningVotesReceived: BigDecimal! # uint256
   fundingVotesReceived: BigDecimal! # uint256
+  fundingVotesNegative: BigDecimal! # uint256
+  fundingVotesPositive: BigDecimal! # uint256
   totalTokensRequested: BigDecimal! # uint256
   params: [ProposalParams!]! # ProposalParams
 }
