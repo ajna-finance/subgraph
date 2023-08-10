@@ -263,7 +263,7 @@ export function addLiquidationToPool(pool: Pool, liquidationAuction: Liquidation
 export function removeLiquidationFromPool(pool: Pool, liquidationAuction: LiquidationAuction): void {
     const index = pool.liquidationAuctions.indexOf(liquidationAuction.id)
     if (index != -1) {
-        pool.liquidationAuctions.splice(index, 1)
+      pool.liquidationAuctions = pool.liquidationAuctions.splice(index, 1)
     }
 }
 
