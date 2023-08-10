@@ -28,6 +28,7 @@ export const MAX_BUCKET_INDEX = 4156;
 export const poolInfoUtilsAddressTable = new TypedMap<string, Address>()
 poolInfoUtilsAddressTable.set('mainnet', Address.fromString('0x154FFf344f426F99E328bacf70f4Eb632210ecdc'))
 poolInfoUtilsAddressTable.set('goerli', Address.fromString('0xBB61407715cDf92b2784E9d2F1675c4B8505cBd8'))
+poolInfoUtilsAddressTable.set('mumbai', Address.fromString('0x39250241CC84Dadb1cDFE3A1a717631e2aA603eB'))
 poolInfoUtilsAddressTable.set('ganache', Address.fromString('0x4f05DA51eAAB00e5812c54e370fB95D4C9c51F21'))
 export const positionManagerAddressTable = new TypedMap<string, Address>()
 positionManagerAddressTable.set('goerli', Address.fromString('0x23E2EFF19bd50BfCF0364B7dCA01004D5cce41f9'))

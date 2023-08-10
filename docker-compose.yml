@@ -4,11 +4,11 @@ services:
   graph-node:
     image: graphprotocol/graph-node
     ports:
-      - '8000:8000'
-      - '8001:8001'
-      - '8020:8020'
-      - '8030:8030'
-      - '8040:8040'
+      - '${GRAPHQL_HTTP:-8000}:8000'    # GraphQL HTTP
+      - '${GRAPHQL_WSS:-8001}:8001'     # GraphQL WebSocket
+      - '${GRAPHQL_ADMIN:-8020}:8020'   # JSON-RPC admin
+      - '${GRAPHQL_INDEXER:-8030}:8030' # index node
+      - '${GRAPHQL_METRICS:-8040}:8040' # metrics server
     depends_on:
       - ipfs
       - postgres
@@ -22,16 +22,12 @@ services:
       ipfs: 'ipfs:5001'
       ethereum: ${ETH_NETWORK}
       GRAPH_LOG: info
-    networks:
-      - ajna_test_network
   ipfs:
     image: ipfs/kubo:master-latest
     ports:
-      - '5001:5001'
-    networks:
-      - ajna_test_network
+      - '${GRAPHQL_IPFS:-5001}:5001'
     volumes:
-      - ./data/ipfs:/data/ipfs
+      - ${GRAPHQL_DATADIR:-./data}/ipfs:/data/ipfs
   postgres:
     image: postgres
     expose:
@@ -42,10 +38,5 @@ services:
       POSTGRES_PASSWORD: let-me-in
       POSTGRES_DB: graph-node
       POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
-    networks:
-      - ajna_test_network
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-networks:
-  ajna_test_network:
-    name: ajna_test_network
+      - ${GRAPHQL_DATADIR:-./data}/postgres:/var/lib/postgresql/data
