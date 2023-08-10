@@ -28,6 +28,7 @@ import {
 } from "./utils/grant-fund-utils";
 import {
   DISTRIBUTION_PERIOD_LENGTH,
+  NEG_ONE_BD,
   ONE_BI,
   ONE_WAD_BI,
   SCREENING_PERIOD_LENGTH,
@@ -637,7 +638,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${expectedProposalId}`,
       "fundingVotesReceived",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast).times(NEG_ONE_BD)}`
     );
 
     assert.fieldEquals(
@@ -687,7 +688,7 @@ describe("Grant Fund assertions", () => {
       "FundingVote",
       `${fundingVoteId.toHexString()}`,
       "votesCast",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast).times(NEG_ONE_BD)}`
     );
     assert.fieldEquals(
       "FundingVote",
@@ -824,7 +825,7 @@ describe("Grant Fund assertions", () => {
       "FundedSlate",
       `${fundedSlateHash.toHexString()}`,
       "totalFundingVotesReceived",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast).times(NEG_ONE_BD)}`
     );
     assert.fieldEquals(
       "FundedSlate",

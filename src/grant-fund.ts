@@ -26,11 +26,11 @@ import {
   DistributionPeriodVote
 } from "../generated/schema"
 
-import { EXP_18_BD, ONE_BI, THREE_PERCENT_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from './utils/constants'
+import { NEG_ONE_BD, THREE_PERCENT_BI, ZERO_BD, ZERO_BI } from './utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntArrayToBigDecimalArray, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
-import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
+import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
-import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
+import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
 import { getTreasury, loadOrCreateGrantFund } from './utils/grants/fund'
 import { loadOrCreateAccount } from './utils/account'
 import { wmul } from './utils/math'
@@ -323,7 +323,10 @@ export function handleVoteCast(event: VoteCastEvent): void {
       fundingVote.distribution = distributionId
       fundingVote.voter = voter.id
       fundingVote.proposal = proposalId
-      fundingVote.votesCast = wadToDecimal(event.params.weight)
+      if (event.params.support == 1)
+        fundingVote.votesCast = wadToDecimal(event.params.weight)
+      else
+        fundingVote.votesCast = wadToDecimal(event.params.weight).times(NEG_ONE_BD)
       fundingVote.blockNumber = voteCast.blockNumber
 
       // save initial fundingVote information to enable usage in calculation of votingPowerUsed
