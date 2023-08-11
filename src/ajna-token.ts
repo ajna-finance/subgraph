@@ -23,12 +23,14 @@ export function handleDelegateChanged(event: DelegateChangedEvent): void {
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
+  entity.save()
 
   // update Account.delegatedTo to point to the new voting delegate
   const delegatorId = addressToBytes(event.params.delegator)
   const delegator = loadOrCreateAccount(delegatorId)
   const oldDelegateId = delegator.delegatedTo
   delegator.delegatedTo = addressToBytes(event.params.toDelegate)
+  delegator.save()
 
   // if account was already delegating, remove Account.delegatedFrom on the old delegate
   if (oldDelegateId) {
@@ -42,10 +44,7 @@ export function handleDelegateChanged(event: DelegateChangedEvent): void {
   // update Account.delegatedFrom on the new delegate
   const delegate = loadOrCreateAccount(delegator.delegatedTo!)
   addDelegator(delegator, delegate)
-
-  delegator.save()
   delegate.save()
-  entity.save()
 }
 
 export function handleDelegateVotesChanged(
