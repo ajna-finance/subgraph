@@ -23,6 +23,8 @@ export function loadOrCreateProposal(proposalId: BigInt): Proposal {
         proposal.executed     = false
         proposal.screeningVotesReceived = ZERO_BD
         proposal.fundingVotesReceived = ZERO_BD
+        proposal.fundingVotesNegative = ZERO_BD
+        proposal.fundingVotesPositive = ZERO_BD
         proposal.totalTokensRequested = ZERO_BD
         proposal.params = []
     }

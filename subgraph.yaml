@@ -174,8 +174,8 @@ dataSources:
     name: AjnaToken
     network: ganache
     source:
-      address: "0xaadebCF61AA7Da0573b524DE57c67aDa797D46c5"
       abi: AjnaToken
+      address: "0x25Af17eF4E2E6A4A2CE586C9D25dF87FD84D4a7d"
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

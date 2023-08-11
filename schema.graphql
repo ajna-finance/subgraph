@@ -197,8 +197,10 @@ type Account @entity {
   proposalsCreated: [Proposal!]!
   # ecosystem coordination proposals passed and funded 
   proposalsExecuted: [Proposal!]!
-  # voting delegation
-  delegate: Account
+  # account to which this account is delegating votes
+  delegatedTo: Account
+  # accounts from which votes are delegated
+  delegatedFrom: [Account!]!
   # delegation rewards claimed across all distribution periods
   rewardsClaimed: BigDecimal!
   # voting state for each distribution period
@@ -814,6 +816,8 @@ type Proposal @entity {
   executed: Boolean! # bool
   screeningVotesReceived: BigDecimal! # uint256
   fundingVotesReceived: BigDecimal! # uint256
+  fundingVotesNegative: BigDecimal! # uint256
+  fundingVotesPositive: BigDecimal! # uint256
   totalTokensRequested: BigDecimal! # uint256
   params: [ProposalParams!]! # ProposalParams
 }
@@ -852,7 +856,7 @@ type FundingVote @entity {
   voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on
   votesCast: BigDecimal! # uint256
-  votingPowerUsed: BigDecimal! # uint256 # cost of the incremetnal funding vote to the voter's voting power
+  votingPowerUsed: BigDecimal! # uint256 # cost of the incremental funding vote to the voter's voting power
   blockNumber: BigInt! # block number the vote was cast
 }
 
