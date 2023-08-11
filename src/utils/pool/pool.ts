@@ -209,10 +209,9 @@ export function updatePool(pool: Pool): void {
     pool.loansCount     = poolLoansInfo.loansCount
     pool.maxBorrower    = poolLoansInfo.maxBorrower
     pool.inflator       = wadToDecimal(poolLoansInfo.pendingInflator)
-    
-    // TODO: NEED TO UPDATE THIS PER POOL TYPE
+
     // update amount of debt in pool
-    const debtInfo = getDebtInfo(pool)
+    const debtInfo = isERC20Pool(pool) ? getDebtInfo(pool) : getDebtInfoERC721Pool(pool)
     pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
 
     // update pool prices information
@@ -371,6 +370,11 @@ export function getDebtInfoERC721Pool(pool: Pool): DebtInfo {
     debtInfoResult.value2,
     debtInfoResult.value3
   )
+}
+
+export function getTotalBucketTokens(pool: Bytes): BigInt {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(pool))
+  return poolContract.totalBucketTokens()
 }
 
 export function isERC20Pool(pool: Pool): boolean {

@@ -7,6 +7,7 @@ import {
   Flashloan as FlashloanEvent,
   KickReserveAuction as KickReserveAuctionEvent,
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
+  RemoveCollateral as RemoveCollateralEvent,
   RemoveQuoteToken as RemoveQuoteTokenEvent,
   ReserveAuction as ReserveAuctionEvent,
   Settle as SettleEvent
@@ -22,6 +23,7 @@ import {
   ReserveAuctionKick,
   MergeOrRemoveCollateralNFT,
   Pool,
+  RemoveCollateral,
   RemoveQuoteToken,
   ReserveAuction,
   Settle
@@ -133,6 +135,7 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
     bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
     bucket.tokenIds     = bucket.tokenIds.concat(event.params.tokenIds)
     // TODO: should these tokenIds be added to the pool entity here as well?
+      // we probably actually want to just add tokenIds at the pool level, and not the bucket level
 
     // update account state
     const accountId = addressToBytes(event.params.actor)
@@ -171,6 +174,71 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   // TODO: get compiler to ignore this line's INFO output
   event = changetype<AddQuoteTokenEvent | null>(event)!
   _handleAddQuoteToken(null, event)
+}
+
+// TODO: call pop() on pool.tokenIds with the number of NFTs removed
+// TODO: finish implementing updating tokenIds
+// TODO: call borrowerTokenIds() to update the loan tokenIds after removal, and bucketTokenIds() to update the pool tokenIds
+export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
+  const removeCollateral = new RemoveCollateral(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  removeCollateral.claimer    = event.params.claimer
+  removeCollateral.index      = event.params.index.toU32()
+  removeCollateral.amount     = wadToDecimal(event.params.amount)
+  removeCollateral.lpRedeemed = wadToDecimal(event.params.lpRedeemed)
+
+  removeCollateral.blockNumber = event.block.number
+  removeCollateral.blockTimestamp = event.block.timestamp
+  removeCollateral.transactionHash = event.transaction.hash
+
+  // update pool entity
+  const pool = Pool.load(addressToBytes(event.address))!
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  // update tx count for a pools tokens
+  incrementTokenTxCount(pool)
+
+  // update bucket state
+  const bucketId   = getBucketId(pool.id, event.params.index.toU32())
+  const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
+  const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
+  bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+  bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+  bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+  bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+
+  // update account state
+  const accountId = removeCollateral.claimer
+  const account   = loadOrCreateAccount(accountId)
+  account.txCount = account.txCount.plus(ONE_BI)
+
+  const lendId = getLendId(bucketId, accountId)
+  const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeCollateral.claimer)
+  // TODO: UPDATE LEND LPB - call getLenderInfo?
+  // TODO: call getLenderINfo to update buckets directly
+  if (removeCollateral.lpRedeemed.le(lend.lpb)){
+    lend.lpb = lend.lpb.minus(removeCollateral.lpRedeemed)
+  } else {
+    lend.lpb = ZERO_BD
+  }
+  lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+
+  // call pool.ownerOf()
+  // update pool tokenIds
+
+  // update account's list of pools and lends if necessary
+  updateAccountPools(account, pool)
+  updateAccountLends(account, lend)
+
+  // save entities to store
+  account.save()
+  bucket.save()
+  lend.save()
+  pool.save()
+
+  removeCollateral.bucket = bucket.id
+  removeCollateral.pool = pool.id
 }
 
 export function handleRemoreQuoteToken(event: RemoveQuoteTokenEvent): void {

@@ -29,6 +29,10 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
     return loan
 }
 
+/**********************************/
+/*** Contract Calling Functions ***/
+/**********************************/
+
 export class BorrowerInfo {
   t0debt: BigInt
   collateral: BigInt
@@ -60,6 +64,17 @@ export function getBorrowerInfoERC721Pool(borrower: Bytes, poolId: Bytes): Borro
     borrowerInfoResult.value2
   )
 }
+
+// get the number of tokenIds pledged to the pool by a borrower
+export function getTotalBorrowerTokens(borrower: Address, poolId: Bytes): BigInt {
+  const poolAddress = Address.fromBytes(poolId)
+  const poolContract = ERC721Pool.bind(poolAddress)
+  return poolContract.totalBorrowerTokens(borrower)
+}
+
+/*************************/
+/*** Utility Functions ***/
+/*************************/
 
 export function collateralizationAtLup(debt: BigDecimal, collateral: BigDecimal, lup: BigDecimal): BigDecimal {
   if (debt > ZERO_BD && lup > ZERO_BD) {
