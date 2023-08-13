@@ -13,7 +13,8 @@ import {
   RemoveQuoteToken as RemoveQuoteTokenEvent,
   RepayDebt as RepayDebtEvent,
   ReserveAuction as ReserveAuctionEvent,
-  Settle as SettleEvent
+  Settle as SettleEvent,
+  Take as TakeEvent
 } from "../generated/templates/ERC721Pool/ERC721Pool"
 import {
   AddCollateralNFT,
@@ -30,7 +31,8 @@ import {
   RemoveQuoteToken,
   RepayDebt,
   ReserveAuction,
-  Settle
+  Settle,
+  Take
 } from "../generated/schema"
 
 import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc721"
@@ -48,7 +50,7 @@ import { _handleAddQuoteToken, _handleMoveQuoteToken } from "./mappings/base/bas
 
 // TODO:
 // - Finish liquidations and implement rebalance logic for moving tokenIds from tokenIdsPledged to bucketTokenIds
-// - Create base functions to reduce code duplication common handlers
+// - Create base functions to reduce code duplication across common handlers
 
 /*******************************/
 /*** Borrower Event Handlers ***/
@@ -486,7 +488,7 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   // TODO: test tokenId rebalancing
   // rebalance tokenIds on auction settle
   // round down remaining collateral pledged, and slice that many tokenIds
-  const numberOfTokensToLeave = Math.floor(event.params.collateral.div(ONE_WAD_BI).toI32())
+  const numberOfTokensToLeave = BigInt.fromString(Math.floor(event.params.collateral.div(ONE_WAD_BI).toI32()).toString()).toI32()
   // slice all tokenIds out other than the number of tokens to leave
   const tokenIdsSettled = loan.tokenIdsPledged.slice(numberOfTokensToLeave)
   // const tokenIdsSettled = loan.tokenIdsPledged.slice(0, numberOfTokensToLeave)
@@ -555,6 +557,36 @@ export function handleSettle(event: SettleEvent): void {
   pool.save()
 
   settle.save()
+}
+
+export function handleTake(event: TakeEvent): void {
+  const take = new Take(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  take.borrower   = event.params.borrower
+  take.taker      = event.transaction.from
+  take.amount     = wadToDecimal(event.params.amount)
+  take.collateral = wadToDecimal(event.params.collateral)
+  take.bondChange = wadToDecimal(event.params.bondChange)
+  take.isReward   = event.params.isReward
+
+  take.blockNumber = event.block.number
+  take.blockTimestamp = event.block.timestamp
+  take.transactionHash = event.transaction.hash
+
+  // update pool state
+  const pool = Pool.load(addressToBytes(event.address))!
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
+
+  // update taker account state
+  const account   = loadOrCreateAccount(take.taker)
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountTakes(account, take.id)
+  updateAccountPools(account, pool)
+
+  // TODO: update loan TokenIdsPledged and pool tokenIdsPledged
 }
 
 /*******************************/
