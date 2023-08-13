@@ -8,6 +8,7 @@ import {
   Flashloan as FlashloanEvent,
   KickReserveAuction as KickReserveAuctionEvent,
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
+  MoveQuoteToken as MoveQuoteTokenEvent,
   RemoveCollateral as RemoveCollateralEvent,
   RemoveQuoteToken as RemoveQuoteTokenEvent,
   RepayDebt as RepayDebtEvent,
@@ -43,7 +44,7 @@ import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidat
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, calculateLendRate, isERC20Pool } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
-import { _handleAddQuoteToken } from "./mappings/base/base-pool"
+import { _handleAddQuoteToken, _handleMoveQuoteToken } from "./mappings/base/base-pool"
 
 // TODO:
 // - Finish liquidations and implement rebalance logic for moving tokenIds from tokenIdsPledged to bucketTokenIds
@@ -221,6 +222,11 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   // TODO: get compiler to ignore this line's INFO output
   event = changetype<AddQuoteTokenEvent | null>(event)!
   _handleAddQuoteToken(null, event)
+}
+
+export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
+  event = changetype<MoveQuoteTokenEvent | null>(event)!
+  _handleMoveQuoteToken(null, event)
 }
 
 export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
