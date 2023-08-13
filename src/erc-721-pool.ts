@@ -434,7 +434,7 @@ export function handleMergeOrRemoveCollateralNFT(
   // update pool bucketTokenIds
   if (mergeOrRemove.collateralMerged.equals(wadToDecimal(noNFTsToRemove))) {
     // slice the tokenIds that will be removed from the end of the array
-    const tokenIdsToRemove = pool.bucketTokenIds.slice(pool.bucketTokenIds.length - noNFTsToRemove.toI32(), pool.bucketTokenIds.length)
+    const tokenIdsToRemove = pool.bucketTokenIds.slice(pool.bucketTokenIds.length - noNFTsToRemove.div(ONE_WAD_BI).toI32(), pool.bucketTokenIds.length)
     // splice the identified tokenIds out of pool.bucketTokenIds
     pool.bucketTokenIds = findAndRemoveTokenIds(tokenIdsToRemove, pool.bucketTokenIds)
   }
