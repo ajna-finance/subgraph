@@ -1,3 +1,4 @@
+import { BigInt, ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 import {
   AddCollateralNFT as AddCollateralNFTEvent,
   AddQuoteToken as AddQuoteTokenEvent,
@@ -30,14 +31,12 @@ import {
   ReserveAuction,
   Settle
 } from "../generated/schema"
-import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc721"
-import { ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 
+import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc721"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BD } from "./utils/constants"
-
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "./utils/pool/liquidation"
@@ -47,9 +46,8 @@ import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/
 import { _handleAddQuoteToken } from "./mappings/base/base-pool"
 
 // TODO:
-// - Figure out solution for accurate tracking of tokenIdsPledged
-// - Update getInfo functions to appropriate pool type
-// - Create base functions to reduce code duplication
+// - Finish liquidations and implement rebalance logic for moving tokenIds from tokenIdsPledged to bucketTokenIds
+// - Create base functions to reduce code duplication common handlers
 
 /*******************************/
 /*** Borrower Event Handlers ***/
@@ -135,7 +133,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
 
   // remove tokenIds from loan and track the tokenIds pulled
   const tokenIdsPledged = loan.tokenIdsPledged
-  const tokenIdsPulled = []
+  const tokenIdsPulled: Array<BigInt> = []
 
   // iterate through tokenIdsPledged and remove the ones that were pulled
   let i = repayDebt.collateralPulled
