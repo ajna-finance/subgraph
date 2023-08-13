@@ -1,4 +1,4 @@
-import { BigInt, ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
+import { BigDecimal, BigInt, ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 import {
   AddCollateralNFT as AddCollateralNFTEvent,
   AddQuoteToken as AddQuoteTokenEvent,
@@ -36,7 +36,7 @@ import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc7
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
-import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BD } from "./utils/constants"
+import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI } from "./utils/constants"
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "./utils/pool/liquidation"
@@ -280,13 +280,12 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
   // update pool tokenIds
-  let i = removeCollateral.amount
-  while (i.gt(ZERO_BD)) {
-    // follow the same logic as in the ERC721Pool contract
-    // and pop() the tokenIds from the pool
-    pool.bucketTokenIds.pop()
-    i = i.minus(ONE_BD) // TODO: check this precision
-  }
+  // slice the tokenIds that will be removed from the end of the array
+  const numberOfTokensToRemove = event.params.amount.div(ONE_WAD_BI).toI32()
+  const tokenIdsToRemove = pool.bucketTokenIds.slice(pool.bucketTokenIds.length - numberOfTokensToRemove, pool.bucketTokenIds.length)
+  // splice the identified tokenIds out of pool.bucketTokenIds
+  pool.bucketTokenIds = findAndRemoveTokenIds(tokenIdsToRemove, pool.bucketTokenIds)
+  log.info('Removed the following tokenIds from pool.bucketTokenIds: {}', [tokenIdsToRemove.toString()])
 
   // update account's list of pools and lends if necessary
   updateAccountPools(account, pool)
@@ -298,8 +297,11 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   lend.save()
   pool.save()
 
+  // associate bucket and pool with removeCollateral entity
   removeCollateral.bucket = bucket.id
   removeCollateral.pool = pool.id
+
+  removeCollateral.save()
 }
 
 export function handleRemoreQuoteToken(event: RemoveQuoteTokenEvent): void {
@@ -439,12 +441,10 @@ export function handleMergeOrRemoveCollateralNFT(
 
   // update pool bucketTokenIds
   if (mergeOrRemove.collateralMerged.equals(wadToDecimal(noNFTsToRemove))) {
-    // pop() noNFTsToRemove from bucketTokenIds
-    let i = mergeOrRemove.collateralMerged
-    while (i.gt(ZERO_BD)) {
-      pool.bucketTokenIds.pop()
-      i = i.minus(ONE_BD) // TODO: check this precision
-    }
+    // slice the tokenIds that will be removed from the end of the array
+    const tokenIdsToRemove = pool.bucketTokenIds.slice(pool.bucketTokenIds.length - noNFTsToRemove.toI32(), pool.bucketTokenIds.length)
+    // splice the identified tokenIds out of pool.bucketTokenIds
+    pool.bucketTokenIds = findAndRemoveTokenIds(tokenIdsToRemove, pool.bucketTokenIds)
   }
 
   updateAccountPools(account, pool)

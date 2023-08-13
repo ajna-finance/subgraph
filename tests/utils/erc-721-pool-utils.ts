@@ -7,6 +7,7 @@ import {
   Flashloan,
   KickReserveAuction,
   MergeOrRemoveCollateralNFT,
+  RemoveCollateral,
   RepayDebt,
   ReserveAuction
 } from "../../generated/templates/ERC721Pool/ERC721Pool"
@@ -184,9 +185,6 @@ export function createMergeOrRemoveCollateralNFTEvent(
     newMockEvent()
   )
 
-  // update event source address to the expected pool address
-  mergeOrRemoveCollateralNftEvent.address = poolAddress
-
   mergeOrRemoveCollateralNftEvent.parameters = new Array()
 
   mergeOrRemoveCollateralNftEvent.parameters.push(
@@ -205,10 +203,46 @@ export function createMergeOrRemoveCollateralNFTEvent(
     )
   )
 
+  // update event source address to the expected pool address
+  mergeOrRemoveCollateralNftEvent.address = poolAddress
+
   // set calldata as input
   mergeOrRemoveCollateralNftEvent.transaction.input = calldata
 
   return mergeOrRemoveCollateralNftEvent
+}
+
+export function createRemoveCollateralEvent(
+  pool: Address,
+  claimer: Address,
+  index: BigInt,
+  amount: BigInt,
+  lpRedeemed: BigInt
+): RemoveCollateral {
+  let removeCollateralEvent = changetype<RemoveCollateral>(newMockEvent())
+
+  removeCollateralEvent.parameters = new Array()
+
+  removeCollateralEvent.parameters.push(
+    new ethereum.EventParam("claimer", ethereum.Value.fromAddress(claimer))
+  )
+  removeCollateralEvent.parameters.push(
+    new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
+  )
+  removeCollateralEvent.parameters.push(
+    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
+  )
+  removeCollateralEvent.parameters.push(
+    new ethereum.EventParam(
+      "lpRedeemed",
+      ethereum.Value.fromUnsignedBigInt(lpRedeemed)
+    )
+  )
+
+  // update transaction target to the expected pool address
+  removeCollateralEvent.address = pool
+
+  return removeCollateralEvent
 }
 
 export function createRepayDebtEvent(

@@ -371,7 +371,7 @@ export function createMoveQuoteTokenEvent(
 
 export function createRemoveCollateralEvent(
   claimer: Address,
-  price: BigInt,
+  index: BigInt,
   amount: BigInt,
   lpRedeemed: BigInt
 ): RemoveCollateral {
@@ -383,7 +383,7 @@ export function createRemoveCollateralEvent(
     new ethereum.EventParam("claimer", ethereum.Value.fromAddress(claimer))
   )
   removeCollateralEvent.parameters.push(
-    new ethereum.EventParam("price", ethereum.Value.fromUnsignedBigInt(price))
+    new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
   )
   removeCollateralEvent.parameters.push(
     new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))

@@ -16,7 +16,6 @@ export const ONE_WAD_BI       = BigInt.fromString("1000000000000000000")
 export const ZERO_BD = BigDecimal.zero()
 export const EXP_18_BD = BigDecimal.fromString('1000000000000000000')
 export const ONE_BD = BigDecimal.fromString('1')
-export const ONE_WAD_BD = BigDecimal.fromString('1000000000000000000') // 1e18
 export const NEG_ONE_BD = BigDecimal.fromString('-1')
 
 // max price of the pool is 1_004_968_987.606512354182109771 * 1e18

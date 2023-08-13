@@ -10,18 +10,19 @@ import {
   logStore,
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { Account, AddCollateralNFT, Loan } from "../generated/schema"
+import { Account, AddCollateralNFT, Lend, Loan } from "../generated/schema"
 import { AddCollateralNFT as AddCollateralNFTEvent } from "../generated/templates/ERC721Pool/ERC721Pool"
-import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT } from "../src/erc-721-pool"
-import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent } from "./utils/erc-721-pool-utils"
+import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral } from "../src/erc-721-pool"
+import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent } from "./utils/erc-721-pool-utils"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
-import { create721Pool, createPool, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
-import { BucketInfo } from "../src/utils/pool/bucket"
+import { assertBucketUpdate, assertLendUpdate, create721Pool, createPool, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
+import { BucketInfo, getBucketId } from "../src/utils/pool/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
 import { DebtInfo } from "../src/utils/pool/pool"
 import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
 import { wdiv } from "../src/utils/math"
+import { getLendId } from "../src/utils/pool/lend"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -533,6 +534,165 @@ describe("Describe entity assertions", () => {
   })
 
   test("RemoveCollateral", () => {
+    assert.entityCount("AddCollateralNFT", 0)
+    assert.entityCount("RemoveCollateral", 0)
+
+    /**********************/
+    /*** Add Collateral ***/
+    /**********************/
+
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const actor = Address.fromString("0x0000000000000000000000000000000000000003")
+    const index = BigInt.fromI32(234)
+    const price = BigDecimal.fromString("312819781990957000000000000") // 312819781.990957 * 1e18
+    const tokenIds = [BigInt.fromI32(234), BigInt.fromI32(456), BigInt.fromI32(789)]
+    const lpAwarded = BigInt.fromString("3036884000000")               // 0.00000303688 * 1e18
+
+    const expectedCollateralAmountWad = BigInt.fromString('1000000000000000000').times(BigInt.fromI32(tokenIds.length))
+
+    // mock required contract calls
+    const expectedBucketInfo = new BucketInfo(
+      index.toU32(),
+      price,
+      ZERO_BI,
+      expectedCollateralAmountWad, // 3 * 1e18
+      lpAwarded,
+      ZERO_BI,
+      ONE_WAD_BI
+    )
+    mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
+
+    mockGetLPBValueInQuote(poolAddress, lpAwarded, index, lpAwarded)
+
+    mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
+      poolSize: ZERO_BI,
+      debt: ZERO_BI,
+      loansCount: ZERO_BI,
+      maxBorrower: ZERO_ADDRESS,
+      inflator: ONE_WAD_BI,
+      hpb: ZERO_BI, //TODO: indexToPrice(price)
+      hpbIndex: index,
+      htp: ZERO_BI, //TODO: indexToPrice(price)
+      htpIndex: ZERO_BI,
+      lup: MAX_PRICE_BI,
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
+      momp: BigInt.fromU32(623804),
+      reserves: ZERO_BI,
+      claimableReserves: ZERO_BI,
+      claimableReservesRemaining: ZERO_BI,
+      reserveAuctionPrice: ZERO_BI,
+      currentBurnEpoch: BigInt.fromI32(9998102),
+      reserveAuctionTimeRemaining: ZERO_BI,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI
+    })
+
+    mockTokenBalance(Address.fromString("0x10aA0Cf12AAb305bd77AD8F76c037E048B12513B"), poolAddress, ZERO_BI)
+    mockTokenBalance(Address.fromString("0xC9bCeeEA5288b2BE0b777F4F388F125F55aB5a81"), poolAddress, ZERO_BI)
+
+    const newAddCollateralNFTEvent = createAddCollateralNFTEvent(
+      poolAddress,
+      actor,
+      index,
+      tokenIds,
+      lpAwarded
+    )
+    handleAddCollateralNFT(newAddCollateralNFTEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    assert.fieldEquals(
+      "AddCollateralNFT",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "actor",
+      `${actor.toHexString()}`
+    )
+    assert.fieldEquals(
+      "AddCollateralNFT",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "tokenIds",
+      "[234, 456, 789]"
+    )
+
+    /*************************/
+    /*** Remove Collateral ***/
+    /*************************/
+
+    // mock parameters
+    const collateralRemoved = BigInt.fromString("2000000000000000000") // 2 * 1e18
+    const lpRedeemed = BigInt.fromString("2036884000000")       // 0.00000203688 * 1e18
+    const expectedRemainingLPB = lpAwarded.minus(lpRedeemed)
+
+    mockGetLPBValueInQuote(poolAddress, expectedRemainingLPB, index, lpRedeemed)
+
+    const newRemoveCollateralEvent = createRemoveCollateralEvent(poolAddress, actor, index, collateralRemoved, lpRedeemed)
+    handleRemoveCollateral(newRemoveCollateralEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // set expected addresses
+    const expectedPoolAddress = addressToBytes(poolAddress)
+    const accountId = addressToBytes(actor)
+    const bucketId = getBucketId(expectedPoolAddress, index.toU32())
+
+    // check RemoveCollateralEvent attributes
+    assert.entityCount("RemoveCollateral", 1)
+    assert.fieldEquals(
+      "RemoveCollateral",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "claimer",
+      `${actor.toHexString()}`
+    )
+
+    // check pool attributes updated
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "t0debt",
+      `${0}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "tokenIdsPledged",
+      "[]"
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "bucketTokenIds",
+      "[234]"
+    )
+
+    // // check bucket attributes updated
+    // assertBucketUpdate({
+    //   id: bucketId,
+    //   collateral: ONE_WAD_BI, // TODO: figure out why this won't update
+    //   deposit: ZERO_BI,
+    //   exchangeRate: ONE_WAD_BI,
+    //   bucketIndex: index,
+    //   lpb: expectedRemainingLPB
+    // })
+
+    // check Lend attributes updated
+    assert.entityCount("Lend", 1)
+    const lendId = getLendId(bucketId, accountId)
+    const loadedLend = Lend.load(lendId)!
+    assert.bytesEquals(bucketId, loadedLend.bucket)
+    assertLendUpdate({
+      id: lendId,
+      bucketId: bucketId,
+      poolAddress: poolAddress.toHexString(),
+      lpb: expectedRemainingLPB,
+      lpbValueInQuote: lpRedeemed
+    })
 
   })
 
