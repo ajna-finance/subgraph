@@ -6,6 +6,7 @@ import {
   AuctionSettle as AuctionSettleEvent,
   DrawDebtNFT as DrawDebtNFTEvent,
   Flashloan as FlashloanEvent,
+  Kick as KickEvent,
   KickReserveAuction as KickReserveAuctionEvent,
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
   MoveQuoteToken as MoveQuoteTokenEvent,
@@ -566,6 +567,73 @@ export function handleSettle(event: SettleEvent): void {
   pool.save()
 
   settle.save()
+}
+
+export function handleKick(event: KickEvent): void {
+  const kick = new Kick(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+
+  kick.borrower   = event.params.borrower
+  kick.debt       = wadToDecimal(event.params.debt)
+  kick.collateral = wadToDecimal(event.params.collateral)
+  kick.bond       = wadToDecimal(event.params.bond)
+  kick.locked     = kick.bond
+  kick.claimable  = ZERO_BD
+
+  kick.blockNumber = event.block.number
+  kick.blockTimestamp = event.block.timestamp
+  kick.transactionHash = event.transaction.hash
+
+  kick.kicker = event.transaction.from
+
+  // update entities
+  const pool = Pool.load(addressToBytes(event.address))!
+
+  // update pool state
+  updatePool(pool)
+  pool.totalBondEscrowed = pool.totalBondEscrowed.plus(wadToDecimal(event.params.bond))
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
+
+  // update kicker account state
+  const account   = loadOrCreateAccount(kick.kicker)
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountKicks(account, kick)
+  updateAccountPools(account, pool)
+
+  // update loan state
+  const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
+  const loan = loadOrCreateLoan(loanId, pool.id, kick.borrower)
+  loan.inLiquidation     = true
+  loan.collateralPledged = kick.collateral
+  loan.t0debt            = kick.debt.div(pool.inflator) // update loan debt to account for kick penalty
+
+  // retrieve auction information on the kicked loan
+  const auctionInfo = getAuctionInfoERC721Pool(kick.borrower, pool)
+  const auctionStatus = getAuctionStatus(pool, event.params.borrower)
+
+  // update liquidation auction state
+  const auctionId = getLiquidationAuctionId(pool.id, loan.id, kick.blockNumber)
+  const auction = loadOrCreateLiquidationAuction(pool.id, auctionId, kick, loan)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus, false)
+
+  kick.kickMomp = wadToDecimal(auctionInfo.kickMomp)
+  kick.startingPrice = wadToDecimal(auctionStatus.price)
+  kick.pool = pool.id
+  kick.loan = loan.id
+  kick.liquidationAuction = auctionId
+  loan.liquidationAuction = auctionId
+
+  // track new liquidation auction at the pool level
+  addLiquidationToPool(pool, auction)
+
+  // save entities to store
+  account.save()
+  auction.save()
+  loan.save()
+  pool.save()
+  kick.save()
 }
 
 export function handleTake(event: TakeEvent): void {
