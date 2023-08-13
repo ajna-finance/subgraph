@@ -931,7 +931,7 @@ describe("ERC20Pool assertions", () => {
       "Kick",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
       "locked",
-      `${wadToDecimal(bond)}`
+      `${0}`
     )    
     assert.fieldEquals(
       "Kick",

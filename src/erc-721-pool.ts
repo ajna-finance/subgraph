@@ -38,13 +38,14 @@ import {
   Take,
   TransferLP,
   Account,
-  Bucket
+  Bucket,
+  Kick
 } from "../generated/schema"
 
 import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc721"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
-import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
+import { addressToBytes, bigIntArrayToIntArray, decimalToWad, wadToDecimal } from "./utils/convert"
 import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD } from "./utils/constants"
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
@@ -594,7 +595,62 @@ export function handleTake(event: TakeEvent): void {
   updateAccountTakes(account, take.id)
   updateAccountPools(account, pool)
 
-  // TODO: update loan TokenIdsPledged and pool tokenIdsPledged
+  // update loan state
+  const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
+  const loan   = Loan.load(loanId)!
+  const borrowerInfo     = getBorrowerInfoERC721Pool(addressToBytes(event.params.borrower), pool.id)
+  loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+  loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
+
+  // remove tokenIdsTaken from loan and pool tokenIdsPledged
+  const numberOfTokensToTake = BigInt.fromString(Math.floor(event.params.collateral.div(ONE_WAD_BI).toI32()).toString()).toI32()
+  const tokenIdsTaken = loan.tokenIdsPledged.slice(loan.tokenIdsPledged.length - numberOfTokensToTake, loan.tokenIdsPledged.length)
+  loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsTaken, loan.tokenIdsPledged)
+  pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsTaken, pool.tokenIdsPledged)
+
+  // Rebalance any borrower tokenIds if necessary
+  const numberOfTokensToLeave = BigInt.fromString(Math.floor(decimalToWad(loan.collateralPledged).div(ONE_WAD_BI).toI32()).toString()).toI32()
+  const tokenIdsToRebalance = loan.tokenIdsPledged.slice(numberOfTokensToLeave)
+  loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsToRebalance, loan.tokenIdsPledged)
+  pool.bucketTokenIds = pool.bucketTokenIds.concat(tokenIdsToRebalance)
+
+  // update liquidation auction state
+  const auctionId = loan.liquidationAuction!
+  const auction   = LiquidationAuction.load(auctionId)!
+  auction.takes = auction.takes.concat([take.id])
+  const auctionInfo = getAuctionInfoERC721Pool(take.borrower, pool)
+  const auctionStatus = getAuctionStatus(pool, event.params.borrower)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus)
+
+  const debtCovered         = wadToDecimal(event.params.amount)
+  const collateralPurchased = wadToDecimal(event.params.collateral)
+  pool.pledgedCollateral    = pool.pledgedCollateral.minus(collateralPurchased)
+  take.auctionPrice         = wadToDecimal(auctionStatus.price)
+
+  // update kick and pool for the change in bond as a result of the take
+  const kick = Kick.load(auction.kick)!
+  if (take.isReward) {
+    // reward kicker if take is below neutral price
+    pool.totalBondEscrowed = pool.totalBondEscrowed.plus(wadToDecimal(event.params.bondChange))
+    kick.locked = kick.locked.plus(wadToDecimal(event.params.bondChange))
+  } else {
+    // penalize kicker if take is above neutral price
+    pool.totalBondEscrowed = pool.totalBondEscrowed.minus(wadToDecimal(event.params.bondChange))
+    kick.locked = kick.locked.minus(wadToDecimal(event.params.bondChange))
+  }
+
+  // update take pointers
+  take.liquidationAuction = auction.id
+  take.loan = loanId
+  take.pool = pool.id
+
+  // save entities to the store
+  account.save()
+  auction.save()
+  loan.save()
+  pool.save()
+  kick.save()
+  take.save()
 }
 
 /*************************************/

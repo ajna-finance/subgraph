@@ -974,6 +974,7 @@ export function handleTake(event: TakeEvent): void {
   auction.save()
   loan.save()
   pool.save()
+  kick.save()
   take.save()
 }
 
