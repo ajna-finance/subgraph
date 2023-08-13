@@ -71,6 +71,14 @@ export function bigIntArrayToIntArray(indexes: BigInt[]): i32[] {
     return retval
 }
 
+export function bigIntArrayToBigDecimalArray(indexes: BigInt[]): BigDecimal[] {
+    const retval: BigDecimal[] = [];
+    for (let i=0; i<indexes.length; ++i) {
+        retval.push(wadToDecimal(indexes[i]))
+    }
+    return retval
+}
+
 export function indexToPrice(index: u32): BigDecimal {
     const bucketIndex = MAX_BUCKET_INDEX - index;
     assert(bucketIndex >= MIN_BUCKET_INDEX && bucketIndex <= MAX_BUCKET_INDEX, 'Invalid bucket index')

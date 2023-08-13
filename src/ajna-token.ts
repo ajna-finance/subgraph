@@ -1,15 +1,16 @@
+import { Bytes } from "@graphprotocol/graph-ts"
 import {
   DelegateChanged as DelegateChangedEvent,
   DelegateVotesChanged as DelegateVotesChangedEvent,
 } from "../generated/AjnaToken/AjnaToken"
 import {
+  Account,
   DelegateChanged,
   DelegateVotesChanged,
 } from "../generated/schema"
 import { loadOrCreateAccount } from "./utils/account"
 import { addressToBytes, bigIntToBytes, wadToDecimal } from "./utils/convert"
-import { getCurrentDistributionId } from "./utils/grants/distribution"
-import { loadOrCreateDistributionPeriodVote } from "./utils/grants/voter"
+import { addDelegator, removeDelegator } from "./utils/grants/voter"
 
 export function handleDelegateChanged(event: DelegateChangedEvent): void {
   let entity = new DelegateChanged(
@@ -22,14 +23,28 @@ export function handleDelegateChanged(event: DelegateChangedEvent): void {
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
+  entity.save()
 
-  // update Account.delegate to point to the new voting delegate
+  // update Account.delegatedTo to point to the new voting delegate
   const delegatorId = addressToBytes(event.params.delegator)
   const delegator = loadOrCreateAccount(delegatorId)
-  delegator.delegate = addressToBytes(event.params.toDelegate)
-
+  const oldDelegateId = delegator.delegatedTo
+  delegator.delegatedTo = addressToBytes(event.params.toDelegate)
   delegator.save()
-  entity.save()
+
+  // if account was already delegating, remove Account.delegatedFrom on the old delegate
+  if (oldDelegateId) {
+    const oldDelegate = Account.load(oldDelegateId)
+    if (oldDelegate != null) {
+      removeDelegator(delegator, oldDelegate)
+      oldDelegate.save()
+    }
+  }
+
+  // update Account.delegatedFrom on the new delegate
+  const delegate = loadOrCreateAccount(delegator.delegatedTo!)
+  addDelegator(delegator, delegate)
+  delegate.save()
 }
 
 export function handleDelegateVotesChanged(
@@ -39,8 +54,8 @@ export function handleDelegateVotesChanged(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.delegate = event.params.delegate
-  entity.previousBalance = event.params.previousBalance
-  entity.newBalance = event.params.newBalance
+  entity.previousBalance = wadToDecimal(event.params.previousBalance)
+  entity.newBalance = wadToDecimal(event.params.newBalance)
   const changeInBalance = wadToDecimal(event.params.newBalance.minus(event.params.previousBalance))
 
   entity.blockNumber = event.block.number

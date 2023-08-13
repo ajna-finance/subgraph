@@ -227,8 +227,10 @@ type Account @entity {
   proposalsCreated: [Proposal!]!
   # ecosystem coordination proposals passed and funded 
   proposalsExecuted: [Proposal!]!
-  # voting delegation
-  delegate: Account
+  # account to which this account is delegating votes
+  delegatedTo: Account
+  # accounts from which votes are delegated
+  delegatedFrom: [Account!]!
   # delegation rewards claimed across all distribution periods
   rewardsClaimed: BigDecimal!
   # voting state for each distribution period
@@ -864,6 +866,7 @@ type GrantFund @entity {
 
 type DistributionPeriod @entity {
   id: Bytes! # distribution period id converted to Bytes from uint
+  distributionId: BigInt! # identifies the distribution period
   startBlock: BigInt! # block number the distribution period starts
   endBlock: BigInt! # block number the distribution period ends
   topSlate: FundedSlate # The current top FundedSlate
@@ -879,11 +882,14 @@ type DistributionPeriod @entity {
 
 type Proposal @entity {
   id: Bytes! # proposal id converted to Bytes from uint
+  proposalId: BigInt! # proposal id stored in original uint format
   description: String! # proposal description hashed as part of proposalId
   distribution: DistributionPeriod # distributionPeriod in which the proposal was submitted if Standard, null otherwise
   executed: Boolean! # bool
   screeningVotesReceived: BigDecimal! # uint256
   fundingVotesReceived: BigDecimal! # uint256
+  fundingVotesNegative: BigDecimal! # uint256
+  fundingVotesPositive: BigDecimal! # uint256
   totalTokensRequested: BigDecimal! # uint256
   params: [ProposalParams!]! # ProposalParams
 }
@@ -922,7 +928,7 @@ type FundingVote @entity {
   voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on
   votesCast: BigDecimal! # uint256
-  votingPowerUsed: BigDecimal! # uint256 # cost of the incremetnal funding vote to the voter's voting power
+  votingPowerUsed: BigDecimal! # uint256 # cost of the incremental funding vote to the voter's voting power
   blockNumber: BigInt! # block number the vote was cast
 }
 
@@ -952,8 +958,8 @@ type DelegateChanged @entity(immutable: true) {
 type DelegateVotesChanged @entity(immutable: true) {
   id: Bytes!
   delegate: Bytes! # address
-  previousBalance: BigInt! # uint256
-  newBalance: BigInt! # uint256
+  previousBalance: BigDecimal! # uint256
+  newBalance: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -972,7 +978,7 @@ type DelegateRewardClaimed @entity(immutable: true) {
 type FundTreasury @entity(immutable: true) {
   id: Bytes!
   amount: BigInt! # uint256
-  treasuryBalance: BigInt! # uint256
+  treasuryBalance: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -992,7 +998,7 @@ type ProposalCreated @entity(immutable: true) {
   proposal: Proposal!
   proposer: Bytes! # address
   targets: [Bytes!]! # address[]
-  values: [BigInt!]! # uint256[]
+  values: [BigDecimal!]! # uint256[]
   signatures: [String!]! # string[]
   calldatas: [Bytes!]! # bytes[]
   startBlock: BigInt! # uint256
@@ -1026,7 +1032,7 @@ type VoteCast @entity(immutable: true) {
   voter: Bytes! # address # TODO: should be Account
   proposalId: BigInt! # uint256
   support: Int! # uint8
-  weight: BigInt! # uint256
+  weight: BigDecimal! # uint256
   reason: String! # string
   blockNumber: BigInt!
   blockTimestamp: BigInt!

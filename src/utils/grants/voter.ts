@@ -1,10 +1,10 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
-import { DistributionPeriodVote, FundingVote } from "../../../generated/schema"
+import { Account, DistributionPeriodVote, FundingVote } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
-import { EXP_18_BD, ZERO_BD, ZERO_BI } from "../constants"
-import { wadToDecimal } from "../convert"
+import { ZERO_BD, ZERO_BI } from "../constants"
+import { bigIntToBytes, wadToDecimal } from "../convert"
 import { loadOrCreateDistributionPeriod } from "./distribution"
 
 export function getDistributionPeriodVoteId(distributionPeriodId: Bytes, voterId: Bytes): Bytes {
@@ -48,9 +48,7 @@ export function getFundingVotingPowerUsed(distributionPeriodVote: DistributionPe
     const squaredAmount: BigDecimal[] = [];
     for (let i = 0; i < votes.length; i++) {
         const vote = loadOrCreateFundingVote(votes[i]);
-        // convert back from wad before squaring
-        const decimalVotesCast = vote.votesCast.times(EXP_18_BD)
-        squaredAmount.push(decimalVotesCast.times(decimalVotesCast).div(EXP_18_BD));
+        squaredAmount.push(vote.votesCast.times(vote.votesCast));
     }
 
     // sum the squared amounts
@@ -77,7 +75,8 @@ export function loadOrCreateFundingVote(fundingVoteId: Bytes): FundingVote {
     return fundingVote
 }
 
-export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, voterId: Bytes): DistributionPeriodVote {
+export function loadOrCreateDistributionPeriodVote(distributionId: BigInt, voterId: Bytes): DistributionPeriodVote {
+    const distributionPeriodId = bigIntToBytes(distributionId)
     const distributionPeriodVotesId = getDistributionPeriodVoteId(distributionPeriodId, voterId)
     let distributionPeriodVotes = DistributionPeriodVote.load(distributionPeriodVotesId)
     if (distributionPeriodVotes == null) {
@@ -91,7 +90,7 @@ export function loadOrCreateDistributionPeriodVote(distributionPeriodId: Bytes, 
         distributionPeriodVotes.fundingVotes = []
 
         // add to DistributionPeriod entity
-        const distributionPeriod = loadOrCreateDistributionPeriod(distributionPeriodId)
+        const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
         distributionPeriod.votes = distributionPeriod.votes.concat([distributionPeriodVotesId])
         distributionPeriod.save()
     }
@@ -114,4 +113,19 @@ export function getScreeningStageVotingPower(grantFundAddress: Address, distribu
     const votingPower = grantFundContract.getVotesScreening(distributionId.toI32(), voter)
 
     return wadToDecimal(votingPower)
+}
+
+export function addDelegator(delegator: Account, delegate: Account): void {
+    // prevent duplicate delegatedFroms
+    const index = delegate.delegatedFrom.indexOf(delegator.id)
+    if (index != -1) return
+
+    delegate.delegatedFrom = delegate.delegatedFrom.concat([delegator.id])
+}
+
+export function removeDelegator(oldDelegator: Account, delegate: Account): void {
+    const removalIndex = delegate.delegatedFrom.indexOf(oldDelegator.id)
+    if (removalIndex != -1) {
+        delegate.delegatedFrom = delegate.delegatedFrom.splice(removalIndex, 1)
+    }
 }

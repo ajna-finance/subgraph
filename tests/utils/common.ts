@@ -13,7 +13,7 @@ import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool/pool"
 import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
 import { BorrowerInfo } from "../../src/utils/pool/loan"
-import { wdiv, wmin } from "../../src/utils/math"
+import { wdiv, wmin, wmul } from "../../src/utils/math"
 
 /*************************/
 /*** Bucket Assertions ***/
@@ -593,6 +593,14 @@ export function mockGetERC721TokenInfo(token: Address, expectedName: string, exp
         .returns([ethereum.Value.fromString(expectedSymbol)])
 }
 
+export function mockDepositUpToIndex(pool: Address, index: BigInt, expectedInfo: BigInt): void {
+  createMockedFunction(pool, 'depositUpToIndex', 'depositUpToIndex(uint256):(uint256)')
+      .withArgs([ethereum.Value.fromUnsignedBigInt(index)])
+      .returns([
+        ethereum.Value.fromUnsignedBigInt(expectedInfo)
+      ])
+}
+
 export class PoolMockParams {
     // loans info mock params
     poolSize: BigInt
@@ -669,6 +677,8 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
       BigInt.fromString("850000000000000000"), // 0.85 * 1e18
       BigInt.fromString("50000000000000000"),  // 0.05 * 1e18
     )
+
+    mockDepositUpToIndex(pool, params.lupIndex, wmul(params.poolSize, params.actualUtilization))
 }
 
 /****************************/

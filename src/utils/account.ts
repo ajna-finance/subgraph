@@ -20,6 +20,7 @@ export function loadOrCreateAccount(accountId: Bytes): Account {
 
       account.proposalsCreated        = []
       account.proposalsExecuted       = []
+      account.delegatedFrom           = []
       account.rewardsClaimed          = ZERO_BD
       account.distributionPeriodVotes = []
       account.tokensDelegated         = ZERO_BD

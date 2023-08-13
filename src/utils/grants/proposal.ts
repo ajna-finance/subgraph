@@ -3,7 +3,7 @@ import { Proposal, ProposalParams } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
 import { ZERO_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI } from "../constants"
-import { bytesToBigInt } from "../convert"
+import { bigIntToBytes, bytesToBigInt } from "../convert"
 
 export function getProposalParamsId(proposalId: Bytes, paramIndex: number): Bytes {
     return proposalId
@@ -11,16 +11,20 @@ export function getProposalParamsId(proposalId: Bytes, paramIndex: number): Byte
         .concat(Bytes.fromUTF8(paramIndex.toString()))
 }
 
-export function loadOrCreateProposal(proposalId: Bytes): Proposal {
-    let proposal = Proposal.load(proposalId)
+export function loadOrCreateProposal(proposalId: BigInt): Proposal {
+    const proposalIdBytes = bigIntToBytes(proposalId)
+    let proposal = Proposal.load(proposalIdBytes)
     if (proposal == null) {
         // create new proposal if one hasn't already been stored
-        proposal = new Proposal(proposalId) as Proposal
+        proposal = new Proposal(proposalIdBytes) as Proposal
+        proposal.proposalId = proposalId
         proposal.description  = ""
         proposal.distribution = Bytes.empty()
         proposal.executed     = false
         proposal.screeningVotesReceived = ZERO_BD
         proposal.fundingVotesReceived = ZERO_BD
+        proposal.fundingVotesNegative = ZERO_BD
+        proposal.fundingVotesPositive = ZERO_BD
         proposal.totalTokensRequested = ZERO_BD
         proposal.params = []
     }

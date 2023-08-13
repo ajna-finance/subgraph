@@ -26,11 +26,11 @@ import {
   DistributionPeriodVote
 } from "../generated/schema"
 
-import { EXP_18_BD, ONE_BI, THREE_PERCENT_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from './utils/constants'
-import { addressArrayToBytesArray, addressToBytes, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
-import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal, removeProposalFromList } from './utils/grants/proposal'
+import { NEG_ONE_BD, THREE_PERCENT_BI, ZERO_BD, ZERO_BI } from './utils/constants'
+import { addressArrayToBytesArray, addressToBytes, bigIntArrayToBigDecimalArray, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
+import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
-import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
+import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
 import { getTreasury, loadOrCreateGrantFund } from './utils/grants/fund'
 import { loadOrCreateAccount } from './utils/account'
 import { wmul } from './utils/math'
@@ -51,7 +51,7 @@ export function handleDelegateRewardClaimed(
   const rewardsClaimed = wadToDecimal(event.params.rewardClaimed)
 
   // update DistributionPeriod entity
-  const distributionId = bigIntToBytes(getCurrentDistributionId(event.address))
+  const distributionId = getCurrentDistributionId(event.address)
   const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
   distributionPeriod.delegationRewardsClaimed = distributionPeriod.delegationRewardsClaimed.plus(rewardsClaimed)
 
@@ -60,7 +60,7 @@ export function handleDelegateRewardClaimed(
   grantFund.treasury = grantFund.treasury.minus(rewardsClaimed)
   grantFund.totalDelegationRewardsClaimed = grantFund.totalDelegationRewardsClaimed.plus(rewardsClaimed)
 
-  delegateRewardClaimed.distribution = distributionId
+  delegateRewardClaimed.distribution = distributionPeriod.id
 
   // update Account entity
   const accountId = addressToBytes(event.params.delegateeAddress)
@@ -79,7 +79,7 @@ export function handleFundTreasury(event: FundTreasuryEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   fundTreasury.amount = event.params.amount
-  fundTreasury.treasuryBalance = event.params.treasuryBalance
+  fundTreasury.treasuryBalance = wadToDecimal(event.params.treasuryBalance)
 
   fundTreasury.blockNumber = event.block.number
   fundTreasury.blockTimestamp = event.block.timestamp
@@ -106,13 +106,12 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
   fundedSlateUpdated.transactionHash = event.transaction.hash
 
   // update DistributionPeriod entity
-  const distributionId = bigIntToBytes(event.params.distributionId)
-  const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
+  const distributionPeriod = loadOrCreateDistributionPeriod(event.params.distributionId)
   distributionPeriod.topSlate = event.params.fundedSlateHash
 
   // create FundedSlate entity
   const fundedSlate = new FundedSlate(fundedSlateUpdated.fundedSlateHash_) as FundedSlate
-  fundedSlate.distribution = distributionId
+  fundedSlate.distribution = distributionPeriod.id
   fundedSlate.updateBlock = event.block.number
 
   // get the list of proposals in the slate
@@ -123,7 +122,7 @@ export function handleFundedSlateUpdated(event: FundedSlateUpdatedEvent): void {
 
   for (let i = 0; i < proposalsInSlate.length; i++) {
     const proposalId = proposalsInSlate[i]
-    const proposal = loadOrCreateProposal(bigIntToBytes(proposalId))
+    const proposal = loadOrCreateProposal(proposalId)
 
     totalTokensRequested = totalTokensRequested.plus(proposal.totalTokensRequested)
     totalFundingVotesReceived = totalFundingVotesReceived.plus(proposal.fundingVotesReceived)
@@ -149,7 +148,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
   )
   proposalCreated.proposer    = event.params.proposer
   proposalCreated.targets     = addressArrayToBytesArray(event.params.targets)
-  proposalCreated.values      = event.params.values
+  proposalCreated.values      = bigIntArrayToBigDecimalArray(event.params.values)
   proposalCreated.signatures  = event.params.signatures
   proposalCreated.calldatas   = event.params.calldatas
   proposalCreated.startBlock  = event.params.startBlock
@@ -162,7 +161,7 @@ export function handleProposalCreated(event: ProposalCreatedEvent): void {
 
   // create Proposal entity
   const proposalId = bigIntToBytes(event.params.proposalId)
-  const proposal = loadOrCreateProposal(proposalId)
+  const proposal = loadOrCreateProposal(event.params.proposalId)
   proposal.description  = event.params.description
 
   let totalTokensRequested = ZERO_BI
@@ -222,7 +221,7 @@ export function handleProposalExecuted(event: ProposalExecutedEvent): void {
   proposalExecuted.transactionHash = event.transaction.hash
 
   // update proposal entity
-  const proposal = loadOrCreateProposal(bigIntToBytes(event.params.proposalId))
+  const proposal = loadOrCreateProposal(event.params.proposalId)
   proposal.executed = true
 
   const distributionPeriod = DistributionPeriod.load(proposal.distribution!)!
@@ -240,8 +239,7 @@ export function handleDistributionPeriodStarted(
   const distributionStarted = new DistributionPeriodStarted(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  const distributionId = bigIntToBytes(event.params.distributionId)
-  distributionStarted.distribution = distributionId
+  distributionStarted.distribution = bigIntToBytes(event.params.distributionId)
   distributionStarted.startBlock = event.params.startBlock
   distributionStarted.endBlock = event.params.endBlock
 
@@ -250,7 +248,7 @@ export function handleDistributionPeriodStarted(
   distributionStarted.transactionHash = event.transaction.hash
 
   // create DistributionPeriod entities
-  const distributionPeriod = loadOrCreateDistributionPeriod(distributionId)
+  const distributionPeriod = loadOrCreateDistributionPeriod(event.params.distributionId)
   distributionPeriod.startBlock = distributionStarted.startBlock
   distributionPeriod.endBlock = distributionStarted.endBlock
 
@@ -275,7 +273,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
   voteCast.voter = event.params.voter
   voteCast.proposalId = event.params.proposalId
   voteCast.support = event.params.support
-  voteCast.weight = event.params.weight
+  voteCast.weight = wadToDecimal(event.params.weight)
   voteCast.reason = event.params.reason
 
   voteCast.blockNumber = event.block.number
@@ -294,7 +292,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
     const distributionPeriod = DistributionPeriod.load(distributionId) as DistributionPeriod
 
     // load voter's distributionPeriodVotes
-    const distributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.id, voter.id)
+    const distributionPeriodVote = loadOrCreateDistributionPeriodVote(distributionPeriod.distributionId, voter.id)
 
     // check stage of proposal
     const stage = getCurrentStage(voteCast.blockNumber, distributionPeriod)
@@ -325,7 +323,10 @@ export function handleVoteCast(event: VoteCastEvent): void {
       fundingVote.distribution = distributionId
       fundingVote.voter = voter.id
       fundingVote.proposal = proposalId
-      fundingVote.votesCast = wadToDecimal(event.params.weight)
+      if (event.params.support == 1)
+        fundingVote.votesCast = wadToDecimal(event.params.weight)
+      else
+        fundingVote.votesCast = wadToDecimal(event.params.weight).times(NEG_ONE_BD)
       fundingVote.blockNumber = voteCast.blockNumber
 
       // save initial fundingVote information to enable usage in calculation of votingPowerUsed
@@ -350,6 +351,10 @@ export function handleVoteCast(event: VoteCastEvent): void {
 
       // record votes cast on the Proposal entity
       proposal.fundingVotesReceived = proposal.fundingVotesReceived.plus(fundingVote.votesCast)
+      if (fundingVote.votesCast > ZERO_BD)
+        proposal.fundingVotesPositive = proposal.fundingVotesPositive.plus(fundingVote.votesCast)
+      else
+        proposal.fundingVotesNegative = proposal.fundingVotesNegative.plus(fundingVote.votesCast)
 
       // save fundingVote to the store
       fundingVote.save()

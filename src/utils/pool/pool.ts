@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, Bytes, Address, dataSource, bigInt } from '@graphprotocol/graph-ts'
 
 import { ERC721Token, LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
@@ -9,8 +9,9 @@ import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, poolFactoryAddressTable, poolInfoUt
 import { addressToBytes, decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
 import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
-import { wmul, wdiv } from '../math'
+import { wmul, wdiv, wmin } from '../math'
 import { ERC721PoolFactory } from '../../../generated/ERC721PoolFactory/ERC721PoolFactory'
+
 
 export function getPoolAddress(poolId: Bytes): Address {
   return Address.fromBytes(poolId)
@@ -80,7 +81,17 @@ export function getRatesAndFees(poolId: Bytes): RatesAndFees {
   return new RatesAndFees(lim, bfr, dfr);
 }
 
-export function calculateLendRate(borrowRate: BigInt, lenderInterestMargin: BigInt, utilization: BigInt): BigDecimal {
+export function calculateLendRate(
+  poolAddress: Address, 
+  borrowRate: BigInt, 
+  lenderInterestMargin: BigInt, 
+  poolPricesInfo: PoolPricesInfo, 
+  debt: BigInt
+): BigDecimal {
+  const meaningfulPriceIndex = max(poolPricesInfo.lupIndex.toU32(), poolPricesInfo.htpIndex.toU32())
+  const meaningfulDeposit = depositUpToIndex(poolAddress, meaningfulPriceIndex)
+  if (meaningfulDeposit.equals(ZERO_BI)) return ZERO_BD
+  const utilization = wdiv(debt, meaningfulDeposit)
   return wadToDecimal(wmul(wmul(borrowRate,lenderInterestMargin), utilization))
 }
 
@@ -259,9 +270,11 @@ export function updatePool(pool: Pool): void {
     // update lend rate and borrow fee, which change irrespective of borrow rate
     const ratesAndFees = getRatesAndFees(poolAddress)
     pool.lendRate = calculateLendRate(
+      poolAddress,
       decimalToWad(pool.borrowRate), 
       ratesAndFees.lenderInterestMargin, 
-      poolUtilizationInfo.actualUtilization)
+      poolPricesInfo,
+      debtInfo.pendingDebt)
     pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
 }
 
@@ -279,7 +292,7 @@ export function addLiquidationToPool(pool: Pool, liquidationAuction: Liquidation
 export function removeLiquidationFromPool(pool: Pool, liquidationAuction: LiquidationAuction): void {
     const index = pool.liquidationAuctions.indexOf(liquidationAuction.id)
     if (index != -1) {
-        pool.liquidationAuctions.splice(index, 1)
+      pool.liquidationAuctions = pool.liquidationAuctions.splice(index, 1)
     }
 }
 
@@ -455,4 +468,9 @@ export function loadOrCreatePool(id: Bytes): Pool {
     pool.save()
   }
   return pool
+}
+
+export function depositUpToIndex(poolAddress: Address, index: u32): BigInt {
+  const poolContract = ERC20Pool.bind(poolAddress)
+  return poolContract.depositUpToIndex(BigInt.fromU32(index));
 }

@@ -28,6 +28,7 @@ import {
 } from "./utils/grant-fund-utils";
 import {
   DISTRIBUTION_PERIOD_LENGTH,
+  NEG_ONE_BD,
   ONE_BI,
   ONE_WAD_BI,
   SCREENING_PERIOD_LENGTH,
@@ -175,7 +176,7 @@ describe("Grant Fund assertions", () => {
       "FundTreasury",
       `0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000`,
       "treasuryBalance",
-      `${treasuryBalance}`
+      `${wadToDecimal(treasuryBalance)}`
     );
   });
 
@@ -251,6 +252,13 @@ describe("Grant Fund assertions", () => {
     assert.entityCount("GrantFund", 1);
 
     const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
+
+    assert.fieldEquals(
+      "Proposal",
+      `${bigIntToBytes(proposalId).toHexString()}`,
+      "proposalId",
+      `${proposalId}`
+    );
 
     assert.fieldEquals(
       "Proposal",
@@ -616,8 +624,8 @@ describe("Grant Fund assertions", () => {
     const screeningVoteId = getScreeningVoteId(bigIntToBytes(proposalId), addressToBytes(voter), BigInt.fromI32(1));
     const expectedProposalId = bigIntToBytes(proposalId).toHexString();
     const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
-    const expectedVotingPowerUsed = wadToDecimal(votesCast.times(votesCast));
-    const expectedScreeningVotesReceived = wadToDecimal(votesCast.times(BigInt.fromI32(-1)));
+    const expectedVotingPowerUsed = wadToDecimal(votesCast).times(wadToDecimal(votesCast));
+    const expectedScreeningVotesReceived = wadToDecimal(votesCast).times(NEG_ONE_BD);
 
     assert.fieldEquals(
       "Proposal",
@@ -630,7 +638,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${expectedProposalId}`,
       "fundingVotesReceived",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast).times(NEG_ONE_BD)}`
     );
 
     assert.fieldEquals(
@@ -653,14 +661,14 @@ describe("Grant Fund assertions", () => {
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
       "estimatedInitialFundingStageVotingPowerForCalculatingRewards",
-      `${expectedVotingPowerUsed}`
+      '0.000000000000054756'
     );
 
     assert.fieldEquals(
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
       "estimatedRemainingFundingStageVotingPowerForCalculatingRewards",
-      `${0}`
+      '0.000000000000054755999999999999945244'
     );
 
     // check FundingVote attributes
@@ -680,7 +688,7 @@ describe("Grant Fund assertions", () => {
       "FundingVote",
       `${fundingVoteId.toHexString()}`,
       "votesCast",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast).times(NEG_ONE_BD)}`
     );
     assert.fieldEquals(
       "FundingVote",
@@ -817,7 +825,7 @@ describe("Grant Fund assertions", () => {
       "FundedSlate",
       `${fundedSlateHash.toHexString()}`,
       "totalFundingVotesReceived",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast).times(NEG_ONE_BD)}`
     );
     assert.fieldEquals(
       "FundedSlate",
