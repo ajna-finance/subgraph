@@ -37,7 +37,7 @@ import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc7
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
-import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI } from "./utils/constants"
+import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD } from "./utils/constants"
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "./utils/pool/liquidation"
@@ -451,9 +451,6 @@ export function handleMergeOrRemoveCollateralNFT(
 /*** Liquidation Event Handlers ***/
 /**********************************/
 
-// TODO: need to rebalance tokenIds from tokenIdsPledged to bucketTokenIds
-// TODO: update lends on AuctionNFTSettle in case of lpb reward in any of the buckets?
-// TODO: retrieve bucket depth value from calldata to know how many lends to create?
 // emitted concurrently with `Settle`
 export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   const auctionNFTSettle = new AuctionNFTSettle(
@@ -485,10 +482,23 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   // update loan state
   loan.t0debt = ZERO_BD
   loan.collateralPledged = auctionNFTSettle.collateral
-  // TODO: UPDATE LOAN TOKENIDS
+
+  // TODO: test tokenId rebalancing
+  // rebalance tokenIds on auction settle
+  // round down remaining collateral pledged, and slice that many tokenIds
+  const numberOfTokensToLeave = Math.floor(event.params.collateral.div(ONE_WAD_BI).toI32())
+  // slice all tokenIds out other than the number of tokens to leave
+  const tokenIdsSettled = loan.tokenIdsPledged.slice(numberOfTokensToLeave)
+  // const tokenIdsSettled = loan.tokenIdsPledged.slice(0, numberOfTokensToLeave)
+  // remove tokenIdsSettled from the loan and pool tokenIdsPledged
+  loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsSettled, loan.tokenIdsPledged)
+  pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsSettled, pool.tokenIdsPledged)
+  // add the removed tokenIdsPledged to the pool bucketTokenIds
+  pool.bucketTokenIds = pool.bucketTokenIds.concat(tokenIdsSettled)
 
   loan.inLiquidation = false
   loan.save()
+  pool.save()
 
   // update auctionNFTSettle pointers
   auctionNFTSettle.pool = pool.id
