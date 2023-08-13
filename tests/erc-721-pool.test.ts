@@ -12,8 +12,8 @@ import {
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Account, AddCollateralNFT, Loan } from "../generated/schema"
 import { AddCollateralNFT as AddCollateralNFTEvent } from "../generated/templates/ERC721Pool/ERC721Pool"
-import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleMergeOrRemoveCollateralNFT } from "../src/erc-721-pool"
-import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createMergeOrRemoveCollateralNFTEvent } from "./utils/erc-721-pool-utils"
+import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT } from "../src/erc-721-pool"
+import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent } from "./utils/erc-721-pool-utils"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { create721Pool, createPool, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
@@ -357,6 +357,182 @@ describe("Describe entity assertions", () => {
       "txCount",
       `${ONE_BI}`
     )
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345]"
+    )
+  })
+
+  test("RepayDebt", () => {
+    // check entities are unavailable prior to storage
+    assert.entityCount("DrawDebtNFT", 0)
+    assert.entityCount("RepayDebt", 0)
+
+    /*****************/
+    /*** Draw Debt ***/
+    /*****************/
+
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const borrower = Address.fromString("0x0000000000000000000000000000000000000003")
+    const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345)]
+    const amountPledged = BigInt.fromString("2000000000000000000")
+    let lup = BigInt.fromString("9529276179422528643") //   9.529276179422528643 * 1e18
+
+    // mock required contract calls
+    const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
+    mockGetDebtInfo(poolAddress, expectedPoolDebtInfo)
+
+    const inflator = BigInt.fromString("1002804000000000000")
+    let expectedBorrowerInfo = new BorrowerInfo(
+      wdiv(amountBorrowed, inflator),
+      amountPledged,
+      BigInt.fromString("8766934085068726351"))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
+
+    const newDrawDebtEvent = createDrawDebtNFTEvent(
+      poolAddress,
+      borrower,
+      amountBorrowed,
+      tokenIdsPledged,
+      lup
+    )
+    handleDrawDebtNFT(newDrawDebtEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // set expected addresses
+    const expectedPoolAddress = addressToBytes(poolAddress)
+    const accountId = addressToBytes(borrower)
+    const loanId = getLoanId(expectedPoolAddress, accountId)
+    let loadedLoan = Loan.load(loanId)!
+
+    assert.fieldEquals(
+      "Pool",
+      `${addressToBytes(poolAddress).toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345]"
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345]"
+    )
+
+    /******************/
+    /*** Repay Debt ***/
+    /******************/
+
+    // mock parameters
+    const quoteRepaid = BigInt.fromString("567111000000000000000")     // 567.111  * 1e18
+    const collateralPulled = BigInt.fromString("1000000000000000000") //  1 * 1e18
+
+    expectedBorrowerInfo = new BorrowerInfo(quoteRepaid, collateralPulled, BigInt.fromString("501250000000000000"))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
+
+    const newRepayDebtEvent = createRepayDebtEvent(
+      poolAddress,
+      borrower,
+      quoteRepaid,
+      collateralPulled,
+      lup
+    )
+    handleRepayDebt(newRepayDebtEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // check RepayDebtEvent attributes
+    assert.entityCount("RepayDebt", 1)
+    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000 is the default address used in newMockEvent() function
+    assert.fieldEquals(
+      "RepayDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "borrower",
+      `${borrower.toHexString()}`
+    )
+    assert.fieldEquals(
+      "RepayDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "quoteRepaid",
+      `${wadToDecimal(quoteRepaid)}`
+    )
+    assert.fieldEquals(
+      "RepayDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "collateralPulled",
+      `${wadToDecimal(collateralPulled)}`
+    )
+    assert.fieldEquals(
+      "RepayDebt",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lup",
+      `${wadToDecimal(lup)}`
+    )
+
+    // check pool attributes updated
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "t0debt",
+      `${wadToDecimal(amountBorrowed)}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "lup",
+      `${wadToDecimal(lup)}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "txCount",
+      `${BigInt.fromI32(2)}`
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "tokenIdsPledged",
+      "[234]"
+    )
+
+    // check Account attributes updated
+    assert.entityCount("Account", 1)
+    const loadedAccount = Account.load(accountId)!
+    assert.bytesEquals(expectedPoolAddress, loadedAccount.pools[0])
+    assert.fieldEquals(
+      "Account",
+      `${accountId.toHexString()}`,
+      "txCount",
+      `${BigInt.fromI32(2)}`
+    )
+
+    // check loan attributes
+    assert.entityCount("Loan", 1)
+    loadedLoan = Loan.load(loanId)!
+    assert.bytesEquals(expectedPoolAddress, loadedLoan.pool)
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "collateralPledged",
+      `${wadToDecimal(amountPledged.minus(collateralPulled))}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "tokenIdsPledged",
+      "[234]" // last tokenId should have been target of pop()
+    )
+  })
+
+  test("RemoveCollateral", () => {
 
   })
 

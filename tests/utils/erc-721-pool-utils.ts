@@ -7,6 +7,7 @@ import {
   Flashloan,
   KickReserveAuction,
   MergeOrRemoveCollateralNFT,
+  RepayDebt,
   ReserveAuction
 } from "../../generated/templates/ERC721Pool/ERC721Pool"
 
@@ -208,6 +209,42 @@ export function createMergeOrRemoveCollateralNFTEvent(
   mergeOrRemoveCollateralNftEvent.transaction.input = calldata
 
   return mergeOrRemoveCollateralNftEvent
+}
+
+export function createRepayDebtEvent(
+  pool: Address,
+  borrower: Address,
+  quoteRepaid: BigInt,
+  collateralPulled: BigInt,
+  lup: BigInt
+): RepayDebt {
+  let repayDebtEvent = changetype<RepayDebt>(newMockEvent())
+
+  repayDebtEvent.parameters = new Array()
+
+  repayDebtEvent.parameters.push(
+    new ethereum.EventParam("borrower", ethereum.Value.fromAddress(borrower))
+  )
+  repayDebtEvent.parameters.push(
+    new ethereum.EventParam(
+      "quoteRepaid",
+      ethereum.Value.fromUnsignedBigInt(quoteRepaid)
+    )
+  )
+  repayDebtEvent.parameters.push(
+    new ethereum.EventParam(
+      "collateralPulled",
+      ethereum.Value.fromUnsignedBigInt(collateralPulled)
+    )
+  )
+  repayDebtEvent.parameters.push(
+    new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
+  )
+
+  // update transaction target to the expected pool address
+  repayDebtEvent.address = pool
+
+  return repayDebtEvent
 }
 
 export function createReserveAuctionEvent(
