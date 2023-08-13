@@ -14,7 +14,7 @@ import {
 } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
-import { getRatesAndFees } from "./utils/pool/pool"
+import { getRatesAndFees, loadOrCreatePool } from "./utils/pool/pool"
 import { loadOrCreateFactory } from "./utils/pool/pool-factory"
 import { Bytes } from "@graphprotocol/graph-ts"
 
@@ -60,8 +60,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     collateralToken.txCount = ZERO_BI
     collateralToken.tokenType = "ERC20"
     collateralToken.poolCount = ONE_BI
-  }
-  else {
+  } else {
     collateralToken.poolCount = collateralToken.poolCount.plus(ONE_BI)
   }
   let quoteToken = Token.load(quoteTokenAddressBytes)
@@ -75,71 +74,31 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     quoteToken.txCount = ZERO_BI
     quoteToken.tokenType = "ERC20"
     quoteToken.poolCount = ONE_BI
-  }
-  else {
+  } else {
     quoteToken.poolCount = quoteToken.poolCount.plus(ONE_BI)
   }
 
   // create entities
-  const pool = new Pool(event.params.pool_) as Pool // create pool entity
+  const pool = loadOrCreatePool(event.params.pool_)
   ERC20Pool.create(event.params.pool_) // create data source template
 
-  // record pool information
+  // record pool metadata
   pool.createdAtTimestamp = event.block.timestamp
   pool.createdAtBlockNumber = event.block.number
+  pool.txCount = ZERO_BI
+
+  // record pool token information
   pool.collateralToken = collateralToken.id
   pool.quoteToken = quoteToken.id
-  pool.t0debt = ZERO_BD
-  pool.inflator = ONE_BD
+
+  // record pool rate information
   pool.borrowRate = wadToDecimal(interestRateResults.value0)
-  pool.lendRate = ZERO_BD
   pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
   pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
-  pool.pledgedCollateral = ZERO_BD
-  pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
-  pool.txCount = ZERO_BI
+
+  // record pool type information
   pool.poolType = "Fungible"
-  pool.subsetHash = Bytes.empty()
-  pool.tokenIdsAllowed = []
-  pool.tokenIdsPledged = []
-  pool.bucketTokenIds = []
-
-  // pool loans information
-  pool.poolSize = ZERO_BD
-  pool.loansCount = ZERO_BI
-  pool.maxBorrower = ZERO_ADDRESS
-  pool.quoteTokenFlashloaned = ZERO_BD
-  pool.collateralFlashloaned = ZERO_BD
-
-  // pool prices information
-  pool.hpb = ZERO_BD
-  pool.hpbIndex = 0
-  pool.htp = ZERO_BD
-  pool.htpIndex = 0
-  pool.lup = MAX_PRICE
-  pool.lupIndex = MAX_PRICE_INDEX
-  pool.momp = ZERO_BD
-
-  // reserve auction information
-  pool.reserves = ZERO_BD
-  pool.claimableReserves = ZERO_BD
-  pool.claimableReservesRemaining = ZERO_BD
-  pool.burnEpoch = ZERO_BI
-  pool.totalAjnaBurned = ZERO_BD
-  pool.reserveAuctions = []
-
-  // utilization information
-  pool.minDebtAmount = ZERO_BD
-  pool.actualUtilization = ZERO_BD
-  pool.targetUtilization = ONE_BD
-
-  // liquidation information
-  pool.totalBondEscrowed = ZERO_BD
-  pool.liquidationAuctions = []
-
-  // TVL information
-  pool.quoteTokenBalance = ZERO_BD
-  pool.collateralBalance = ZERO_BD
+  pool.subsetHash = Bytes.empty() // TODO: use hardcoded subset hash for keccak(ERC20_POOL_SUBSET_HASH)
 
   // add pool reference to factories' list of pools
   factory.pools = factory.pools.concat([pool.id])

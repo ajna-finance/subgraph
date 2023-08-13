@@ -394,7 +394,6 @@ export function isERC20Pool(pool: Pool): boolean {
   return pool.poolType == 'Fungible'
 }
 
-// TODO: use this in erc-20-pool-factory
 export function loadOrCreatePool(id: Bytes): Pool {
   let pool = Pool.load(id)
   if (pool == null) {

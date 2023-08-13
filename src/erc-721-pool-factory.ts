@@ -75,8 +75,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     collateralToken.symbol = getTokenSymbolERC721(collateralTokenAddress)
     collateralToken.txCount = ZERO_BI
     collateralToken.poolCount = ONE_BI
-  }
-  else {
+  } else {
     collateralToken.poolCount = collateralToken.poolCount.plus(ONE_BI)
   }
   let quoteToken = Token.load(quoteTokenAddressBytes)
@@ -90,8 +89,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     quoteToken.txCount = ZERO_BI
     quoteToken.tokenType = "ERC20"
     quoteToken.poolCount = ONE_BI
-  }
-  else {
+  } else {
     quoteToken.poolCount = quoteToken.poolCount.plus(ONE_BI)
   }
 
