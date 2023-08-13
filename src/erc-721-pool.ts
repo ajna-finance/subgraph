@@ -131,24 +131,11 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
 
-  // remove tokenIds from loan and track the tokenIds pulled
-  const tokenIdsPledged = loan.tokenIdsPledged
-  const tokenIdsPulled: Array<BigInt> = []
-
-  // iterate through tokenIdsPledged and remove the ones that were pulled
-  let i = repayDebt.collateralPulled
-  while (i.gt(ZERO_BD)) {
-    // get the tokenId at the end of the array
-    const tokenId = tokenIdsPledged[tokenIdsPledged.length - 1]
-    tokenIdsPulled.push(tokenId)
-    // follow the same logic as in the ERC721Pool contract
-    // and pop() the tokenIds from the loan
-    tokenIdsPledged.pop()
-    i = i.minus(ONE_BD) // TODO: check this precision
-  }
-  loan.tokenIdsPledged = tokenIdsPledged
-
-  // remove tokenIdsPulled from the pool tokenIdsPledged
+  // retrieve the tokenIdsPledged that were pulled in this event
+  const numberOfTokensPulled = event.params.collateralPulled.div(ONE_WAD_BI).toI32()
+  const tokenIdsPulled = loan.tokenIdsPledged.slice(loan.tokenIdsPledged.length - numberOfTokensPulled, loan.tokenIdsPledged.length)
+  // remove tokenIdsPulled from the loan and pool tokenIdsPledged
+  loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsPulled, loan.tokenIdsPledged)
   pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsPulled, pool.tokenIdsPledged)
 
   // update account loans if necessary
@@ -597,7 +584,5 @@ export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   account.save()
   pool.save()
   reserveAuction.save()
-  reserveKick.save()
-
   reserveKick.save()
 }
