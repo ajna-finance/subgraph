@@ -230,17 +230,12 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
   addCollateralNFT.save()
 }
 
-// TODO: ensure that the common events don't result in double counting state incrementation
-// TODO: potentially get around this by create or load and exiting the function if it's already been created
 export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   // TODO: get compiler to ignore this line's INFO output
   event = changetype<AddQuoteTokenEvent | null>(event)!
   _handleAddQuoteToken(null, event)
 }
 
-// TODO: call pop() on pool.tokenIds with the number of NFTs removed
-// TODO: finish implementing updating tokenIds
-// TODO: call borrowerTokenIds() to update the loan tokenIds after removal, and bucketTokenIds() to update the pool tokenIds
 export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   const removeCollateral = new RemoveCollateral(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -374,7 +369,6 @@ export function handleRemoreQuoteToken(event: RemoveQuoteTokenEvent): void {
   removeQuote.save()
 }
 
-// TODO: in order to track tokenIds, need to be able to do before / after snapshot of tokenIds associated with a bucket
 // called by Account's with Lend(s) in a pool
 export function handleMergeOrRemoveCollateralNFT(
   event: MergeOrRemoveCollateralNFTEvent
