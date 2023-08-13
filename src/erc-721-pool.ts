@@ -13,8 +13,11 @@ import {
   RemoveQuoteToken as RemoveQuoteTokenEvent,
   RepayDebt as RepayDebtEvent,
   ReserveAuction as ReserveAuctionEvent,
+  RevokeLPAllowance as RevokeLPAllowanceEvent,
+  RevokeLPTransferors as RevokeLPTransferorsEvent,
   Settle as SettleEvent,
-  Take as TakeEvent
+  Take as TakeEvent,
+  TransferLP as TransferLPEvent
 } from "../generated/templates/ERC721Pool/ERC721Pool"
 import {
   AddCollateralNFT,
@@ -32,7 +35,10 @@ import {
   RepayDebt,
   ReserveAuction,
   Settle,
-  Take
+  Take,
+  TransferLP,
+  Account,
+  Bucket
 } from "../generated/schema"
 
 import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc721"
@@ -43,10 +49,12 @@ import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD } from "./utils/
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "./utils/pool/liquidation"
-import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, calculateLendRate, isERC20Pool } from "./utils/pool/pool"
+import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool, getRatesAndFees, calculateLendRate, isERC20Pool } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
 import { _handleAddQuoteToken, _handleMoveQuoteToken } from "./mappings/base/base-pool"
+import { loadOrCreateAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
+import { loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
 
 // TODO:
 // - Finish liquidations and implement rebalance logic for moving tokenIds from tokenIdsPledged to bucketTokenIds
@@ -422,7 +430,7 @@ export function handleMergeOrRemoveCollateralNFT(
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, event.params.actor)
-    lend.lpb = wadToDecimal(getLenderInfo(pool.id, index, event.params.actor).lpBalance)
+    lend.lpb = wadToDecimal(getLenderInfoERC721Pool(pool.id, index, event.params.actor).lpBalance)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
     updateAccountLends(account, lend)
@@ -587,6 +595,100 @@ export function handleTake(event: TakeEvent): void {
   updateAccountPools(account, pool)
 
   // TODO: update loan TokenIdsPledged and pool tokenIdsPledged
+}
+
+/*************************************/
+/*** LPB Management Event Handlers ***/
+/*************************************/
+
+export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
+  const poolId = addressToBytes(event.address)
+  const lender = event.transaction.from
+  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  revokeAllowances(entity, event.params.indexes)
+
+  const pool = Pool.load(poolId)
+  if (pool != null) {
+    pool.txCount = pool.txCount.plus(ONE_BI)
+    pool.save()
+  }
+
+  entity.save()
+}
+
+export function handleRevokeLPTransferors(
+  event: RevokeLPTransferorsEvent
+): void {
+  const poolId = addressToBytes(event.address)
+  const entity = loadOrCreateTransferors(poolId, event.params.lender)
+  revokeTransferors(entity, event.params.transferors)
+
+  const pool = Pool.load(poolId)
+  if (pool != null) {
+    pool.txCount = pool.txCount.plus(ONE_BI)
+    pool.save()
+  }
+
+  entity.save()
+}
+
+export function handleTransferLP(event: TransferLPEvent): void {
+  const entity = new TransferLP(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  entity.owner    = addressToBytes(event.params.owner)
+  entity.newOwner = addressToBytes(event.params.newOwner)
+  entity.indexes  = bigIntArrayToIntArray(event.params.indexes)
+  entity.lp       = wadToDecimal(event.params.lp)
+
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+
+  const poolId = addressToBytes(event.address)
+  const pool = Pool.load(poolId)!
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
+  // TODO: should this also call updatePool()?
+
+  log.info("handleTransferLP from {} to {}" , [entity.owner.toHexString(), entity.newOwner.toHexString()])
+
+  // update Lends for old and new owners, creating entities where necessary
+  const oldOwnerAccount = Account.load(entity.owner)!
+  const newOwnerAccount = loadOrCreateAccount(entity.newOwner)
+  for (var i=0; i<event.params.indexes.length; ++i) {
+    const bucketIndex = event.params.indexes[i]
+    const bucketId = getBucketId(poolId, bucketIndex.toU32())
+    const bucket = Bucket.load(bucketId)!
+    const oldLendId = getLendId(bucketId, entity.owner)
+    const newLendId = getLendId(bucketId, entity.newOwner)
+
+    // If PositionManager generated this event, it means either:
+    // Memorialize - transfer from lender to PositionManager, eliminating the lender's Lend
+    // Redeem      - transfer from PositionManager to lender, creating the lender's Lend
+
+    // event does not reveal LP amounts transferred for each bucket, so query the pool and update
+    // remove old lend
+    const oldLend = loadOrCreateLend(bucketId, oldLendId, poolId, entity.owner)
+    oldLend.lpb = wadToDecimal(getLenderInfoERC721Pool(pool.id, bucketIndex, event.params.owner).lpBalance)
+    oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
+    updateAccountLends(oldOwnerAccount, oldLend)
+    oldLend.save()
+
+    // add new lend
+    const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
+    newLend.lpb = wadToDecimal(getLenderInfoERC721Pool(pool.id, bucketIndex, event.params.newOwner).lpBalance)
+    newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
+    updateAccountLends(newOwnerAccount, newLend)
+    newLend.save()
+  }
+  oldOwnerAccount.save()
+  newOwnerAccount.save()
+
+  // increment pool and token tx counts
+  pool.save()
+
+  entity.save()
 }
 
 /*******************************/
