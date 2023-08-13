@@ -552,7 +552,7 @@ describe("Describe entity assertions", () => {
     const expectedCollateralAmountWad = BigInt.fromString('1000000000000000000').times(BigInt.fromI32(tokenIds.length))
 
     // mock required contract calls
-    const expectedBucketInfo = new BucketInfo(
+    let expectedBucketInfo = new BucketInfo(
       index.toU32(),
       price,
       ZERO_BI,
@@ -628,6 +628,18 @@ describe("Describe entity assertions", () => {
     const lpRedeemed = BigInt.fromString("2036884000000")       // 0.00000203688 * 1e18
     const expectedRemainingLPB = lpAwarded.minus(lpRedeemed)
 
+    // mock required contract calls
+    expectedBucketInfo = new BucketInfo(
+      index.toU32(),
+      price,
+      ZERO_BI,
+      ONE_WAD_BI, // 3 * 1e18
+      expectedRemainingLPB,
+      ZERO_BI,
+      ONE_WAD_BI
+    )
+    mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
+
     mockGetLPBValueInQuote(poolAddress, expectedRemainingLPB, index, lpRedeemed)
 
     const newRemoveCollateralEvent = createRemoveCollateralEvent(poolAddress, actor, index, collateralRemoved, lpRedeemed)
@@ -671,15 +683,15 @@ describe("Describe entity assertions", () => {
       "[234]"
     )
 
-    // // check bucket attributes updated
-    // assertBucketUpdate({
-    //   id: bucketId,
-    //   collateral: ONE_WAD_BI, // TODO: figure out why this won't update
-    //   deposit: ZERO_BI,
-    //   exchangeRate: ONE_WAD_BI,
-    //   bucketIndex: index,
-    //   lpb: expectedRemainingLPB
-    // })
+    // check bucket attributes updated
+    assertBucketUpdate({
+      id: bucketId,
+      collateral: ONE_WAD_BI,
+      deposit: ZERO_BI,
+      exchangeRate: ONE_WAD_BI,
+      bucketIndex: index,
+      lpb: expectedRemainingLPB
+    })
 
     // check Lend attributes updated
     assert.entityCount("Lend", 1)
@@ -714,7 +726,5 @@ describe("Describe entity assertions", () => {
     // handleMergeOrRemoveCollateralNFT(newMergeOrRemoveCollateralNFTEvent)
 
   })
-
-  // TODO: test token and pool tx count incrementing in more thorough own unit test
 
 })
