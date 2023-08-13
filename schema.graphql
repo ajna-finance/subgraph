@@ -134,6 +134,8 @@ type Pool @entity {
   subsetHash: Bytes!
   # list of tokenIds pledged by the borrower
   tokenIdsPledged: [BigInt!]!
+  # list of tokenIds available to lenders
+  bucketTokenIds: [BigInt!]!
   # list of tokenIds allowed by a subset pool
   tokenIdsAllowed: [BigInt!]!
 }
@@ -153,8 +155,6 @@ type Bucket @entity {
   pool: Pool!
   # total collateral available in the bucket
   collateral: BigDecimal!
-  # tokenIds added to the bucket
-  tokenIds: [BigInt!]!
   # total quote tokens deposited in the bucket, inclusive of interest
   deposit: BigDecimal!
   # total LP for all lenders in the bucket

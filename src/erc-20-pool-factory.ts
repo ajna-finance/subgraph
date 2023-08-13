@@ -102,6 +102,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.subsetHash = Bytes.empty()
   pool.tokenIdsAllowed = []
   pool.tokenIdsPledged = []
+  pool.bucketTokenIds = []
 
   // pool loans information
   pool.poolSize = ZERO_BD

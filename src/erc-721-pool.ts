@@ -34,7 +34,7 @@ import { ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
-import { ZERO_BD, ONE_BI, TEN_BI } from "./utils/constants"
+import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BD } from "./utils/constants"
 
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
@@ -124,6 +124,7 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
     // update pool state
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
+    pool.bucketTokenIds = pool.bucketTokenIds.concat(event.params.tokenIds)
 
     // update bucket state
     const bucketId   = getBucketId(pool.id, event.params.index.toU32())
@@ -133,9 +134,6 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
     bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
     bucket.lpb          = wadToDecimal(bucketInfo.lpb)
     bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
-    bucket.tokenIds     = bucket.tokenIds.concat(event.params.tokenIds)
-    // TODO: should these tokenIds be added to the pool entity here as well?
-      // we probably actually want to just add tokenIds at the pool level, and not the bucket level
 
     // update account state
     const accountId = addressToBytes(event.params.actor)
@@ -215,8 +213,6 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
 
   const lendId = getLendId(bucketId, accountId)
   const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeCollateral.claimer)
-  // TODO: UPDATE LEND LPB - call getLenderInfo?
-  // TODO: call getLenderINfo to update buckets directly
   if (removeCollateral.lpRedeemed.le(lend.lpb)){
     lend.lpb = lend.lpb.minus(removeCollateral.lpRedeemed)
   } else {
@@ -224,8 +220,14 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   }
   lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
-  // call pool.ownerOf()
   // update pool tokenIds
+  let i = removeCollateral.amount
+  while (i.gt(ZERO_BD)) {
+    // follow the same logic as in the ERC721Pool contract
+    // and pop() the tokenIds from the pool
+    pool.bucketTokenIds.pop()
+    i = i.minus(ONE_BD) // TODO: check this precision
+  }
 
   // update account's list of pools and lends if necessary
   updateAccountPools(account, pool)
@@ -350,8 +352,6 @@ export function handleMergeOrRemoveCollateralNFT(
   const noNFTsToRemove = decoded.toTuple()[1].toBigInt()
   const toIndex        = decoded.toTuple()[2].toBigInt()
 
-  // TODO: NEED TO FIND AND REMOVE TOKENIDS FROM EACH BUCKET
-  // TODO: find ways to reduce compute cost of this operation given potentially unbounded (to number of indexes) iteration
   // iterate through removalIndexes and update state
   for (let i = 0; i < removalIndexes.length; i++) {
     const index = removalIndexes[i]
@@ -379,6 +379,16 @@ export function handleMergeOrRemoveCollateralNFT(
     lend.save()
   }
 
+  // update pool bucketTokenIds
+  if (mergeOrRemove.collateralMerged.equals(wadToDecimal(noNFTsToRemove))) {
+    // pop() noNFTsToRemove from bucketTokenIds
+    let i = mergeOrRemove.collateralMerged
+    while (i.gt(ZERO_BD)) {
+      pool.bucketTokenIds.pop()
+      i = i.minus(ONE_BD) // TODO: check this precision
+    }
+  }
+
   updateAccountPools(account, pool)
 
   // save entities to store
@@ -391,6 +401,7 @@ export function handleMergeOrRemoveCollateralNFT(
 /*** Liquidation Event Handlers ***/
 /**********************************/
 
+// TODO: need to rebalance tokenIds from tokenIdsPledged to bucketTokenIds
 // TODO: update lends on AuctionNFTSettle in case of lpb reward in any of the buckets?
 // TODO: retrieve bucket depth value from calldata to know how many lends to create?
 // emitted concurrently with `Settle`

@@ -449,6 +449,7 @@ export function loadOrCreatePool(id: Bytes): Pool {
     // ERC721 Pool Information
     pool.tokenIdsAllowed = []
     pool.tokenIdsPledged = []
+    pool.bucketTokenIds = []
     pool.subsetHash = Bytes.empty()
 
     pool.save()
