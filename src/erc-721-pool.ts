@@ -9,6 +9,7 @@ import {
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
   RemoveCollateral as RemoveCollateralEvent,
   RemoveQuoteToken as RemoveQuoteTokenEvent,
+  RepayDebt as RepayDebtEvent,
   ReserveAuction as ReserveAuctionEvent,
   Settle as SettleEvent
 } from "../generated/templates/ERC721Pool/ERC721Pool"
@@ -25,10 +26,11 @@ import {
   Pool,
   RemoveCollateral,
   RemoveQuoteToken,
+  RepayDebt,
   ReserveAuction,
   Settle
 } from "../generated/schema"
-import { incrementTokenTxCount } from "./utils/token-erc721"
+import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc721"
 import { ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
@@ -98,6 +100,70 @@ export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
   account.save()
   loan.save()
   drawDebtNFT.save()
+}
+
+export function handleRepayDebt(event: RepayDebtEvent): void {
+  const repayDebt = new RepayDebt(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  repayDebt.borrower         = event.params.borrower
+  repayDebt.quoteRepaid      = wadToDecimal(event.params.quoteRepaid)
+  repayDebt.collateralPulled = wadToDecimal(event.params.collateralPulled)
+  repayDebt.lup              = wadToDecimal(event.params.lup)
+
+  repayDebt.blockNumber = event.block.number
+  repayDebt.blockTimestamp = event.block.timestamp
+  repayDebt.transactionHash = event.transaction.hash
+
+  // update pool entity
+  const pool = Pool.load(addressToBytes(event.address))!
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  // update tx count for a pools tokens
+  incrementTokenTxCount(pool)
+
+  // update account state
+  const accountId = addressToBytes(event.params.borrower)
+  const account   = loadOrCreateAccount(accountId)
+  account.txCount = account.txCount.plus(ONE_BI)
+
+  const loanId = getLoanId(pool.id, accountId)
+  const loan = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
+  const borrowerInfo = getBorrowerInfoERC721Pool(accountId, pool.id)
+  loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+  loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
+
+  // remove tokenIds from loan and track the tokenIds pulled
+  const tokenIdsPledged = loan.tokenIdsPledged
+  const tokenIdsPulled = []
+
+  // iterate through tokenIdsPledged and remove the ones that were pulled
+  let i = repayDebt.collateralPulled
+  while (i.gt(ZERO_BD)) {
+    // get the tokenId at the end of the array
+    const tokenId = tokenIdsPledged[tokenIdsPledged.length - 1]
+    tokenIdsPulled.push(tokenId)
+    // follow the same logic as in the ERC721Pool contract
+    // and pop() the tokenIds from the loan
+    tokenIdsPledged.pop()
+    i = i.minus(ONE_BD) // TODO: check this precision
+  }
+  loan.tokenIdsPledged = tokenIdsPledged
+
+  // remove tokenIdsPulled from the pool tokenIdsPledged
+  pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsPulled, pool.tokenIdsPledged)
+
+  // update account loans if necessary
+  updateAccountLoans(account, loan)
+
+  // associate pool with repayDebt event
+  repayDebt.pool = pool.id
+
+  // save entities to store
+  account.save()
+  pool.save()
+  loan.save()
+  repayDebt.save()
 }
 
 /*****************************/

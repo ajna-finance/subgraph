@@ -50,3 +50,19 @@ export function incrementTokenTxCount(pool: Pool): void {
     quoteToken.txCount = quoteToken.txCount.plus(ONE_BI)
     quoteToken.save()
 }
+
+// find the tokenId in the tokenIds array and remove it, returning the new array
+export function findAndRemoveTokenId(tokenId: BigInt, tokenIds: Array<BigInt>): Array<BigInt> {
+    let index = tokenIds.indexOf(tokenId)
+    if (index > -1) {
+        tokenIds.splice(index, 1)
+    }
+    return tokenIds
+}
+
+export function findAndRemoveTokenIds(tokenIdsToRemove: Array<BigInt>, tokenIds: Array<BigInt>): Array<BigInt> {
+    for (let i = 0; i < tokenIdsToRemove.length; i++) {
+        tokenIds = findAndRemoveTokenId(tokenIdsToRemove[i], tokenIds)
+    }
+    return tokenIds
+}
