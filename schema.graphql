@@ -700,7 +700,7 @@ type RedeemPosition @entity(immutable: true) {
 
 type BurnWrap @entity(immutable: true) {
   id: Bytes!
-  from: Bytes!        # address
+  wrapper: Bytes!     # address
   account: Account    # null if does not already exist
   amount: BigDecimal! # uint256
   blockNumber: BigInt!

@@ -1,23 +1,25 @@
 import {
-  BurnWrappedAjnaApproval as BurnWrappedAjnaApprovalEvent,
-  BurnWrappedAjnaTransfer as BurnWrappedAjnaTransferEvent
+  Transfer as TransferEvent
 } from "../generated/BurnWrappedAjna/BurnWrappedAjna"
 import { BurnWrap } from "../generated/schema"
+import { ZERO_ADDRESS } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 
 export function handleTransfer(
-  event: BurnWrappedAjnaTransferEvent
+  event: TransferEvent
 ): void {
-  let entity = new BurnWrap(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.from = event.params.from
-  entity.account = addressToBytes(event.params.from)
-  entity.amount =  wadToDecimal(event.params.value)
+  if (event.params.from == ZERO_ADDRESS) {
+    let entity = new BurnWrap(
+      event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.wrapper = event.params.to
+    entity.account = addressToBytes(event.params.from)
+    entity.amount =  wadToDecimal(event.params.value)
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+    entity.blockNumber = event.block.number
+    entity.blockTimestamp = event.block.timestamp
+    entity.transactionHash = event.transaction.hash
 
-  entity.save()
+    entity.save()
+  }
 }
