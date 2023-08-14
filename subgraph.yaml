@@ -6,8 +6,8 @@ dataSources:
     name: PositionManager
     source:
       abi: PositionManager
-      address: "0x6c5c7fD98415168ada1930d44447790959097482"
-      startBlock: 0
+      address: "0x37048D43A65748409B04f4051eEd9480BEf68c82"
+      startBlock: 9289397
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -46,13 +46,13 @@ dataSources:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
       file: ./src/position-manager.ts
-    network: ganache
+    network: goerli
   - kind: ethereum
     name: ERC20PoolFactory
     source:
       abi: ERC20PoolFactory
-      address: "0xD86c4A8b172170Da0d5C0C1F12455bA80Eaa42AD"
-      startBlock: 0
+      address: "0x01Da8a85A5B525D476cA2b51e44fe7087fFafaFF"
+      startBlock: 9289397
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -72,13 +72,13 @@ dataSources:
         - event: PoolCreated(address)
           handler: handlePoolCreated
       file: ./src/erc-20-pool-factory.ts
-    network: ganache
+    network: goerli
   - kind: ethereum
     name: RewardsManager
     source:
       abi: RewardsManager
-      address: "0x6548dF23A854f72335902e58a1e59B50bb3f11F1"
-      startBlock: 0
+      address: "0x994dE190dd763Af3126FcC8EdC139275937d800b"
+      startBlock: 9289397
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -107,13 +107,13 @@ dataSources:
         - event: UpdateExchangeRates(indexed address,indexed address,uint256[],uint256)
           handler: handleUpdateExchangeRates
       file: ./src/rewards-manager.ts
-    network: ganache
+    network: goerli
   - kind: ethereum
     name: ERC721PoolFactory
     source:
       abi: ERC721PoolFactory
-      address: "0x9617ABE221F9A9c492D5348be56aef4Db75A692d"
-      startBlock: 0
+      address: "0x37048D43A65748409B04f4051eEd9480BEf68c82"
+      startBlock: 9289397
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -131,13 +131,13 @@ dataSources:
         - event: PoolCreated(address)
           handler: handlePoolCreated
       file: ./src/erc-721-pool-factory.ts
-    network: ganache
+    network: goerli
   - kind: ethereum
     name: GrantFund
     source:
       abi: GrantFund
-      address: "0xE340B87CEd1af1AbE1CE8D617c84B7f168e3b18b"
-      startBlock: 0
+      address: "0x881b4dFF6C72babA6f5eA60f34A61410c1EA1ec2"
+      startBlock: 9297080
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -169,13 +169,14 @@ dataSources:
         - event: VoteCast(indexed address,uint256,uint8,uint256,string)
           handler: handleVoteCast
       file: ./src/grant-fund.ts
-    network: ganache
+    network: goerli
   - kind: ethereum
     name: AjnaToken
-    network: ganache
+    network: goerli
     source:
       abi: AjnaToken
-      address: "0x25Af17eF4E2E6A4A2CE586C9D25dF87FD84D4a7d"
+      address: "0xaadebCF61AA7Da0573b524DE57c67aDa797D46c5"
+      startBlock: 9297080
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -192,6 +193,26 @@ dataSources:
         - event: DelegateVotesChanged(indexed address,uint256,uint256)
           handler: handleDelegateVotesChanged
       file: ./src/ajna-token.ts
+  - kind: ethereum
+    name: BurnWrappedAjna
+    network: goerli
+    source:
+      abi: BurnWrappedAjna
+      address: "0xE38DFd7aB36806B882bD7332a8aE454f2273D015"
+      startBlock: 9445944
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - BurnWrap
+      abis:
+        - name: BurnWrappedAjna
+          file: ./abis/BurnWrappedAjna.json
+      eventHandlers:
+        - event: BurnWrappedAjnaTransfer(indexed address,indexed address,uint256)
+          handler: handleBurnWrappedAjnaTransfer
+      file: ./src/burn-wrapped-ajna.ts
 templates:
   - kind: ethereum
     name: ERC20Pool
@@ -295,4 +316,4 @@ templates:
         - event: UpdateInterestRate(uint256,uint256)
           handler: handleUpdateInterestRate
       file: ./src/erc-20-pool.ts
-    network: ganache
+    network: goerli

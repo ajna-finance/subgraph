@@ -18,3 +18,6 @@ graph add 0xaeB91e664A49829FaBf06BE35d4447938d83A271 --abi ../ecosystem-coordina
 
 # Goerli AjnaToken
 graph add 0xaadebCF61AA7Da0573b524DE57c67aDa797D46c5 --abi ../ecosystem-coordination/out/AjnaToken.sol/AjnaToken.json --contract-name AjnaToken
+
+# Goerli BurnWrapper
+graph add 0xE38DFd7aB36806B882bD7332a8aE454f2273D015 --abi ../ecosystem-coordination/out/BurnWrapper.sol/BurnWrappedAjna.json --contract-name BurnWrappedAjna
