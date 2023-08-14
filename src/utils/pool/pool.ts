@@ -2,15 +2,26 @@ import { BigDecimal, BigInt, Bytes, Address, dataSource, bigInt } from '@graphpr
 
 import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
+import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { poolInfoUtilsAddressTable, TEN_BI, ZERO_BD, ZERO_BI } from "../constants"
-import { decimalToWad, wadToDecimal } from '../convert'
+import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, erc721PoolFactoryAddressTable, poolInfoUtilsAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
+import { addressToBytes, decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
+import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
 import { wmul, wdiv, wmin } from '../math'
+import { ERC721PoolFactory } from '../../../generated/ERC721PoolFactory/ERC721PoolFactory'
+
 
 export function getPoolAddress(poolId: Bytes): Address {
   return Address.fromBytes(poolId)
+}
+
+export function getPoolSubsetHash(tokenIds: BigInt[]): Bytes {
+  const erc721PoolFactoryAddress = erc721PoolFactoryAddressTable.get(dataSource.network())!
+  const poolFactoryContract = ERC721PoolFactory.bind(erc721PoolFactoryAddress)
+
+  return poolFactoryContract.getNFTSubsetHash(tokenIds)
 }
 
 export class LenderInfo {
@@ -23,6 +34,15 @@ export class LenderInfo {
 }
 export function getLenderInfo(poolId: Bytes, bucketIndex: BigInt, lender: Address): LenderInfo {
   const poolContract = ERC20Pool.bind(Address.fromBytes(poolId))
+  const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
+
+  return new LenderInfo(
+    lenderInfoResult.value0,
+    lenderInfoResult.value1
+  )
+}
+export function getLenderInfoERC721Pool(poolId: Bytes, bucketIndex: BigInt, lender: Address): LenderInfo {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(poolId))
   const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
 
   return new LenderInfo(
@@ -200,9 +220,9 @@ export function updatePool(pool: Pool): void {
     pool.loansCount     = poolLoansInfo.loansCount
     pool.maxBorrower    = poolLoansInfo.maxBorrower
     pool.inflator       = wadToDecimal(poolLoansInfo.pendingInflator)
-    
+
     // update amount of debt in pool
-    const debtInfo = getDebtInfo(pool)
+    const debtInfo = isERC20Pool(pool) ? getDebtInfo(pool) : getDebtInfoERC721Pool(pool)
     pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
 
     // update pool prices information
@@ -228,14 +248,23 @@ export function updatePool(pool: Pool): void {
     pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
 
     // update pool token balances
+    // update quote token balances, this is common between all pool types
     const poolAddress = Address.fromBytes(pool.id)
     let token = Token.load(pool.quoteToken)!
     let scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
     let unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
     pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
-    token = Token.load(pool.collateralToken)!
-    scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
-    unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+    // update collateral token balances
+    // use the appropriate contract for querying balanceOf the pool
+    if (pool.poolType == 'Fungible') {
+      token = Token.load(pool.collateralToken)!
+      scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+      unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+    }
+    else {
+      scaleFactor = TEN_BI.pow(18) // assume 18 decimal factor for ERC721
+      unnormalizedTokenBalance = getERC721TokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+    }
     pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 
     // update lend rate and borrow fee, which change irrespective of borrow rate
@@ -282,6 +311,11 @@ export function getCurrentBurnEpoch(pool: Pool): BigInt {
     const ajnaBurnEpoch = poolContract.currentBurnEpoch()
     return ajnaBurnEpoch
 }
+export function getCurrentBurnEpochERC721Pool(pool: Pool): BigInt {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
+  const ajnaBurnEpoch = poolContract.currentBurnEpoch()
+  return ajnaBurnEpoch
+}
 
 export class BurnInfo {
     timestamp: BigInt
@@ -303,6 +337,17 @@ export function getBurnInfo(pool: Pool, burnEpoch: BigInt): BurnInfo {
         burnInfoResult.value2
     )
     return burnInfo
+}
+export function getBurnInfoERC721Pool(pool: Pool, burnEpoch: BigInt): BurnInfo {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
+  const burnInfoResult = poolContract.burnInfo(burnEpoch)
+
+  const burnInfo = new BurnInfo(
+      burnInfoResult.value0,
+      burnInfoResult.value1,
+      burnInfoResult.value2
+  )
+  return burnInfo
 }
 
 export class DebtInfo {
@@ -327,6 +372,101 @@ export function getDebtInfo(pool: Pool): DebtInfo {
     debtInfoResult.value2,
     debtInfoResult.value3
   )
+}
+export function getDebtInfoERC721Pool(pool: Pool): DebtInfo {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
+  const debtInfoResult = poolContract.debtInfo()
+
+  return new DebtInfo(
+    debtInfoResult.value0,
+    debtInfoResult.value1,
+    debtInfoResult.value2,
+    debtInfoResult.value3
+  )
+}
+
+export function getTotalBucketTokens(pool: Bytes): BigInt {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(pool))
+  return poolContract.totalBucketTokens()
+}
+
+export function isERC20Pool(pool: Pool): boolean {
+  return pool.poolType == 'Fungible'
+}
+
+export function loadOrCreatePool(id: Bytes): Pool {
+  let pool = Pool.load(id)
+  if (pool == null) {
+    pool = new Pool(id) as Pool
+
+    // pool global information
+    pool.txCount = ZERO_BI
+    pool.createdAtTimestamp = ZERO_BI
+    pool.createdAtBlockNumber = ZERO_BI
+    pool.poolType = 'NOT_SET'
+
+    // pool token information
+    pool.collateralToken = addressToBytes(ZERO_ADDRESS)
+    pool.quoteToken = addressToBytes(ZERO_ADDRESS)
+
+    // pool debt information
+    pool.t0debt = ZERO_BD
+    pool.inflator = ONE_BD
+    pool.lendRate = ZERO_BD
+    pool.pledgedCollateral = ZERO_BD
+
+    // pool rate information
+    pool.borrowRate = ZERO_BD
+    pool.borrowFeeRate = ZERO_BD
+    pool.depositFeeRate = ZERO_BD
+
+    // pool loans information
+    pool.poolSize = ZERO_BD
+    pool.loansCount = ZERO_BI
+    pool.maxBorrower = ZERO_ADDRESS
+    pool.quoteTokenFlashloaned = ZERO_BD
+    pool.collateralFlashloaned = ZERO_BD
+
+    // pool prices information
+    pool.hpb = ZERO_BD
+    pool.hpbIndex = 0
+    pool.htp = ZERO_BD
+    pool.htpIndex = 0
+    pool.lup = MAX_PRICE
+    pool.lupIndex = MAX_PRICE_INDEX
+    pool.momp = ZERO_BD
+
+    // reserve auction information
+    pool.reserves = ZERO_BD
+    pool.claimableReserves = ZERO_BD
+    pool.claimableReservesRemaining = ZERO_BD
+    pool.burnEpoch = ZERO_BI
+    pool.totalAjnaBurned = ZERO_BD
+    pool.reserveAuctions = []
+    pool.totalInterestEarned = ZERO_BD // updated on ReserveAuction
+
+    // utilization information
+    pool.minDebtAmount = ZERO_BD
+    pool.actualUtilization = ZERO_BD
+    pool.targetUtilization = ONE_BD
+
+    // liquidation information
+    pool.totalBondEscrowed = ZERO_BD
+    pool.liquidationAuctions = []
+
+    // TVL information
+    pool.quoteTokenBalance = ZERO_BD
+    pool.collateralBalance = ZERO_BD
+
+    // ERC721 Pool Information
+    pool.tokenIdsAllowed = []
+    pool.tokenIdsPledged = []
+    pool.bucketTokenIds = []
+    pool.subsetHash = Bytes.empty()
+
+    pool.save()
+  }
+  return pool
 }
 
 export function depositUpToIndex(poolAddress: Address, index: u32): BigInt {

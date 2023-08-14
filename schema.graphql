@@ -9,15 +9,16 @@ type Token @entity {
   # token name
   name: String!
   # token decimals
-  decimals: Int!
+  decimals: Int
   # indicates whether the token is ERC20 or ERC721
-  tokenType: String!
+  tokenType: String! # ERC20 or ERC721
   # number of pools including this token
   poolCount: BigInt!
   # total supply of the token
-  totalSupply: BigInt!
+  totalSupply: BigInt
   # transactions across all pools that include this token
   txCount: BigInt!
+  # TODO: track which tokenIds have been used in pools?
 }
 
 type PoolFactory @entity {
@@ -64,6 +65,8 @@ type Pool @entity {
   totalInterestEarned: BigDecimal!
   # total number of transactions sent to the pool
   txCount: BigInt!
+  # type of pool: "Fungible", Collection", "Subset"
+  poolType: String!
 
   # LOANS INFORMATION
   loansCount: BigInt! # total number of loans in the pool
@@ -112,6 +115,16 @@ type Pool @entity {
   # normalized contract balances, used for TVL
   quoteTokenBalance: BigDecimal!
   collateralBalance: BigDecimal!
+
+  # ERC721 POOL INFORMATION
+  # pool subsetHash
+  subsetHash: Bytes!
+  # list of tokenIds pledged by the borrower
+  tokenIdsPledged: [BigInt!]!
+  # list of tokenIds available to lenders
+  bucketTokenIds: [BigInt!]!
+  # list of tokenIds allowed by a subset pool
+  tokenIdsAllowed: [BigInt!]!
 }
 
 type Bucket @entity {
@@ -151,6 +164,8 @@ type Lend @entity {
   lpb: BigDecimal!
   # quote equivalent value of the lend's LPB in the bucket (regardless of available deposit in bucket)
   lpbValueInQuote: BigDecimal!
+  # time at which the lend was made
+  depositTime: BigInt!
 }
 
 # each borrower has only one loan with a pool
@@ -169,6 +184,8 @@ type Loan @entity {
   liquidationAuction: LiquidationAuction
   # collateral tokens deposited in a pool by the borrower
   collateralPledged: BigDecimal!
+  # list of tokenIds pledged by the borrower
+  tokenIdsPledged: [BigInt!]!
   # debt in T0 terms, useful when the caller knows the pending inflator
   t0debt: BigDecimal!
 }
@@ -273,9 +290,9 @@ type LPAllowances @entity {
   allowances: [LPAllowance!]! # list of LP allowances
 }
 
-  # # # # # #
-  # EVENTS  #
-  # # # # # #
+  # # # # # # # # # # #
+  # ERC20 Pool Events #
+  # # # # # # # # # # #
 
 type AddCollateral @entity(immutable: true) {
   id: Bytes!
@@ -306,6 +323,8 @@ type AddQuoteToken @entity(immutable: true) {
 
 type AuctionNFTSettle @entity(immutable: true) {
   id: Bytes!
+  pool: Pool!             # Pool whose debt was settled
+  loan: Loan!             # Loan which was settled
   borrower: Bytes!        # address
   collateral: BigDecimal! # uint256
   lp: BigDecimal!         # uint256
@@ -631,6 +650,46 @@ type PoolCreated @entity(immutable: true) {
   pool: Pool!           # pool which was created
   poolType: String!     # ERC20 or ERC721
   factory: PoolFactory! # address of factory contract used to create pool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+  # # # # # # # # # #  #
+  # ERC721 POOL EVENTS #
+  # # # # # # # # # #  #
+
+type AddCollateralNFT @entity(immutable: true) {
+  id: Bytes!
+  pool: Pool!            # Pool to which collateral was added
+  bucket: Bucket!        # Bucket to which collateral was added
+  actor: Bytes!          # address
+  index: BigInt!         # bucket index to which collateral was added
+  tokenIds: [BigInt!]!   # uint256[] list of tokenIds added as collateral
+  lpAwarded: BigDecimal! # lp awarded for adding collateral
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type DrawDebtNFT @entity(immutable: true) {
+  id: Bytes!
+  pool: Pool!                 # Pool from which quote was withdrawn
+  borrower: Bytes! # address
+  amountBorrowed: BigDecimal! # uint256
+  tokenIdsPledged: [BigInt!]! # uint256[]
+  lup: BigDecimal! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MergeOrRemoveCollateralNFT @entity(immutable: true) {
+  id: Bytes!
+  pool: Pool!            # Pool in which NFT collateral was merged or removed
+  actor: Bytes! # address
+  collateralMerged: BigDecimal! # uint256
+  toIndexLps: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

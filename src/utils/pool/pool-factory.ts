@@ -1,5 +1,5 @@
-import { Address } from "@graphprotocol/graph-ts"
-import { PoolFactory } from "../../../generated/schema"
+import { Address, Bytes } from "@graphprotocol/graph-ts"
+import { PoolFactory, Token } from "../../../generated/schema"
 
 import { ZERO_BI } from "../constants"
 

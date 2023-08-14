@@ -71,11 +71,12 @@ import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "./utils/pool/liquidation"
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees } from "./utils/pool/pool"
-import { lpbValueInQuote } from "./utils/common"
+import { lpbValueInQuote } from "./utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
 import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
+import { _handleAddQuoteToken, _handleMoveQuoteToken, _handleRemoveQuoteToken } from "./mappings/base/base-pool"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -96,9 +97,6 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     // update pool state
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
-
-    // update tx count for a pools tokens
-    incrementTokenTxCount(pool)
 
     // update bucket state
     const bucketId   = getBucketId(pool.id, event.params.index.toU32())
@@ -130,6 +128,9 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     lend.save()
     pool.save()
 
+    // update tx count for a pools tokens
+    incrementTokenTxCount(pool)
+
     addCollateral.bucket = bucket.id
     addCollateral.pool = pool.id
   }
@@ -138,58 +139,9 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
 }
 
 export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
-  const addQuoteToken = new AddQuoteToken(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  addQuoteToken.lender    = event.params.lender
-  addQuoteToken.index     = event.params.index.toU32()
-  addQuoteToken.amount    = wadToDecimal(event.params.amount)
-  addQuoteToken.lpAwarded = wadToDecimal(event.params.lpAwarded)
-  addQuoteToken.lup       = wadToDecimal(event.params.lup)
-
-  addQuoteToken.blockNumber = event.block.number
-  addQuoteToken.blockTimestamp = event.block.timestamp
-  addQuoteToken.transactionHash = event.transaction.hash
-
-  // update entities
-  const pool = Pool.load(addressToBytes(event.address))!
-  updatePool(pool)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-  incrementTokenTxCount(pool)
-
-  // update bucket state
-  const bucketId      = getBucketId(pool.id, event.params.index.toU32())
-  const bucket        = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
-  const bucketInfo    = getBucketInfo(pool.id, bucket.bucketIndex)
-  bucket.collateral   = wadToDecimal(bucketInfo.collateral)
-  bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
-  bucket.lpb          = wadToDecimal(bucketInfo.lpb)
-  bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
-
-  // update account state
-  const accountId = addressToBytes(event.params.lender)
-  const account   = loadOrCreateAccount(accountId)
-  account.txCount = account.txCount.plus(ONE_BI)
-
-  // update lend state
-  const lendId         = getLendId(bucketId, accountId)
-  const lend           = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
-  lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
-  lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
-
-  // update account's list of pools and lends if necessary
-  updateAccountPools(account, pool)
-  updateAccountLends(account, lend)
-
-  // save entities to store
-  account.save()
-  bucket.save()
-  lend.save()
-  pool.save()
-
-  addQuoteToken.bucket = bucket.id
-  addQuoteToken.pool = pool.id
-  addQuoteToken.save()
+  // TODO: get compiler to ignore this line's INFO output
+  event = changetype<AddQuoteTokenEvent | null>(event)!
+  _handleAddQuoteToken(event, null)
 }
 
 export function handleApproveLPTransferors(
@@ -202,22 +154,9 @@ export function handleApproveLPTransferors(
   entity.save()
 }
 
-// TODO: ERC721Pool only (doesn't belong here)
-export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
-  const entity = new AuctionNFTSettle(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.borrower = event.params.borrower
-  entity.collateral = wadToDecimal(event.params.collateral)
-  entity.lp = wadToDecimal(event.params.lp)
-  entity.index = event.params.index.toU32()
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
+// ERC721Pool only
+// This is in the code path for ERC20Pools, but will never be emitted
+export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {}
 
 // ERC20Pool only
 // emitted in conjunction with Settle
@@ -411,6 +350,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   bucketTake.save()
   loan.save()
   pool.save()
+  kick.save()
   kickerAccount.save()
   kickerLend.save()
   takerLend.save()
@@ -431,7 +371,6 @@ export function handleBucketTakeLPAwarded(
   bucketTakeLpAwarded.blockTimestamp  = event.block.timestamp
   bucketTakeLpAwarded.transactionHash = event.transaction.hash
   bucketTakeLpAwarded.save()
-
 
   // since this is emitted immediately before BucketTakeEvent, create BucketTake entity to associate it with this LP award
   const bucketTakeId   = event.transaction.hash.concatI32(event.logIndex.toI32() + 1)
@@ -624,90 +563,9 @@ export function handleLoanStamped(event: LoanStampedEvent): void {
 }
 
 export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
-  const moveQuoteToken = new MoveQuoteToken(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  moveQuoteToken.lender         = event.params.lender
-  moveQuoteToken.amount         = wadToDecimal(event.params.amount)
-  moveQuoteToken.lpRedeemedFrom = wadToDecimal(event.params.lpRedeemedFrom)
-  moveQuoteToken.lpAwardedTo    = wadToDecimal(event.params.lpAwardedTo)
-  moveQuoteToken.lup            = wadToDecimal(event.params.lup)
-
-  moveQuoteToken.blockNumber = event.block.number
-  moveQuoteToken.blockTimestamp = event.block.timestamp
-  moveQuoteToken.transactionHash = event.transaction.hash
-
-  // update entities
-  const fromIndex = event.params.from.toU32()
-  const toIndex = event.params.to.toU32()
-  const pool = Pool.load(addressToBytes(event.address))
-  if (pool != null) {
-    // update pool state
-    updatePool(pool)
-    pool.txCount = pool.txCount.plus(ONE_BI)
-
-    // update tx count for a pools tokens
-    incrementTokenTxCount(pool)
-
-    // update from bucket state
-    const fromBucketId = getBucketId(pool.id, event.params.from.toU32())
-    const fromBucket = loadOrCreateBucket(pool.id, fromBucketId, fromIndex)
-    const fromBucketInfo = getBucketInfo(pool.id, fromIndex)
-    fromBucket.collateral   = wadToDecimal(fromBucketInfo.collateral)
-    fromBucket.deposit      = wadToDecimal(fromBucketInfo.quoteTokens)
-    fromBucket.lpb          = wadToDecimal(fromBucketInfo.lpb)
-    fromBucket.exchangeRate = wadToDecimal(fromBucketInfo.exchangeRate)
-
-    // update to bucket state
-    const toBucketId = getBucketId(pool.id, event.params.to.toU32())
-    const toBucket = loadOrCreateBucket(pool.id, toBucketId, toIndex)
-    const toBucketInfo = getBucketInfo(pool.id, toIndex)
-    toBucket.collateral   = wadToDecimal(toBucketInfo.collateral)
-    toBucket.deposit      = wadToDecimal(toBucketInfo.quoteTokens)
-    toBucket.lpb          = wadToDecimal(toBucketInfo.lpb)
-    toBucket.exchangeRate = wadToDecimal(toBucketInfo.exchangeRate)
-
-    // update from bucket lend state
-    const fromBucketLendId = getLendId(fromBucketId, event.params.lender)
-    const fromBucketLend = loadOrCreateLend(fromBucketId, fromBucketLendId, pool.id, moveQuoteToken.lender)
-    const lpRedeemedFrom = wadToDecimal(event.params.lpRedeemedFrom)
-    if (lpRedeemedFrom.le(fromBucketLend.lpb)) {
-      fromBucketLend.lpb = fromBucketLend.lpb.minus(lpRedeemedFrom)
-    } else {
-      log.warning('handleMoveQuoteToken: lender {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0', 
-                  [moveQuoteToken.lender.toHexString(), lpRedeemedFrom.toString(), fromBucketLend.lpb.toString()])
-      fromBucketLend.lpb = ZERO_BD
-    }
-    fromBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, fromBucket.bucketIndex, fromBucketLend.lpb)
-
-    // update to bucket lend state
-    const toBucketLendId = getLendId(toBucketId, event.params.lender)
-    const toBucketLend = loadOrCreateLend(toBucketId, toBucketLendId, pool.id, moveQuoteToken.lender)
-    toBucketLend.lpb = toBucketLend.lpb.plus(wadToDecimal(event.params.lpAwardedTo))
-    toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket.bucketIndex, toBucketLend.lpb)
-
-    // update account state
-    const accountId = addressToBytes(event.params.lender)
-    const account   = loadOrCreateAccount(accountId)
-    account.txCount = account.txCount.plus(ONE_BI)
-    // update account lends if necessary
-    updateAccountLends(account, fromBucketLend)
-    updateAccountLends(account, toBucketLend)
-
-    // save entities to store
-    pool.save()
-    fromBucket.save()
-    toBucket.save()
-    fromBucketLend.save()
-    toBucketLend.save()
-    account.save()
-
-    moveQuoteToken.from = fromBucketId
-    moveQuoteToken.to = toBucketId
-    moveQuoteToken.pool = pool.id
-  }
-
-  moveQuoteToken.save()
+  // TODO: get compiler to ignore this line's INFO output
+  event = changetype<MoveQuoteTokenEvent | null>(event)!
+  _handleMoveQuoteToken(event, null)
 }
 
 export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
@@ -777,70 +635,9 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
 }
 
 export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
-  const removeQuote = new RemoveQuoteToken(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  removeQuote.lender     = event.params.lender
-  removeQuote.index      = event.params.index.toU32()
-  removeQuote.amount     = wadToDecimal(event.params.amount)
-  removeQuote.lpRedeemed = wadToDecimal(event.params.lpRedeemed)
-  removeQuote.lup        = wadToDecimal(event.params.lup)
-
-  removeQuote.blockNumber = event.block.number
-  removeQuote.blockTimestamp = event.block.timestamp
-  removeQuote.transactionHash = event.transaction.hash
-
-  // update entities
-  const pool = Pool.load(addressToBytes(event.address))
-  if (pool != null) {
-    // update pool state
-    updatePool(pool)
-    pool.txCount = pool.txCount.plus(ONE_BI)
-
-    // update tx count for a pools tokens
-    incrementTokenTxCount(pool)
-
-    // update bucket state
-    const bucketId   = getBucketId(pool.id, event.params.index.toU32())
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
-    const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
-    bucket.collateral   = wadToDecimal(bucketInfo.collateral)
-    bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
-    bucket.lpb          = wadToDecimal(bucketInfo.lpb)
-    bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
-
-    // update account state
-    const accountId = removeQuote.lender
-    const account   = loadOrCreateAccount(accountId)
-    account.txCount = account.txCount.plus(ONE_BI)
-
-    // update lend state
-    const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeQuote.lender)
-    if (removeQuote.lpRedeemed.le(lend.lpb)) {
-      lend.lpb = lend.lpb.minus(removeQuote.lpRedeemed)
-    } else {
-      log.warning('handleRemoveQuoteToken: lender {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0', 
-                  [removeQuote.lender.toHexString(), removeQuote.lpRedeemed.toString(), lend.lpb.toString()])
-      lend.lpb = ZERO_BD
-    }
-    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
-
-    // update account's list of pools and lends if necessary
-    updateAccountPools(account, pool)
-    updateAccountLends(account, lend)
-
-    // save entities to store
-    account.save()
-    bucket.save()
-    lend.save()
-    pool.save()
-
-    removeQuote.bucket = bucket.id
-    removeQuote.pool = pool.id
-  }
-
-  removeQuote.save()
+  // TODO: get compiler to ignore this line's INFO output
+  event = changetype<RemoveQuoteTokenEvent | null>(event)!
+  _handleRemoveQuoteToken(event, null)
 }
 
 export function handleRepayDebt(event: RepayDebtEvent): void {
@@ -893,7 +690,6 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   repayDebt.save()
 }
 
-// called on both start and take reserves
 export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
   const reserveKick = new ReserveAuctionKick(
@@ -933,7 +729,6 @@ export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   reserveKick.save()
 }
 
-// called on both start and take reserves
 export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
   const reserveTake = new ReserveAuctionTake(
     event.transaction.hash.concat(event.transaction.from)
@@ -1118,6 +913,7 @@ export function handleTake(event: TakeEvent): void {
   auction.save()
   loan.save()
   pool.save()
+  kick.save()
   take.save()
 }
 
@@ -1202,10 +998,10 @@ export function handleTransferLP(event: TransferLPEvent): void {
 
     // event does not reveal LP amounts transferred for each bucket, so query the pool and update
     // remove old lend
-    const oldLend = Lend.load(oldLendId)!
+    const oldLend = loadOrCreateLend(bucketId, oldLendId, poolId, entity.owner)
     oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
     oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
-    updateAccountLends(oldOwnerAccount, Lend.load(oldLendId)!)
+    updateAccountLends(oldOwnerAccount, oldLend)
     oldLend.save()
 
     // add new lend

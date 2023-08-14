@@ -1,49 +1,48 @@
 import { newMockEvent } from "matchstick-as"
-import { ethereum, Address, BigInt } from "@graphprotocol/graph-ts"
+import { ethereum, Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import {
-  AddCollateral,
+  AddCollateralNFT,
   AddQuoteToken,
   AuctionNFTSettle,
-  AuctionSettle,
   BucketBankruptcy,
   BucketTake,
   BucketTakeLPAwarded,
-  DrawDebt,
+  DrawDebtNFT,
+  Flashloan,
   Kick,
   KickReserveAuction,
-  MoveQuoteToken,
+  MergeOrRemoveCollateralNFT,
   RemoveCollateral,
-  RemoveQuoteToken,
   RepayDebt,
   ReserveAuction,
   Settle,
-  Take,
-  TransferLP,
-  UpdateInterestRate
-} from "../../generated/templates/ERC20Pool/ERC20Pool"
-import { ReserveAuctionKick, ReserveAuctionTake } from "../../generated/schema"
+  Take
+} from "../../generated/templates/ERC721Pool/ERC721Pool"
 
-export function createAddCollateralEvent(
-  pool: Address,
+export function createAddCollateralNFTEvent(
+  poolAddress: Address,
   actor: Address,
   index: BigInt,
-  amount: BigInt,
+  tokenIds: Array<BigInt>,
   lpAwarded: BigInt
-): AddCollateral {
-  let addCollateralEvent = changetype<AddCollateral>(newMockEvent())
+): AddCollateralNFT {
+  let addCollateralNftEvent = changetype<AddCollateralNFT>(newMockEvent())
 
-  addCollateralEvent.parameters = new Array()
+  addCollateralNftEvent.parameters = new Array()
 
-  addCollateralEvent.parameters.push(
+  addCollateralNftEvent.parameters.push(
     new ethereum.EventParam("actor", ethereum.Value.fromAddress(actor))
   )
-  addCollateralEvent.parameters.push(
+  addCollateralNftEvent.parameters.push(
     new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
   )
-  addCollateralEvent.parameters.push(
-    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
+  addCollateralNftEvent.parameters.push(
+    new ethereum.EventParam(
+      "tokenIds",
+      ethereum.Value.fromUnsignedBigIntArray(tokenIds)
+    )
   )
-  addCollateralEvent.parameters.push(
+  addCollateralNftEvent.parameters.push(
     new ethereum.EventParam(
       "lpAwarded",
       ethereum.Value.fromUnsignedBigInt(lpAwarded)
@@ -51,9 +50,9 @@ export function createAddCollateralEvent(
   )
 
   // update transaction target to the expected pool address
-  addCollateralEvent.address = pool
+  addCollateralNftEvent.address = poolAddress
 
-  return addCollateralEvent
+  return addCollateralNftEvent
 }
 
 export function createAddQuoteTokenEvent(
@@ -120,27 +119,6 @@ export function createAuctionNFTSettleEvent(
   )
 
   return auctionNftSettleEvent
-}
-
-export function createAuctionSettleEvent(
-  borrower: Address,
-  collateral: BigInt
-): AuctionSettle {
-  let auctionSettleEvent = changetype<AuctionSettle>(newMockEvent())
-
-  auctionSettleEvent.parameters = new Array()
-
-  auctionSettleEvent.parameters.push(
-    new ethereum.EventParam("borrower", ethereum.Value.fromAddress(borrower))
-  )
-  auctionSettleEvent.parameters.push(
-    new ethereum.EventParam(
-      "collateral",
-      ethereum.Value.fromUnsignedBigInt(collateral)
-    )
-  )
-
-  return auctionSettleEvent
 }
 
 export function createBucketBankruptcyEvent(
@@ -250,40 +228,62 @@ export function createBucketTakeLPAwardedEvent(
   return bucketTakeLpAwardedEvent
 }
 
-export function createDrawDebtEvent(
+export function createDrawDebtNFTEvent(
   pool: Address,
   borrower: Address,
   amountBorrowed: BigInt,
-  collateralPledged: BigInt,
+  tokenIdsPledged: Array<BigInt>,
   lup: BigInt
-): DrawDebt {
-  let drawDebtEvent = changetype<DrawDebt>(newMockEvent())
+): DrawDebtNFT {
+  let drawDebtNftEvent = changetype<DrawDebtNFT>(newMockEvent())
 
-  drawDebtEvent.parameters = new Array()
+  drawDebtNftEvent.parameters = new Array()
 
-  drawDebtEvent.parameters.push(
+  drawDebtNftEvent.parameters.push(
     new ethereum.EventParam("borrower", ethereum.Value.fromAddress(borrower))
   )
-  drawDebtEvent.parameters.push(
+  drawDebtNftEvent.parameters.push(
     new ethereum.EventParam(
       "amountBorrowed",
       ethereum.Value.fromUnsignedBigInt(amountBorrowed)
     )
   )
-  drawDebtEvent.parameters.push(
+  drawDebtNftEvent.parameters.push(
     new ethereum.EventParam(
-      "collateralPledged",
-      ethereum.Value.fromUnsignedBigInt(collateralPledged)
+      "tokenIdsPledged",
+      ethereum.Value.fromUnsignedBigIntArray(tokenIdsPledged)
     )
   )
-  drawDebtEvent.parameters.push(
+  drawDebtNftEvent.parameters.push(
     new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
   )
 
   // update transaction target to the expected pool address
-  drawDebtEvent.address = pool
+  drawDebtNftEvent.address = pool
 
-  return drawDebtEvent
+  return drawDebtNftEvent
+}
+
+export function createFlashloanEvent(
+  receiver: Address,
+  token: Address,
+  amount: BigInt
+): Flashloan {
+  let flashloanEvent = changetype<Flashloan>(newMockEvent())
+
+  flashloanEvent.parameters = new Array()
+
+  flashloanEvent.parameters.push(
+    new ethereum.EventParam("receiver", ethereum.Value.fromAddress(receiver))
+  )
+  flashloanEvent.parameters.push(
+    new ethereum.EventParam("token", ethereum.Value.fromAddress(token))
+  )
+  flashloanEvent.parameters.push(
+    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
+  )
+
+  return flashloanEvent
 }
 
 export function createKickEvent(
@@ -321,55 +321,77 @@ export function createKickEvent(
   return kickEvent
 }
 
-export function createMoveQuoteTokenEvent(
-  pool: Address,
-  lender: Address,
-  from: BigInt,
-  to: BigInt,
-  amount: BigInt,
-  lpRedeemedFrom: BigInt,
-  lpAwardedTo: BigInt,
-  lup: BigInt
-): MoveQuoteToken {
-  let moveQuoteTokenEvent = changetype<MoveQuoteToken>(newMockEvent())
+export function createKickReserveAuctionEvent(
+  claimableReservesRemaining: BigInt,
+  auctionPrice: BigInt,
+  currentBurnEpoch: BigInt
+): KickReserveAuction {
+  let kickReserveAuctionEvent = changetype<KickReserveAuction>(newMockEvent())
 
-  moveQuoteTokenEvent.parameters = new Array()
+  kickReserveAuctionEvent.parameters = new Array()
 
-  moveQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("lender", ethereum.Value.fromAddress(lender))
-  )
-  moveQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("from", ethereum.Value.fromUnsignedBigInt(from))
-  )
-  moveQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("to", ethereum.Value.fromUnsignedBigInt(to))
-  )
-  moveQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
-  )
-  moveQuoteTokenEvent.parameters.push(
+  kickReserveAuctionEvent.parameters.push(
     new ethereum.EventParam(
-      "lpRedeemedFrom",
-      ethereum.Value.fromUnsignedBigInt(lpRedeemedFrom)
+      "claimableReservesRemaining",
+      ethereum.Value.fromUnsignedBigInt(claimableReservesRemaining)
     )
   )
-  moveQuoteTokenEvent.parameters.push(
+  kickReserveAuctionEvent.parameters.push(
     new ethereum.EventParam(
-      "lpAwardedTo",
-      ethereum.Value.fromUnsignedBigInt(lpAwardedTo)
+      "auctionPrice",
+      ethereum.Value.fromUnsignedBigInt(auctionPrice)
     )
   )
-  moveQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
+  kickReserveAuctionEvent.parameters.push(
+    new ethereum.EventParam(
+      "currentBurnEpoch",
+      ethereum.Value.fromUnsignedBigInt(currentBurnEpoch)
+    )
   )
 
-  // update transaction target to the expected pool address
-  moveQuoteTokenEvent.address = pool
+  return kickReserveAuctionEvent
+}
 
-  return moveQuoteTokenEvent
+export function createMergeOrRemoveCollateralNFTEvent(
+  poolAddress: Address,
+  actor: Address,
+  collateralMerged: BigInt,
+  toIndexLps: BigInt,
+  calldata: Bytes
+): MergeOrRemoveCollateralNFT {
+  let mergeOrRemoveCollateralNftEvent = changetype<MergeOrRemoveCollateralNFT>(
+    newMockEvent()
+  )
+
+  mergeOrRemoveCollateralNftEvent.parameters = new Array()
+
+  mergeOrRemoveCollateralNftEvent.parameters.push(
+    new ethereum.EventParam("actor", ethereum.Value.fromAddress(actor))
+  )
+  mergeOrRemoveCollateralNftEvent.parameters.push(
+    new ethereum.EventParam(
+      "collateralMerged",
+      ethereum.Value.fromUnsignedBigInt(collateralMerged)
+    )
+  )
+  mergeOrRemoveCollateralNftEvent.parameters.push(
+    new ethereum.EventParam(
+      "toIndexLps",
+      ethereum.Value.fromUnsignedBigInt(toIndexLps)
+    )
+  )
+
+  // update event source address to the expected pool address
+  mergeOrRemoveCollateralNftEvent.address = poolAddress
+
+  // set calldata as input
+  mergeOrRemoveCollateralNftEvent.transaction.input = calldata
+
+  return mergeOrRemoveCollateralNftEvent
 }
 
 export function createRemoveCollateralEvent(
+  pool: Address,
   claimer: Address,
   index: BigInt,
   amount: BigInt,
@@ -395,40 +417,10 @@ export function createRemoveCollateralEvent(
     )
   )
 
+  // update transaction target to the expected pool address
+  removeCollateralEvent.address = pool
+
   return removeCollateralEvent
-}
-
-export function createRemoveQuoteTokenEvent(
-  lender: Address,
-  price: BigInt,
-  amount: BigInt,
-  lpRedeemed: BigInt,
-  lup: BigInt
-): RemoveQuoteToken {
-  let removeQuoteTokenEvent = changetype<RemoveQuoteToken>(newMockEvent())
-
-  removeQuoteTokenEvent.parameters = new Array()
-
-  removeQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("lender", ethereum.Value.fromAddress(lender))
-  )
-  removeQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("price", ethereum.Value.fromUnsignedBigInt(price))
-  )
-  removeQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
-  )
-  removeQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam(
-      "lpRedeemed",
-      ethereum.Value.fromUnsignedBigInt(lpRedeemed)
-    )
-  )
-  removeQuoteTokenEvent.parameters.push(
-    new ethereum.EventParam("lup", ethereum.Value.fromUnsignedBigInt(lup))
-  )
-
-  return removeQuoteTokenEvent
 }
 
 export function createRepayDebtEvent(
@@ -467,49 +459,10 @@ export function createRepayDebtEvent(
   return repayDebtEvent
 }
 
-export function createReserveAuctionKickEvent(
-  operator: Address,
-  pool: Address,
+export function createReserveAuctionEvent(
   claimableReservesRemaining: BigInt,
   auctionPrice: BigInt,
-  currentBurnEpoch: BigInt,
-): KickReserveAuction {
-  let reserveAuctionEvent = changetype<KickReserveAuction>(newMockEvent())
-
-  reserveAuctionEvent.parameters = new Array()
-
-  reserveAuctionEvent.parameters.push(
-    new ethereum.EventParam(
-      "claimableReservesRemaining",
-      ethereum.Value.fromUnsignedBigInt(claimableReservesRemaining)
-    )
-  )
-  reserveAuctionEvent.parameters.push(
-    new ethereum.EventParam(
-      "auctionPrice",
-      ethereum.Value.fromUnsignedBigInt(auctionPrice)
-    )
-  )
-  reserveAuctionEvent.parameters.push(
-    new ethereum.EventParam(
-      "currentBurnEpoch",
-      ethereum.Value.fromUnsignedBigInt(currentBurnEpoch)
-    )
-  )
-
-  // update transaction target to the expected pool address
-  reserveAuctionEvent.transaction.from = operator
-  reserveAuctionEvent.address = pool
-  
-  return reserveAuctionEvent;
-}
-
-export function createReserveAuctionTakeEvent(
-  operator: Address,
-  pool: Address,
-  claimableReservesRemaining: BigInt,
-  auctionPrice: BigInt,
-  currentBurnEpoch: BigInt,
+  currentBurnEpoch: BigInt
 ): ReserveAuction {
   let reserveAuctionEvent = changetype<ReserveAuction>(newMockEvent())
 
@@ -533,10 +486,6 @@ export function createReserveAuctionTakeEvent(
       ethereum.Value.fromUnsignedBigInt(currentBurnEpoch)
     )
   )
-
-  // update transaction target to the expected pool address
-  reserveAuctionEvent.transaction.from = operator
-  reserveAuctionEvent.address = pool
 
   return reserveAuctionEvent
 }
@@ -608,64 +557,4 @@ export function createTakeEvent(
   takeEvent.address = pool
 
   return takeEvent
-}
-
-export function createTransferLPEvent(
-  owner: Address,
-  newOwner: Address,
-  indexes: Array<BigInt>,
-  lp: BigInt
-): TransferLP {
-  let transferLpTokensEvent = changetype<TransferLP>(newMockEvent())
-
-  transferLpTokensEvent.parameters = new Array()
-
-  transferLpTokensEvent.parameters.push(
-    new ethereum.EventParam("owner", ethereum.Value.fromAddress(owner))
-  )
-  transferLpTokensEvent.parameters.push(
-    new ethereum.EventParam("newOwner", ethereum.Value.fromAddress(newOwner))
-  )
-  transferLpTokensEvent.parameters.push(
-    new ethereum.EventParam(
-      "indexes",
-      ethereum.Value.fromUnsignedBigIntArray(indexes)
-    )
-  )
-  transferLpTokensEvent.parameters.push(
-    new ethereum.EventParam(
-      "lp",
-      ethereum.Value.fromUnsignedBigInt(lp)
-    )
-  )
-
-  return transferLpTokensEvent
-}
-
-export function createUpdateInterestRateEvent(
-  pool: Address,
-  oldRate: BigInt,
-  newRate: BigInt
-): UpdateInterestRate {
-  let updateInterestRateEvent = changetype<UpdateInterestRate>(newMockEvent())
-
-  updateInterestRateEvent.parameters = new Array()
-
-  updateInterestRateEvent.parameters.push(
-    new ethereum.EventParam(
-      "oldRate",
-      ethereum.Value.fromUnsignedBigInt(oldRate)
-    )
-  )
-  updateInterestRateEvent.parameters.push(
-    new ethereum.EventParam(
-      "newRate",
-      ethereum.Value.fromUnsignedBigInt(newRate)
-    )
-  )
-
-  // update transaction target to the expected pool address
-  updateInterestRateEvent.address = pool
-
-  return updateInterestRateEvent
 }

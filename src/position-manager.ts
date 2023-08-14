@@ -23,7 +23,7 @@ import {
   Transfer
 } from "../generated/schema"
 import { getBucketId } from "./utils/pool/bucket"
-import { lpbValueInQuote } from "./utils/common"
+import { lpbValueInQuote } from "./utils/pool/lend"
 import { ONE_BI, ZERO_BD } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"

@@ -2,10 +2,11 @@ import { Address, BigDecimal, BigInt, Bytes, Value, dataSource } from "@graphpro
 
 import { LiquidationAuction, Kick, Loan, Pool, BucketTake } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
+import { ERC721Pool } from "../../../generated/templates/ERC721Pool/ERC721Pool"
+import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 import { wadToDecimal } from "../convert"
 import { ONE_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI, poolInfoUtilsAddressTable } from "../constants"
-import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, kickBlock: BigInt): Bytes {
     return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + kickBlock.toString()))
@@ -39,6 +40,35 @@ export function loadOrCreateLiquidationAuction(poolId: Bytes, liquidationAuction
     }
     return liquidationAuction
 }
+
+export function loadOrCreateBucketTake(id: Bytes): BucketTake {
+  let bucketTake = BucketTake.load(id)
+  if (bucketTake == null) {
+    // create new account if account hasn't already been stored
+    bucketTake = new BucketTake(id) as BucketTake
+
+    bucketTake.borrower = ZERO_ADDRESS
+    bucketTake.taker = ZERO_ADDRESS
+    bucketTake.liquidationAuction = Bytes.fromI32(0)
+    bucketTake.loan = Bytes.fromI32(0)
+    bucketTake.pool = Bytes.fromI32(0)
+    bucketTake.index = 0
+    bucketTake.auctionPrice = ZERO_BD
+    bucketTake.amount = ZERO_BD
+    bucketTake.collateral = ZERO_BD
+    bucketTake.bondChange = ZERO_BD
+    bucketTake.isReward = false
+    bucketTake.lpAwarded = Bytes.fromI32(0)
+    bucketTake.blockNumber = ZERO_BI
+    bucketTake.blockTimestamp = ZERO_BI
+    bucketTake.transactionHash = Bytes.fromI32(0)
+  }
+  return bucketTake;
+}
+
+/******************************/
+/*** State Update Functions ***/
+/******************************/
 
 export function updateLiquidationAuction(
   liquidationAuction: LiquidationAuction, 
@@ -99,6 +129,23 @@ export function getAuctionInfoERC20Pool(borrower: Bytes, pool: Pool): AuctionInf
     )
     return auctionInfo
 }
+export function getAuctionInfoERC721Pool(borrower: Bytes, pool: Pool): AuctionInfo {
+    const poolContract = ERC721Pool.bind(Address.fromBytes(pool.id))
+    const auctionInfoResult = poolContract.auctionInfo(Address.fromBytes(borrower))
+    const auctionInfo = new AuctionInfo(
+        auctionInfoResult.value0,
+        auctionInfoResult.value1,
+        auctionInfoResult.value2,
+        auctionInfoResult.value3,
+        auctionInfoResult.value4,
+        auctionInfoResult.value5,
+        auctionInfoResult.value6,
+        auctionInfoResult.value7,
+        auctionInfoResult.value8,
+        auctionInfoResult.value9
+    )
+    return auctionInfo
+}
 
 export class AuctionStatus {
     kickTime: BigInt
@@ -128,29 +175,4 @@ export function getAuctionStatus(pool: Pool, borrower: Address): AuctionStatus {
       result.value4,
       result.value5
     )
-}
-
-export function loadOrCreateBucketTake(id: Bytes): BucketTake {
-  let bucketTake = BucketTake.load(id)
-  if (bucketTake == null) {
-    // create new account if account hasn't already been stored
-    bucketTake = new BucketTake(id) as BucketTake
-
-    bucketTake.borrower = ZERO_ADDRESS
-    bucketTake.taker = ZERO_ADDRESS
-    bucketTake.liquidationAuction = Bytes.fromI32(0)
-    bucketTake.loan = Bytes.fromI32(0)
-    bucketTake.pool = Bytes.fromI32(0)
-    bucketTake.index = 0
-    bucketTake.auctionPrice = ZERO_BD
-    bucketTake.amount = ZERO_BD
-    bucketTake.collateral = ZERO_BD
-    bucketTake.bondChange = ZERO_BD
-    bucketTake.isReward = false
-    bucketTake.lpAwarded = Bytes.fromI32(0)
-    bucketTake.blockNumber = ZERO_BI
-    bucketTake.blockTimestamp = ZERO_BI
-    bucketTake.transactionHash = Bytes.fromI32(0)
-  }
-  return bucketTake;
 }
