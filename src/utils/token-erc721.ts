@@ -3,7 +3,16 @@ import { Address, BigInt } from "@graphprotocol/graph-ts"
 
 import { ERC721 } from "../../generated/ERC721PoolFactory/ERC721"
 import { Pool, Token } from "../../generated/schema"
-import { ONE_BI } from "./constants"
+import { ONE_BI, ONE_WAD_BI, ZERO_BI } from "./constants"
+
+export function getTokenBalance(tokenAddress: Address, address: Address): BigInt {
+    const balanceOfCall = ERC721.bind(tokenAddress).try_balanceOf(address)
+    if (balanceOfCall.reverted) {
+        return ZERO_BI
+    } else {
+        return balanceOfCall.value
+    }
+}
 
 export function getTokenName(tokenAddress: Address): string {
     const tokenNameCall = ERC721.bind(tokenAddress).try_name()
@@ -23,6 +32,15 @@ export function getTokenSymbol(tokenAddress: Address): string {
     }
 }
 
+export function getTokenURI(tokenAddress: Address, tokenId: BigInt): string {
+    const tokenURICall = ERC721.bind(tokenAddress).try_tokenURI(tokenId)
+    if (tokenURICall.reverted) {
+        return "N/A"
+    } else {
+        return tokenURICall.value
+    }
+}
+
 export function incrementTokenTxCount(pool: Pool): void {
     // increment token tx count
     const collateralToken = Token.load(pool.collateralToken)!
@@ -31,4 +49,26 @@ export function incrementTokenTxCount(pool: Pool): void {
     const quoteToken = Token.load(pool.quoteToken)!
     quoteToken.txCount = quoteToken.txCount.plus(ONE_BI)
     quoteToken.save()
+}
+
+// find the tokenId in the tokenIds array and remove it, returning the new array
+export function findAndRemoveTokenId(tokenId: BigInt, tokenIds: Array<BigInt>): Array<BigInt> {
+    let index = tokenIds.indexOf(tokenId)
+    if (index > -1) {
+        tokenIds.splice(index, 1)
+    }
+    return tokenIds
+}
+
+export function findAndRemoveTokenIds(tokenIdsToRemove: Array<BigInt>, tokenIds: Array<BigInt>): Array<BigInt> {
+    for (let i = 0; i < tokenIdsToRemove.length; i++) {
+        tokenIds = findAndRemoveTokenId(tokenIdsToRemove[i], tokenIds)
+    }
+    return tokenIds
+}
+
+// collateral is expected to be a BigInt WAD
+// get the number of tokenIds associated with the collateral amount
+export function getWadCollateralFloorTokens(collateral: BigInt): BigInt {
+    return BigInt.fromString(Math.floor(collateral.div(ONE_WAD_BI).toI32()).toString())
 }

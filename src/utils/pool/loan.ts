@@ -2,8 +2,9 @@ import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/g
 import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 import { Loan }    from "../../../generated/schema"
-import { poolInfoUtilsAddressTable, ZERO_BD, ZERO_BI } from "../constants"
+import { poolInfoUtilsAddressTable, ONE_BD, ZERO_BD, ZERO_BI } from "../constants"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
+import { ERC721Pool } from "../../../generated/templates/ERC721Pool/ERC721Pool"
 
 export function getLoanId(poolId: Bytes, accountId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|').concat(accountId))
@@ -19,13 +20,18 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
       loan.pool                = poolId
       loan.poolAddress         = poolId.toHexString()
       loan.collateralPledged   = ZERO_BD
-      loan.t0debt                = ZERO_BD
+      loan.t0debt              = ZERO_BD
       loan.inLiquidation       = false
       loan.liquidationAuction  = null
+      loan.tokenIdsPledged     = []
     }
 
     return loan
 }
+
+/**********************************/
+/*** Contract Calling Functions ***/
+/**********************************/
 
 export class BorrowerInfo {
   t0debt: BigInt
@@ -46,4 +52,42 @@ export function getBorrowerInfo(borrower: Bytes, poolId: Bytes): BorrowerInfo {
     borrowerInfoResult.value1,
     borrowerInfoResult.value2
   )
+}
+
+export function getBorrowerInfoERC721Pool(borrower: Bytes, poolId: Bytes): BorrowerInfo {
+  const poolContract = ERC721Pool.bind(Address.fromBytes(poolId))
+  const borrowerInfoResult = poolContract.borrowerInfo(Address.fromBytes(borrower))
+
+  return new BorrowerInfo(
+    borrowerInfoResult.value0,
+    borrowerInfoResult.value1,
+    borrowerInfoResult.value2
+  )
+}
+
+// get the number of tokenIds pledged to the pool by a borrower
+export function getTotalBorrowerTokens(borrower: Address, poolId: Bytes): BigInt {
+  const poolAddress = Address.fromBytes(poolId)
+  const poolContract = ERC721Pool.bind(poolAddress)
+  return poolContract.totalBorrowerTokens(borrower)
+}
+
+/*************************/
+/*** Utility Functions ***/
+/*************************/
+
+export function collateralizationAtLup(debt: BigDecimal, collateral: BigDecimal, lup: BigDecimal): BigDecimal {
+  if (debt > ZERO_BD && lup > ZERO_BD) {
+    return collateral.times(lup).div(debt)
+  } else {
+    return ONE_BD
+  }
+}
+
+export function thresholdPrice(debt: BigDecimal, collateral: BigDecimal): BigDecimal {
+  if (collateral > ZERO_BD) {
+    return debt.div(collateral)
+  } else {
+    return ZERO_BD;
+  }
 }
