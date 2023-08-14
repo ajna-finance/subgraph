@@ -56,7 +56,8 @@ import {
   Account,
   Bucket,
   Kick,
-  Token
+  Token,
+  ReserveAuctionTake
 } from "../generated/schema"
 
 import { findAndRemoveTokenIds, getWadCollateralFloorTokens, incrementTokenTxCount } from "./utils/token-erc721"
@@ -74,9 +75,6 @@ import { _handleAddQuoteToken, _handleMoveQuoteToken } from "./mappings/base/bas
 import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
 import { loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
 
-// TODO:
-// - Finish liquidations and implement rebalance logic for moving tokenIds from tokenIdsPledged to bucketTokenIds
-// - Create base functions to reduce code duplication across common handlers
 
 /*******************************/
 /*** Borrower Event Handlers ***/
@@ -398,7 +396,7 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   removeCollateral.save()
 }
 
-export function handleRemoreQuoteToken(event: RemoveQuoteTokenEvent): void {
+export function handleRemoveQuoteToken(event: RemoveQuoteTokenEvent): void {
   const removeQuote = new RemoveQuoteToken(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
@@ -553,6 +551,7 @@ export function handleMergeOrRemoveCollateralNFT(
 /*** Liquidation Event Handlers ***/
 /**********************************/
 
+// identical to ERC20Pool
 export function handleBondWithdrawn(event: BondWithdrawnEvent): void {
   const entity = new BondWithdrawn(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -862,6 +861,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   takerLend.save()
 }
 
+// identical to ERC20Pool
 export function handleBucketTakeLPAwarded(event: BucketTakeLPAwardedEvent): void {
   const lpAwardedId                   = event.transaction.hash.concatI32(event.logIndex.toI32());
   const bucketTakeLpAwarded           = new BucketTakeLPAwarded(lpAwardedId)
@@ -974,6 +974,7 @@ export function handleTake(event: TakeEvent): void {
 /*** LPB Management Event Handlers ***/
 /*************************************/
 
+// identical to ERC20Pool
 export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
   const poolId = addressToBytes(event.address)
   const lender = event.transaction.from
@@ -989,6 +990,7 @@ export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void
   entity.save()
 }
 
+// identical to ERC20Pool
 export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
   const poolId = addressToBytes(event.address)
   const lender = event.transaction.from
@@ -1004,6 +1006,7 @@ export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void
   entity.save()
 }
 
+// identical to ERC20Pool
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
   const poolId = addressToBytes(event.address)
   const lender = event.transaction.from
@@ -1019,6 +1022,7 @@ export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
   entity.save()
 }
 
+// identical to ERC20Pool
 export function handleRevokeLPTransferors(
   event: RevokeLPTransferorsEvent
 ): void {
@@ -1098,7 +1102,7 @@ export function handleTransferLP(event: TransferLPEvent): void {
 /*** Reserves Event Handlers ***/
 /*******************************/
 
-// TODO: ABSTRACT THIS - THIS FUNCTION IS COPY PASTA FROM ERC20Pool
+// identical to ERC20Pool
 export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
   const reserveKick = new ReserveAuctionKick(
@@ -1139,10 +1143,61 @@ export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   reserveKick.save()
 }
 
+// identical to ERC20Pool
+export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
+  const reserveTake = new ReserveAuctionTake(
+    event.transaction.hash.concat(event.transaction.from)
+  )
+  const pool           = Pool.load(addressToBytes(event.address))!
+  const reserveAuction = loadOrCreateReserveAuction(pool.id, event.params.currentBurnEpoch)
+
+  reserveTake.taker                      = event.transaction.from
+  reserveTake.reserveAuction             = reserveAuction.id
+  reserveTake.pool                       = pool.id
+  reserveTake.claimableReservesRemaining = wadToDecimal(event.params.claimableReservesRemaining)
+  reserveTake.auctionPrice               = wadToDecimal(event.params.auctionPrice)
+
+  // retrieve ajna burn information from the pool
+  const burnInfo = getBurnInfo(pool, event.params.currentBurnEpoch)
+  // update burn information of the reserve auction take
+  // since only one reserve auction can occur at a time, look at the difference since the last reserve auction
+  reserveTake.ajnaBurned = wadToDecimal(burnInfo.totalBurned).minus(pool.totalAjnaBurned)
+  reserveAuction.claimableReservesRemaining = reserveTake.claimableReservesRemaining
+  reserveAuction.lastTakePrice              = reserveTake.auctionPrice
+  reserveAuction.ajnaBurned                 = reserveAuction.ajnaBurned.plus(reserveTake.ajnaBurned)
+  reserveAuction.takes                      = reserveAuction.takes.concat([reserveTake.id])
+
+  // event does not provide amount purchased; use auctionPrice and ajnaBurned to calculate
+  reserveTake.quotePurchased = reserveTake.ajnaBurned.div(reserveTake.auctionPrice)
+
+  reserveTake.blockNumber = event.block.number
+  reserveTake.blockTimestamp = event.block.timestamp
+  reserveTake.transactionHash = event.transaction.hash
+
+  // update pool state
+  pool.totalAjnaBurned = wadToDecimal(burnInfo.totalBurned)
+  pool.totalInterestEarned = wadToDecimal(burnInfo.totalInterest)
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
+
+  // update account state
+  const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountReserveAuctions(account, reserveAuction.id)
+
+  // save entities to store
+  account.save()
+  pool.save()
+  reserveAuction.save()
+  reserveTake.save()
+}
+
 /***************************/
 /*** Pool Event Handlers ***/
 /***************************/
 
+// identical to ERC20Pool
 export function handleResetInterestRate(event: ResetInterestRateEvent): void {
   const resetInterestRate = new UpdateInterestRate(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -1178,6 +1233,7 @@ export function handleResetInterestRate(event: ResetInterestRateEvent): void {
   resetInterestRate.save()
 }
 
+// identical to ERC20Pool
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   const updateInterestRate = new UpdateInterestRate(
     event.transaction.hash.concatI32(event.logIndex.toI32())
