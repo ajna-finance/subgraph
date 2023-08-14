@@ -34,7 +34,7 @@
         "type": "uint256"
       }
     ],
-    "name": "BurnWrappedAjnaApproval",
+    "name": "Approval",
     "type": "event"
   },
   {
@@ -59,7 +59,7 @@
         "type": "uint256"
       }
     ],
-    "name": "BurnWrappedAjnaTransfer",
+    "name": "Transfer",
     "type": "event"
   },
   {

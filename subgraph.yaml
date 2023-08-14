@@ -210,8 +210,8 @@ dataSources:
         - name: BurnWrappedAjna
           file: ./abis/BurnWrappedAjna.json
       eventHandlers:
-        - event: BurnWrappedAjnaTransfer(indexed address,indexed address,uint256)
-          handler: handleBurnWrappedAjnaTransfer
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
       file: ./src/burn-wrapped-ajna.ts
 templates:
   - kind: ethereum

@@ -5,7 +5,7 @@ import {
 import { BurnWrap } from "../generated/schema"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 
-export function handleBurnWrappedAjnaTransfer(
+export function handleTransfer(
   event: BurnWrappedAjnaTransferEvent
 ): void {
   let entity = new BurnWrap(
