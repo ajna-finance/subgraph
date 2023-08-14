@@ -48,7 +48,8 @@ import {
   TransferLP,
   Account,
   Bucket,
-  Kick
+  Kick,
+  Token
 } from "../generated/schema"
 
 import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc721"
@@ -170,6 +171,30 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   pool.save()
   loan.save()
   repayDebt.save()
+}
+
+export function handleFlashloan(event: FlashloanEvent): void {
+  const flashloan = new Flashloan(event.transaction.hash.concatI32(event.logIndex.toI32()))
+  const pool = Pool.load(addressToBytes(event.address))!
+  const token = Token.load(addressToBytes(event.params.token))!
+  const scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+
+  flashloan.pool = pool.id
+  flashloan.borrower = event.params.receiver
+
+  const normalizedAmount = wadToDecimal(event.params.amount.times(scaleFactor))
+  flashloan.amount = normalizedAmount
+  if (token.id == pool.quoteToken) {
+    pool.quoteTokenFlashloaned = pool.quoteTokenFlashloaned.plus(normalizedAmount)
+  } else if (token.id == pool.collateralToken) {
+    pool.collateralFlashloaned = pool.collateralFlashloaned.plus(normalizedAmount)
+  }
+  token.txCount = token.txCount.plus(ONE_BI)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+
+  token.save()
+  pool.save()
+  flashloan.save()
 }
 
 /*****************************/
@@ -644,7 +669,11 @@ export function handleKick(event: KickEvent): void {
   kick.save()
 }
 
-export function handleBucketTake(event: Bucket): void {
+export function handleBucketTake(event: BucketTakeEvent): void {
+
+}
+
+export function handleBucketTakeLPAwarded(event: BucketTakeLPAwardedEvent): void {
 
 }
 
