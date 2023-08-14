@@ -350,6 +350,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   bucketTake.save()
   loan.save()
   pool.save()
+  kick.save()
   kickerAccount.save()
   kickerLend.save()
   takerLend.save()
@@ -370,7 +371,6 @@ export function handleBucketTakeLPAwarded(
   bucketTakeLpAwarded.blockTimestamp  = event.block.timestamp
   bucketTakeLpAwarded.transactionHash = event.transaction.hash
   bucketTakeLpAwarded.save()
-
 
   // since this is emitted immediately before BucketTakeEvent, create BucketTake entity to associate it with this LP award
   const bucketTakeId   = event.transaction.hash.concatI32(event.logIndex.toI32() + 1)

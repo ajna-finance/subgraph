@@ -52,7 +52,7 @@ import {
   Token
 } from "../generated/schema"
 
-import { findAndRemoveTokenIds, incrementTokenTxCount } from "./utils/token-erc721"
+import { findAndRemoveTokenIds, getWadCollateralFloorTokens, incrementTokenTxCount } from "./utils/token-erc721"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
 import { addressToBytes, bigIntArrayToIntArray, decimalToWad, wadToDecimal } from "./utils/convert"
@@ -670,11 +670,137 @@ export function handleKick(event: KickEvent): void {
 }
 
 export function handleBucketTake(event: BucketTakeEvent): void {
+  const bucketTakeId    = event.transaction.hash.concatI32(event.logIndex.toI32());
+  const bucketTake      = BucketTake.load(bucketTakeId)!
+  bucketTake.borrower   = event.params.borrower
+  bucketTake.taker      = event.transaction.from
+  bucketTake.index      = event.params.index.toU32()
+  bucketTake.amount     = wadToDecimal(event.params.amount)
+  bucketTake.collateral = wadToDecimal(event.params.collateral)
+  bucketTake.bondChange = wadToDecimal(event.params.bondChange)
+  bucketTake.isReward   = event.params.isReward
 
+  bucketTake.blockNumber     = event.block.number
+  bucketTake.blockTimestamp  = event.block.timestamp
+  bucketTake.transactionHash = event.transaction.hash
+
+  // update entities
+  const pool = Pool.load(addressToBytes(event.address))!
+
+  // update pool state
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  incrementTokenTxCount(pool)
+
+  // update taker account state
+  const account   = loadOrCreateAccount(bucketTake.taker)
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountTakes(account, bucketTake.id)
+  updateAccountPools(account, pool)
+
+  // update loan state
+  const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
+  const loan = loadOrCreateLoan(loanId, pool.id, addressToBytes(event.params.borrower))
+  const borrowerInfo     = getBorrowerInfoERC721Pool(addressToBytes(event.params.borrower), pool.id)
+  loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
+  loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
+
+  // Rebalance borrower tokenIds used in bucketTake
+  const numberOfTokensToLeave = getWadCollateralFloorTokens(decimalToWad(loan.collateralPledged)).toI32()
+  const tokenIdsToRebalance = loan.tokenIdsPledged.slice(numberOfTokensToLeave)
+  loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsToRebalance, loan.tokenIdsPledged)
+  pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsToRebalance, pool.tokenIdsPledged)
+  pool.bucketTokenIds = pool.bucketTokenIds.concat(tokenIdsToRebalance)
+
+  // retrieve auction information on the take's auction
+  const auctionInfo   = getAuctionInfoERC721Pool(bucketTake.borrower, pool)
+  const auctionStatus = getAuctionStatus(pool, event.params.borrower)
+
+  // update liquidation auction state
+  const auctionId = loan.liquidationAuction!
+  const auction   = LiquidationAuction.load(auctionId)!
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus)
+  auction.bucketTakes = auction.bucketTakes.concat([bucketTake.id])
+
+  bucketTake.auctionPrice = wadToDecimal(auctionStatus.price)
+
+  // update kick and pool for the change in bond as a result of the take
+  const kick = Kick.load(auction.kick)!
+  if (bucketTake.isReward) {
+    // reward kicker if take is below neutral price
+    pool.totalBondEscrowed = pool.totalBondEscrowed.plus(wadToDecimal(event.params.bondChange))
+    kick.locked = kick.locked.plus(wadToDecimal(event.params.bondChange))
+  } else {
+    // penalize kicker if take is above neutral price
+    pool.totalBondEscrowed = pool.totalBondEscrowed.minus(wadToDecimal(event.params.bondChange))
+    kick.locked = kick.locked.minus(wadToDecimal(event.params.bondChange))
+  }
+
+  // update bucket state
+  const bucketId      = getBucketId(pool.id, bucketTake.index)
+  const bucket        = loadOrCreateBucket(pool.id, bucketId, bucketTake.index)
+  const bucketInfo    = getBucketInfo(pool.id, bucket.bucketIndex)
+  bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+  bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+  bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+  bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+
+  // update lend state for kicker
+  const lpAwardedId          = event.transaction.hash.concatI32(event.logIndex.toI32() - 1);
+  const bucketTakeLpAwarded  = BucketTakeLPAwarded.load(lpAwardedId)!
+  const kickerLendId         = getLendId(bucketId, bucketTakeLpAwarded.kicker)
+  const kickerLend           = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucketTakeLpAwarded.kicker)
+  kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
+  kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
+
+  // update kicker account state if they weren't a lender already
+  const kickerAccountId = bucketTakeLpAwarded.kicker
+  const kickerAccount   = loadOrCreateAccount(kickerAccountId)
+  updateAccountLends(kickerAccount, kickerLend)
+
+  // update lend state for taker
+  const takerLendId         = getLendId(bucketId, bucketTakeLpAwarded.taker)
+  const takerLend           = loadOrCreateLend(bucketId, takerLendId, pool.id, bucketTakeLpAwarded.taker)
+  takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
+  takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, takerLend.lpb)
+
+  // update bucketTake pointers
+  bucketTake.liquidationAuction = auction.id
+  bucketTake.loan = loanId
+  bucketTake.pool = pool.id
+
+  // save entities to the store
+  account.save()
+  auction.save()
+  bucket.save()
+  bucketTake.save()
+  loan.save()
+  pool.save()
+  kick.save()
+  kickerAccount.save()
+  kickerLend.save()
+  takerLend.save()
 }
 
 export function handleBucketTakeLPAwarded(event: BucketTakeLPAwardedEvent): void {
+  const lpAwardedId                   = event.transaction.hash.concatI32(event.logIndex.toI32());
+  const bucketTakeLpAwarded           = new BucketTakeLPAwarded(lpAwardedId)
+  bucketTakeLpAwarded.taker           = event.params.taker
+  bucketTakeLpAwarded.pool            = addressToBytes(event.address)
+  bucketTakeLpAwarded.kicker          = event.params.kicker
+  bucketTakeLpAwarded.lpAwardedTaker  = wadToDecimal(event.params.lpAwardedTaker)
+  bucketTakeLpAwarded.lpAwardedKicker = wadToDecimal(event.params.lpAwardedKicker)
 
+  bucketTakeLpAwarded.blockNumber     = event.block.number
+  bucketTakeLpAwarded.blockTimestamp  = event.block.timestamp
+  bucketTakeLpAwarded.transactionHash = event.transaction.hash
+  bucketTakeLpAwarded.save()
+
+  // since this is emitted immediately before BucketTakeEvent, create BucketTake entity to associate it with this LP award
+  const bucketTakeId   = event.transaction.hash.concatI32(event.logIndex.toI32() + 1)
+  const bucketTake     = loadOrCreateBucketTake(bucketTakeId)
+  bucketTake.lpAwarded = lpAwardedId
+  bucketTake.save()
 }
 
 export function handleTake(event: TakeEvent): void {
@@ -712,16 +838,18 @@ export function handleTake(event: TakeEvent): void {
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
 
   // remove tokenIdsTaken from loan and pool tokenIdsPledged
-  const numberOfTokensToTake = BigInt.fromString(Math.floor(event.params.collateral.div(ONE_WAD_BI).toI32()).toString()).toI32()
+  // const numberOfTokensToTake = BigInt.fromString(Math.floor(event.params.collateral.div(ONE_WAD_BI).toI32()).toString()).toI32()
+  const numberOfTokensToTake = getWadCollateralFloorTokens(event.params.collateral).toI32()
   const tokenIdsTaken = loan.tokenIdsPledged.slice(loan.tokenIdsPledged.length - numberOfTokensToTake, loan.tokenIdsPledged.length)
   loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsTaken, loan.tokenIdsPledged)
   pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsTaken, pool.tokenIdsPledged)
 
   // TODO: ensure that loan.collateralPledged is accurate to the post take amount and rebalancing is correct
   // Rebalance any borrower tokenIds if necessary
-  const numberOfTokensToLeave = BigInt.fromString(Math.floor(decimalToWad(loan.collateralPledged).div(ONE_WAD_BI).toI32()).toString()).toI32()
+  const numberOfTokensToLeave = getWadCollateralFloorTokens(decimalToWad(loan.collateralPledged)).toI32()
   const tokenIdsToRebalance = loan.tokenIdsPledged.slice(numberOfTokensToLeave)
   loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsToRebalance, loan.tokenIdsPledged)
+  pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsToRebalance, pool.tokenIdsPledged)
   pool.bucketTokenIds = pool.bucketTokenIds.concat(tokenIdsToRebalance)
 
   // update liquidation auction state

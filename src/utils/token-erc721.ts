@@ -3,7 +3,7 @@ import { Address, BigInt } from "@graphprotocol/graph-ts"
 
 import { ERC721 } from "../../generated/ERC721PoolFactory/ERC721"
 import { ERC721Token, Pool, Token } from "../../generated/schema"
-import { ONE_BI, ZERO_BI } from "./constants"
+import { ONE_BI, ONE_WAD_BI, ZERO_BI } from "./constants"
 
 export function getTokenBalance(tokenAddress: Address, address: Address): BigInt {
     const balanceOfCall = ERC721.bind(tokenAddress).try_balanceOf(address)
@@ -65,4 +65,10 @@ export function findAndRemoveTokenIds(tokenIdsToRemove: Array<BigInt>, tokenIds:
         tokenIds = findAndRemoveTokenId(tokenIdsToRemove[i], tokenIds)
     }
     return tokenIds
+}
+
+// collateral is expected to be a BigInt WAD
+// get the number of tokenIds associated with the collateral amount
+export function getWadCollateralFloorTokens(collateral: BigInt): BigInt {
+    return BigInt.fromString(Math.floor(collateral.div(ONE_WAD_BI).toI32()).toString())
 }
