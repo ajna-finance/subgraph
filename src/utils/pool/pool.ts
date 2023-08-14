@@ -1,6 +1,6 @@
 import { BigDecimal, BigInt, Bytes, Address, dataSource, bigInt } from '@graphprotocol/graph-ts'
 
-import { ERC721Token, LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
+import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'

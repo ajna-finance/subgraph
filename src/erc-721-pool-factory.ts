@@ -1,5 +1,5 @@
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC721PoolFactory/ERC721PoolFactory"
-import { ERC721Token, Pool, PoolCreated, Token } from "../generated/schema"
+import { Pool, PoolCreated, Token } from "../generated/schema"
 import { ERC721Pool } from "../generated/templates"
 import { ERC721Pool as ERC721PoolContract } from "../generated/templates/ERC721Pool/ERC721Pool"
 
@@ -67,14 +67,15 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   const quoteTokenAddressBytes = addressToBytes(quoteTokenAddress)
 
   // record token information
-  let collateralToken = ERC721Token.load(collateralTokenAddressBytes)
+  let collateralToken = Token.load(collateralTokenAddressBytes)
   if (collateralToken == null) {
     // create new token if it doesn't exist already
-    collateralToken = new ERC721Token(collateralTokenAddressBytes) as ERC721Token
+    collateralToken = new Token(collateralTokenAddressBytes) as Token
     collateralToken.name = getTokenNameERC721(collateralTokenAddress)
     collateralToken.symbol = getTokenSymbolERC721(collateralTokenAddress)
     collateralToken.txCount = ZERO_BI
     collateralToken.poolCount = ONE_BI
+    collateralToken.tokenType = "ERC721"
   } else {
     collateralToken.poolCount = collateralToken.poolCount.plus(ONE_BI)
   }

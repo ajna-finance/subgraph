@@ -121,8 +121,7 @@ describe("ERC721PoolFactory assertions", () => {
     const expectedCollateralToken = Address.fromString("0xC9bCeeEA5288b2BE0b777F4F388F125F55aB5a81")
     const expectedQuoteToken      = Address.fromString("0x10aA0Cf12AAb305bd77AD8F76c037E048B12513B")
 
-    assert.entityCount("ERC721Token", 1)
-    assert.entityCount("Token", 1)
+    assert.entityCount("Token", 2)
 
     assert.fieldEquals(
       "Token",
@@ -137,13 +136,13 @@ describe("ERC721PoolFactory assertions", () => {
       "Q"
     )
     assert.fieldEquals(
-      "ERC721Token",
+      "Token",
       `${expectedCollateralToken.toHexString()}`,
       "name",
       "collateral"
     )
     assert.fieldEquals(
-      "ERC721Token",
+      "Token",
       `${expectedCollateralToken.toHexString()}`,
       "symbol",
       "C"

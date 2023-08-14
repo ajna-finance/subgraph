@@ -2,7 +2,7 @@
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 
 import { ERC721 } from "../../generated/ERC721PoolFactory/ERC721"
-import { ERC721Token, Pool, Token } from "../../generated/schema"
+import { Pool, Token } from "../../generated/schema"
 import { ONE_BI, ONE_WAD_BI, ZERO_BI } from "./constants"
 
 export function getTokenBalance(tokenAddress: Address, address: Address): BigInt {
@@ -43,7 +43,7 @@ export function getTokenURI(tokenAddress: Address, tokenId: BigInt): string {
 
 export function incrementTokenTxCount(pool: Pool): void {
     // increment token tx count
-    const collateralToken = ERC721Token.load(pool.collateralToken)!
+    const collateralToken = Token.load(pool.collateralToken)!
     collateralToken.txCount = collateralToken.txCount.plus(ONE_BI)
     collateralToken.save()
     const quoteToken = Token.load(pool.quoteToken)!
