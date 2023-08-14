@@ -3,13 +3,20 @@ import { ethereum, Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import {
   AddCollateralNFT,
   AddQuoteToken,
+  AuctionNFTSettle,
+  BucketBankruptcy,
+  BucketTake,
+  BucketTakeLPAwarded,
   DrawDebtNFT,
   Flashloan,
+  Kick,
   KickReserveAuction,
   MergeOrRemoveCollateralNFT,
   RemoveCollateral,
   RepayDebt,
-  ReserveAuction
+  ReserveAuction,
+  Settle,
+  Take
 } from "../../generated/templates/ERC721Pool/ERC721Pool"
 
 export function createAddCollateralNFTEvent(
@@ -85,6 +92,142 @@ export function createAddQuoteTokenEvent(
   return addQuoteTokenEvent
 }
 
+export function createAuctionNFTSettleEvent(
+  borrower: Address,
+  collateral: BigInt,
+  lp: BigInt,
+  index: BigInt
+): AuctionNFTSettle {
+  let auctionNftSettleEvent = changetype<AuctionNFTSettle>(newMockEvent())
+
+  auctionNftSettleEvent.parameters = new Array()
+
+  auctionNftSettleEvent.parameters.push(
+    new ethereum.EventParam("borrower", ethereum.Value.fromAddress(borrower))
+  )
+  auctionNftSettleEvent.parameters.push(
+    new ethereum.EventParam(
+      "collateral",
+      ethereum.Value.fromUnsignedBigInt(collateral)
+    )
+  )
+  auctionNftSettleEvent.parameters.push(
+    new ethereum.EventParam("lp", ethereum.Value.fromUnsignedBigInt(lp))
+  )
+  auctionNftSettleEvent.parameters.push(
+    new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
+  )
+
+  return auctionNftSettleEvent
+}
+
+export function createBucketBankruptcyEvent(
+  pool: Address,
+  index: BigInt,
+  lpForfeited: BigInt
+): BucketBankruptcy {
+  let bucketBankruptcyEvent = changetype<BucketBankruptcy>(newMockEvent())
+
+  bucketBankruptcyEvent.parameters = new Array()
+
+  bucketBankruptcyEvent.parameters.push(
+    new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
+  )
+  bucketBankruptcyEvent.parameters.push(
+    new ethereum.EventParam(
+      "lpForfeited",
+      ethereum.Value.fromUnsignedBigInt(lpForfeited)
+    )
+  )
+
+  // update transaction target to the expected pool address
+  bucketBankruptcyEvent.address = pool
+
+  return bucketBankruptcyEvent
+}
+
+export function createBucketTakeEvent(
+  pool: Address,
+  taker: Address,
+  borrower: Address,
+  index: BigInt,
+  amount: BigInt,
+  collateral: BigInt,
+  bondChange: BigInt,
+  isReward: boolean
+): BucketTake {
+  let bucketTakeEvent = changetype<BucketTake>(newMockEvent())
+
+  bucketTakeEvent.parameters = new Array()
+
+  bucketTakeEvent.parameters.push(
+    new ethereum.EventParam("borrower", ethereum.Value.fromAddress(borrower))
+  )
+  bucketTakeEvent.parameters.push(
+    new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
+  )
+  bucketTakeEvent.parameters.push(
+    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
+  )
+  bucketTakeEvent.parameters.push(
+    new ethereum.EventParam(
+      "collateral",
+      ethereum.Value.fromUnsignedBigInt(collateral)
+    )
+  )
+  bucketTakeEvent.parameters.push(
+    new ethereum.EventParam(
+      "bondChange",
+      ethereum.Value.fromUnsignedBigInt(bondChange)
+    )
+  )
+  bucketTakeEvent.parameters.push(
+    new ethereum.EventParam("isReward", ethereum.Value.fromBoolean(isReward))
+  )
+
+  // update transaction targets to the expected pool address and taker
+  bucketTakeEvent.transaction.from = taker
+  bucketTakeEvent.address = pool
+
+  return bucketTakeEvent
+}
+
+export function createBucketTakeLPAwardedEvent(
+  pool: Address,
+  taker: Address,
+  kicker: Address,
+  lpAwardedTaker: BigInt,
+  lpAwardedKicker: BigInt
+): BucketTakeLPAwarded {
+  let bucketTakeLpAwardedEvent = changetype<BucketTakeLPAwarded>(newMockEvent())
+
+  bucketTakeLpAwardedEvent.parameters = new Array()
+
+  bucketTakeLpAwardedEvent.parameters.push(
+    new ethereum.EventParam("taker", ethereum.Value.fromAddress(taker))
+  )
+  bucketTakeLpAwardedEvent.parameters.push(
+    new ethereum.EventParam("kicker", ethereum.Value.fromAddress(kicker))
+  )
+  bucketTakeLpAwardedEvent.parameters.push(
+    new ethereum.EventParam(
+      "lpAwardedTaker",
+      ethereum.Value.fromUnsignedBigInt(lpAwardedTaker)
+    )
+  )
+  bucketTakeLpAwardedEvent.parameters.push(
+    new ethereum.EventParam(
+      "lpAwardedKicker",
+      ethereum.Value.fromUnsignedBigInt(lpAwardedKicker)
+    )
+  )
+
+  // update transaction targets to the expected pool address
+  bucketTakeLpAwardedEvent.address = pool
+
+  return bucketTakeLpAwardedEvent
+}
+
 export function createDrawDebtNFTEvent(
   pool: Address,
   borrower: Address,
@@ -141,6 +284,41 @@ export function createFlashloanEvent(
   )
 
   return flashloanEvent
+}
+
+export function createKickEvent(
+  pool: Address,
+  kicker: Address,
+  borrower: Address,
+  debt: BigInt,
+  collateral: BigInt,
+  bond: BigInt
+): Kick {
+  let kickEvent = changetype<Kick>(newMockEvent())
+
+  kickEvent.parameters = new Array()
+
+  kickEvent.parameters.push(
+    new ethereum.EventParam("borrower", ethereum.Value.fromAddress(borrower))
+  )
+  kickEvent.parameters.push(
+    new ethereum.EventParam("debt", ethereum.Value.fromUnsignedBigInt(debt))
+  )
+  kickEvent.parameters.push(
+    new ethereum.EventParam(
+      "collateral",
+      ethereum.Value.fromUnsignedBigInt(collateral)
+    )
+  )
+  kickEvent.parameters.push(
+    new ethereum.EventParam("bond", ethereum.Value.fromUnsignedBigInt(bond))
+  )
+
+  // update transaction target to the expected pool address and kicker
+  kickEvent.transaction.from = kicker
+  kickEvent.address = pool
+
+  return kickEvent
 }
 
 export function createKickReserveAuctionEvent(
@@ -310,4 +488,73 @@ export function createReserveAuctionEvent(
   )
 
   return reserveAuctionEvent
+}
+
+export function createSettleEvent(
+  pool: Address,
+  settler: Address,
+  borrower: Address,
+  settledDebt: BigInt
+): Settle {
+  let settleEvent = changetype<Settle>(newMockEvent())
+
+  settleEvent.parameters = new Array()
+
+  settleEvent.parameters.push(
+    new ethereum.EventParam("borrower", ethereum.Value.fromAddress(borrower))
+  )
+  settleEvent.parameters.push(
+    new ethereum.EventParam(
+      "settledDebt",
+      ethereum.Value.fromUnsignedBigInt(settledDebt)
+    )
+  )
+
+  // update transaction targets to the expected pool address and taker
+  settleEvent.transaction.from = settler
+  settleEvent.address = pool
+
+  return settleEvent
+}
+
+export function createTakeEvent(
+  pool: Address,
+  taker: Address,
+  borrower: Address,
+  amount: BigInt,
+  collateral: BigInt,
+  bondChange: BigInt,
+  isReward: boolean
+): Take {
+  let takeEvent = changetype<Take>(newMockEvent())
+
+  takeEvent.parameters = new Array()
+
+  takeEvent.parameters.push(
+    new ethereum.EventParam("borrower", ethereum.Value.fromAddress(borrower))
+  )
+  takeEvent.parameters.push(
+    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
+  )
+  takeEvent.parameters.push(
+    new ethereum.EventParam(
+      "collateral",
+      ethereum.Value.fromUnsignedBigInt(collateral)
+    )
+  )
+  takeEvent.parameters.push(
+    new ethereum.EventParam(
+      "bondChange",
+      ethereum.Value.fromUnsignedBigInt(bondChange)
+    )
+  )
+  takeEvent.parameters.push(
+    new ethereum.EventParam("isReward", ethereum.Value.fromBoolean(isReward))
+  )
+
+  // update transaction targets to the expected pool address and taker
+  takeEvent.transaction.from = taker
+  takeEvent.address = pool
+
+  return takeEvent
 }

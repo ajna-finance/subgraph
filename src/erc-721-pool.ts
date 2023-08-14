@@ -676,6 +676,7 @@ export function handleTake(event: TakeEvent): void {
   loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsTaken, loan.tokenIdsPledged)
   pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsTaken, pool.tokenIdsPledged)
 
+  // TODO: ensure that loan.collateralPledged is accurate to the post take amount and rebalancing is correct
   // Rebalance any borrower tokenIds if necessary
   const numberOfTokensToLeave = BigInt.fromString(Math.floor(decimalToWad(loan.collateralPledged).div(ONE_WAD_BI).toI32()).toString()).toI32()
   const tokenIdsToRebalance = loan.tokenIdsPledged.slice(numberOfTokensToLeave)
