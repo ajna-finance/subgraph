@@ -123,10 +123,14 @@ dataSources:
       abis:
         - name: ERC721PoolFactory
           file: ./abis/ERC721PoolFactory.json
+        - name: ERC721Pool
+          file: ./abis/ERC721Pool.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: ERC721
           file: ./abis/ERC721.json
+        - name: PoolInfoUtils
+          file: ./abis/PoolInfoUtils.json
       eventHandlers:
         - event: PoolCreated(address)
           handler: handlePoolCreated
@@ -334,6 +338,8 @@ templates:
         - TransferLP
         - UpdateInterestRate
       abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
         - name: ERC721
           file: ./abis/ERC721.json
         - name: ERC721Pool
