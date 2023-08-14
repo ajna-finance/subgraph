@@ -7,23 +7,27 @@ import {
   BucketBankruptcy as BucketBankruptcyEvent,
   BucketTake as BucketTakeEvent,
   BucketTakeLPAwarded as BucketTakeLPAwardedEvent,
+  BondWithdrawn as BondWithdrawnEvent,
   DrawDebtNFT as DrawDebtNFTEvent,
   DecreaseLPAllowance as DecreaseLPAllowanceEvent,
   Flashloan as FlashloanEvent,
   IncreaseLPAllowance as IncreaseLPAllowanceEvent,
   Kick as KickEvent,
   KickReserveAuction as KickReserveAuctionEvent,
+  LoanStamped as LoanStampedEvent,
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
   MoveQuoteToken as MoveQuoteTokenEvent,
   RemoveCollateral as RemoveCollateralEvent,
   RemoveQuoteToken as RemoveQuoteTokenEvent,
   RepayDebt as RepayDebtEvent,
   ReserveAuction as ReserveAuctionEvent,
+  ResetInterestRate as ResetInterestRateEvent,
   RevokeLPAllowance as RevokeLPAllowanceEvent,
   RevokeLPTransferors as RevokeLPTransferorsEvent,
   Settle as SettleEvent,
   Take as TakeEvent,
-  TransferLP as TransferLPEvent
+  TransferLP as TransferLPEvent,
+  UpdateInterestRate as UpdateInterestRateEvent
 } from "../generated/templates/ERC721Pool/ERC721Pool"
 import {
   AddCollateralNFT,
@@ -32,10 +36,12 @@ import {
   BucketTake,
   BucketTakeLPAwarded,
   BucketBankruptcy,
+  BondWithdrawn,
   DrawDebtNFT,
   Flashloan,
   LiquidationAuction,
   Loan,
+  LoanStamped,
   ReserveAuctionKick,
   MergeOrRemoveCollateralNFT,
   Pool,
@@ -46,6 +52,7 @@ import {
   Settle,
   Take,
   TransferLP,
+  UpdateInterestRate,
   Account,
   Bucket,
   Kick,
@@ -197,6 +204,18 @@ export function handleFlashloan(event: FlashloanEvent): void {
   flashloan.save()
 }
 
+export function handleLoanStamped(event: LoanStampedEvent): void {
+  const entity = new LoanStamped(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  entity.borrower = event.params.borrower
+  entity.pool = addressToBytes(event.address)
+
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+}
+
 /*****************************/
 /*** Lender Event Handlers ***/
 /*****************************/
@@ -272,6 +291,44 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
 export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
   event = changetype<MoveQuoteTokenEvent | null>(event)!
   _handleMoveQuoteToken(null, event)
+}
+
+export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
+  const bucketBankruptcy = new BucketBankruptcy(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  bucketBankruptcy.index = event.params.index.toU32()
+  bucketBankruptcy.lpForfeited = wadToDecimal(event.params.lpForfeited)
+
+  bucketBankruptcy.blockNumber = event.block.number
+  bucketBankruptcy.blockTimestamp = event.block.timestamp
+  bucketBankruptcy.transactionHash = event.transaction.hash
+
+  // update entities
+  const pool = Pool.load(addressToBytes(event.address))
+  if (pool != null) {
+    // update pool state
+    updatePool(pool)
+
+    // update bucket state to zero out bucket contents
+    const bucketId      = getBucketId(pool.id, event.params.index.toU32())
+    const bucket        = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
+    bucket.collateral   = ZERO_BD
+    bucket.deposit      = ZERO_BD
+    bucket.lpb          = ZERO_BD
+    bucket.exchangeRate = ZERO_BD
+
+    bucketBankruptcy.bucket = bucketId
+    bucketBankruptcy.pool = pool.id
+
+    // TODO: update Lends
+
+    // save entities to store
+    pool.save()
+    bucket.save()
+  }
+
+  bucketBankruptcy.save()
 }
 
 export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
@@ -495,6 +552,21 @@ export function handleMergeOrRemoveCollateralNFT(
 /**********************************/
 /*** Liquidation Event Handlers ***/
 /**********************************/
+
+export function handleBondWithdrawn(event: BondWithdrawnEvent): void {
+  const entity = new BondWithdrawn(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  entity.kicker = event.params.kicker
+  entity.reciever = event.params.reciever
+  entity.amount = wadToDecimal(event.params.amount)
+
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+
+  entity.save()
+}
 
 // emitted concurrently with `Settle`
 export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
@@ -1065,4 +1137,78 @@ export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   pool.save()
   reserveAuction.save()
   reserveKick.save()
+}
+
+/***************************/
+/*** Pool Event Handlers ***/
+/***************************/
+
+export function handleResetInterestRate(event: ResetInterestRateEvent): void {
+  const resetInterestRate = new UpdateInterestRate(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  const poolAddress = addressToBytes(event.address)
+  const pool = Pool.load(poolAddress)!
+  const ratesAndFees = getRatesAndFees(poolAddress)
+  updatePool(pool)
+
+  resetInterestRate.pool = pool.id
+  resetInterestRate.oldBorrowRate = pool.borrowRate
+  resetInterestRate.oldLendRate = pool.lendRate
+  resetInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
+  resetInterestRate.oldDepositFeeRate = pool.depositFeeRate
+  resetInterestRate.newBorrowRate = wadToDecimal(event.params.newRate)
+  resetInterestRate.newLendRate = pool.lendRate
+  resetInterestRate.newBorrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
+  resetInterestRate.newDepositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
+
+  resetInterestRate.blockNumber = event.block.number
+  resetInterestRate.blockTimestamp = event.block.timestamp
+  resetInterestRate.transactionHash = event.transaction.hash
+
+  // update pool state
+  pool.borrowRate = resetInterestRate.newBorrowRate
+  pool.lendRate = resetInterestRate.newLendRate
+  pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
+  pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+
+  // save entities to the store
+  pool.save()
+  resetInterestRate.save()
+}
+
+export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
+  const updateInterestRate = new UpdateInterestRate(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  const poolAddress = addressToBytes(event.address)
+  const pool = Pool.load(poolAddress)!
+  const ratesAndFees = getRatesAndFees(poolAddress)
+  updatePool(pool)
+
+  updateInterestRate.pool = pool.id
+  updateInterestRate.oldBorrowRate = pool.borrowRate
+  updateInterestRate.oldLendRate = pool.lendRate
+  updateInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
+  updateInterestRate.oldDepositFeeRate = pool.depositFeeRate
+  updateInterestRate.newBorrowRate = wadToDecimal(event.params.newRate)
+  updateInterestRate.newLendRate = pool.lendRate
+  updateInterestRate.newBorrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
+  updateInterestRate.newDepositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
+
+  updateInterestRate.blockNumber = event.block.number
+  updateInterestRate.blockTimestamp = event.block.timestamp
+  updateInterestRate.transactionHash = event.transaction.hash
+
+  // update pool state
+  pool.borrowRate = updateInterestRate.newBorrowRate
+  pool.lendRate = updateInterestRate.newLendRate
+  pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
+  pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+
+  // save entities to the store
+  pool.save()
+  updateInterestRate.save()
 }
