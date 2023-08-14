@@ -519,7 +519,7 @@ export function mockGetPoolUtilizationInfo(pool: Address, expectedInfo: PoolUtil
 }
 
 // mock auctionInfo contract calls
-export function mockGetAuctionInfoERC20Pool(borrower: Address, pool: Address, expectedInfo: AuctionInfo): void {
+export function mockGetAuctionInfo(borrower: Address, pool: Address, expectedInfo: AuctionInfo): void {
     createMockedFunction(pool, 'auctionInfo', 'auctionInfo(address):(address,uint256,uint256,uint256,uint256,uint256,address,address,address,bool)')
         .withArgs([ethereum.Value.fromAddress(borrower)])
         .returns([

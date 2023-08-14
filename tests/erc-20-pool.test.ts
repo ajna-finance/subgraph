@@ -16,7 +16,7 @@ import {
   assertLendUpdate,
   assertPoolUpdate,
   createPool,
-  mockGetAuctionInfoERC20Pool,
+  mockGetAuctionInfo,
   mockGetAuctionStatus,
   mockGetBorrowerInfo,
   mockGetBucketInfo,
@@ -657,7 +657,7 @@ describe("ERC20Pool assertions", () => {
       prev,
       alreadyTaken
     )
-    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+    mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
     const expectedAuctionStatus = new AuctionStatus(
       kickTime,
       collateral,
@@ -841,7 +841,7 @@ describe("ERC20Pool assertions", () => {
       prev,
       false
     )
-    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+    mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 
     const inflator = BigInt.fromString("1001530000000000000")
     let expectedBorrowerInfo = new BorrowerInfo(
@@ -878,7 +878,7 @@ describe("ERC20Pool assertions", () => {
       prev,
       alreadyTaken
     )
-    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+    mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
     const expectedAuctionStatus = new AuctionStatus(
       kickTime,
       collateral,
@@ -1031,7 +1031,7 @@ describe("ERC20Pool assertions", () => {
       prev,
       alreadyTaken
     )
-    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+    mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 
     // mock kick event
     const newKickEvent = createKickEvent(
@@ -1061,7 +1061,7 @@ describe("ERC20Pool assertions", () => {
       prev,
       alreadyTaken
     )
-    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+    mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
     const expectedAuctionStatus = new AuctionStatus(
       kickTime,
       collateral,
@@ -1226,7 +1226,7 @@ describe("ERC20Pool assertions", () => {
       prev,
       alreadyTaken
     )
-    mockGetAuctionInfoERC20Pool(borrower, poolAddress, expectedAuctionInfo)
+    mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 
     // mock kick event
     const newKickEvent = createKickEvent(

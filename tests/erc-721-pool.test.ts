@@ -12,17 +12,18 @@ import {
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Account, AddCollateralNFT, Lend, Loan } from "../generated/schema"
 import { AddCollateralNFT as AddCollateralNFTEvent } from "../generated/templates/ERC721Pool/ERC721Pool"
-import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral } from "../src/erc-721-pool"
-import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent } from "./utils/erc-721-pool-utils"
+import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick } from "../src/erc-721-pool"
+import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent } from "./utils/erc-721-pool-utils"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
-import { assertBucketUpdate, assertLendUpdate, create721Pool, createPool, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
+import { assertBucketUpdate, assertLendUpdate, create721Pool, createPool, mockGetAuctionInfo, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/pool/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
 import { DebtInfo } from "../src/utils/pool/pool"
 import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
 import { wdiv } from "../src/utils/math"
 import { getLendId } from "../src/utils/pool/lend"
+import { AuctionInfo } from "../src/utils/pool/liquidation"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -724,6 +725,85 @@ describe("Describe entity assertions", () => {
     const calldata = Bytes.empty()
     const newMergeOrRemoveCollateralNFTEvent = createMergeOrRemoveCollateralNFTEvent(poolAddress, actor, collateralMerged, toIndexLps, calldata)
     // handleMergeOrRemoveCollateralNFT(newMergeOrRemoveCollateralNFTEvent)
+
+  })
+
+  // TODO: finish implementing this
+  test("Kick, Take, and Settle", () => {
+    // // mock event params
+    // const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    // const taker = Address.fromString("0x0000000000000000000000000000000000000009")
+    // const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
+    // const amountToTake = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    // const collateral = BigInt.fromString("1067529276179422528643") // 1067.529276179422528643 * 1e18
+    // const bondChange = BigInt.fromString("234000000000000000000")
+    // const isReward = false
+
+    // /*****************/
+    // /*** Draw Debt ***/
+    // /*****************/
+
+    // /********************/
+    // /*** Kick Auction ***/
+    // /********************/
+
+    // // mock auction info
+    // const kicker = Address.fromString("0x0000000000000000000000000000000000000003")
+    // const bond = BigInt.fromString("234000000000000000000")
+    // const bondFactor = ONE_WAD_BI
+    // const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    // const kickTime = BigInt.fromI32(123)
+    // const kickMomp = BigInt.fromI32(456)
+    // const neutralPrice = BigInt.fromI32(456)
+    // const head = Address.fromString("0x0000000000000000000000000000000000000000")
+    // const next = Address.fromString("0x0000000000000000000000000000000000000000")
+    // const prev = Address.fromString("0x0000000000000000000000000000000000000000")
+    // const alreadyTaken = false
+
+    // let expectedAuctionInfo = new AuctionInfo(
+    //   kicker,
+    //   bondFactor,
+    //   bond,
+    //   kickTime,
+    //   kickMomp,
+    //   neutralPrice,
+    //   head,
+    //   next,
+    //   prev,
+    //   false
+    // )
+    // mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
+
+    // const inflator = BigInt.fromString("1001530000000000000")
+    // let expectedBorrowerInfo = new BorrowerInfo(
+    //   wdiv(debt, inflator),
+    //   collateral,
+    //   wdiv(neutralPrice, inflator))
+    // mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
+
+    // // mock kick event
+    // const newKickEvent = createKickEvent(
+    //   poolAddress,
+    //   kicker,
+    //   borrower,
+    //   debt,
+    //   collateral,
+    //   bond
+    // )
+    // handleKick(newKickEvent)
+
+    // /********************/
+    // /*** Take Auction ***/
+    // /********************/
+
+    // /********************/
+    // /*** Assert State ***/
+    // /********************/
+
+  })
+
+  // TODO: finish implementing this
+  test("Kick, BucketTake, and Settle", () => {
 
   })
 
