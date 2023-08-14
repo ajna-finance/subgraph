@@ -4,8 +4,13 @@ import {
   AddQuoteToken as AddQuoteTokenEvent,
   AuctionNFTSettle as AuctionNFTSettleEvent,
   AuctionSettle as AuctionSettleEvent,
+  BucketBankruptcy as BucketBankruptcyEvent,
+  BucketTake as BucketTakeEvent,
+  BucketTakeLPAwarded as BucketTakeLPAwardedEvent,
   DrawDebtNFT as DrawDebtNFTEvent,
+  DecreaseLPAllowance as DecreaseLPAllowanceEvent,
   Flashloan as FlashloanEvent,
+  IncreaseLPAllowance as IncreaseLPAllowanceEvent,
   Kick as KickEvent,
   KickReserveAuction as KickReserveAuctionEvent,
   MergeOrRemoveCollateralNFT as MergeOrRemoveCollateralNFTEvent,
@@ -24,6 +29,9 @@ import {
   AddCollateralNFT,
   AddQuoteToken,
   AuctionNFTSettle,
+  BucketTake,
+  BucketTakeLPAwarded,
+  BucketBankruptcy,
   DrawDebtNFT,
   Flashloan,
   LiquidationAuction,
@@ -55,7 +63,7 @@ import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool,
 import { lpbValueInQuote } from "./utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
 import { _handleAddQuoteToken, _handleMoveQuoteToken } from "./mappings/base/base-pool"
-import { loadOrCreateAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
+import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
 import { loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
 
 // TODO:
@@ -636,6 +644,10 @@ export function handleKick(event: KickEvent): void {
   kick.save()
 }
 
+export function handleBucketTake(event: Bucket): void {
+
+}
+
 export function handleTake(event: TakeEvent): void {
   const take = new Take(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -725,6 +737,36 @@ export function handleTake(event: TakeEvent): void {
 /*************************************/
 /*** LPB Management Event Handlers ***/
 /*************************************/
+
+export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
+  const poolId = addressToBytes(event.address)
+  const lender = event.transaction.from
+  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  decreaseAllowances(entity, event.params.indexes, event.params.amounts)
+
+  const pool = Pool.load(poolId)
+  if (pool != null) {
+    pool.txCount = pool.txCount.plus(ONE_BI)
+    pool.save()
+  }
+
+  entity.save()
+}
+
+export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
+  const poolId = addressToBytes(event.address)
+  const lender = event.transaction.from
+  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  increaseAllowances(entity, event.params.indexes, event.params.amounts)
+
+  const pool = Pool.load(poolId)
+  if (pool != null) {
+    pool.txCount = pool.txCount.plus(ONE_BI)
+    pool.save()
+  }
+
+  entity.save()
+}
 
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
   const poolId = addressToBytes(event.address)
