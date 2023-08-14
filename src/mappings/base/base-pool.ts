@@ -1,12 +1,14 @@
 import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts"
-import { AddQuoteToken, MoveQuoteToken, Pool } from "../../../generated/schema"
+import { AddQuoteToken, MoveQuoteToken, Pool, RemoveQuoteToken } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
-    MoveQuoteToken as MoveQuoteTokenERC20Event
+    MoveQuoteToken as MoveQuoteTokenERC20Event,
+    RemoveQuoteToken as RemoveQuoteTokenERC20Event
 } from "../../../generated/templates/ERC20Pool/ERC20Pool"
 import {
     AddQuoteToken as AddQuoteTokenERC721Event,
-    MoveQuoteToken as MoveQuoteTokenERC721Event
+    MoveQuoteToken as MoveQuoteTokenERC721Event,
+    RemoveQuoteToken as RemoveQuoteTokenERC721Event
 } from "../../../generated/templates/ERC721Pool/ERC721Pool"
 
 import { loadOrCreateAccount, updateAccountLends, updateAccountPools } from "../../utils/account"
@@ -242,4 +244,105 @@ export function _handleMoveQuoteToken(erc20Event: MoveQuoteTokenERC20Event | nul
     moveQuoteToken.to = toBucketId
     moveQuoteToken.pool = pool.id
     moveQuoteToken.save()
+}
+
+export function _handleRemoveQuoteToken(erc20Event: RemoveQuoteTokenERC20Event | null, erc721Event: RemoveQuoteTokenERC721Event | null): void {
+    // get pool based upon the event source
+    const pool = erc20Event === null ? Pool.load(addressToBytes(erc721Event!.address))! : Pool.load(addressToBytes(erc20Event.address))!
+
+    // set event attribute types to local variables
+    let logIndex: i32;
+    let lender: Address;
+    let index: u32;
+    let amount: BigInt;
+    let lpRedeemed: BigInt;
+    let lup: BigInt;
+    let blockNumber: BigInt;
+    let blockTimestamp: BigInt;
+    let transactionHash: Bytes;
+
+    // access event attributes and write to local variables
+    if (isERC20Pool(pool)) {
+        incrementTokenTxCountERC20Pool(pool)
+
+        logIndex = erc20Event!.logIndex.toI32()
+        lender = erc20Event!.params.lender
+        index = erc20Event!.params.index.toU32()
+        amount = erc20Event!.params.amount
+        lpRedeemed = erc20Event!.params.lpRedeemed
+        lup = erc20Event!.params.lup
+        blockNumber = erc20Event!.block.number
+        blockTimestamp = erc20Event!.block.timestamp
+        transactionHash = erc20Event!.transaction.hash
+    } else {
+        incrementTokenTxCountERC721Pool(pool)
+
+        logIndex = erc721Event!.logIndex.toI32()
+        lender = erc721Event!.params.lender
+        index = erc721Event!.params.index.toU32()
+        amount = erc721Event!.params.amount
+        lpRedeemed = erc721Event!.params.lpRedeemed
+        lup = erc721Event!.params.lup
+        blockNumber = erc721Event!.block.number
+        blockTimestamp = erc721Event!.block.timestamp
+        transactionHash = erc721Event!.transaction.hash
+    }
+
+    const removeQuote = new RemoveQuoteToken(
+        transactionHash.concatI32(logIndex)
+    )
+    removeQuote.lender     = lender
+    removeQuote.index      = index
+    removeQuote.amount     = wadToDecimal(amount)
+    removeQuote.lpRedeemed = wadToDecimal(lpRedeemed)
+    removeQuote.lup        = wadToDecimal(lup)
+
+    removeQuote.blockNumber = blockNumber
+    removeQuote.blockTimestamp = blockTimestamp
+    removeQuote.transactionHash = transactionHash
+
+    // update pool entity
+    updatePool(pool)
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // update bucket state
+    const bucketId   = getBucketId(pool.id, event.params.index.toU32())
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
+    const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
+    bucket.collateral   = wadToDecimal(bucketInfo.collateral)
+    bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
+    bucket.lpb          = wadToDecimal(bucketInfo.lpb)
+    bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+
+    // update account state
+    const accountId = removeQuote.lender
+    const account   = loadOrCreateAccount(accountId)
+    account.txCount = account.txCount.plus(ONE_BI)
+
+    // update lend state
+    const lendId = getLendId(bucketId, accountId)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeQuote.lender)
+    if (removeQuote.lpRedeemed.le(lend.lpb)) {
+      lend.lpb = lend.lpb.minus(removeQuote.lpRedeemed)
+    } else {
+      log.warning('handleRemoveQuoteToken: lender {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0',
+                  [removeQuote.lender.toHexString(), removeQuote.lpRedeemed.toString(), lend.lpb.toString()])
+      lend.lpb = ZERO_BD
+    }
+    lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+
+    // update account's list of pools and lends if necessary
+    updateAccountPools(account, pool)
+    updateAccountLends(account, lend)
+
+    // save entities to store
+    account.save()
+    bucket.save()
+    lend.save()
+    pool.save()
+
+    // associate removeQuoteToken event with relevant entities and save to the store
+    removeQuote.bucket = bucket.id
+    removeQuote.pool = pool.id
+    removeQuote.save()
 }
