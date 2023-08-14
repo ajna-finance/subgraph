@@ -705,7 +705,15 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
 
-  // Rebalance borrower tokenIds used in bucketTake
+  // unique to ERC721Pools
+  // remove collateral taken from loan and pool
+  const numberOfTokensToTake = getWadCollateralFloorTokens(event.params.collateral).toI32()
+  const tokenIdsTaken = loan.tokenIdsPledged.slice(loan.tokenIdsPledged.length - numberOfTokensToTake, loan.tokenIdsPledged.length)
+  loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsTaken, loan.tokenIdsPledged)
+  pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsTaken, pool.tokenIdsPledged)
+
+  // unique to ERC721Pools
+  // Rebalance surplus borrower tokenIds after bucketTake
   const numberOfTokensToLeave = getWadCollateralFloorTokens(decimalToWad(loan.collateralPledged)).toI32()
   const tokenIdsToRebalance = loan.tokenIdsPledged.slice(numberOfTokensToLeave)
   loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsToRebalance, loan.tokenIdsPledged)
@@ -838,7 +846,6 @@ export function handleTake(event: TakeEvent): void {
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
 
   // remove tokenIdsTaken from loan and pool tokenIdsPledged
-  // const numberOfTokensToTake = BigInt.fromString(Math.floor(event.params.collateral.div(ONE_WAD_BI).toI32()).toString()).toI32()
   const numberOfTokensToTake = getWadCollateralFloorTokens(event.params.collateral).toI32()
   const tokenIdsTaken = loan.tokenIdsPledged.slice(loan.tokenIdsPledged.length - numberOfTokensToTake, loan.tokenIdsPledged.length)
   loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsTaken, loan.tokenIdsPledged)
