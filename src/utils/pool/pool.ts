@@ -5,7 +5,7 @@ import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, poolFactoryAddressTable, poolInfoUtilsAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
+import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, erc721PoolFactoryAddressTable, poolInfoUtilsAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
 import { addressToBytes, decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
 import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
@@ -18,7 +18,7 @@ export function getPoolAddress(poolId: Bytes): Address {
 }
 
 export function getPoolSubsetHash(tokenIds: BigInt[]): Bytes {
-  const erc721PoolFactoryAddress = poolFactoryAddressTable.get(dataSource.network())!
+  const erc721PoolFactoryAddress = erc721PoolFactoryAddressTable.get(dataSource.network())!
   const poolFactoryContract = ERC721PoolFactory.bind(erc721PoolFactoryAddress)
 
   return poolFactoryContract.getNFTSubsetHash(tokenIds)

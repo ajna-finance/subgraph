@@ -9,7 +9,7 @@ import { createERC721PoolFactoryPoolCreatedEvent } from "./erc-721-pool-factory-
 
 import { BucketInfo } from "../../src/utils/pool/bucket"
 import { wadToDecimal } from "../../src/utils/convert"
-import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI, poolFactoryAddressTable } from "../../src/utils/constants"
+import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI, erc721PoolFactoryAddressTable } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool/pool"
 import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
 import { BorrowerInfo } from "../../src/utils/pool/loan"
@@ -393,7 +393,7 @@ export function create721Pool(pool: Address, collateral: Address, quote: Address
     mockGetTokenInfo(quote, 'quote', 'Q', BigInt.fromI32(18), BigInt.fromI32(100))
 
     // handlePoolCreated event
-    const erc721PoolFactoryAddress = poolFactoryAddressTable.get(dataSource.network())!
+    const erc721PoolFactoryAddress = erc721PoolFactoryAddressTable.get(dataSource.network())!
     const newPoolCreatedEvent = createERC721PoolFactoryPoolCreatedEvent(erc721PoolFactoryAddress, pool, calldata)
     // TODO: DYNAMICALLY SET THIS ADDRESS
     newPoolCreatedEvent.address = Address.fromString("0x0000000000000000000000000000000000002020")
