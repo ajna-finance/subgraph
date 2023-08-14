@@ -306,8 +306,8 @@ export function _handleRemoveQuoteToken(erc20Event: RemoveQuoteTokenERC20Event |
     pool.txCount = pool.txCount.plus(ONE_BI)
 
     // update bucket state
-    const bucketId   = getBucketId(pool.id, event.params.index.toU32())
-    const bucket     = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
+    const bucketId   = getBucketId(pool.id, index)
+    const bucket     = loadOrCreateBucket(pool.id, bucketId, index)
     const bucketInfo = getBucketInfo(pool.id, bucket.bucketIndex)
     bucket.collateral   = wadToDecimal(bucketInfo.collateral)
     bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
