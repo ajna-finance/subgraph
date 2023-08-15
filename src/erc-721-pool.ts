@@ -880,6 +880,7 @@ export function handleTake(event: TakeEvent): void {
   const auctionStatus = getAuctionStatus(pool, event.params.borrower)
   updateLiquidationAuction(auction, auctionInfo, auctionStatus)
 
+  // TODO: should this debtCovered variable be used?
   const debtCovered         = wadToDecimal(event.params.amount)
   const collateralPurchased = wadToDecimal(event.params.collateral)
   pool.pledgedCollateral    = pool.pledgedCollateral.minus(collateralPurchased)

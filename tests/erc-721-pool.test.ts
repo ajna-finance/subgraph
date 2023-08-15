@@ -732,7 +732,10 @@ describe("Describe entity assertions", () => {
   test("Kick, Take, and Settle", () => {
 
     // check entities are unavailable prior to storage
+    assert.entityCount("Account", 0)
     assert.entityCount("DrawDebtNFT", 0)
+    assert.entityCount("Loan", 0)
+    assert.entityCount("LiquidationAuction", 0)
     assert.entityCount("Kick", 0)
     assert.entityCount("Take", 0)
     assert.entityCount("Settle", 0)
@@ -832,12 +835,8 @@ describe("Describe entity assertions", () => {
     /********************/
 
     const amountToTake = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
-    const collateralToTake = BigInt.fromString("3067529276179422528") // 3.067529276179422528 * 1e18
+    const collateralToTake = BigInt.fromString("3967529276179422528") // 3.967529276179422528 * 1e18
     const bondChange = BigInt.fromString("234000000000000000000")
-    const takeIndex = BigInt.fromI32(123)
-    const takePrice = BigDecimal.fromString("544160563095425000000000000")
-    const lpAwardedKicker = BigInt.fromString("0")
-    const lpAwardedTaker = BigInt.fromString("0")
 
     const isReward = false
 
@@ -853,10 +852,47 @@ describe("Describe entity assertions", () => {
     )
     handleTake(newTakeEvent)
 
+    /**********************/
+    /*** Settle Auction ***/
+    /**********************/
+
     /********************/
     /*** Assert State ***/
     /********************/
 
+    // check entities have been stored
+    assert.entityCount("Account", 3)
+    assert.entityCount("DrawDebtNFT", 1)
+    assert.entityCount("Loan", 1)
+    assert.entityCount("LiquidationAuction", 1)
+    assert.entityCount("Kick", 1)
+    assert.entityCount("Take", 1)
+    assert.entityCount("Settle", 0)
+    assert.entityCount("AuctionNFTSettle", 0)
+
+    // check Take state
+    assert.fieldEquals(
+      "Take",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "taker",
+      `${taker.toHexString()}`
+    )
+    assert.fieldEquals(
+      "Take",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "amount",
+      `${wadToDecimal(amountToTake)}`
+    )
+    assert.fieldEquals(
+      "Take",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "collateral",
+      `${wadToDecimal(collateralToTake)}`
+    )
+
+    // check LiquidationAuction state
+
+    // check tokenIds and rebalancing
   })
 
   // TODO: finish implementing this
