@@ -314,7 +314,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       // add additional screening votes to voter's distributionPeriodVote entity
       distributionPeriodVote.screeningVotes = distributionPeriodVote.screeningVotes.concat([screeningVote.id])
 
-      // associate the VoteCast entity with the FundingVote
+      // associate the VoteCast entity with the ScreeningVote
       screeningVote.votesCast.push(voteCast.id)
 
       // save screeningVote to the store
