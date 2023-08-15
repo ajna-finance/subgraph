@@ -21,6 +21,11 @@ type Token @entity {
   # TODO: track which tokenIds have been used in pools?
 }
 
+
+  # # # # # # # # #
+  # Pool ENTITIES #
+  # # # # # # # # #
+
 type PoolFactory @entity {
   # factory address
   id: Bytes!
@@ -316,19 +321,6 @@ type AddQuoteToken @entity(immutable: true) {
   amount: BigDecimal!    # uint256
   lpAwarded: BigDecimal! # uint256
   lup: BigDecimal!       # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type AuctionNFTSettle @entity(immutable: true) {
-  id: Bytes!
-  pool: Pool!             # Pool whose debt was settled
-  loan: Loan!             # Loan which was settled
-  borrower: Bytes!        # address
-  collateral: BigDecimal! # uint256
-  lp: BigDecimal!         # uint256
-  index: Int!             # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -672,6 +664,19 @@ type AddCollateralNFT @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type AuctionNFTSettle @entity(immutable: true) {
+  id: Bytes!
+  pool: Pool!             # Pool whose debt was settled
+  loan: Loan!             # Loan which was settled
+  borrower: Bytes!        # address
+  collateral: BigDecimal! # uint256
+  lp: BigDecimal!         # uint256
+  index: Int!             # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type DrawDebtNFT @entity(immutable: true) {
   id: Bytes!
   pool: Pool!                 # Pool from which quote was withdrawn
@@ -748,20 +753,6 @@ type RedeemPosition @entity(immutable: true) {
   lender: Bytes!   # address
   tokenId: BigInt! # uint256
   indexes: [Int!]! # uint256[]
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-  # # # # # # # # # # # #
-  # BURN WRAPPER EVENTS #
-  # # # # # # # # # # # #
-
-type BurnWrap @entity(immutable: true) {
-  id: Bytes!
-  wrapper: Bytes!     # address
-  account: Account    # null if does not already exist
-  amount: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -946,25 +937,6 @@ type FundedSlate @entity {
   # GRANT FUND EVENTS #
   # # # # # # # # # # #
 
-type DelegateChanged @entity(immutable: true) {
-  id: Bytes!
-  delegator: Bytes! # address
-  fromDelegate: Bytes! # address
-  toDelegate: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type DelegateVotesChanged @entity(immutable: true) {
-  id: Bytes!
-  delegate: Bytes! # address
-  previousBalance: BigDecimal! # uint256
-  newBalance: BigDecimal! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
 
 type DelegateRewardClaimed @entity(immutable: true) {
   id: Bytes!
@@ -1035,6 +1007,45 @@ type VoteCast @entity(immutable: true) {
   support: Int! # uint8
   weight: BigDecimal! # uint256
   reason: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+  # # # # # # # # # # #
+  # AJNA TOKEN EVENTS #
+  # # # # # # # # # # #
+
+type DelegateChanged @entity(immutable: true) {
+  id: Bytes!
+  delegator: Bytes! # address
+  fromDelegate: Bytes! # address
+  toDelegate: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type DelegateVotesChanged @entity(immutable: true) {
+  id: Bytes!
+  delegate: Bytes! # address
+  previousBalance: BigDecimal! # uint256
+  newBalance: BigDecimal! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+
+  # # # # # # # # # # # #
+  # BURN WRAPPER EVENTS #
+  # # # # # # # # # # # #
+
+type BurnWrap @entity(immutable: true) {
+  id: Bytes!
+  wrapper: Bytes!     # address
+  account: Account    # null if does not already exist
+  amount: BigDecimal! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

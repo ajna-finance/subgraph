@@ -708,25 +708,6 @@ describe("Describe entity assertions", () => {
 
   })
 
-  // TODO: finish implementing once a mergeOrRemoveCollateralNFT calldata becomes available
-  test("MergeOrRemoveCollateralNFT", () => {
-    // check entity is unavailable prior to storage
-    assert.entityCount("MergeOrRemoveCollateralNFT", 0)
-
-    // mock parameters
-    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
-    const actor = Address.fromString("0x0000000000000000000000000000000000000003")
-    const collateralMerged = BigInt.fromString("2000000000000000000") // 2 * 1e18
-    const toIndexLps = BigInt.fromI32(234)
-
-    // TODO: mock required contract calls
-
-    const calldata = Bytes.empty()
-    const newMergeOrRemoveCollateralNFTEvent = createMergeOrRemoveCollateralNFTEvent(poolAddress, actor, collateralMerged, toIndexLps, calldata)
-    // handleMergeOrRemoveCollateralNFT(newMergeOrRemoveCollateralNFTEvent)
-
-  })
-
   // TODO: finish implementing this
   test("Kick, Take, and Settle", () => {
 
@@ -1077,6 +1058,25 @@ describe("Describe entity assertions", () => {
 
   // TODO: finish implementing this
   test("Kick, BucketTake, and Settle", () => {
+
+  })
+
+  // TODO: finish implementing once a mergeOrRemoveCollateralNFT calldata becomes available
+  test("MergeOrRemoveCollateralNFT", () => {
+    // check entity is unavailable prior to storage
+    assert.entityCount("MergeOrRemoveCollateralNFT", 0)
+
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const actor = Address.fromString("0x0000000000000000000000000000000000000003")
+    const collateralMerged = BigInt.fromString("2000000000000000000") // 2 * 1e18
+    const toIndexLps = BigInt.fromI32(234)
+
+    // TODO: mock required contract calls
+
+    const calldata = Bytes.empty()
+    const newMergeOrRemoveCollateralNFTEvent = createMergeOrRemoveCollateralNFTEvent(poolAddress, actor, collateralMerged, toIndexLps, calldata)
+    // handleMergeOrRemoveCollateralNFT(newMergeOrRemoveCollateralNFTEvent)
 
   })
 
