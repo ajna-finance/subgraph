@@ -29,6 +29,7 @@ import {
 import {
   DISTRIBUTION_PERIOD_LENGTH,
   NEG_ONE_BD,
+  NEG_ONE_BI,
   ONE_BI,
   ONE_WAD_BI,
   SCREENING_PERIOD_LENGTH,
@@ -602,7 +603,8 @@ describe("Grant Fund assertions", () => {
     support = 0;
     votesCast = BigInt.fromI32(-234);
 
-    const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, support, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(2));
+    const emittedVotesCast = votesCast.times(NEG_ONE_BI); // emitted amount is always abs(votesCast)
+    const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, support, emittedVotesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(2));
     handleVoteCast(fundingVoteCastEvent);
 
     /********************/
@@ -799,14 +801,14 @@ describe("Grant Fund assertions", () => {
 
     // mock parameters
     const voter = Address.fromString("0x0000000000000000000000000000000000000050");
-    const votesCast = BigInt.fromString("-234000000000000000000")
+    const votesCast = BigInt.fromString("234000000000000000000")
     const reason = ""
 
     const fundingVotingPower = votesCast.times(votesCast);
 
     mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);
 
-    const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 0, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(1));
+    const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(1));
     handleVoteCast(fundingVoteCastEvent);
 
     /********************/
@@ -824,6 +826,11 @@ describe("Grant Fund assertions", () => {
     /********************/
     /*** Assert State ***/
     /********************/
+
+    const fundingVoteId = getFundingVoteId(bigIntToBytes(proposalId), addressToBytes(voter), bigIntToBytes(distributionId));
+    const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
+    const expectedProposalId = bigIntToBytes(proposalId).toHexString();
+    const expectedVotingPowerUsed = wadToDecimal(votesCast).times(wadToDecimal(votesCast));
 
     // check GrantFund attributes
     assert.entityCount("GrantFund", 1);
@@ -848,5 +855,52 @@ describe("Grant Fund assertions", () => {
       "totalTokensRequested",
       `${wadToDecimal(BigInt.fromString("2000000000000000000000"))}` // 1000 * 1e18
     );
+
+    // check FundingVote attributes
+    assert.fieldEquals(
+      "FundingVote",
+      `${fundingVoteId.toHexString()}`,
+      "distribution",
+      `${expectedDistributionId}`
+    );
+    assert.fieldEquals(
+      "FundingVote",
+      `${fundingVoteId.toHexString()}`,
+      "voter",
+      `${voter.toHexString()}`
+    );
+    assert.fieldEquals(
+      "FundingVote",
+      `${fundingVoteId.toHexString()}`,
+      "totalVotesCast",
+      `${wadToDecimal(votesCast)}`
+    );
+    assert.fieldEquals(
+      "FundingVote",
+      `${fundingVoteId.toHexString()}`,
+      "votingPowerUsed",
+      `${expectedVotingPowerUsed}`
+    );
+
+    // check proposal attributes
+    assert.fieldEquals(
+      "Proposal",
+      `${expectedProposalId}`,
+      "fundingVotesReceived",
+      `${wadToDecimal(votesCast)}`
+    );
+    assert.fieldEquals(
+      "Proposal",
+      `${expectedProposalId}`,
+      "fundingVotesNegative",
+      `${0}`
+    );
+    assert.fieldEquals(
+      "Proposal",
+      `${expectedProposalId}`,
+      "fundingVotesPositive",
+      `${wadToDecimal(votesCast)}`
+    );
+
   });
 });

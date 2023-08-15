@@ -11,6 +11,7 @@ export const THREE_PERCENT_BI = BigInt.fromString("30000000000000000") // 0.03 *
 export const FIVE_PERCENT_BI  = BigInt.fromString("50000000000000000") // 0.05 * 1e18
 export const HALF_WAD_BI      = BigInt.fromString("500000000000000000")
 export const ONE_WAD_BI       = BigInt.fromString("1000000000000000000")
+export const NEG_ONE_BI       = BigInt.fromString('-1')
 
 // BigDecimal constants
 export const ZERO_BD = BigDecimal.zero()
