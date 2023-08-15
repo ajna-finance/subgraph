@@ -643,6 +643,18 @@ describe("Grant Fund assertions", () => {
       "fundingVotesReceived",
       `${wadToDecimal(votesCast)}`
     );
+    assert.fieldEquals(
+      "Proposal",
+      `${expectedProposalId}`,
+      "fundingVotesNegative",
+      `${wadToDecimal(votesCast)}`
+    );
+    assert.fieldEquals(
+      "Proposal",
+      `${expectedProposalId}`,
+      "fundingVotesPositive",
+      `${0}`
+    );
 
     assert.fieldEquals(
       "DistributionPeriodVote",

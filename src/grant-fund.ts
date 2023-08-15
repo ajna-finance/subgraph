@@ -327,10 +327,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       fundingVote.distribution = distributionId
       fundingVote.voter = voter.id
       fundingVote.proposal = proposalId
-      if (event.params.support == 1)
-        fundingVote.totalVotesCast = fundingVote.totalVotesCast.plus(voteCast.weight)
-      else
-        fundingVote.totalVotesCast = fundingVote.totalVotesCast.minus(voteCast.weight)
+      fundingVote.totalVotesCast = fundingVote.totalVotesCast.plus(voteCast.weight)
 
       // save initial fundingVote information to enable usage in calculation of votingPowerUsed
       fundingVote.votingPowerUsed = ZERO_BD
@@ -357,7 +354,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       if (fundingVote.totalVotesCast > ZERO_BD)
         proposal.fundingVotesPositive = proposal.fundingVotesPositive.plus(voteCast.weight)
       else
-        proposal.fundingVotesNegative = proposal.fundingVotesNegative.minus(voteCast.weight)
+        proposal.fundingVotesNegative = proposal.fundingVotesNegative.plus(voteCast.weight)
 
       // associate the VoteCast entity with the FundingVote
       fundingVote.votesCast.push(voteCast.id)
