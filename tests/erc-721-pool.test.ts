@@ -708,7 +708,6 @@ describe("Describe entity assertions", () => {
 
   })
 
-  // TODO: finish implementing this
   test("Kick, Take, and Settle", () => {
 
     // check entities are unavailable prior to storage
@@ -1042,7 +1041,6 @@ describe("Describe entity assertions", () => {
     )
   })
 
-  // TODO: finish implementing this
   test("Kick, BucketTake, and Settle", () => {
 
     // check entities are unavailable prior to storage
@@ -1067,6 +1065,64 @@ describe("Describe entity assertions", () => {
     /*** Add Quote Token ***/
     /***********************/
 
+    // AddQuoteToken event params
+    const index = BigInt.fromI32(234)
+    const price = BigDecimal.fromString("312819781990957000000000000")
+    const amount = BigInt.fromString("567529276179422528643")    // 567.529276179422528643 * 1e18
+    const lpAwarded = BigInt.fromString("533477519608657176924") // 533.477519608657176924 * 1e18
+    const lup = BigInt.fromString("9529276179422528643")         //   9.529276179422528643 * 1e18
+
+    // mock required contract calls
+    const expectedBucketInfo = new BucketInfo(
+      index.toU32(),
+      price,
+      amount,
+      ZERO_BI,
+      lpAwarded,
+      ZERO_BI,
+      ONE_WAD_BI
+    )
+    mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
+
+    const expectedLPBValueInQuote = lpAwarded
+    mockGetLPBValueInQuote(poolAddress, lpAwarded, index, expectedLPBValueInQuote)
+
+    mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
+      poolSize: amount,
+      debt: ZERO_BI,
+      loansCount: ZERO_BI,
+      maxBorrower: ZERO_ADDRESS,
+      inflator: ONE_WAD_BI,
+      hpb: ZERO_BI, //TODO: indexToPrice(price)
+      hpbIndex: index,
+      htp: ZERO_BI, //TODO: indexToPrice(price)
+      htpIndex: ZERO_BI,
+      lup: lup,
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
+      momp: BigInt.fromI32(623803),
+      reserves: ZERO_BI,
+      claimableReserves: ZERO_BI,
+      claimableReservesRemaining: ZERO_BI,
+      reserveAuctionPrice: ZERO_BI,
+      currentBurnEpoch: BigInt.fromI32(9998103),
+      reserveAuctionTimeRemaining: ZERO_BI,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI
+    })
+
+    // mock add quote token event
+    const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
+      poolAddress,
+      lender,
+      index,
+      amount,
+      lpAwarded,
+      lup
+    )
+    handleAddQuoteToken(newAddQuoteTokenEvent)
+
     /*****************/
     /*** Draw Debt ***/
     /*****************/
@@ -1075,7 +1131,6 @@ describe("Describe entity assertions", () => {
     const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345), BigInt.fromI32(456), BigInt.fromI32(567), BigInt.fromI32(789)]
     const amountPledged = BigInt.fromString("5000000000000000000") // 5 * 1e18
-    const lup = BigInt.fromString("9529276179422528643") //   9.529276179422528643 * 1e18
 
     // mock required contract calls
     const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
@@ -1179,6 +1234,10 @@ describe("Describe entity assertions", () => {
     /*******************/
     /*** Bucket Take ***/
     /*******************/
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
 
   })
 
