@@ -211,7 +211,6 @@ export function getPoolUtilizationInfo(pool: Pool): PoolUtilizationInfo {
     return poolUtilizationInfo
 }
 
-// TODO: investigate multicall for faster rpc
 // TODO: investigate checking blockHeight to avoid duplicate calls on same block
 export function updatePool(pool: Pool): void {
     // update pool loan information
