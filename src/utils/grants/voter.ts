@@ -44,20 +44,15 @@ export function getFundingVotesByProposalId(distributionPeriodVote: Distribution
 export function getFundingVotingPowerUsed(distributionPeriodVote: DistributionPeriodVote, proposalId: Bytes): BigDecimal {
     const votes = getFundingVotesByProposalId(distributionPeriodVote, proposalId);
 
-    // accumulate the squared votes from each separate vote on the proposal
-    const squaredAmount: BigDecimal[] = [];
+    // accumulate the votes cast from each separate vote on the proposal
+    let sum = ZERO_BD;
     for (let i = 0; i < votes.length; i++) {
         const vote = loadOrCreateFundingVote(votes[i]);
-        squaredAmount.push(vote.votesCast.times(vote.votesCast));
+        sum = sum.plus(vote.votesCast);
     }
 
-    // sum the squared amounts
-    let sum = ZERO_BD;
-    for (let i = 0; i < squaredAmount.length; i++) {
-        sum = sum.plus(squaredAmount[i]);
-    }
-
-    return sum;
+    // square the sum of votes to determine the incremental voting power used
+    return sum.times(sum);
 }
 
 export function loadOrCreateFundingVote(fundingVoteId: Bytes): FundingVote {
