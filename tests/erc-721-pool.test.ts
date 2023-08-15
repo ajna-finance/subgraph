@@ -1001,13 +1001,6 @@ describe("Describe entity assertions", () => {
     )
 
     // check Pool attributes
-    // TODO: need to update pool t0debt during liquidations
-    // assert.fieldEquals(
-    //   "Pool",
-    //   `${expectedPoolAddress.toHexString()}`,
-    //   "t0debt",
-    //   `${0}`
-    // )
     assert.fieldEquals(
       "Pool",
       `${expectedPoolAddress.toHexString()}`,
@@ -1047,17 +1040,145 @@ describe("Describe entity assertions", () => {
       "settled",
       `${true}`
     )
-    // TODO: need to update debtRemaining
-    // assert.fieldEquals(
-    //   "LiquidationAuction",
-    //   `${liquidationAuctionId.toHexString()}`,
-    //   "debtRemaining",
-    //   `${0}`
-    // )
   })
 
   // TODO: finish implementing this
   test("Kick, BucketTake, and Settle", () => {
+
+    // check entities are unavailable prior to storage
+    assert.entityCount("Account", 0)
+    assert.entityCount("DrawDebtNFT", 0)
+    assert.entityCount("Loan", 0)
+    assert.entityCount("LiquidationAuction", 0)
+    assert.entityCount("Kick", 0)
+    assert.entityCount("Take", 0)
+    assert.entityCount("Settle", 0)
+    assert.entityCount("AuctionNFTSettle", 0)
+
+    // mock addresses
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
+    const kicker = Address.fromString("0x0000000000000000000000000000000000000079")
+    const lender = Address.fromString("0x0000000000000000000000000000000000000089") 
+    const settler = Address.fromString("0x0000000000000000000000000000000000000049")
+    const taker = Address.fromString("0x0000000000000000000000000000000000000009")
+
+    /***********************/
+    /*** Add Quote Token ***/
+    /***********************/
+
+    /*****************/
+    /*** Draw Debt ***/
+    /*****************/
+
+    // DrawDebt event params
+    const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345), BigInt.fromI32(456), BigInt.fromI32(567), BigInt.fromI32(789)]
+    const amountPledged = BigInt.fromString("5000000000000000000") // 5 * 1e18
+    const lup = BigInt.fromString("9529276179422528643") //   9.529276179422528643 * 1e18
+
+    // mock required contract calls
+    const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
+    mockGetDebtInfo(poolAddress, expectedPoolDebtInfo)
+
+    let inflator = BigInt.fromString("1002804000000000000")
+    let expectedBorrowerInfo = new BorrowerInfo(
+      wdiv(amountBorrowed, inflator),
+      amountPledged,
+      BigInt.fromString("8766934085068726351"))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
+
+    // create and handle DrawDebt event
+    const newDrawDebtEvent = createDrawDebtNFTEvent(
+      poolAddress,
+      borrower,
+      amountBorrowed,
+      tokenIdsPledged,
+      lup
+    )
+    handleDrawDebtNFT(newDrawDebtEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    const expectedPoolAddress = addressToBytes(poolAddress)
+    const loanId = getLoanId(expectedPoolAddress, addressToBytes(borrower))
+
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345, 456, 567, 789]"
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345, 456, 567, 789]"
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "bucketTokenIds",
+      "[]"
+    )
+
+    /********************/
+    /*** Kick Auction ***/
+    /********************/
+
+    // mock Kick event params
+    const bond = BigInt.fromString("234000000000000000000")
+    const bondFactor = ONE_WAD_BI
+    const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const kickTime = BigInt.fromI32(123)
+    const kickMomp = BigInt.fromI32(456)
+    const neutralPrice = BigInt.fromI32(456)
+    const head = Address.fromString("0x0000000000000000000000000000000000000000")
+    const next = Address.fromString("0x0000000000000000000000000000000000000000")
+    const prev = Address.fromString("0x0000000000000000000000000000000000000000")
+    const alreadyTaken = false
+
+    // mock required contract calls
+    let expectedAuctionInfo = new AuctionInfo(
+      kicker,
+      bondFactor,
+      bond,
+      kickTime,
+      kickMomp,
+      neutralPrice,
+      head,
+      next,
+      prev,
+      false
+    )
+    mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
+
+    const expectedAuctionStatus = new AuctionStatus(
+      kickTime,
+      amountPledged,
+      debt,
+      false,
+      wmul(neutralPrice, BigInt.fromString("1020000000000000000")), // take price = neutral price * 1.02
+      neutralPrice
+    )
+    mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
+
+    // create and handle Kick event
+    const newKickEvent = createKickEvent(
+      poolAddress,
+      kicker,
+      borrower,
+      debt,
+      amountPledged,
+      bond
+    )
+    handleKick(newKickEvent)
+
+    /*******************/
+    /*** Bucket Take ***/
+    /*******************/
 
   })
 
