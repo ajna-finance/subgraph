@@ -753,6 +753,20 @@ type RedeemPosition @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+  # # # # # # # # # # # #
+  # BURN WRAPPER EVENTS #
+  # # # # # # # # # # # #
+
+type BurnWrap @entity(immutable: true) {
+  id: Bytes!
+  wrapper: Bytes!     # address
+  account: Account    # null if does not already exist
+  amount: BigDecimal! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
   # # # # # # # # # # # # # # #
   # REWARDS MANAGER ENTITIES  #
   # # # # # # # # # # # # # # #
