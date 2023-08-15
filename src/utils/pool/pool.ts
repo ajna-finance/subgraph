@@ -1,15 +1,15 @@
-import { BigDecimal, BigInt, Bytes, Address, dataSource, bigInt } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
 
 import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, erc721PoolFactoryAddressTable, poolInfoUtilsAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
+import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, poolInfoUtilsAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
 import { addressToBytes, decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
 import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
-import { wmul, wdiv, wmin } from '../math'
+import { wmul, wdiv } from '../math'
 import { ERC721PoolFactory } from '../../../generated/ERC721PoolFactory/ERC721PoolFactory'
 
 
@@ -17,8 +17,7 @@ export function getPoolAddress(poolId: Bytes): Address {
   return Address.fromBytes(poolId)
 }
 
-export function getPoolSubsetHash(tokenIds: BigInt[]): Bytes {
-  const erc721PoolFactoryAddress = erc721PoolFactoryAddressTable.get(dataSource.network())!
+export function getPoolSubsetHash(erc721PoolFactoryAddress: Address, tokenIds: BigInt[]): Bytes {
   const poolFactoryContract = ERC721PoolFactory.bind(erc721PoolFactoryAddress)
 
   return poolFactoryContract.getNFTSubsetHash(tokenIds)
