@@ -115,7 +115,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // record ERC721Pool tokenId information
   if (tokenIds.length > 0) {
     pool.poolType = "Subset"
-    pool.subsetHash = getPoolSubsetHash(tokenIds)
+    pool.subsetHash = getPoolSubsetHash(event.address, tokenIds)
   } else {
     pool.poolType = "Collection"
     // TODO: hardcode the subset hash
