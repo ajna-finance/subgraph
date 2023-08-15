@@ -70,5 +70,6 @@ export function findAndRemoveTokenIds(tokenIdsToRemove: Array<BigInt>, tokenIds:
 // collateral is expected to be a BigInt WAD
 // get the number of tokenIds associated with the collateral amount
 export function getWadCollateralFloorTokens(collateral: BigInt): BigInt {
-    return BigInt.fromString(Math.floor(collateral.div(ONE_WAD_BI).toI32()).toString())
+    // div automatically rounds down
+    return collateral.div(ONE_WAD_BI)
 }

@@ -93,6 +93,7 @@ export function createAddQuoteTokenEvent(
 }
 
 export function createAuctionNFTSettleEvent(
+  pool: Address,
   borrower: Address,
   collateral: BigInt,
   lp: BigInt,
@@ -117,6 +118,9 @@ export function createAuctionNFTSettleEvent(
   auctionNftSettleEvent.parameters.push(
     new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
   )
+
+  // update transaction target to the expected pool address
+  auctionNftSettleEvent.address = pool
 
   return auctionNftSettleEvent
 }
