@@ -10,10 +10,9 @@ import {
   logStore,
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { Account, AddCollateralNFT, Lend, Loan } from "../generated/schema"
-import { AddCollateralNFT as AddCollateralNFTEvent } from "../generated/templates/ERC721Pool/ERC721Pool"
-import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick, handleTake } from "../src/erc-721-pool"
-import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent, createTakeEvent } from "./utils/erc-721-pool-utils"
+import { Account, Lend, Loan } from "../generated/schema"
+import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick, handleAuctionNFTSettle, handleSettle, handleTake } from "../src/erc-721-pool"
+import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent, createAuctionNFTSettleEvent, createSettleEvent, createTakeEvent } from "./utils/erc-721-pool-utils"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { assertBucketUpdate, assertLendUpdate, create721Pool, createPool, mockGetAuctionInfo, mockGetAuctionStatus, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
@@ -745,6 +744,7 @@ describe("Describe entity assertions", () => {
     const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
     const borrower = Address.fromString("0x0000000000000000000000000000000000000030")
     const kicker = Address.fromString("0x0000000000000000000000000000000000000079")
+    const settler = Address.fromString("0x0000000000000000000000000000000000000049")
     const taker = Address.fromString("0x0000000000000000000000000000000000000009")
 
     /*****************/
@@ -886,45 +886,36 @@ describe("Describe entity assertions", () => {
     )
     handleTake(newTakeEvent)
 
-    /**********************/
-    /*** Settle Auction ***/
-    /**********************/
-
     /********************/
     /*** Assert State ***/
     /********************/
 
-    // check entities have been stored
-    assert.entityCount("Account", 3)
-    assert.entityCount("DrawDebtNFT", 1)
-    assert.entityCount("Loan", 1)
-    assert.entityCount("LiquidationAuction", 1)
-    assert.entityCount("Kick", 1)
-    assert.entityCount("Take", 1)
-    assert.entityCount("Settle", 0)
-    assert.entityCount("AuctionNFTSettle", 0)
-
-    // check Take state
+    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId, ONE_BI)
     assert.fieldEquals(
-      "Take",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
-      "taker",
-      `${taker.toHexString()}`
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
     )
     assert.fieldEquals(
-      "Take",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
-      "amount",
-      `${wadToDecimal(amountToTake)}`
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "borrower",
+      `${borrower.toHexString()}`
     )
     assert.fieldEquals(
-      "Take",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
-      "collateral",
-      `${wadToDecimal(collateralToTake)}`
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "loan",
+      `${loanId.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "settled",
+      `${false}`
     )
 
-    // check Loan attributes
     assert.fieldEquals(
       "Loan",
       `${loanId.toHexString()}`,
@@ -959,8 +950,98 @@ describe("Describe entity assertions", () => {
       "[345]" // since borrower collateral was > 1 but < 2 after take their last tokenId should have been popped and transferred to bucketTokenIds
     )
 
+    /**********************/
+    /*** Settle Auction ***/
+    /**********************/
+
+    const lp = BigInt.fromString("3036884000000") // 0.000003036884 * 1e18
+    const index = BigInt.fromI32(234)
+
+    // create and handle Settle event
+    const newSettleEvent = createSettleEvent(poolAddress, settler, borrower, amountBorrowed)
+    handleSettle(newSettleEvent)
+
+    // create and handle AuctionNFTSettleEvent event
+    const newAuctionNFTSettleEvent = createAuctionNFTSettleEvent(poolAddress, borrower, amountBorrowed, lp, index)
+    handleAuctionNFTSettle(newAuctionNFTSettleEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // check entities have been stored
+    assert.entityCount("Account", 4)
+    assert.entityCount("DrawDebtNFT", 1)
+    assert.entityCount("Loan", 1)
+    assert.entityCount("LiquidationAuction", 1)
+    assert.entityCount("Kick", 1)
+    assert.entityCount("Take", 1)
+    assert.entityCount("Settle", 1)
+    assert.entityCount("AuctionNFTSettle", 1)
+
+    // check Take state
+    assert.fieldEquals(
+      "Take",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "taker",
+      `${taker.toHexString()}`
+    )
+    assert.fieldEquals(
+      "Take",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "amount",
+      `${wadToDecimal(amountToTake)}`
+    )
+    assert.fieldEquals(
+      "Take",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "collateral",
+      `${wadToDecimal(collateralToTake)}`
+    )
+
+    // check Loan attributes
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "inLiquidation",
+      `${false}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "t0debt",
+      `${0}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "tokenIdsPledged",
+      "[234]"
+    )
+
+    // check Pool attributes
+    // TODO: need to update pool t0debt during liquidations
+    // assert.fieldEquals(
+    //   "Pool",
+    //   `${expectedPoolAddress.toHexString()}`,
+    //   "t0debt",
+    //   `${0}`
+    // )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "tokenIdsPledged",
+      "[234]"
+    )
+    // check Pool attributes
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "bucketTokenIds",
+      "[345]" // since tokenIds were already rebalance in Take, no additional rebalancing should occur in AuctionNFTSettle
+    )
+
     // check LiquidationAuction state
-    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId, ONE_BI)
     assert.fieldEquals(
       "LiquidationAuction",
       `${liquidationAuctionId.toHexString()}`,
@@ -979,6 +1060,19 @@ describe("Describe entity assertions", () => {
       "loan",
       `${loanId.toHexString()}`
     )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "settled",
+      `${true}`
+    )
+    // TODO: need to update debtRemaining
+    // assert.fieldEquals(
+    //   "LiquidationAuction",
+    //   `${liquidationAuctionId.toHexString()}`,
+    //   "debtRemaining",
+    //   `${0}`
+    // )
   })
 
   // TODO: finish implementing this

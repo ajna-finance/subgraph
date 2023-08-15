@@ -540,13 +540,11 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   loan.t0debt = ZERO_BD
   loan.collateralPledged = auctionNFTSettle.collateral
 
-  // TODO: test tokenId rebalancing
   // rebalance tokenIds on auction settle
   // round down remaining collateral pledged, and slice that many tokenIds
-  const numberOfTokensToLeave = BigInt.fromString(Math.floor(event.params.collateral.div(ONE_WAD_BI).toI32()).toString()).toI32()
+  const numberOfTokensToLeave = getWadCollateralFloorTokens(event.params.collateral).toI32()
   // slice all tokenIds out other than the number of tokens to leave
   const tokenIdsSettled = loan.tokenIdsPledged.slice(numberOfTokensToLeave)
-  // const tokenIdsSettled = loan.tokenIdsPledged.slice(0, numberOfTokensToLeave)
   // remove tokenIdsSettled from the loan and pool tokenIdsPledged
   loan.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsSettled, loan.tokenIdsPledged)
   pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsSettled, pool.tokenIdsPledged)
