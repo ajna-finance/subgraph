@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
-import { Account, DistributionPeriodVote, FundingVote } from "../../../generated/schema"
+import { Account, DistributionPeriodVote, FundingVote, ScreeningVote } from "../../../generated/schema"
 import { GrantFund } from "../../../generated/GrantFund/GrantFund"
 
 import { ZERO_BD, ZERO_BI } from "../constants"
@@ -13,18 +13,18 @@ export function getDistributionPeriodVoteId(distributionPeriodId: Bytes, voterId
         .concat(distributionPeriodId))
 }
 
-export function getFundingVoteId(proposalId: Bytes, voterId: Bytes, logIndex: BigInt): Bytes {
+export function getFundingVoteId(proposalId: Bytes, voterId: Bytes, distributionId: Bytes): Bytes {
     return proposalId
         .concat(Bytes.fromUTF8('funding'))
         .concat(voterId)
-        .concat(Bytes.fromUTF8(logIndex.toString()))
+        .concat(distributionId)
 }
 
-export function getScreeningVoteId(proposalId: Bytes, voterId: Bytes, logIndex: BigInt): Bytes {
+export function getScreeningVoteId(proposalId: Bytes, voterId: Bytes, distributionId: Bytes): Bytes {
     return proposalId
         .concat(Bytes.fromUTF8('screening'))
         .concat(voterId)
-        .concat(Bytes.fromUTF8(logIndex.toString()))
+        .concat(distributionId)
 }
 
 export function getFundingVotesByProposalId(distributionPeriodVote: DistributionPeriodVote, proposalId: Bytes): Bytes[] {
@@ -41,23 +41,28 @@ export function getFundingVotesByProposalId(distributionPeriodVote: Distribution
 }
 
 // calculate the amount of funding voting power used on an individual FundingVote
-export function getFundingVotingPowerUsed(distributionPeriodVote: DistributionPeriodVote, proposalId: Bytes): BigDecimal {
-    const votes = getFundingVotesByProposalId(distributionPeriodVote, proposalId);
+export function getFundingVotingPowerUsed(fundingVote: FundingVote): BigDecimal {
+    // square the sum of votes cast on the proposal to determine the incremental voting power used
+    const sum = fundingVote.totalVotesCast
+    return sum.times(sum);
+}
 
-    // accumulate the squared votes from each separate vote on the proposal
-    const squaredAmount: BigDecimal[] = [];
-    for (let i = 0; i < votes.length; i++) {
-        const vote = loadOrCreateFundingVote(votes[i]);
-        squaredAmount.push(vote.votesCast.times(vote.votesCast));
+/********************/
+/*** Constructors ***/
+/********************/
+
+export function loadOrCreateScreeningVote(screeningVoteId: Bytes): ScreeningVote {
+    let screeningVote = ScreeningVote.load(screeningVoteId)
+    if (screeningVote == null) {
+        // create new screeningVote if one hasn't already been stored
+        screeningVote = new ScreeningVote(screeningVoteId) as ScreeningVote
+        screeningVote.distribution = Bytes.empty()
+        screeningVote.voter = Bytes.empty()
+        screeningVote.proposal = Bytes.empty()
+        screeningVote.totalVotesCast = ZERO_BD
+        screeningVote.votesCast = []
     }
-
-    // sum the squared amounts
-    let sum = ZERO_BD;
-    for (let i = 0; i < squaredAmount.length; i++) {
-        sum = sum.plus(squaredAmount[i]);
-    }
-
-    return sum;
+    return screeningVote
 }
 
 export function loadOrCreateFundingVote(fundingVoteId: Bytes): FundingVote {
@@ -68,9 +73,9 @@ export function loadOrCreateFundingVote(fundingVoteId: Bytes): FundingVote {
         fundingVote.distribution = Bytes.empty()
         fundingVote.voter = Bytes.empty()
         fundingVote.proposal = Bytes.empty()
-        fundingVote.votesCast = ZERO_BD
+        fundingVote.totalVotesCast = ZERO_BD
         fundingVote.votingPowerUsed = ZERO_BD
-        fundingVote.blockNumber = ZERO_BI
+        fundingVote.votesCast = []
     }
     return fundingVote
 }
@@ -114,6 +119,10 @@ export function getScreeningStageVotingPower(grantFundAddress: Address, distribu
 
     return wadToDecimal(votingPower)
 }
+
+/*************************/
+/*** Utility Functions ***/
+/*************************/
 
 export function addDelegator(delegator: Account, delegate: Account): void {
     // prevent duplicate delegatedFroms
