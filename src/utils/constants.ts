@@ -5,6 +5,7 @@ export const ZERO_ADDRESS = Address.fromString('0x000000000000000000000000000000
 // BigInt constants
 export const ZERO_BI          = BigInt.zero()
 export const ONE_BI           = BigInt.fromI32(1)
+export const TWO_BI           = BigInt.fromI32(2)
 export const TEN_BI           = BigInt.fromI32(10)
 export const ONE_PERCENT_BI   = BigInt.fromString("10000000000000000") // 0.01 * 1e18
 export const THREE_PERCENT_BI = BigInt.fromString("30000000000000000") // 0.03 * 1e18

@@ -33,6 +33,7 @@ import {
   ONE_BI,
   ONE_WAD_BI,
   SCREENING_PERIOD_LENGTH,
+  TWO_BI,
   ZERO_BD,
   ZERO_BI,
 } from "../src/utils/constants";
@@ -801,14 +802,24 @@ describe("Grant Fund assertions", () => {
 
     // mock parameters
     const voter = Address.fromString("0x0000000000000000000000000000000000000050");
-    const votesCast = BigInt.fromString("234000000000000000000")
+    const votesCast = BigInt.fromString("234000000000000000000") // 234 * 1e18
     const reason = ""
 
-    const fundingVotingPower = votesCast.times(votesCast);
+    const tokenBalance = BigInt.fromString("1000000000000000000000") // 1000 * 1e18
+    let fundingVotingPower = tokenBalance.times(tokenBalance);
 
     mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);
 
-    const fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(1));
+    // cast first funding vote
+    let fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(1));
+    handleVoteCast(fundingVoteCastEvent);
+
+    // mock the funding voting power updating
+    fundingVotingPower = fundingVotingPower.minus(votesCast.times(votesCast));
+    mockGetVotesFunding(grantFundAddress, distributionId, voter, fundingVotingPower);
+
+    // cast second funding vote
+    fundingVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock.plus(SCREENING_PERIOD_LENGTH).plus(BigInt.fromI32(1)), BigInt.fromI32(2));
     handleVoteCast(fundingVoteCastEvent);
 
     /********************/
@@ -830,24 +841,22 @@ describe("Grant Fund assertions", () => {
     const fundingVoteId = getFundingVoteId(bigIntToBytes(proposalId), addressToBytes(voter), bigIntToBytes(distributionId));
     const expectedDistributionId = bigIntToBytes(distributionId).toHexString();
     const expectedProposalId = bigIntToBytes(proposalId).toHexString();
-    const expectedVotingPowerUsed = wadToDecimal(votesCast).times(wadToDecimal(votesCast));
+    const expectedVotingPowerUsedFirstVote = wadToDecimal(votesCast).times(wadToDecimal(votesCast));
+    const expectedVotingPowerUsedSecondVote = wadToDecimal(votesCast.times(TWO_BI)).times(wadToDecimal(votesCast.times(TWO_BI)));
 
-    // check GrantFund attributes
     assert.entityCount("GrantFund", 1);
-
-    // check Proposal attributes
     assert.entityCount("Proposal", 1);
     assert.entityCount("ProposalParams", 2);
-
     assert.entityCount("DistributionPeriod", 1);
     assert.entityCount("FundedSlate", 1);
+    assert.entityCount("FundingVote", 1);
 
     // check FundedSlate attributes
     assert.fieldEquals(
       "FundedSlate",
       `${fundedSlateHash.toHexString()}`,
       "totalFundingVotesReceived",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast.times(TWO_BI))}`
     );
     assert.fieldEquals(
       "FundedSlate",
@@ -873,13 +882,13 @@ describe("Grant Fund assertions", () => {
       "FundingVote",
       `${fundingVoteId.toHexString()}`,
       "totalVotesCast",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast.times(TWO_BI))}`
     );
     assert.fieldEquals(
       "FundingVote",
       `${fundingVoteId.toHexString()}`,
       "votingPowerUsed",
-      `${expectedVotingPowerUsed}`
+      `${expectedVotingPowerUsedFirstVote.plus(expectedVotingPowerUsedSecondVote)}`
     );
 
     // check proposal attributes
@@ -887,7 +896,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${expectedProposalId}`,
       "fundingVotesReceived",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast.times(TWO_BI))}`
     );
     assert.fieldEquals(
       "Proposal",
@@ -899,7 +908,7 @@ describe("Grant Fund assertions", () => {
       "Proposal",
       `${expectedProposalId}`,
       "fundingVotesPositive",
-      `${wadToDecimal(votesCast)}`
+      `${wadToDecimal(votesCast.times(TWO_BI))}`
     );
 
   });

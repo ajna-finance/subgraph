@@ -333,14 +333,13 @@ export function handleVoteCast(event: VoteCastEvent): void {
         fundingVote.totalVotesCast = fundingVote.totalVotesCast.minus(voteCast.weight)
 
       // save initial fundingVote information to enable usage in calculation of votingPowerUsed
-      fundingVote.votingPowerUsed = ZERO_BD
       fundingVote.save()
 
       // add additional funding votes to voter's distributionPeriodVote entity
       distributionPeriodVote.fundingVotes = distributionPeriodVote.fundingVotes.concat([fundingVote.id])
 
       // calculate and record the voting power cost of this funding vote
-      fundingVote.votingPowerUsed = getFundingVotingPowerUsed(fundingVote);
+      fundingVote.votingPowerUsed = fundingVote.votingPowerUsed.plus(getFundingVotingPowerUsed(fundingVote));
       distributionPeriod.fundingVotePowerUsed = distributionPeriod.fundingVotePowerUsed.plus(fundingVote.votingPowerUsed)
 
       // update voter's distributionPeriodVote entity voting power tracking if it hasn't been recorded yet
