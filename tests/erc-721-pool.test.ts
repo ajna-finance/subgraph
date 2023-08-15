@@ -23,7 +23,7 @@ import { DebtInfo } from "../src/utils/pool/pool"
 import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
 import { wdiv, wmul } from "../src/utils/math"
 import { getLendId } from "../src/utils/pool/lend"
-import { AuctionInfo, AuctionStatus } from "../src/utils/pool/liquidation"
+import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/pool/liquidation"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -779,6 +779,32 @@ describe("Describe entity assertions", () => {
     handleDrawDebtNFT(newDrawDebtEvent)
 
     /********************/
+    /*** Assert State ***/
+    /********************/
+
+    const expectedPoolAddress = addressToBytes(poolAddress)
+    const loanId = getLoanId(expectedPoolAddress, addressToBytes(borrower))
+
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345, 456, 567, 789]"
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345, 456, 567, 789]"
+    )
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "bucketTokenIds",
+      "[]"
+    )
+
+    /********************/
     /*** Kick Auction ***/
     /********************/
 
@@ -840,6 +866,14 @@ describe("Describe entity assertions", () => {
 
     const isReward = false
 
+    // need to update mock borrower info to reflect reduced collateral to ensure that the expected tokenId rebalancing occurs
+    inflator = BigInt.fromString("1002804000000000000")
+    expectedBorrowerInfo = new BorrowerInfo(
+      wdiv(amountBorrowed, inflator),
+      amountPledged.minus(collateralToTake),
+      BigInt.fromString("8766934085068726351"))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
+
     // create and handle Take event
     const newTakeEvent = createTakeEvent(
       poolAddress,
@@ -890,9 +924,61 @@ describe("Describe entity assertions", () => {
       `${wadToDecimal(collateralToTake)}`
     )
 
-    // check LiquidationAuction state
+    // check Loan attributes
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "inLiquidation",
+      `${true}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "t0debt",
+      `${wadToDecimal(wdiv(debt, inflator))}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "tokenIdsPledged",
+      "[234]"
+    )
 
-    // check tokenIds and rebalancing
+    // check Pool attributes
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "tokenIdsPledged",
+      "[234]"
+    )
+    // check Pool attributes
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "bucketTokenIds",
+      "[345]" // since borrower collateral was > 1 but < 2 after take their last tokenId should have been popped and transferred to bucketTokenIds
+    )
+
+    // check LiquidationAuction state
+    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId, ONE_BI)
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "borrower",
+      `${borrower.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "loan",
+      `${loanId.toHexString()}`
+    )
   })
 
   // TODO: finish implementing this
