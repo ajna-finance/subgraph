@@ -915,7 +915,7 @@ type DistributionPeriodVote @entity {
 }
 
 type ScreeningVote @entity {
-  id: Bytes! # $proposalId + 'screening' + $account.id + $logIndex
+  id: Bytes! # $proposalId + 'screening' + $account.id + $distributionId
   distribution: DistributionPeriod! # distribution period the vote was cast in
   voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on
@@ -924,7 +924,7 @@ type ScreeningVote @entity {
 }
 
 type FundingVote @entity {
-  id: Bytes! # $proposalId + 'funding' + $account.id + $logIndex
+  id: Bytes! # $proposalId + 'funding' + $account.id + $distributionId
   distribution: DistributionPeriod! # distribution period the vote was cast in
   voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on

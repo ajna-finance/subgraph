@@ -304,7 +304,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       distributionPeriod.screeningVotesCast = distributionPeriod.screeningVotesCast.plus(event.params.weight.toBigDecimal())
 
       // create ScreeningVote entity
-      const screeningVote = loadOrCreateScreeningVote(getScreeningVoteId(proposalId, voter.id, event.logIndex))
+      const screeningVote = loadOrCreateScreeningVote(getScreeningVoteId(proposalId, voter.id, distributionId))
 
       screeningVote.distribution = distributionId
       screeningVote.voter = voter.id
@@ -322,8 +322,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
     }
     else if (stage === "FUNDING") {
       // create FundingVote entity
-      // TODO: change logIndex to distributionId
-      const fundingVote = loadOrCreateFundingVote(getFundingVoteId(proposalId, voter.id, event.logIndex))
+      const fundingVote = loadOrCreateFundingVote(getFundingVoteId(proposalId, voter.id, distributionId))
 
       fundingVote.distribution = distributionId
       fundingVote.voter = voter.id
