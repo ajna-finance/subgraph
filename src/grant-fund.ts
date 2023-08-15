@@ -30,7 +30,7 @@ import { NEG_ONE_BD, THREE_PERCENT_BI, ZERO_BD, ZERO_BI } from './utils/constant
 import { addressArrayToBytesArray, addressToBytes, bigIntArrayToBigDecimalArray, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
 import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal } from './utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
-import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningVoteId, loadOrCreateDistributionPeriodVote } from './utils/grants/voter'
+import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateFundingVote, loadOrCreateScreeningVote } from './utils/grants/voter'
 import { getTreasury, loadOrCreateGrantFund } from './utils/grants/fund'
 import { loadOrCreateAccount } from './utils/account'
 import { wmul } from './utils/math'
@@ -304,30 +304,34 @@ export function handleVoteCast(event: VoteCastEvent): void {
       distributionPeriod.screeningVotesCast = distributionPeriod.screeningVotesCast.plus(event.params.weight.toBigDecimal())
 
       // create ScreeningVote entity
-      const screeningVote = new ScreeningVote(getScreeningVoteId(proposalId, voter.id, event.logIndex)) as ScreeningVote
+      const screeningVote = loadOrCreateScreeningVote(getScreeningVoteId(proposalId, voter.id, event.logIndex))
+
       screeningVote.distribution = distributionId
       screeningVote.voter = voter.id
       screeningVote.proposal = proposalId
-      screeningVote.votesCast = screeningVotesCast
-      screeningVote.blockNumber = voteCast.blockNumber
+      screeningVote.totalVotesCast = screeningVote.totalVotesCast.plus(screeningVotesCast)
 
       // add additional screening votes to voter's distributionPeriodVote entity
       distributionPeriodVote.screeningVotes = distributionPeriodVote.screeningVotes.concat([screeningVote.id])
+
+      // associate the VoteCast entity with the FundingVote
+      screeningVote.votesCast.push(voteCast.id)
 
       // save screeningVote to the store
       screeningVote.save()
     }
     else if (stage === "FUNDING") {
       // create FundingVote entity
-      const fundingVote = new FundingVote(getFundingVoteId(proposalId, voter.id, event.logIndex)) as FundingVote
+      // TODO: change logIndex to distributionId
+      const fundingVote = loadOrCreateFundingVote(getFundingVoteId(proposalId, voter.id, event.logIndex))
+
       fundingVote.distribution = distributionId
       fundingVote.voter = voter.id
       fundingVote.proposal = proposalId
       if (event.params.support == 1)
-        fundingVote.votesCast = wadToDecimal(event.params.weight)
+        fundingVote.totalVotesCast = fundingVote.totalVotesCast.plus(voteCast.weight)
       else
-        fundingVote.votesCast = wadToDecimal(event.params.weight).times(NEG_ONE_BD)
-      fundingVote.blockNumber = voteCast.blockNumber
+        fundingVote.totalVotesCast = fundingVote.totalVotesCast.minus(voteCast.weight)
 
       // save initial fundingVote information to enable usage in calculation of votingPowerUsed
       fundingVote.votingPowerUsed = ZERO_BD
@@ -337,7 +341,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       distributionPeriodVote.fundingVotes = distributionPeriodVote.fundingVotes.concat([fundingVote.id])
 
       // calculate and record the voting power cost of this funding vote
-      fundingVote.votingPowerUsed = getFundingVotingPowerUsed(distributionPeriodVote, proposalId);
+      fundingVote.votingPowerUsed = getFundingVotingPowerUsed(fundingVote);
       distributionPeriod.fundingVotePowerUsed = distributionPeriod.fundingVotePowerUsed.plus(fundingVote.votingPowerUsed)
 
       // update voter's distributionPeriodVote entity voting power tracking if it hasn't been recorded yet
@@ -350,11 +354,14 @@ export function handleVoteCast(event: VoteCastEvent): void {
       }
 
       // record votes cast on the Proposal entity
-      proposal.fundingVotesReceived = proposal.fundingVotesReceived.plus(fundingVote.votesCast)
-      if (fundingVote.votesCast > ZERO_BD)
-        proposal.fundingVotesPositive = proposal.fundingVotesPositive.plus(fundingVote.votesCast)
+      proposal.fundingVotesReceived = proposal.fundingVotesReceived.plus(voteCast.weight)
+      if (fundingVote.totalVotesCast > ZERO_BD)
+        proposal.fundingVotesPositive = proposal.fundingVotesPositive.plus(voteCast.weight)
       else
-        proposal.fundingVotesNegative = proposal.fundingVotesNegative.plus(fundingVote.votesCast)
+        proposal.fundingVotesNegative = proposal.fundingVotesNegative.minus(voteCast.weight)
+
+      // associate the VoteCast entity with the FundingVote
+      fundingVote.votesCast.push(voteCast.id)
 
       // save fundingVote to the store
       fundingVote.save()

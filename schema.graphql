@@ -919,8 +919,8 @@ type ScreeningVote @entity {
   distribution: DistributionPeriod! # distribution period the vote was cast in
   voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on
-  votesCast: BigDecimal! # uint256
-  blockNumber: BigInt! # block number the vote was cast
+  totalVotesCast: BigDecimal! # total screening votes cast by a single voter on a proposal
+  votesCast: [VoteCast!]! # array of voteCast entities created for each screeningVote on this proposal
 }
 
 type FundingVote @entity {
@@ -928,9 +928,9 @@ type FundingVote @entity {
   distribution: DistributionPeriod! # distribution period the vote was cast in
   voter: Account! # actor who cast votes
   proposal: Proposal! # proposal being voted on
-  votesCast: BigDecimal! # uint256
+  totalVotesCast: BigDecimal! # uint256 total unsquared votes cast on the proposal
   votingPowerUsed: BigDecimal! # uint256 # cost of the incremental funding vote to the voter's voting power
-  blockNumber: BigInt! # block number the vote was cast
+  votesCast: [VoteCast!]! # array of voteCast entities created for each fundingVote on this proposal
 }
 
 type FundedSlate @entity {
