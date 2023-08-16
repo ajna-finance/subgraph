@@ -611,6 +611,7 @@ export function createTakeEvent(
 }
 
 export function createTransferLPEvent(
+  pool: Address,
   owner: Address,
   newOwner: Address,
   indexes: Array<BigInt>,
@@ -638,6 +639,9 @@ export function createTransferLPEvent(
       ethereum.Value.fromUnsignedBigInt(lp)
     )
   )
+
+  // update transaction target to the expected pool address
+  transferLpTokensEvent.address = pool
 
   return transferLpTokensEvent
 }

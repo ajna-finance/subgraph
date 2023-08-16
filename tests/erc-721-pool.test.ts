@@ -11,11 +11,11 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Account, Lend, Loan } from "../generated/schema"
-import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick, handleAuctionNFTSettle, handleSettle, handleTake, handleBucketTakeLPAwarded, handleBucketTake } from "../src/erc-721-pool"
-import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent, createAuctionNFTSettleEvent, createSettleEvent, createTakeEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent } from "./utils/erc-721-pool-utils"
+import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick, handleAuctionNFTSettle, handleSettle, handleTake, handleBucketTakeLPAwarded, handleBucketTake, handleTransferLP } from "../src/erc-721-pool"
+import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent, createAuctionNFTSettleEvent, createSettleEvent, createTakeEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createTransferLPEvent } from "./utils/erc-721-pool-utils"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, TWO_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
-import { assertBucketUpdate, assertLendUpdate, create721Pool, createPool, mockGetAuctionInfo, mockGetAuctionStatus, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
+import { assertBucketUpdate, assertLendUpdate, create721Pool, createAndHandleAddQuoteTokenEvent, createPool, mockGetAuctionInfo, mockGetAuctionStatus, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetLenderInfo, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/pool/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
 import { DebtInfo } from "../src/utils/pool/pool"
@@ -118,8 +118,6 @@ describe("Describe entity assertions", () => {
     handleAddCollateralNFT(newAddCollateralNFTEvent)
 
     assert.entityCount("AddCollateralNFT", 1)
-
-    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a is the default address used in newMockEvent() function
     assert.fieldEquals(
       "AddCollateralNFT",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
@@ -202,6 +200,7 @@ describe("Describe entity assertions", () => {
     // mock add quote token event
     const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
       poolAddress,
+      ONE_BI,
       lender,
       index,
       amount,
@@ -1115,6 +1114,7 @@ describe("Describe entity assertions", () => {
     // mock add quote token event
     const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
       poolAddress,
+      ZERO_BI,
       lender,
       index,
       amount,
@@ -1419,6 +1419,96 @@ describe("Describe entity assertions", () => {
       lpb: lpAwardedKicker,
       lpbValueInQuote: expectedKickerLPBValueInQuote
     })
+  })
+
+  test("TransferLP", () => {
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const expectedPoolAddress = addressToBytes(poolAddress)
+    const owner = Address.fromString("0x0000000000000000000000000000000000000003")
+    const newOwner = Address.fromString("0x0000000000000000000000000000000000000005")
+    const ownerAccountId = addressToBytes(owner)
+    const newOwnerAccountId = addressToBytes(newOwner)
+    const indexes = [BigInt.fromI32(234), BigInt.fromI32(345), BigInt.fromI32(456), BigInt.fromI32(567), BigInt.fromI32(789)]
+    const lp = BigInt.fromString("3036884000000") // 0.000003036884 * 1e18
+    const expectedDepositTime = BigInt.fromI32(1000)
+    const lup = BigInt.fromString("9529276179422528643")         //   9.529276179422528643 * 1e18
+
+    // create lends and mock lender contract calls
+    for (let i = 0; i < indexes.length; i++) {
+      const index = indexes[i]
+      const amount = index.times(index)
+      const price = indexes[i].times(TWO_BI).toBigDecimal()
+      const logIndex = BigInt.fromI32(i)
+
+      // create AddQuoteToken and Lend entities for each index
+      createAndHandleAddQuoteTokenEvent(poolAddress, owner, index, price, amount, lp, lup, logIndex)
+
+      // mock handleTransferLP contract calls
+      mockGetLenderInfo(poolAddress, index, owner, ZERO_BI, expectedDepositTime)
+      mockGetLPBValueInQuote(poolAddress, ZERO_BI, index, ZERO_BI)
+      mockGetLenderInfo(poolAddress, index, newOwner, lp, expectedDepositTime)
+      mockGetLPBValueInQuote(poolAddress, lp, index, lp)
+    }
+
+    // create and handle TransferLP event
+    const newTransferLPEvent = createTransferLPEvent(poolAddress, owner, newOwner, indexes, lp)
+    handleTransferLP(newTransferLPEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // check entities have been stored
+    assert.entityCount("Account", 2)
+    assert.entityCount("AddQuoteToken", 5)
+    assert.entityCount("Bucket", 5)
+    assert.entityCount("Lend", 10)
+    assert.entityCount("TransferLP", 1)
+    assert.entityCount("Pool", 2)
+
+    // check TransferLP entity
+    assert.fieldEquals(
+      "TransferLP",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "owner",
+      `${owner.toHexString()}`
+    )
+    assert.fieldEquals(
+      "TransferLP",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "newOwner",
+      `${newOwner.toHexString()}`
+    )
+    assert.fieldEquals(
+      "TransferLP",
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      "lp",
+      `${wadToDecimal(lp)}`
+    )
+
+    // check lend state for each index
+    for (let i = 0; i < indexes.length; i++) {
+      const index = indexes[i]
+      const bucketId = getBucketId(expectedPoolAddress, index.toU32())
+      const ownerLendId = getLendId(bucketId, ownerAccountId)
+      const newOwnerLendId = getLendId(bucketId, newOwnerAccountId)
+
+      assertLendUpdate({
+        id: ownerLendId,
+        bucketId: bucketId,
+        poolAddress: poolAddress.toHexString(),
+        lpb: ZERO_BI, // all lpb was transferred
+        lpbValueInQuote: ZERO_BI
+      })
+
+      assertLendUpdate({
+        id: newOwnerLendId,
+        bucketId: bucketId,
+        poolAddress: poolAddress.toHexString(),
+        lpb: lp,
+        lpbValueInQuote: lp
+      })
+    }
   })
 
   // TODO: finish implementing once a mergeOrRemoveCollateralNFT calldata becomes available
