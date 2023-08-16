@@ -72,3 +72,12 @@ export function updateBucket(bucket: Bucket, bucketInfo: BucketInfo): void {
     bucket.lpb          = wadToDecimal(bucketInfo.lpb)
     bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
 }
+
+export function updateBucketLends(bucket: Bucket, lendId: Bytes): void {
+    const lends = bucket.lends
+    // get current index of lend in bucket's list of lends
+    const index = lends.indexOf(lendId)
+    if (index == -1) {
+        bucket.lends = bucket.lends.concat([lendId])
+    }
+}

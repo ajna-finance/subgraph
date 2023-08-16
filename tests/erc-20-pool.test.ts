@@ -7,6 +7,7 @@ import {
   afterEach,
   beforeAll,
   dataSourceMock,
+  logStore,
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuctionKick, handleReserveAuctionTake, handleTake, handleUpdateInterestRate } from "../src/erc-20-pool"

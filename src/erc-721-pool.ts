@@ -63,7 +63,7 @@ import {
 
 import { findAndRemoveTokenIds, getWadCollateralFloorTokens, incrementTokenTxCount } from "./utils/token-erc721"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
-import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
+import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "./utils/pool/bucket"
 import { addressToBytes, bigIntArrayToIntArray, decimalToWad, wadToDecimal } from "./utils/convert"
 import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD } from "./utils/constants"
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
@@ -262,6 +262,7 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, addCollateralNFT.actor)
     lend.lpb             = lend.lpb.plus(addCollateralNFT.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+    updateBucketLends(bucket, lendId)
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
@@ -471,6 +472,7 @@ export function handleMergeOrRemoveCollateralNFT(
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, event.params.actor)
     lend.lpb = wadToDecimal(getLenderInfoERC721Pool(pool.id, index, event.params.actor).lpBalance)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+    updateBucketLends(bucket, lendId)
 
     updateAccountLends(account, lend)
 
@@ -778,6 +780,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   const kickerLend           = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucketTakeLpAwarded.kicker)
   kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
   kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
+  updateBucketLends(bucket, kickerLendId)
 
   // update kicker account state if they weren't a lender already
   const kickerAccountId = bucketTakeLpAwarded.kicker
@@ -789,6 +792,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   const takerLend           = loadOrCreateLend(bucketId, takerLendId, pool.id, bucketTakeLpAwarded.taker)
   takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
   takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, takerLend.lpb)
+  updateBucketLends(bucket, takerLendId)
 
   // update bucketTake pointers
   bucketTake.liquidationAuction = auction.id
@@ -1033,13 +1037,20 @@ export function handleTransferLP(event: TransferLPEvent): void {
     newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
     updateAccountLends(newOwnerAccount, newLend)
     newLend.save()
+    updateBucketLends(bucket, newLendId)
+    bucket.save()
   }
   oldOwnerAccount.save()
   newOwnerAccount.save()
 
   // increment pool and token tx counts
-  pool.save()
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  const quoteToken = Token.load(pool.quoteToken)!
+  quoteToken.txCount = quoteToken.txCount.plus(ONE_BI)
 
+  // save entities to the store
+  quoteToken.save()
+  pool.save()
   entity.save()
 }
 

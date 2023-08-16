@@ -14,7 +14,7 @@ import {
 import { loadOrCreateAccount, updateAccountLends, updateAccountPools } from "../../utils/account"
 import { ONE_BI, ZERO_BD } from "../../utils/constants"
 import { addressToBytes, wadToDecimal } from "../../utils/convert"
-import { getBucketId, getBucketInfo, loadOrCreateBucket } from "../../utils/pool/bucket"
+import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../../utils/pool/bucket"
 import { getLendId, loadOrCreateLend, lpbValueInQuote } from "../../utils/pool/lend"
 import { isERC20Pool, updatePool } from "../../utils/pool/pool"
 import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../utils/token-erc20"
@@ -105,6 +105,7 @@ export function _handleAddQuoteToken(erc20Event: AddQuoteTokenERC20Event | null,
     const lend           = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
     lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+    updateBucketLends(bucket, lendId)
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
@@ -222,6 +223,7 @@ export function _handleMoveQuoteToken(erc20Event: MoveQuoteTokenERC20Event | nul
     const toBucketLend = loadOrCreateLend(toBucketId, toBucketLendId, pool.id, moveQuoteToken.lender)
     toBucketLend.lpb = toBucketLend.lpb.plus(wadToDecimal(lpAwardedTo))
     toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket.bucketIndex, toBucketLend.lpb)
+    updateBucketLends(toBucket, toBucketLend.id)
 
     // update account state
     const accountId = addressToBytes(lender)
