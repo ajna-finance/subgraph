@@ -65,8 +65,8 @@ import { findAndRemoveTokenIds, getWadCollateralFloorTokens, incrementTokenTxCou
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "./utils/pool/bucket"
 import { addressToBytes, bigIntArrayToIntArray, decimalToWad, wadToDecimal } from "./utils/convert"
-import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD } from "./utils/constants"
-import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
+import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD, ZERO_BI } from "./utils/constants"
+import { getDepositTime, getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "./utils/pool/liquidation"
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool, getRatesAndFees, calculateLendRate, isERC20Pool } from "./utils/pool/pool"
@@ -260,6 +260,7 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, addCollateralNFT.actor)
+    lend.depositTime     = addCollateralNFT.blockTimestamp
     lend.lpb             = lend.lpb.plus(addCollateralNFT.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
     updateBucketLends(bucket, lendId)
@@ -328,6 +329,7 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
     for (let i = 0; i < bucket.lends.length; i++) {
       const lendId = bucket.lends[i]
       const lend = Lend.load(lendId)!
+      lend.depositTime = bucketBankruptcy.blockTimestamp.plus(ONE_BI)
       lend.lpb = ZERO_BD
       lend.lpbValueInQuote = ZERO_BD
       lend.save()
@@ -470,6 +472,7 @@ export function handleMergeOrRemoveCollateralNFT(
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, event.params.actor)
+    lend.depositTime = mergeOrRemove.blockTimestamp
     lend.lpb = wadToDecimal(getLenderInfoERC721Pool(pool.id, index, event.params.actor).lpBalance)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
     updateBucketLends(bucket, lendId)
@@ -778,6 +781,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   const bucketTakeLpAwarded  = BucketTakeLPAwarded.load(lpAwardedId)!
   const kickerLendId         = getLendId(bucketId, bucketTakeLpAwarded.kicker)
   const kickerLend           = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucketTakeLpAwarded.kicker)
+  kickerLend.depositTime     = bucketTake.blockTimestamp
   kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
   kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
   updateBucketLends(bucket, kickerLendId)
@@ -790,6 +794,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   // update lend state for taker
   const takerLendId         = getLendId(bucketId, bucketTakeLpAwarded.taker)
   const takerLend           = loadOrCreateLend(bucketId, takerLendId, pool.id, bucketTakeLpAwarded.taker)
+  takerLend.depositTime     = bucketTake.blockTimestamp
   takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
   takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, takerLend.lpb)
   updateBucketLends(bucket, takerLendId)
@@ -1033,6 +1038,7 @@ export function handleTransferLP(event: TransferLPEvent): void {
 
     // add new lend
     const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
+    newLend.depositTime = getDepositTime(entity.blockTimestamp, newLend)
     newLend.lpb = wadToDecimal(getLenderInfoERC721Pool(pool.id, bucketIndex, event.params.newOwner).lpBalance)
     newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
     updateAccountLends(newOwnerAccount, newLend)
