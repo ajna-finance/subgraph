@@ -64,10 +64,17 @@ export class LendUpdatedParams {
     id: Bytes
     bucketId: Bytes
     poolAddress: String
+    depositTime: BigInt
     lpb: BigInt
     lpbValueInQuote: BigInt
 }
 export function assertLendUpdate(params: LendUpdatedParams): void {
+    assert.fieldEquals(
+        "Lend",
+        `${params.id.toHexString()}`,
+        "depositTime",
+        `${params.depositTime}`
+    )
     assert.fieldEquals(
         "Lend",
         `${params.id.toHexString()}`,

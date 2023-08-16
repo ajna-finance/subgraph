@@ -652,6 +652,7 @@ describe("Describe entity assertions", () => {
     const expectedPoolAddress = addressToBytes(poolAddress)
     const accountId = addressToBytes(actor)
     const bucketId = getBucketId(expectedPoolAddress, index.toU32())
+    const expectedDepositTime = newRemoveCollateralEvent.block.timestamp
 
     // check RemoveCollateralEvent attributes
     assert.entityCount("RemoveCollateral", 1)
@@ -701,6 +702,7 @@ describe("Describe entity assertions", () => {
       id: lendId,
       bucketId: bucketId,
       poolAddress: poolAddress.toHexString(),
+      depositTime: expectedDepositTime,
       lpb: expectedRemainingLPB,
       lpbValueInQuote: lpRedeemed
     })
@@ -1398,10 +1400,12 @@ describe("Describe entity assertions", () => {
     const lenderLendId = getLendId(bucketId, lenderAccountId)
     const takerLendId = getLendId(bucketId, takerAccountId)
     const kickerLendId = getLendId(bucketId, kickerAccountId)
+    const expectedDepositTime = ONE_BI
     assertLendUpdate({
       id: lenderLendId,
       bucketId: bucketId,
       poolAddress: poolAddress.toHexString(),
+      depositTime: expectedDepositTime,
       lpb: lpAwarded,
       lpbValueInQuote: expectedLPBValueInQuote
     })
@@ -1409,6 +1413,7 @@ describe("Describe entity assertions", () => {
       id: takerLendId,
       bucketId: bucketId,
       poolAddress: poolAddress.toHexString(),
+      depositTime: expectedDepositTime,
       lpb: lpAwardedTaker,
       lpbValueInQuote: expectedTakerLPBValueInQuote
     })
@@ -1416,6 +1421,7 @@ describe("Describe entity assertions", () => {
       id: kickerLendId,
       bucketId: bucketId,
       poolAddress: poolAddress.toHexString(),
+      depositTime: expectedDepositTime,
       lpb: lpAwardedKicker,
       lpbValueInQuote: expectedKickerLPBValueInQuote
     })
@@ -1444,7 +1450,7 @@ describe("Describe entity assertions", () => {
       createAndHandleAddQuoteTokenEvent(poolAddress, owner, index, price, amount, lp, lup, logIndex)
 
       // mock handleTransferLP contract calls
-      mockGetLenderInfo(poolAddress, index, owner, ZERO_BI, expectedDepositTime)
+      mockGetLenderInfo(poolAddress, index, owner, ZERO_BI, ONE_BI)
       mockGetLPBValueInQuote(poolAddress, ZERO_BI, index, ZERO_BI)
       mockGetLenderInfo(poolAddress, index, newOwner, lp, expectedDepositTime)
       mockGetLPBValueInQuote(poolAddress, lp, index, lp)
@@ -1497,6 +1503,7 @@ describe("Describe entity assertions", () => {
         id: ownerLendId,
         bucketId: bucketId,
         poolAddress: poolAddress.toHexString(),
+        depositTime: ONE_BI,
         lpb: ZERO_BI, // all lpb was transferred
         lpbValueInQuote: ZERO_BI
       })
@@ -1505,6 +1512,7 @@ describe("Describe entity assertions", () => {
         id: newOwnerLendId,
         bucketId: bucketId,
         poolAddress: poolAddress.toHexString(),
+        depositTime: expectedDepositTime,
         lpb: lp,
         lpbValueInQuote: lp
       })
