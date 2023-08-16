@@ -433,6 +433,7 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
 
       // add new lend
       const newLend = loadOrCreateLend(bucketId, newLendId, pool.id, transferLP.newOwner)
+      // TODO: should we simply use lenderInfo.depositTime instead of getDepositTime?
       newLend.depositTime = getDepositTime(oldLend.depositTime, newLend)
       newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, newOwner).lpBalance)
       newLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, newLend.lpb)

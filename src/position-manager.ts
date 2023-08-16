@@ -1,4 +1,4 @@
-import { BigDecimal, log } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, log } from "@graphprotocol/graph-ts"
 import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
@@ -23,11 +23,12 @@ import {
   Transfer
 } from "../generated/schema"
 import { getBucketId } from "./utils/pool/bucket"
-import { lpbValueInQuote } from "./utils/pool/lend"
+import { getDepositTime, lpbValueInQuote } from "./utils/pool/lend"
 import { ONE_BI, ZERO_BD } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { deletePosition, getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "./utils/position"
+import { getLenderInfo } from "./utils/pool/pool"
 
 export function handleApproval(event: ApprovalEvent): void {
   const approval = new Approval(
@@ -160,7 +161,9 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   const lendIdTo     = getLendId(bucketIdTo, moveLiquidity.lender)
   const lendTo       = loadOrCreateLend(bucketIdTo, lendIdTo, moveLiquidity.pool, moveLiquidity.lender)
 
-  lendTo.lpb               = lendTo.lpb.plus(wadToDecimal(event.params.lpAwardedTo))
+  const lendToInfo         = getLenderInfo(moveLiquidity.pool, event.params.toIndex, Address.fromBytes(lendTo.lender))
+  lendTo.depositTime       = lendToInfo.depositTime
+  lendTo.lpb               = wadToDecimal(lendToInfo.lpBalance)
   lendTo.lpbValueInQuote   = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendTo.lpb)
   const lpRedeemedFrom     = wadToDecimal(event.params.lpRedeemedFrom)
   if (lpRedeemedFrom.le(lendFrom.lpb)) {
