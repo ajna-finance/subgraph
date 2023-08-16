@@ -1,22 +1,24 @@
 import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts"
-import { AddQuoteToken, MoveQuoteToken, Pool, RemoveQuoteToken } from "../../../generated/schema"
+import { Account, AddQuoteToken, Bucket, MoveQuoteToken, Pool, RemoveQuoteToken, Token, TransferLP } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
-    RemoveQuoteToken as RemoveQuoteTokenERC20Event
+    RemoveQuoteToken as RemoveQuoteTokenERC20Event,
+    TransferLP as TransferLPERC20Event
 } from "../../../generated/templates/ERC20Pool/ERC20Pool"
 import {
     AddQuoteToken as AddQuoteTokenERC721Event,
     MoveQuoteToken as MoveQuoteTokenERC721Event,
-    RemoveQuoteToken as RemoveQuoteTokenERC721Event
+    RemoveQuoteToken as RemoveQuoteTokenERC721Event,
+    TransferLP as TransferLPERC721Event
 } from "../../../generated/templates/ERC721Pool/ERC721Pool"
 
 import { loadOrCreateAccount, updateAccountLends, updateAccountPools } from "../../utils/account"
 import { ONE_BI, ZERO_BD } from "../../utils/constants"
-import { addressToBytes, wadToDecimal } from "../../utils/convert"
+import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../../utils/convert"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../../utils/pool/bucket"
 import { getDepositTime, getLendId, loadOrCreateLend, lpbValueInQuote } from "../../utils/pool/lend"
-import { isERC20Pool, updatePool } from "../../utils/pool/pool"
+import { getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
 import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../utils/token-erc20"
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
 
@@ -349,4 +351,100 @@ export function _handleRemoveQuoteToken(erc20Event: RemoveQuoteTokenERC20Event |
     removeQuote.bucket = bucket.id
     removeQuote.pool = pool.id
     removeQuote.save()
+}
+
+export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc721Event: TransferLPERC721Event | null): void {
+    // get pool based upon the event source
+    const pool = erc20Event === null ? Pool.load(addressToBytes(erc721Event!.address))! : Pool.load(addressToBytes(erc20Event.address))!
+
+    // set event attribute types to local variables
+    let logIndex: i32;
+    let owner: Address;
+    let newOwner: Address;
+    let indexes: Array<BigInt>;
+    let lp: BigInt;
+    let blockNumber: BigInt;
+    let blockTimestamp: BigInt;
+    let transactionHash: Bytes;
+
+    // access event attributes and write to local variables
+    if (isERC20Pool(pool)) {
+        logIndex = erc20Event!.logIndex.toI32()
+        owner = erc20Event!.params.owner
+        newOwner = erc20Event!.params.newOwner
+        indexes = erc20Event!.params.indexes
+        lp = erc20Event!.params.lp
+        blockNumber = erc20Event!.block.number
+        blockTimestamp = erc20Event!.block.timestamp
+        transactionHash = erc20Event!.transaction.hash
+    } else {
+        logIndex = erc721Event!.logIndex.toI32()
+        owner = erc721Event!.params.owner
+        newOwner = erc721Event!.params.newOwner
+        indexes = erc721Event!.params.indexes
+        lp = erc721Event!.params.lp
+        blockNumber = erc721Event!.block.number
+        blockTimestamp = erc721Event!.block.timestamp
+        transactionHash = erc721Event!.transaction.hash
+    }
+
+    const transferLP = new TransferLP(
+        transactionHash.concatI32(logIndex)
+    )
+    transferLP.owner    = addressToBytes(owner)
+    transferLP.newOwner = addressToBytes(newOwner)
+    transferLP.indexes  = bigIntArrayToIntArray(indexes)
+    transferLP.lp       = wadToDecimal(lp)
+
+    transferLP.blockNumber = blockNumber
+    transferLP.blockTimestamp = blockTimestamp
+    transferLP.transactionHash = transactionHash
+
+    // increment pool and token tx counts
+    pool.txCount = pool.txCount.plus(ONE_BI)
+    const quoteToken = Token.load(pool.quoteToken)!
+    quoteToken.txCount = quoteToken.txCount.plus(ONE_BI)
+    quoteToken.save()
+    // TODO: should this also call updatePool
+
+    log.info("handleTransferLP from {} to {}" , [transferLP.owner.toHexString(), transferLP.newOwner.toHexString()])
+
+    // update Lends for old and new owners, creating entities where necessary
+    const oldOwnerAccount = Account.load(transferLP.owner)!
+    const newOwnerAccount = loadOrCreateAccount(transferLP.newOwner)
+    for (var i=0; i<indexes.length; ++i) {
+      const bucketIndex = indexes[i]
+      const bucketId = getBucketId(pool.id, bucketIndex.toU32())
+      const bucket = Bucket.load(bucketId)!
+      const oldLendId = getLendId(bucketId, transferLP.owner)
+      const newLendId = getLendId(bucketId, transferLP.newOwner)
+
+      // If PositionManager generated this event, it means either:
+      // Memorialize - transfer from lender to PositionManager, eliminating the lender's Lend
+      // Redeem      - transfer from PositionManager to lender, creating the lender's Lend
+
+      // event does not reveal LP amounts transferred for each bucket, so query the pool and update
+      // remove old lend
+      const oldLend = loadOrCreateLend(bucketId, oldLendId, pool.id, transferLP.owner)
+      oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, owner).lpBalance)
+      oldLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, oldLend.lpb)
+      updateAccountLends(oldOwnerAccount, oldLend)
+      oldLend.save()
+
+      // add new lend
+      const newLend = loadOrCreateLend(bucketId, newLendId, pool.id, transferLP.newOwner)
+      newLend.depositTime = getDepositTime(oldLend.depositTime, newLend)
+      newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, newOwner).lpBalance)
+      newLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, newLend.lpb)
+      updateAccountLends(newOwnerAccount, newLend)
+      newLend.save()
+      updateBucketLends(bucket, newLendId)
+      bucket.save()
+    }
+
+    // save entities to the store
+    oldOwnerAccount.save()
+    newOwnerAccount.save()
+    pool.save()
+    transferLP.save()
 }

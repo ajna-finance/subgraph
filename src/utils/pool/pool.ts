@@ -32,6 +32,14 @@ export class LenderInfo {
   }
 }
 export function getLenderInfo(poolId: Bytes, bucketIndex: BigInt, lender: Address): LenderInfo {
+  const pool = Pool.load(poolId)!
+  if (isERC20Pool(pool)) {
+    return getLenderInfoERC20Pool(poolId, bucketIndex, lender)
+  } else {
+    return getLenderInfoERC721Pool(poolId, bucketIndex, lender)
+  }
+}
+export function getLenderInfoERC20Pool(poolId: Bytes, bucketIndex: BigInt, lender: Address): LenderInfo {
   const poolContract = ERC20Pool.bind(Address.fromBytes(poolId))
   const lenderInfoResult = poolContract.lenderInfo(bucketIndex, lender)
 
