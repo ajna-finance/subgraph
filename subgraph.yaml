@@ -125,6 +125,8 @@ dataSources:
           file: ./abis/ERC721PoolFactory.json
         - name: ERC721Pool
           file: ./abis/ERC721Pool.json
+        - name: ERC20Pool
+          file: ./abis/ERC20Pool.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: ERC721
