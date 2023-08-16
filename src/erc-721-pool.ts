@@ -1035,7 +1035,7 @@ export function handleTransferLP(event: TransferLPEvent): void {
 
     // add new lend
     const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
-    newLend.depositTime = getDepositTime(entity.blockTimestamp, newLend)
+    newLend.depositTime = getDepositTime(oldLend.depositTime, newLend)
     newLend.lpb = wadToDecimal(getLenderInfoERC721Pool(pool.id, bucketIndex, event.params.newOwner).lpBalance)
     newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
     updateAccountLends(newOwnerAccount, newLend)

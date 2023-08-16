@@ -222,7 +222,7 @@ export function _handleMoveQuoteToken(erc20Event: MoveQuoteTokenERC20Event | nul
     // update to bucket lend state
     const toBucketLendId = getLendId(toBucketId, lender)
     const toBucketLend = loadOrCreateLend(toBucketId, toBucketLendId, pool.id, moveQuoteToken.lender)
-    toBucketLend.depositTime = getDepositTime(blockTimestamp, toBucketLend)
+    toBucketLend.depositTime = getDepositTime(fromBucketLend.depositTime, toBucketLend)
     toBucketLend.lpb = toBucketLend.lpb.plus(wadToDecimal(lpAwardedTo))
     toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket.bucketIndex, toBucketLend.lpb)
     updateBucketLends(toBucket, toBucketLend.id)
