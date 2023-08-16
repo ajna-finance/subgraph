@@ -11,8 +11,8 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Account, Lend, Loan } from "../generated/schema"
-import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick, handleAuctionNFTSettle, handleSettle, handleTake } from "../src/erc-721-pool"
-import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent, createAuctionNFTSettleEvent, createSettleEvent, createTakeEvent } from "./utils/erc-721-pool-utils"
+import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick, handleAuctionNFTSettle, handleSettle, handleTake, handleBucketTakeLPAwarded, handleBucketTake } from "../src/erc-721-pool"
+import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent, createAuctionNFTSettleEvent, createSettleEvent, createTakeEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent } from "./utils/erc-721-pool-utils"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { assertBucketUpdate, assertLendUpdate, create721Pool, createPool, mockGetAuctionInfo, mockGetAuctionStatus, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
@@ -1041,7 +1041,7 @@ describe("Describe entity assertions", () => {
     )
   })
 
-  test("Kick, BucketTake, and Settle", () => {
+  test("Add Liquidity, Kick, BucketTake", () => {
 
     // check entities are unavailable prior to storage
     assert.entityCount("Account", 0)
@@ -1073,7 +1073,7 @@ describe("Describe entity assertions", () => {
     const lup = BigInt.fromString("9529276179422528643")         //   9.529276179422528643 * 1e18
 
     // mock required contract calls
-    const expectedBucketInfo = new BucketInfo(
+    let expectedBucketInfo = new BucketInfo(
       index.toU32(),
       price,
       amount,
@@ -1235,10 +1235,120 @@ describe("Describe entity assertions", () => {
     /*** Bucket Take ***/
     /*******************/
 
+    const amountToTake = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
+    const bondChange = BigInt.fromString("234000000000000000000")
+    const collateralToTake = BigInt.fromString("2967529276179422528") // 2.967529276179422528 * 1e18
+    const lpAwardedKicker = BigInt.fromString("0")
+    const lpAwardedTaker = BigInt.fromString("0")
+    const isReward = true
+
+    // mock required contract calls
+    expectedBucketInfo = new BucketInfo(
+      index.toU32(),
+      price,
+      debt,
+      ZERO_BI,
+      lpAwarded.plus(lpAwardedTaker),
+      ZERO_BI,
+      ONE_WAD_BI
+    )
+    mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
+
+    const expectedKickerLPBValueInQuote = lpAwardedKicker
+    mockGetLPBValueInQuote(poolAddress, lpAwardedKicker, index, expectedKickerLPBValueInQuote)
+
+    const expectedTakerLPBValueInQuote = lpAwardedTaker
+    mockGetLPBValueInQuote(poolAddress, lpAwardedTaker, index, expectedTakerLPBValueInQuote)
+
+    // mock createBucketTakeLPAwardedEvent
+    const newBucketTakeLPAwardedEvent = createBucketTakeLPAwardedEvent(
+      poolAddress,
+      taker,
+      kicker,
+      lpAwardedTaker,
+      lpAwardedKicker
+    )
+    handleBucketTakeLPAwarded(newBucketTakeLPAwardedEvent)
+
+    // mock bucket take event
+    const newBucketTakeEvent = createBucketTakeEvent(
+      poolAddress,
+      taker,
+      borrower,
+      index,
+      amountToTake,
+      collateralToTake,
+      bondChange,
+      isReward
+    )
+    // implementation assumes these events happen in succession
+    newBucketTakeEvent.transaction.hash = newBucketTakeLPAwardedEvent.transaction.hash
+    newBucketTakeEvent.logIndex = newBucketTakeLPAwardedEvent.logIndex.plus(ONE_BI)
+    handleBucketTake(newBucketTakeEvent)
+
     /********************/
     /*** Assert State ***/
     /********************/
 
+    const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId, ONE_BI)
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "pool",
+      `${poolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "borrower",
+      `${borrower.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "loan",
+      `${loanId.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LiquidationAuction",
+      `${liquidationAuctionId.toHexString()}`,
+      "settled",
+      `${false}`
+    )
+
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "inLiquidation",
+      `${true}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "t0debt",
+      `${wadToDecimal(wdiv(debt, inflator))}`
+    )
+    assert.fieldEquals(
+      "Loan",
+      `${loanId.toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345]"
+    )
+
+    // check Pool attributes
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "tokenIdsPledged",
+      "[234, 345]"
+    )
+    // check Pool attributes
+    assert.fieldEquals(
+      "Pool",
+      `${expectedPoolAddress.toHexString()}`,
+      "bucketTokenIds",
+      "[456]" // since borrower collateral was > 2 but < 3 after take their last tokenId should have been popped and transferred to bucketTokenIds
+    )
   })
 
   // TODO: finish implementing once a mergeOrRemoveCollateralNFT calldata becomes available
