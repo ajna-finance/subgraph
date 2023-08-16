@@ -98,7 +98,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // record pool type information
   pool.poolType = "Fungible"
-  pool.subsetHash = Bytes.empty() // TODO: use hardcoded subset hash for keccak(ERC20_POOL_SUBSET_HASH)
+  pool.subsetHash = Bytes.fromHexString("0x2263c4378b4920f0bef611a3ff22c506afa4745b3319c50b6d704a874990b8b2")
 
   // add pool reference to factories' list of pools
   factory.pools = factory.pools.concat([pool.id])

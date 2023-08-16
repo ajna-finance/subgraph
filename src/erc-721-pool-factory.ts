@@ -118,8 +118,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     pool.subsetHash = getPoolSubsetHash(event.address, tokenIds)
   } else {
     pool.poolType = "Collection"
-    // TODO: hardcode the subset hash
-    pool.subsetHash = Bytes.empty()
+    pool.subsetHash = Bytes.fromHexString("0x93e3b87db48beb11f82ff978661ba6e96f72f582300e9724191ab4b5d7964364")
   }
   pool.tokenIdsAllowed = tokenIds
 
