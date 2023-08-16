@@ -975,68 +975,6 @@ export function handleSettle(event: SettleEvent): void {
 export function handleTransferLP(event: TransferLPEvent): void {
   event = changetype<TransferLPEvent | null>(event)!
   _handleTransferLP(event, null)
-
-  // const entity = new TransferLP(
-  //   event.transaction.hash.concatI32(event.logIndex.toI32())
-  // )
-  // entity.owner    = addressToBytes(event.params.owner)
-  // entity.newOwner = addressToBytes(event.params.newOwner)
-  // entity.indexes  = bigIntArrayToIntArray(event.params.indexes)
-  // entity.lp       = wadToDecimal(event.params.lp)
-
-  // entity.blockNumber = event.block.number
-  // entity.blockTimestamp = event.block.timestamp
-  // entity.transactionHash = event.transaction.hash
-
-  // const poolId = addressToBytes(event.address)
-  // const pool = Pool.load(poolId)!
-
-  // log.info("handleTransferLP from {} to {}" , [entity.owner.toHexString(), entity.newOwner.toHexString()])
-
-  // // update Lends for old and new owners, creating entities where necessary
-  // const oldOwnerAccount = Account.load(entity.owner)!
-  // const newOwnerAccount = loadOrCreateAccount(entity.newOwner)
-  // for (var i=0; i<event.params.indexes.length; ++i) {
-  //   const bucketIndex = event.params.indexes[i]
-  //   const bucketId = getBucketId(poolId, bucketIndex.toU32())
-  //   const bucket = Bucket.load(bucketId)!
-  //   const oldLendId = getLendId(bucketId, entity.owner)
-  //   const newLendId = getLendId(bucketId, entity.newOwner)
-
-  //   // If PositionManager generated this event, it means either:
-  //   // Memorialize - transfer from lender to PositionManager, eliminating the lender's Lend
-  //   // Redeem      - transfer from PositionManager to lender, creating the lender's Lend
-
-  //   // event does not reveal LP amounts transferred for each bucket, so query the pool and update
-  //   // remove old lend
-  //   const oldLend = loadOrCreateLend(bucketId, oldLendId, poolId, entity.owner)
-  //   oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
-  //   oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
-  //   updateAccountLends(oldOwnerAccount, oldLend)
-  //   oldLend.save()
-
-  //   // add new lend
-  //   const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
-  //   newLend.depositTime = getDepositTime(oldLend.depositTime, newLend)
-  //   newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.newOwner).lpBalance)
-  //   newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
-  //   updateAccountLends(newOwnerAccount, newLend)
-  //   newLend.save()
-  //   updateBucketLends(bucket, newLendId)
-  //   bucket.save()
-  // }
-  // oldOwnerAccount.save()
-  // newOwnerAccount.save()
-
-  // // increment pool and token tx counts
-  // pool.txCount = pool.txCount.plus(ONE_BI)
-  // const quoteToken = Token.load(pool.quoteToken)!
-  // quoteToken.txCount = quoteToken.txCount.plus(ONE_BI)
-
-  // // save entities to the store
-  // quoteToken.save()
-  // pool.save()
-  // entity.save()
 }
 
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
