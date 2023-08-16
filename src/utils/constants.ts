@@ -33,10 +33,10 @@ poolInfoUtilsAddressTable.set('mainnet', Address.fromString('0x154FFf344f426F99E
 poolInfoUtilsAddressTable.set('polygon', Address.fromString('0xA9Ada58DD3c820b30D3bf5B490226F2ef92107bA'))
 poolInfoUtilsAddressTable.set('goerli', Address.fromString('0xBB61407715cDf92b2784E9d2F1675c4B8505cBd8'))
 poolInfoUtilsAddressTable.set('mumbai', Address.fromString('0x39250241CC84Dadb1cDFE3A1a717631e2aA603eB'))
-poolInfoUtilsAddressTable.set('ganache', Address.fromString('0x4f05DA51eAAB00e5812c54e370fB95D4C9c51F21'))
+poolInfoUtilsAddressTable.set('ganache', Address.fromString('0x6c5c7fD98415168ada1930d44447790959097482'))
 export const positionManagerAddressTable = new TypedMap<string, Address>()
 positionManagerAddressTable.set('goerli', Address.fromString('0x23E2EFF19bd50BfCF0364B7dCA01004D5cce41f9'))
-positionManagerAddressTable.set('ganache', Address.fromString('0x6c5c7fD98415168ada1930d44447790959097482'))
+positionManagerAddressTable.set('ganache', Address.fromString('0x6548dF23A854f72335902e58a1e59B50bb3f11F1'))
 
 // GrantFund constants
 export const CHALLENGE_PERIOD_LENGTH    = BigInt.fromI32(50400)
