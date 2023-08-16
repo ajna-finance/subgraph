@@ -1270,6 +1270,14 @@ describe("Describe entity assertions", () => {
     )
     handleBucketTakeLPAwarded(newBucketTakeLPAwardedEvent)
 
+    // need to update mock borrower info to reflect reduced collateral to ensure that the expected tokenId rebalancing occurs
+    inflator = BigInt.fromString("1002804000000000000")
+    expectedBorrowerInfo = new BorrowerInfo(
+      wdiv(amountBorrowed, inflator),
+      amountPledged.minus(collateralToTake),
+      BigInt.fromString("8766934085068726351"))
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
+
     // mock bucket take event
     const newBucketTakeEvent = createBucketTakeEvent(
       poolAddress,
@@ -1289,6 +1297,17 @@ describe("Describe entity assertions", () => {
     /********************/
     /*** Assert State ***/
     /********************/
+
+    // check entities have been stored
+    assert.entityCount("Account", 4)
+    assert.entityCount("AddQuoteToken", 1)
+    assert.entityCount("DrawDebtNFT", 1)
+    assert.entityCount("Loan", 1)
+    assert.entityCount("LiquidationAuction", 1)
+    assert.entityCount("Kick", 1)
+    assert.entityCount("BucketTake", 1)
+    assert.entityCount("BucketTakeLPAwarded", 1)
+    assert.entityCount("Pool", 2)
 
     const liquidationAuctionId = getLiquidationAuctionId(addressToBytes(poolAddress), loanId, ONE_BI)
     assert.fieldEquals(
