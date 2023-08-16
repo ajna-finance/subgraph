@@ -14,7 +14,7 @@ import { Account, Lend, Loan } from "../generated/schema"
 import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick, handleAuctionNFTSettle, handleSettle, handleTake, handleBucketTakeLPAwarded, handleBucketTake } from "../src/erc-721-pool"
 import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent, createAuctionNFTSettleEvent, createSettleEvent, createTakeEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent } from "./utils/erc-721-pool-utils"
 
-import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
+import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, TWO_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { assertBucketUpdate, assertLendUpdate, create721Pool, createPool, mockGetAuctionInfo, mockGetAuctionStatus, mockGetBorrowerInfo, mockGetBucketInfo, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/pool/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
@@ -1236,19 +1236,21 @@ describe("Describe entity assertions", () => {
     /*******************/
 
     const amountToTake = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
-    const bondChange = BigInt.fromString("234000000000000000000")
-    const collateralToTake = BigInt.fromString("2967529276179422528") // 2.967529276179422528 * 1e18
-    const lpAwardedKicker = BigInt.fromString("0")
-    const lpAwardedTaker = BigInt.fromString("0")
+    const bondChange = BigInt.fromString("234000000000000000000") // 234 * 1e18
+    const collateralToTake = BigInt.fromString("2167529276179422528") // 2.167529276179422528 * 1e18
+    const tokensRemaining = BigInt.fromString("2000000000000000000") // 2 * 1e18
+    const remainingCollateral = collateralToTake.minus(tokensRemaining)
+    const lpAwardedKicker = BigInt.fromString("20000000000000000000")
+    const lpAwardedTaker = BigInt.fromString("20000000000000000000")
     const isReward = true
 
     // mock required contract calls
     expectedBucketInfo = new BucketInfo(
       index.toU32(),
       price,
-      debt,
-      ZERO_BI,
-      lpAwarded.plus(lpAwardedTaker),
+      debt.div(TWO_BI),
+      remainingCollateral,
+      lpAwardedKicker.plus(lpAwardedTaker),
       ZERO_BI,
       ONE_WAD_BI
     )
@@ -1302,6 +1304,7 @@ describe("Describe entity assertions", () => {
     assert.entityCount("Account", 4)
     assert.entityCount("AddQuoteToken", 1)
     assert.entityCount("DrawDebtNFT", 1)
+    assert.entityCount("Lend", 3)
     assert.entityCount("Loan", 1)
     assert.entityCount("LiquidationAuction", 1)
     assert.entityCount("Kick", 1)
@@ -1368,6 +1371,54 @@ describe("Describe entity assertions", () => {
       "bucketTokenIds",
       "[456]" // since borrower collateral was > 2 but < 3 after take their last tokenId should have been popped and transferred to bucketTokenIds
     )
+
+    // check account attributes updated
+    const lenderAccountId = addressToBytes(lender)
+    const kickerAccountId = addressToBytes(kicker)
+    const takerAccountId = addressToBytes(taker)
+    assert.fieldEquals(
+      "Account",
+      `${lenderAccountId.toHexString()}`,
+      "txCount",
+      `${ONE_BI}`
+    )
+
+    // check bucket attributes updated
+    const bucketId = getBucketId(addressToBytes(poolAddress), index.toU32())
+    assertBucketUpdate({
+      id: bucketId,
+      collateral: remainingCollateral,
+      deposit: debt.div(TWO_BI),
+      exchangeRate: ONE_WAD_BI,
+      bucketIndex: index,
+      lpb: lpAwardedKicker.plus(lpAwardedTaker)
+    })
+
+    // check lend entities
+    const lenderLendId = getLendId(bucketId, lenderAccountId)
+    const takerLendId = getLendId(bucketId, takerAccountId)
+    const kickerLendId = getLendId(bucketId, kickerAccountId)
+    assertLendUpdate({
+      id: lenderLendId,
+      bucketId: bucketId,
+      poolAddress: poolAddress.toHexString(),
+      lpb: lpAwarded,
+      lpbValueInQuote: expectedLPBValueInQuote
+    })
+    assertLendUpdate({
+      id: takerLendId,
+      bucketId: bucketId,
+      poolAddress: poolAddress.toHexString(),
+      lpb: lpAwardedTaker,
+      lpbValueInQuote: expectedTakerLPBValueInQuote
+    })
+    assertLendUpdate({
+      id: kickerLendId,
+      bucketId: bucketId,
+      poolAddress: poolAddress.toHexString(),
+      lpb: lpAwardedKicker,
+      lpbValueInQuote: expectedKickerLPBValueInQuote
+    })
   })
 
   // TODO: finish implementing once a mergeOrRemoveCollateralNFT calldata becomes available

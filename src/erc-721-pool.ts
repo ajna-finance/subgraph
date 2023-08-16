@@ -763,7 +763,6 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   bucket.lpb          = wadToDecimal(bucketInfo.lpb)
   bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
 
-  // TODO: fix bucketTakeLpAwarded.kicker being null
   // update lend state for kicker
   const lpAwardedId          = event.transaction.hash.concatI32(event.logIndex.toI32() - 1);
   const bucketTakeLpAwarded  = BucketTakeLPAwarded.load(lpAwardedId)!
