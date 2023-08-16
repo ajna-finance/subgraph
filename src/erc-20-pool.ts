@@ -4,7 +4,6 @@ import {
   AddCollateral as AddCollateralEvent,
   AddQuoteToken as AddQuoteTokenEvent,
   ApproveLPTransferors as ApproveLPTransferorsEvent,
-  AuctionNFTSettle as AuctionNFTSettleEvent,
   AuctionSettle as AuctionSettleEvent,
   BondWithdrawn as BondWithdrawnEvent,
   BucketBankruptcy as BucketBankruptcyEvent,
@@ -150,10 +149,6 @@ export function handleApproveLPTransferors(
 
   entity.save()
 }
-
-// ERC721Pool only
-// This is in the code path for ERC20Pools, but will never be emitted
-export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {}
 
 // ERC20Pool only
 // emitted in conjunction with Settle

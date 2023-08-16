@@ -3,7 +3,6 @@ import {
   AddCollateralNFT as AddCollateralNFTEvent,
   AddQuoteToken as AddQuoteTokenEvent,
   AuctionNFTSettle as AuctionNFTSettleEvent,
-  AuctionSettle as AuctionSettleEvent,
   BucketBankruptcy as BucketBankruptcyEvent,
   BucketTake as BucketTakeEvent,
   BucketTakeLPAwarded as BucketTakeLPAwardedEvent,
@@ -571,9 +570,6 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
 
   auctionNFTSettle.save()
 }
-
-// This is in the code path for ERC721Pools, but will never be emitted
-export function handleAuctionSettle(event: AuctionSettleEvent): void {}
 
 export function handleSettle(event: SettleEvent): void {
   const settle = new Settle(
