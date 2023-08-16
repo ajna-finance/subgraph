@@ -240,7 +240,14 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
     bucketBankruptcy.bucket = bucketId
     bucketBankruptcy.pool = pool.id
 
-    // TODO: update Lends
+    // iterate through all bucket lends and set lend.lpb to zero
+    for (let i = 0; i < bucket.lends.length; i++) {
+      const lendId = bucket.lends[i]
+      const lend = Lend.load(lendId)!
+      lend.lpb = ZERO_BD
+      lend.lpbValueInQuote = ZERO_BD
+      lend.save()
+    }
 
     // save entities to store
     pool.save()

@@ -61,6 +61,7 @@ export function loadOrCreateBucket(poolId: Bytes, bucketId: Bytes, index: u32): 
       bucket.deposit      = ZERO_BD
       bucket.exchangeRate = ONE_BD
       bucket.lpb          = ZERO_BD
+      bucket.lends        = []
     }
     return bucket
 }

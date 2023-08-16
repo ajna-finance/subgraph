@@ -1568,6 +1568,16 @@ describe("ERC20Pool assertions", () => {
     })
     assert.entityCount("Bucket", 1)
 
+    const accountId = addressToBytes(lender)
+    const lendId = getLendId(bucketId, accountId)
+    assertLendUpdate({
+      id: lendId,
+      bucketId: bucketId,
+      poolAddress: poolAddress.toHexString(),
+      lpb: lpAwarded,
+      lpbValueInQuote: lpAwarded
+    })
+
     /*************************/
     /*** Bucket Bankruptcy ***/
     /*************************/
@@ -1589,6 +1599,14 @@ describe("ERC20Pool assertions", () => {
     })
     assert.entityCount("Bucket", 1)
     assert.entityCount("BucketBankruptcy", 1)
+
+    assertLendUpdate({
+      id: lendId,
+      bucketId: bucketId,
+      poolAddress: poolAddress.toHexString(),
+      lpb: ZERO_BI,
+      lpbValueInQuote: ZERO_BI
+    })
   })
 
   test("UpdateInterestRate", () => {
