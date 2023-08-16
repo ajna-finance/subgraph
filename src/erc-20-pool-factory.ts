@@ -1,17 +1,9 @@
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
-import { Pool, PoolCreated, Token } from "../generated/schema"
+import { PoolCreated, Token } from "../generated/schema"
 import { ERC20Pool } from "../generated/templates"
 import { ERC20Pool as ERC20PoolContract } from "../generated/templates/ERC20Pool/ERC20Pool"
 
-import {
-  MAX_PRICE,
-  MAX_PRICE_INDEX,
-  ONE_BI,
-  ZERO_BI,
-  ZERO_BD,
-  ZERO_ADDRESS,
-  ONE_BD
-} from "./utils/constants"
+import { ONE_BI, ZERO_BI } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
 import { getRatesAndFees, loadOrCreatePool } from "./utils/pool/pool"

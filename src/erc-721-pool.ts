@@ -31,7 +31,6 @@ import {
 } from "../generated/templates/ERC721Pool/ERC721Pool"
 import {
   AddCollateralNFT,
-  AddQuoteToken,
   AuctionNFTSettle,
   BucketTake,
   BucketTakeLPAwarded,
@@ -46,9 +45,7 @@ import {
   MergeOrRemoveCollateralNFT,
   Pool,
   RemoveCollateral,
-  RemoveQuoteToken,
   RepayDebt,
-  ReserveAuction,
   Settle,
   Take,
   TransferLP,
