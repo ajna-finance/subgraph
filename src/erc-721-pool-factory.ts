@@ -9,7 +9,7 @@ import { loadOrCreateFactory } from "./utils/pool/pool-factory"
 import { getPoolSubsetHash, getRatesAndFees, loadOrCreatePool } from "./utils/pool/pool"
 import { getTokenName as getTokenNameERC721, getTokenSymbol as getTokenSymbolERC721} from "./utils/token-erc721"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
-import { ByteArray, Bytes, ethereum } from "@graphprotocol/graph-ts"
+import { BigInt, ByteArray, Bytes, ethereum } from "@graphprotocol/graph-ts"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
@@ -47,12 +47,20 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   dataWithoutSelectorAsTuple.set(tuplePrefix, 0);
   dataWithoutSelectorAsTuple.set(dataWithoutSelector, tuplePrefix.length);
 
-  const decoded = ethereum.decode('(address,address,uint256[],uint256)', Bytes.fromUint8Array(dataWithoutSelectorAsTuple))!
+  // handle decoding transaction calldata
+  const tryDecodeSubset = ethereum.decode('(address,address,uint256[],uint256)', Bytes.fromUint8Array(dataWithoutSelectorAsTuple))
+  const tryDecodeCollection = ethereum.decode('(address,address,uint256)', Bytes.fromUint8Array(dataWithoutSelector))
+  const decoded = (tryDecodeSubset != null ? tryDecodeSubset : tryDecodeCollection)!
 
+  // retrieve token addresses from calldata
   const collateralTokenAddress = decoded.toTuple()[0].toAddress()
   const quoteTokenAddress      = decoded.toTuple()[1].toAddress()
-  const tokenIds               = decoded.toTuple()[2].toBigIntArray()
-  const interestRate           = decoded.toTuple()[3].toBigInt()
+
+  // decode subset tokenIds if available
+  let tokenIds: Array<BigInt> = []
+  if (decoded.toTuple().length == 4) {
+    tokenIds = decoded.toTuple()[2].toBigIntArray()
+  }
 
   // create Token entites associated with the pool
   const collateralTokenAddressBytes = addressToBytes(collateralTokenAddress)
