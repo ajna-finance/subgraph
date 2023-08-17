@@ -5,6 +5,10 @@ import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUt
 import { poolInfoUtilsAddressTable, ZERO_BD, ZERO_BI } from "../constants"
 import { decimalToWad, wadToDecimal } from "../convert"
 
+// return the max of the two deposit times
+export function getDepositTime(depositTime: BigInt, toLend: Lend): BigInt {
+    return depositTime > toLend.depositTime ? depositTime : toLend.depositTime
+}
 
 export function getLendId(bucketId: Bytes, accountId: Bytes): Bytes {
     return bucketId.concat(Bytes.fromUTF8('|').concat(accountId))

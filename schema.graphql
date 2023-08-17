@@ -151,6 +151,8 @@ type Bucket @entity {
   deposit: BigDecimal!
   # total LP for all lenders in the bucket
   lpb: BigDecimal!
+  # list of lends associated with the bucket
+  lends: [Lend!]!
 }
 
 # lend occurs per bucket in a pool
@@ -897,14 +899,17 @@ type ProposalParams @entity {
 
 type DistributionPeriodVote @entity {
   id: Bytes! # $accountId + '|'' + $distributionId
-  voter: Account!
-  distribution: DistributionPeriod! # uint256
-  estimatedInitialFundingStageVotingPowerForCalculatingRewards: BigDecimal! # uint256
-  estimatedRemainingFundingStageVotingPowerForCalculatingRewards: BigDecimal! # uint256
-  screeningVotes: [ScreeningVote!]! # ScreeningVote[]
-  fundingVotes: [FundingVote!]! # FundingVote[]
+  voter: Account! # the account of the voter whose vote state in this distribution is being tracked
+  distribution: DistributionPeriod! # the distribution period associated with this entity
+  initialFundingStageVotingPowerRecordedPostVote: BigDecimal! # Voters initial funding stage voting power. Only recorded if the voter cast a screeningVote in this distribution period.
+  remainingFundingStageVotingPowerRecordedPostVote: BigDecimal! # Voters remaining funding stage voting power.
+  initialScreeningStageVotingPowerRecordedPostVote: BigDecimal! # Voters initial screening stage voting power. Only recorded if the voter cast a screeningVote in this distribution period.
+  remainingScreeningStageVotingPowerRecordedPostVote: BigDecimal! # Voters remaining screening stage voting power.
+  screeningVotes: [ScreeningVote!]! # ScreeningVote[] Array of ScreeningVotes cast.
+  fundingVotes: [FundingVote!]! # FundingVote[] Array of FundingVotes cast.
 }
 
+# 1-1 with Proposal. Multiple screeningVotes on the same proposal write to a single entity
 type ScreeningVote @entity {
   id: Bytes! # $proposalId + 'screening' + $account.id + $distributionId
   distribution: DistributionPeriod! # distribution period the vote was cast in
@@ -914,6 +919,7 @@ type ScreeningVote @entity {
   votesCast: [VoteCast!]! # array of voteCast entities created for each screeningVote on this proposal
 }
 
+# 1-1 with Proposal. Multiple fundingVotes on the same proposal write to a single entity
 type FundingVote @entity {
   id: Bytes! # $proposalId + 'funding' + $account.id + $distributionId
   distribution: DistributionPeriod! # distribution period the vote was cast in

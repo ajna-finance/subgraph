@@ -4,7 +4,6 @@ import {
   AddCollateral as AddCollateralEvent,
   AddQuoteToken as AddQuoteTokenEvent,
   ApproveLPTransferors as ApproveLPTransferorsEvent,
-  AuctionNFTSettle as AuctionNFTSettleEvent,
   AuctionSettle as AuctionSettleEvent,
   BondWithdrawn as BondWithdrawnEvent,
   BucketBankruptcy as BucketBankruptcyEvent,
@@ -33,8 +32,6 @@ import {
 import {
   Account,
   AddCollateral,
-  AddQuoteToken,
-  AuctionNFTSettle,
   AuctionSettle,
   BondWithdrawn,
   Bucket,
@@ -48,12 +45,9 @@ import {
   LiquidationAuction,
   Loan,
   LoanStamped,
-  MoveQuoteToken,
   Pool,
   RemoveCollateral,
-  RemoveQuoteToken,
   RepayDebt,
-  ReserveAuction,
   ReserveAuctionKick,
   ReserveAuctionTake,
   Settle,
@@ -63,11 +57,11 @@ import {
   UpdateInterestRate
 } from "../generated/schema"
 
-import { ZERO_BD, ONE_BI, TEN_BI } from "./utils/constants"
+import { ZERO_BD, ONE_BI, TEN_BI, ZERO_BI } from "./utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
-import { getBucketId, getBucketInfo, loadOrCreateBucket } from "./utils/pool/bucket"
-import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
+import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "./utils/pool/bucket"
+import { getDepositTime, getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "./utils/pool/liquidation"
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees } from "./utils/pool/pool"
@@ -76,7 +70,7 @@ import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/
 import { incrementTokenTxCount } from "./utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
 import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
-import { _handleAddQuoteToken, _handleMoveQuoteToken, _handleRemoveQuoteToken } from "./mappings/base/base-pool"
+import { _handleAddQuoteToken, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./mappings/base/base-pool"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -115,8 +109,10 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     // update lend state
     const lendId = getLendId(bucketId, accountId)
     const lend = loadOrCreateLend(bucketId, lendId, pool.id, addCollateral.actor)
+    lend.depositTime     = addCollateral.blockTimestamp
     lend.lpb             = lend.lpb.plus(addCollateral.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
+    updateBucketLends(bucket, lend.id)
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
@@ -153,10 +149,6 @@ export function handleApproveLPTransferors(
 
   entity.save()
 }
-
-// ERC721Pool only
-// This is in the code path for ERC20Pools, but will never be emitted
-export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {}
 
 // ERC20Pool only
 // emitted in conjunction with Settle
@@ -240,7 +232,15 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
     bucketBankruptcy.bucket = bucketId
     bucketBankruptcy.pool = pool.id
 
-    // TODO: update Lends
+    // iterate through all bucket lends and set lend.lpb to zero
+    for (let i = 0; i < bucket.lends.length; i++) {
+      const lendId = bucket.lends[i]
+      const lend = Lend.load(lendId)!
+      lend.depositTime = bucketBankruptcy.blockTimestamp.plus(ONE_BI)
+      lend.lpb = ZERO_BD
+      lend.lpbValueInQuote = ZERO_BD
+      lend.save()
+    }
 
     // save entities to store
     pool.save()
@@ -324,8 +324,10 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   const bucketTakeLpAwarded  = BucketTakeLPAwarded.load(lpAwardedId)!
   const kickerLendId         = getLendId(bucketId, bucketTakeLpAwarded.kicker)
   const kickerLend           = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucketTakeLpAwarded.kicker)
+  kickerLend.depositTime     = bucketTake.blockTimestamp
   kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
   kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
+  updateBucketLends(bucket, kickerLendId)
 
   // update kicker account state if they weren't a lender already
   const kickerAccountId = bucketTakeLpAwarded.kicker
@@ -335,8 +337,10 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   // update lend state for taker
   const takerLendId         = getLendId(bucketId, bucketTakeLpAwarded.taker)
   const takerLend           = loadOrCreateLend(bucketId, takerLendId, pool.id, bucketTakeLpAwarded.taker)
+  takerLend.depositTime     = bucketTake.blockTimestamp
   takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
   takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, takerLend.lpb)
+  updateBucketLends(bucket, takerLendId)
 
   // update bucketTake pointers
   bucketTake.liquidationAuction = auction.id
@@ -886,7 +890,6 @@ export function handleTake(event: TakeEvent): void {
   const auctionStatus = getAuctionStatus(pool, event.params.borrower)
   updateLiquidationAuction(auction, auctionInfo, auctionStatus)
 
-  const debtCovered         = wadToDecimal(event.params.amount)
   const collateralPurchased = wadToDecimal(event.params.collateral)
   pool.pledgedCollateral    = pool.pledgedCollateral.minus(collateralPurchased)
   take.auctionPrice         = wadToDecimal(auctionStatus.price)
@@ -965,63 +968,8 @@ export function handleSettle(event: SettleEvent): void {
 }
 
 export function handleTransferLP(event: TransferLPEvent): void {
-  const entity = new TransferLP(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.owner    = addressToBytes(event.params.owner)
-  entity.newOwner = addressToBytes(event.params.newOwner)
-  entity.indexes  = bigIntArrayToIntArray(event.params.indexes)
-  entity.lp       = wadToDecimal(event.params.lp)
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  const poolId = addressToBytes(event.address)
-  const pool = Pool.load(poolId)!
-
-  log.info("handleTransferLP from {} to {}" , [entity.owner.toHexString(), entity.newOwner.toHexString()])
-
-  // update Lends for old and new owners, creating entities where necessary
-  const oldOwnerAccount = Account.load(entity.owner)!
-  const newOwnerAccount = loadOrCreateAccount(entity.newOwner)
-  for (var i=0; i<event.params.indexes.length; ++i) {
-    const bucketIndex = event.params.indexes[i]
-    const bucketId = getBucketId(poolId, bucketIndex.toU32())
-    const bucket = Bucket.load(bucketId)!
-    const oldLendId = getLendId(bucketId, entity.owner)
-    const newLendId = getLendId(bucketId, entity.newOwner)
-
-    // If PositionManager generated this event, it means either:
-    // Memorialize - transfer from lender to PositionManager, eliminating the lender's Lend
-    // Redeem      - transfer from PositionManager to lender, creating the lender's Lend
-
-    // event does not reveal LP amounts transferred for each bucket, so query the pool and update
-    // remove old lend
-    const oldLend = loadOrCreateLend(bucketId, oldLendId, poolId, entity.owner)
-    oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.owner).lpBalance)
-    oldLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, oldLend.lpb)
-    updateAccountLends(oldOwnerAccount, oldLend)
-    oldLend.save()
-
-    // add new lend
-    const newLend = loadOrCreateLend(bucketId, newLendId, poolId, entity.newOwner)
-    newLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, event.params.newOwner).lpBalance)
-    newLend.lpbValueInQuote = lpbValueInQuote(poolId, bucket.bucketIndex, newLend.lpb)
-    updateAccountLends(newOwnerAccount, newLend)
-    newLend.save()
-  }
-  oldOwnerAccount.save()
-  newOwnerAccount.save()
-
-  // increment pool and token tx counts
-  pool.txCount = pool.txCount.plus(ONE_BI)
-  const quoteToken = Token.load(pool.quoteToken)!
-  quoteToken.txCount = quoteToken.txCount.plus(ONE_BI)
-  quoteToken.save()
-  pool.save()
-
-  entity.save()
+  event = changetype<TransferLPEvent | null>(event)!
+  _handleTransferLP(event, null)
 }
 
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {

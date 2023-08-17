@@ -3,7 +3,6 @@ import { ethereum, Address, BigInt } from "@graphprotocol/graph-ts"
 import {
   AddCollateral,
   AddQuoteToken,
-  AuctionNFTSettle,
   AuctionSettle,
   BucketBankruptcy,
   BucketTake,
@@ -91,35 +90,6 @@ export function createAddQuoteTokenEvent(
   addQuoteTokenEvent.address = pool
 
   return addQuoteTokenEvent
-}
-
-export function createAuctionNFTSettleEvent(
-  borrower: Address,
-  collateral: BigInt,
-  lp: BigInt,
-  index: BigInt
-): AuctionNFTSettle {
-  let auctionNftSettleEvent = changetype<AuctionNFTSettle>(newMockEvent())
-
-  auctionNftSettleEvent.parameters = new Array()
-
-  auctionNftSettleEvent.parameters.push(
-    new ethereum.EventParam("borrower", ethereum.Value.fromAddress(borrower))
-  )
-  auctionNftSettleEvent.parameters.push(
-    new ethereum.EventParam(
-      "collateral",
-      ethereum.Value.fromUnsignedBigInt(collateral)
-    )
-  )
-  auctionNftSettleEvent.parameters.push(
-    new ethereum.EventParam("lp", ethereum.Value.fromUnsignedBigInt(lp))
-  )
-  auctionNftSettleEvent.parameters.push(
-    new ethereum.EventParam("index", ethereum.Value.fromUnsignedBigInt(index))
-  )
-
-  return auctionNftSettleEvent
 }
 
 export function createAuctionSettleEvent(
@@ -611,6 +581,7 @@ export function createTakeEvent(
 }
 
 export function createTransferLPEvent(
+  pool: Address,
   owner: Address,
   newOwner: Address,
   indexes: Array<BigInt>,
@@ -638,6 +609,9 @@ export function createTransferLPEvent(
       ethereum.Value.fromUnsignedBigInt(lp)
     )
   )
+
+  // update transaction target to the expected pool address
+  transferLpTokensEvent.address = pool
 
   return transferLpTokensEvent
 }

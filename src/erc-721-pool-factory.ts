@@ -1,23 +1,15 @@
 import { PoolCreated as PoolCreatedEvent } from "../generated/ERC721PoolFactory/ERC721PoolFactory"
-import { Pool, PoolCreated, Token } from "../generated/schema"
+import { PoolCreated, Token } from "../generated/schema"
 import { ERC721Pool } from "../generated/templates"
 import { ERC721Pool as ERC721PoolContract } from "../generated/templates/ERC721Pool/ERC721Pool"
 
-import {
-  MAX_PRICE,
-  MAX_PRICE_INDEX,
-  ONE_BI,
-  ZERO_BI,
-  ZERO_BD,
-  ZERO_ADDRESS,
-  ONE_BD
-} from "./utils/constants"
+import { ONE_BI, ZERO_BI } from "./utils/constants"
 import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { loadOrCreateFactory } from "./utils/pool/pool-factory"
 import { getPoolSubsetHash, getRatesAndFees, loadOrCreatePool } from "./utils/pool/pool"
 import { getTokenName as getTokenNameERC721, getTokenSymbol as getTokenSymbolERC721} from "./utils/token-erc721"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
-import { ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
+import { ByteArray, Bytes, ethereum } from "@graphprotocol/graph-ts"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {
   const poolCreated = new PoolCreated(
@@ -118,8 +110,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     pool.subsetHash = getPoolSubsetHash(event.address, tokenIds)
   } else {
     pool.poolType = "Collection"
-    // TODO: hardcode the subset hash
-    pool.subsetHash = Bytes.empty()
+    pool.subsetHash = Bytes.fromHexString("0x93e3b87db48beb11f82ff978661ba6e96f72f582300e9724191ab4b5d7964364")
   }
   pool.tokenIdsAllowed = tokenIds
 

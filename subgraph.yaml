@@ -230,7 +230,6 @@ templates:
         - AddCollateral
         - AddQuoteToken
         - ApproveLPTransferors
-        - AuctionNFTSettle
         - AuctionSettle
         - BondWithdrawn
         - BucketBankruptcy
@@ -268,8 +267,6 @@ templates:
           handler: handleAddQuoteToken
         - event: ApproveLPTransferors(indexed address,address[])
           handler: handleApproveLPTransferors
-        - event: AuctionNFTSettle(indexed address,uint256,uint256,uint256)
-          handler: handleAuctionNFTSettle
         - event: AuctionSettle(indexed address,uint256)
           handler: handleAuctionSettle
         - event: BondWithdrawn(indexed address,indexed address,uint256)
@@ -334,7 +331,6 @@ templates:
         - AddQuoteToken
         - ApproveLPTransferors
         - AuctionNFTSettle
-        - AuctionSettle
         - BondWithdrawn
         - BucketBankruptcy
         - BucketTake
@@ -378,8 +374,6 @@ templates:
           handler: handleApproveLPTransferors
         - event: AuctionNFTSettle(indexed address,uint256,uint256,uint256)
           handler: handleAuctionNFTSettle
-        - event: AuctionSettle(indexed address,uint256)
-          handler: handleAuctionSettle
         - event: BondWithdrawn(indexed address,indexed address,uint256)
           handler: handleBondWithdrawn
         - event: BucketBankruptcy(indexed uint256,uint256)

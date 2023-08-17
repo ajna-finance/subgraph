@@ -475,7 +475,7 @@ describe("Grant Fund assertions", () => {
     const reason = ""
 
     // mock contract calls
-    mockGetVotesScreening(grantFundAddress, distributionId, voter, votesCast);
+    mockGetVotesScreening(grantFundAddress, distributionId, voter, votesCast.times(TWO_BI));
 
     const screeningVoteCastEvent = createVoteCastEvent(voter, proposalId, 1, votesCast, reason, startBlock, BigInt.fromI32(1));
     handleVoteCast(screeningVoteCastEvent);
@@ -504,6 +504,18 @@ describe("Grant Fund assertions", () => {
       `${distributionPeriodVoteId.toHexString()}`,
       "distribution",
       `${bigIntToBytes(distributionId).toHexString()}`
+    );
+    assert.fieldEquals(
+      "DistributionPeriodVote",
+      `${distributionPeriodVoteId.toHexString()}`,
+      "initialScreeningStageVotingPowerRecordedPostVote",
+      `${wadToDecimal(votesCast.times(TWO_BI))}`
+    );
+    assert.fieldEquals(
+      "DistributionPeriodVote",
+      `${distributionPeriodVoteId.toHexString()}`,
+      "remainingScreeningStageVotingPowerRecordedPostVote",
+      `${wadToDecimal(votesCast)}`
     );
 
     assert.fieldEquals(
@@ -678,14 +690,14 @@ describe("Grant Fund assertions", () => {
     assert.fieldEquals(
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
-      "estimatedInitialFundingStageVotingPowerForCalculatingRewards",
+      "initialFundingStageVotingPowerRecordedPostVote",
       '0.000000000000054756'
     );
 
     assert.fieldEquals(
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
-      "estimatedRemainingFundingStageVotingPowerForCalculatingRewards",
+      "remainingFundingStageVotingPowerRecordedPostVote",
       '0.000000000000054755999999999999945244'
     );
 

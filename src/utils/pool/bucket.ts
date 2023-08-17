@@ -61,6 +61,7 @@ export function loadOrCreateBucket(poolId: Bytes, bucketId: Bytes, index: u32): 
       bucket.deposit      = ZERO_BD
       bucket.exchangeRate = ONE_BD
       bucket.lpb          = ZERO_BD
+      bucket.lends        = []
     }
     return bucket
 }
@@ -70,4 +71,13 @@ export function updateBucket(bucket: Bucket, bucketInfo: BucketInfo): void {
     bucket.deposit      = wadToDecimal(bucketInfo.quoteTokens)
     bucket.lpb          = wadToDecimal(bucketInfo.lpb)
     bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
+}
+
+export function updateBucketLends(bucket: Bucket, lendId: Bytes): void {
+    const lends = bucket.lends
+    // get current index of lend in bucket's list of lends
+    const index = lends.indexOf(lendId)
+    if (index == -1) {
+        bucket.lends = bucket.lends.concat([lendId])
+    }
 }

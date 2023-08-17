@@ -16,7 +16,8 @@ import {
   RepayDebt,
   ReserveAuction,
   Settle,
-  Take
+  Take,
+  TransferLP
 } from "../../generated/templates/ERC721Pool/ERC721Pool"
 
 export function createAddCollateralNFTEvent(
@@ -57,6 +58,7 @@ export function createAddCollateralNFTEvent(
 
 export function createAddQuoteTokenEvent(
   pool: Address,
+  logIndex: BigInt,
   lender: Address,
   index: BigInt,
   amount: BigInt,
@@ -88,6 +90,7 @@ export function createAddQuoteTokenEvent(
 
   // update transaction target to the expected pool address
   addQuoteTokenEvent.address = pool
+  addQuoteTokenEvent.logIndex = logIndex
 
   return addQuoteTokenEvent
 }
@@ -561,4 +564,40 @@ export function createTakeEvent(
   takeEvent.address = pool
 
   return takeEvent
+}
+
+export function createTransferLPEvent(
+  pool: Address,
+  owner: Address,
+  newOwner: Address,
+  indexes: Array<BigInt>,
+  lp: BigInt
+): TransferLP {
+  let transferLpTokensEvent = changetype<TransferLP>(newMockEvent())
+
+  transferLpTokensEvent.parameters = new Array()
+
+  transferLpTokensEvent.parameters.push(
+    new ethereum.EventParam("owner", ethereum.Value.fromAddress(owner))
+  )
+  transferLpTokensEvent.parameters.push(
+    new ethereum.EventParam("newOwner", ethereum.Value.fromAddress(newOwner))
+  )
+  transferLpTokensEvent.parameters.push(
+    new ethereum.EventParam(
+      "indexes",
+      ethereum.Value.fromUnsignedBigIntArray(indexes)
+    )
+  )
+  transferLpTokensEvent.parameters.push(
+    new ethereum.EventParam(
+      "lp",
+      ethereum.Value.fromUnsignedBigInt(lp)
+    )
+  )
+
+  // update transaction target to the expected pool address
+  transferLpTokensEvent.address = pool
+
+  return transferLpTokensEvent
 }

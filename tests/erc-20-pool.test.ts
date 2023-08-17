@@ -7,6 +7,7 @@ import {
   afterEach,
   beforeAll,
   dataSourceMock,
+  logStore,
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuctionKick, handleReserveAuctionTake, handleTake, handleUpdateInterestRate } from "../src/erc-20-pool"
@@ -30,7 +31,7 @@ import {
 } from "./utils/common"
 import { BucketInfo, getBucketId } from "../src/utils/pool/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
-import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
+import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, TWO_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { Account, Lend, Loan, Pool } from "../generated/schema"
 import { getLendId } from "../src/utils/pool/lend"
 import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
@@ -320,11 +321,13 @@ describe("ERC20Pool assertions", () => {
     // check Lend attributes updated
     const lendId = getLendId(bucketId, accountId)
     const loadedLend = Lend.load(lendId)!
+    const expectedDepositTime = newAddQuoteTokenEvent.block.timestamp
     assert.bytesEquals(bucketId, loadedLend.bucket)
     assertLendUpdate({
       id: lendId,
       bucketId: bucketId,
       poolAddress: poolAddress.toHexString(),
+      depositTime: expectedDepositTime,
       lpb: lpAwarded,
       lpbValueInQuote: lpAwarded
     })
@@ -1568,6 +1571,18 @@ describe("ERC20Pool assertions", () => {
     })
     assert.entityCount("Bucket", 1)
 
+    const accountId = addressToBytes(lender)
+    const lendId = getLendId(bucketId, accountId)
+    const expectedDepositTime = newAddQuoteTokenEvent.block.timestamp
+    assertLendUpdate({
+      id: lendId,
+      bucketId: bucketId,
+      poolAddress: poolAddress.toHexString(),
+      depositTime: expectedDepositTime,
+      lpb: lpAwarded,
+      lpbValueInQuote: lpAwarded
+    })
+
     /*************************/
     /*** Bucket Bankruptcy ***/
     /*************************/
@@ -1589,6 +1604,15 @@ describe("ERC20Pool assertions", () => {
     })
     assert.entityCount("Bucket", 1)
     assert.entityCount("BucketBankruptcy", 1)
+
+    assertLendUpdate({
+      id: lendId,
+      bucketId: bucketId,
+      poolAddress: poolAddress.toHexString(),
+      depositTime: TWO_BI,
+      lpb: ZERO_BI,
+      lpbValueInQuote: ZERO_BI
+    })
   })
 
   test("UpdateInterestRate", () => {

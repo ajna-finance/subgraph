@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, ethereum, dataSource, log } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, ethereum, dataSource, log, BigDecimal } from "@graphprotocol/graph-ts"
 import { assert, createMockedFunction } from "matchstick-as"
 
 import { handlePoolCreated } from "../../src/erc-20-pool-factory"
@@ -9,11 +9,13 @@ import { createERC721PoolFactoryPoolCreatedEvent } from "./erc-721-pool-factory-
 
 import { BucketInfo } from "../../src/utils/pool/bucket"
 import { wadToDecimal } from "../../src/utils/convert"
-import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
+import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI, ONE_WAD_BI, ZERO_ADDRESS, MAX_PRICE_INDEX } from "../../src/utils/constants"
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool/pool"
 import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
 import { BorrowerInfo } from "../../src/utils/pool/loan"
 import { wdiv, wmin, wmul } from "../../src/utils/math"
+import { createAddQuoteTokenEvent } from "./erc-721-pool-utils"
+import { handleAddQuoteToken } from "../../src/erc-721-pool"
 
 /*************************/
 /*** Bucket Assertions ***/
@@ -62,10 +64,17 @@ export class LendUpdatedParams {
     id: Bytes
     bucketId: Bytes
     poolAddress: String
+    depositTime: BigInt
     lpb: BigInt
     lpbValueInQuote: BigInt
 }
 export function assertLendUpdate(params: LendUpdatedParams): void {
+    assert.fieldEquals(
+        "Lend",
+        `${params.id.toHexString()}`,
+        "depositTime",
+        `${params.depositTime}`
+    )
     assert.fieldEquals(
         "Lend",
         `${params.id.toHexString()}`,
@@ -457,6 +466,15 @@ export function mockGetLPBValueInQuote(pool: Address, lpb: BigInt, bucketIndex: 
         .returns([ethereum.Value.fromUnsignedBigInt(expectedValue)])
 }
 
+export function mockGetLenderInfo(pool: Address, bucketIndex: BigInt, lender: Address, expectedLPB: BigInt, expectedDepositTime: BigInt): void {
+    createMockedFunction(pool, 'lenderInfo', 'lenderInfo(uint256,address):(uint256,uint256)')
+        .withArgs([ethereum.Value.fromUnsignedBigInt(bucketIndex), ethereum.Value.fromAddress(lender)])
+        .returns([
+        ethereum.Value.fromUnsignedBigInt(expectedLPB),
+        ethereum.Value.fromUnsignedBigInt(expectedDepositTime)
+        ])
+}
+
 // mock getPoolLoansInfo contract calls
 export function mockGetPoolLoansInfo(pool: Address, expectedInfo: LoansInfo): void {
     createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'poolLoansInfo', 'poolLoansInfo(address):(uint256,uint256,address,uint256,uint256)')
@@ -691,4 +709,65 @@ export function mockTokenBalance(tokenAddress: Address, address: Address, expect
       .returns([
           ethereum.Value.fromUnsignedBigInt(expectedBalance),
       ])
+}
+
+/*************************/
+/*** Utility Functions ***/
+/*************************/
+
+// CURRENTLY ERC721 POOLS ONLY
+export function createAndHandleAddQuoteTokenEvent(poolAddress: Address, lender: Address, index: BigInt, price: BigDecimal, amount: BigInt, lpAwarded: BigInt, lup: BigInt, logIndex: BigInt): void {
+    // mock required contract calls
+    const expectedBucketInfo = new BucketInfo(
+        index.toU32(),
+        price,
+        amount,
+        ZERO_BI,
+        lpAwarded,
+        ZERO_BI,
+        ONE_WAD_BI
+      )
+      mockGetBucketInfo(poolAddress, index, expectedBucketInfo)
+
+      const expectedLPBValueInQuote = lpAwarded
+      mockGetLPBValueInQuote(poolAddress, lpAwarded, index, expectedLPBValueInQuote)
+
+      mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
+        poolSize: amount,
+        debt: ZERO_BI,
+        loansCount: ZERO_BI,
+        maxBorrower: ZERO_ADDRESS,
+        inflator: ONE_WAD_BI,
+        hpb: ZERO_BI, //TODO: indexToPrice(price)
+        hpbIndex: index,
+        htp: ZERO_BI, //TODO: indexToPrice(price)
+        htpIndex: ZERO_BI,
+        lup: lup,
+        lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
+        momp: BigInt.fromI32(623803),
+        reserves: ZERO_BI,
+        claimableReserves: ZERO_BI,
+        claimableReservesRemaining: ZERO_BI,
+        reserveAuctionPrice: ZERO_BI,
+        currentBurnEpoch: BigInt.fromI32(9998103),
+        reserveAuctionTimeRemaining: ZERO_BI,
+        minDebtAmount: ZERO_BI,
+        collateralization: ONE_WAD_BI,
+        actualUtilization: ZERO_BI,
+        targetUtilization: ONE_WAD_BI
+      })
+
+      // TODO: load pool entity and use it to determine which type of event to create
+
+      // mock add quote token event
+      const newAddQuoteTokenEvent = createAddQuoteTokenEvent(
+        poolAddress,
+        logIndex,
+        lender,
+        index,
+        amount,
+        lpAwarded,
+        lup
+      )
+      handleAddQuoteToken(newAddQuoteTokenEvent)
 }
