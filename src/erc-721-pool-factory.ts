@@ -49,7 +49,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
 
   // handle decoding transaction calldata
   const tryDecodeSubset = ethereum.decode('(address,address,uint256[],uint256)', Bytes.fromUint8Array(dataWithoutSelectorAsTuple))
-  const tryDecodeCollection = ethereum.decode('(address,address,uint256)', Bytes.fromUint8Array(dataWithoutSelectorAsTuple))
+  const tryDecodeCollection = ethereum.decode('(address,address,uint256)', Bytes.fromUint8Array(dataWithoutSelector))
   const decoded = (tryDecodeSubset != null ? tryDecodeSubset : tryDecodeCollection)!
 
   // retrieve token addresses from calldata
