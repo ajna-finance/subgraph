@@ -430,6 +430,7 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
       oldLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, oldLend.lpb)
       oldLend.save()
       updateAccountLends(oldOwnerAccount, oldLend)
+      updateBucketLends(bucket, oldLendId)
 
       // add new lend
       const newLend = loadOrCreateLend(bucketId, newLendId, pool.id, transferLP.newOwner)
