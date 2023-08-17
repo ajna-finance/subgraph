@@ -902,9 +902,9 @@ type DistributionPeriodVote @entity {
   voter: Account! # the account of the voter whose vote state in this distribution is being tracked
   distribution: DistributionPeriod! # the distribution period associated with this entity
   initialFundingStageVotingPowerRecordedPostVote: BigDecimal! # Voters initial funding stage voting power. Only recorded if the voter cast a screeningVote in this distribution period.
-  remainingFundingStageVotingPower: BigDecimal! # Voters remaining funding stage voting power.
+  remainingFundingStageVotingPowerRecordedPostVote: BigDecimal! # Voters remaining funding stage voting power.
   initialScreeningStageVotingPowerRecordedPostVote: BigDecimal! # Voters initial screening stage voting power. Only recorded if the voter cast a screeningVote in this distribution period.
-  remainingScreeningStageVotingPower: BigDecimal! # Voters remaining screening stage voting power.
+  remainingScreeningStageVotingPowerRecordedPostVote: BigDecimal! # Voters remaining screening stage voting power.
   screeningVotes: [ScreeningVote!]! # ScreeningVote[] Array of ScreeningVotes cast.
   fundingVotes: [FundingVote!]! # FundingVote[] Array of FundingVotes cast.
 }

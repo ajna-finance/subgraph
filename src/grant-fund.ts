@@ -318,7 +318,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       if (distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote.equals(ZERO_BD)) {
         distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
-      distributionPeriodVote.remainingScreeningStageVotingPower = distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote.minus(voteCast.weight)
+      distributionPeriodVote.remainingScreeningStageVotingPowerRecordedPostVote = distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote.minus(voteCast.weight)
 
       // associate the VoteCast entity with the ScreeningVote
       screeningVote.votesCast.push(voteCast.id)
@@ -351,10 +351,10 @@ export function handleVoteCast(event: VoteCastEvent): void {
       // update voter's distributionPeriodVote entity voting power tracking if it hasn't been recorded yet
       if (distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote.equals(ZERO_BD)) {
         distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
-        distributionPeriodVote.remainingFundingStageVotingPower = distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote.minus(fundingVote.votingPowerUsed)
+        distributionPeriodVote.remainingFundingStageVotingPowerRecordedPostVote = distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote.minus(fundingVote.votingPowerUsed)
       }
       else {
-        distributionPeriodVote.remainingFundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+        distributionPeriodVote.remainingFundingStageVotingPowerRecordedPostVote = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
 
       // record votes cast on the Proposal entity
