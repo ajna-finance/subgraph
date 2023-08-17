@@ -91,6 +91,8 @@ export function loadOrCreateDistributionPeriodVote(distributionId: BigInt, voter
         distributionPeriodVotes.distribution = distributionPeriodId
         distributionPeriodVotes.estimatedInitialFundingStageVotingPowerForCalculatingRewards = ZERO_BD
         distributionPeriodVotes.estimatedRemainingFundingStageVotingPowerForCalculatingRewards = ZERO_BD
+        distributionPeriodVotes.screeningStageVotingPowerRecordedHavingVoted = ZERO_BD
+        distributionPeriodVotes.remainingScreeningStageVotingPower = ZERO_BD
         distributionPeriodVotes.screeningVotes = []
         distributionPeriodVotes.fundingVotes = []
 

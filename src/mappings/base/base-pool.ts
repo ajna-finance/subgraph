@@ -428,8 +428,8 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
       const oldLend = loadOrCreateLend(bucketId, oldLendId, pool.id, transferLP.owner)
       oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, owner).lpBalance)
       oldLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, oldLend.lpb)
-      updateAccountLends(oldOwnerAccount, oldLend)
       oldLend.save()
+      updateAccountLends(oldOwnerAccount, oldLend)
 
       // add new lend
       const newLend = loadOrCreateLend(bucketId, newLendId, pool.id, transferLP.newOwner)
@@ -437,8 +437,8 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
       newLend.depositTime = newLendInfo.depositTime
       newLend.lpb = wadToDecimal(newLendInfo.lpBalance)
       newLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, newLend.lpb)
-      updateAccountLends(newOwnerAccount, newLend)
       newLend.save()
+      updateAccountLends(newOwnerAccount, newLend)
       updateBucketLends(bucket, newLendId)
       bucket.save()
     }
