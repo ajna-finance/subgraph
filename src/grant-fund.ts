@@ -317,8 +317,10 @@ export function handleVoteCast(event: VoteCastEvent): void {
       // record screening stage voting power
       if (distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote.equals(ZERO_BD)) {
         distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+        distributionPeriodVote.remainingScreeningStageVotingPowerRecordedPostVote = distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote.minus(voteCast.weight)
+      } else {
+        distributionPeriodVote.remainingScreeningStageVotingPowerRecordedPostVote = distributionPeriodVote.remainingScreeningStageVotingPowerRecordedPostVote.minus(voteCast.weight)
       }
-      distributionPeriodVote.remainingScreeningStageVotingPowerRecordedPostVote = distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote.minus(voteCast.weight)
 
       // associate the VoteCast entity with the ScreeningVote
       screeningVote.votesCast.push(voteCast.id)
@@ -352,8 +354,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       if (distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote.equals(ZERO_BD)) {
         distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
         distributionPeriodVote.remainingFundingStageVotingPowerRecordedPostVote = distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote.minus(fundingVote.votingPowerUsed)
-      }
-      else {
+      } else {
         distributionPeriodVote.remainingFundingStageVotingPowerRecordedPostVote = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
 
