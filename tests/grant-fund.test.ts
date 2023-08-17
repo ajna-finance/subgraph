@@ -508,7 +508,7 @@ describe("Grant Fund assertions", () => {
     assert.fieldEquals(
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
-      "screeningStageVotingPowerRecordedHavingVoted",
+      "initialScreeningStageVotingPowerRecordedPostVote",
       `${wadToDecimal(votesCast.times(TWO_BI))}`
     );
     assert.fieldEquals(
@@ -690,14 +690,14 @@ describe("Grant Fund assertions", () => {
     assert.fieldEquals(
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
-      "estimatedInitialFundingStageVotingPowerForCalculatingRewards",
+      "initialFundingStageVotingPowerRecordedPostVote",
       '0.000000000000054756'
     );
 
     assert.fieldEquals(
       "DistributionPeriodVote",
       `${distributionPeriodVoteId.toHexString()}`,
-      "estimatedRemainingFundingStageVotingPowerForCalculatingRewards",
+      "remainingFundingStageVotingPower",
       '0.000000000000054755999999999999945244'
     );
 

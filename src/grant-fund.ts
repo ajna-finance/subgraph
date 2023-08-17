@@ -315,10 +315,10 @@ export function handleVoteCast(event: VoteCastEvent): void {
       distributionPeriodVote.screeningVotes = distributionPeriodVote.screeningVotes.concat([screeningVote.id])
 
       // record screening stage voting power
-      if (distributionPeriodVote.screeningStageVotingPowerRecordedHavingVoted.equals(ZERO_BD)) {
-        distributionPeriodVote.screeningStageVotingPowerRecordedHavingVoted = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+      if (distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote.equals(ZERO_BD)) {
+        distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote = getScreeningStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
-      distributionPeriodVote.remainingScreeningStageVotingPower = distributionPeriodVote.screeningStageVotingPowerRecordedHavingVoted.minus(voteCast.weight)
+      distributionPeriodVote.remainingScreeningStageVotingPower = distributionPeriodVote.initialScreeningStageVotingPowerRecordedPostVote.minus(voteCast.weight)
 
       // associate the VoteCast entity with the ScreeningVote
       screeningVote.votesCast.push(voteCast.id)
@@ -349,12 +349,12 @@ export function handleVoteCast(event: VoteCastEvent): void {
       distributionPeriod.fundingVotePowerUsed = distributionPeriod.fundingVotePowerUsed.plus(fundingVote.votingPowerUsed)
 
       // update voter's distributionPeriodVote entity voting power tracking if it hasn't been recorded yet
-      if (distributionPeriodVote.estimatedInitialFundingStageVotingPowerForCalculatingRewards.equals(ZERO_BD)) {
-        distributionPeriodVote.estimatedInitialFundingStageVotingPowerForCalculatingRewards = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
-        distributionPeriodVote.estimatedRemainingFundingStageVotingPowerForCalculatingRewards = distributionPeriodVote.estimatedInitialFundingStageVotingPowerForCalculatingRewards.minus(fundingVote.votingPowerUsed)
+      if (distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote.equals(ZERO_BD)) {
+        distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+        distributionPeriodVote.remainingFundingStageVotingPower = distributionPeriodVote.initialFundingStageVotingPowerRecordedPostVote.minus(fundingVote.votingPowerUsed)
       }
       else {
-        distributionPeriodVote.estimatedRemainingFundingStageVotingPowerForCalculatingRewards = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
+        distributionPeriodVote.remainingFundingStageVotingPower = getFundingStageVotingPower(event.address, bytesToBigInt(distributionId), Address.fromBytes(voter.id))
       }
 
       // record votes cast on the Proposal entity
