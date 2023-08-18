@@ -1,11 +1,11 @@
-import { BigDecimal, BigInt, Bytes, Address, dataSource, ethereum } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, Bytes, Address, dataSource } from '@graphprotocol/graph-ts'
 
-import { LiquidationAuction, Pool, ReserveAuction, Token, UpdateInterestRate } from "../../../generated/schema"
+import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
-import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, ONE_BI, poolInfoUtilsAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
+import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, poolInfoUtilsAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
 import { addressToBytes, decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
 import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
@@ -478,37 +478,4 @@ export function loadOrCreatePool(id: Bytes): Pool {
 export function depositUpToIndex(poolAddress: Address, index: u32): BigInt {
   const poolContract = ERC20Pool.bind(poolAddress)
   return poolContract.depositUpToIndex(BigInt.fromU32(index));
-}
-
-export function handleInterestRateEvent(poolAddress: Address, event: ethereum.Event, newRate: BigInt): void {
-  const updateInterestRate = new UpdateInterestRate(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  const pool = Pool.load(poolAddress)!
-
-  // record old rates
-  updateInterestRate.pool = pool.id
-  updateInterestRate.oldBorrowRate = pool.borrowRate
-  updateInterestRate.oldLendRate = pool.lendRate
-  updateInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
-  updateInterestRate.oldDepositFeeRate = pool.depositFeeRate
-
-  // update pool.borrowRate such that updatePool may update related rates and fees
-  pool.borrowRate = wadToDecimal(newRate)
-  updatePool(pool)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-
-  // record new rates
-  updateInterestRate.newBorrowRate = pool.borrowRate
-  updateInterestRate.newLendRate = pool.lendRate
-  updateInterestRate.newBorrowFeeRate = pool.borrowFeeRate
-  updateInterestRate.newDepositFeeRate = pool.depositFeeRate
-
-  updateInterestRate.blockNumber = event.block.number
-  updateInterestRate.blockTimestamp = event.block.timestamp
-  updateInterestRate.transactionHash = event.transaction.hash
-
-  // save entities to the store
-  pool.save()
-  updateInterestRate.save()
 }

@@ -60,13 +60,13 @@ import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } fro
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "./utils/pool/liquidation"
-import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, handleInterestRateEvent } from "./utils/pool/pool"
+import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
 import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
-import { _handleAddQuoteToken, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./mappings/base/base-pool"
+import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./mappings/base/base-pool"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -779,7 +779,7 @@ export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
 }
 
 export function handleResetInterestRate(event: ResetInterestRateEvent): void {
-  handleInterestRateEvent(event.address, event, event.params.newRate);
+  _handleInterestRateEvent(event.address, event, event.params.newRate);
 }
 
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
@@ -938,5 +938,5 @@ export function handleTransferLP(event: TransferLPEvent): void {
 }
 
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
-  handleInterestRateEvent(event.address, event, event.params.newRate);
+  _handleInterestRateEvent(event.address, event, event.params.newRate);
 }

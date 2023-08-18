@@ -61,10 +61,10 @@ import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD, ZERO_BI } from 
 import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "./utils/pool/liquidation"
-import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool, getRatesAndFees, calculateLendRate, isERC20Pool, handleInterestRateEvent } from "./utils/pool/pool"
+import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
-import { _handleAddQuoteToken, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./mappings/base/base-pool"
+import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./mappings/base/base-pool"
 import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
 import { loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
 
@@ -1088,10 +1088,10 @@ export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
 
 // identical to ERC20Pool
 export function handleResetInterestRate(event: ResetInterestRateEvent): void {
-  handleInterestRateEvent(event.address, event, event.params.newRate);
+  _handleInterestRateEvent(event.address, event, event.params.newRate);
 }
 
 // identical to ERC20Pool
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
-  handleInterestRateEvent(event.address, event, event.params.newRate);
+  _handleInterestRateEvent(event.address, event, event.params.newRate);
 }

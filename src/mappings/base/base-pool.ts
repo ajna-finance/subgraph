@@ -1,5 +1,5 @@
-import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, Bucket, MoveQuoteToken, Pool, RemoveQuoteToken, Token, TransferLP } from "../../../generated/schema"
+import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
+import { Account, AddQuoteToken, Bucket, MoveQuoteToken, Pool, RemoveQuoteToken, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -449,4 +449,37 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
     newOwnerAccount.save()
     pool.save()
     transferLP.save()
+}
+
+export function _handleInterestRateEvent(poolAddress: Address, event: ethereum.Event, newRate: BigInt): void {
+  const updateInterestRate = new UpdateInterestRate(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  const pool = Pool.load(poolAddress)!
+
+  // record old rates
+  updateInterestRate.pool = pool.id
+  updateInterestRate.oldBorrowRate = pool.borrowRate
+  updateInterestRate.oldLendRate = pool.lendRate
+  updateInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
+  updateInterestRate.oldDepositFeeRate = pool.depositFeeRate
+
+  // update pool.borrowRate such that updatePool may update related rates and fees
+  pool.borrowRate = wadToDecimal(newRate)
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+
+  // record new rates
+  updateInterestRate.newBorrowRate = pool.borrowRate
+  updateInterestRate.newLendRate = pool.lendRate
+  updateInterestRate.newBorrowFeeRate = pool.borrowFeeRate
+  updateInterestRate.newDepositFeeRate = pool.depositFeeRate
+
+  updateInterestRate.blockNumber = event.block.number
+  updateInterestRate.blockTimestamp = event.block.timestamp
+  updateInterestRate.transactionHash = event.transaction.hash
+
+  // save entities to the store
+  pool.save()
+  updateInterestRate.save()
 }
