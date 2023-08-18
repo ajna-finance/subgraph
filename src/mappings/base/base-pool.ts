@@ -461,8 +461,6 @@ export function _handleInterestRateEvent(poolAddress: Address, event: ethereum.E
   updateInterestRate.pool = pool.id
   updateInterestRate.oldBorrowRate = pool.borrowRate
   updateInterestRate.oldLendRate = pool.lendRate
-  updateInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
-  updateInterestRate.oldDepositFeeRate = pool.depositFeeRate
 
   // update pool.borrowRate such that updatePool may update related rates and fees
   pool.borrowRate = wadToDecimal(newRate)
@@ -472,8 +470,8 @@ export function _handleInterestRateEvent(poolAddress: Address, event: ethereum.E
   // record new rates
   updateInterestRate.newBorrowRate = pool.borrowRate
   updateInterestRate.newLendRate = pool.lendRate
-  updateInterestRate.newBorrowFeeRate = pool.borrowFeeRate
-  updateInterestRate.newDepositFeeRate = pool.depositFeeRate
+  updateInterestRate.borrowFeeRate = pool.borrowFeeRate
+  updateInterestRate.depositFeeRate = pool.depositFeeRate
 
   updateInterestRate.blockNumber = event.block.number
   updateInterestRate.blockTimestamp = event.block.timestamp
