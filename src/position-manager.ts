@@ -156,10 +156,10 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
 
   const bucketIdFrom = getBucketId(moveLiquidity.pool, moveLiquidity.fromIndex)
   const lendIdFrom   = getLendId(bucketIdFrom, moveLiquidity.lender)
-  const lendFrom     = loadOrCreateLend(bucketIdFrom, lendIdFrom, moveLiquidity.pool, moveLiquidity.lender)
+  const lendFrom     = loadOrCreateLend(bucketIdFrom, lendIdFrom, moveLiquidity.pool, moveLiquidity.fromIndex, moveLiquidity.lender)
   const bucketIdTo   = getBucketId(moveLiquidity.pool, moveLiquidity.toIndex)
   const lendIdTo     = getLendId(bucketIdTo, moveLiquidity.lender)
-  const lendTo       = loadOrCreateLend(bucketIdTo, lendIdTo, moveLiquidity.pool, moveLiquidity.lender)
+  const lendTo       = loadOrCreateLend(bucketIdTo, lendIdTo, moveLiquidity.pool, moveLiquidity.toIndex, moveLiquidity.lender)
 
   const lendToInfo         = getLenderInfo(moveLiquidity.pool, event.params.toIndex, Address.fromBytes(lendTo.lender))
   lendTo.depositTime       = lendToInfo.depositTime
