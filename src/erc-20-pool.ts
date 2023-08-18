@@ -30,11 +30,9 @@ import {
   UpdateInterestRate as UpdateInterestRateEvent
 } from "../generated/templates/ERC20Pool/ERC20Pool"
 import {
-  Account,
   AddCollateral,
   AuctionSettle,
   BondWithdrawn,
-  Bucket,
   BucketBankruptcy,
   BucketTake,
   BucketTakeLPAwarded,
@@ -52,19 +50,17 @@ import {
   ReserveAuctionTake,
   Settle,
   Take,
-  Token,
-  TransferLP,
-  UpdateInterestRate
+  Token
 } from "../generated/schema"
 
 import { ZERO_BD, ONE_BI, TEN_BI, ZERO_BI } from "./utils/constants"
-import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
+import { addressToBytes, wadToDecimal } from "./utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "./utils/pool/bucket"
-import { getDepositTime, getLendId, loadOrCreateLend } from "./utils/pool/lend"
+import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
 import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
 import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "./utils/pool/liquidation"
-import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees } from "./utils/pool/pool"
+import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfo, getRatesAndFees, handleInterestRateEvent } from "./utils/pool/pool"
 import { lpbValueInQuote } from "./utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
 import { incrementTokenTxCount } from "./utils/token-erc20"
@@ -783,37 +779,7 @@ export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
 }
 
 export function handleResetInterestRate(event: ResetInterestRateEvent): void {
-  const resetInterestRate = new UpdateInterestRate(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  const poolAddress = addressToBytes(event.address)
-  const pool = Pool.load(poolAddress)!
-
-  // record old rates
-  resetInterestRate.pool = pool.id
-  resetInterestRate.oldBorrowRate = pool.borrowRate
-  resetInterestRate.oldLendRate = pool.lendRate
-  resetInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
-  resetInterestRate.oldDepositFeeRate = pool.depositFeeRate
-
-  // update pool.borrowRate such that updatePool may update related rates and fees
-  pool.borrowRate = wadToDecimal(event.params.newRate)
-  updatePool(pool)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-
-  // record new rates
-  resetInterestRate.newBorrowRate = pool.borrowRate
-  resetInterestRate.newLendRate = pool.lendRate
-  resetInterestRate.newBorrowFeeRate = pool.borrowFeeRate
-  resetInterestRate.newDepositFeeRate = pool.depositFeeRate
-
-  resetInterestRate.blockNumber = event.block.number
-  resetInterestRate.blockTimestamp = event.block.timestamp
-  resetInterestRate.transactionHash = event.transaction.hash
-
-  // save entities to the store
-  pool.save()
-  resetInterestRate.save()
+  handleInterestRateEvent(event.address, event, event.params.newRate);
 }
 
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
@@ -972,35 +938,5 @@ export function handleTransferLP(event: TransferLPEvent): void {
 }
 
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
-  const updateInterestRate = new UpdateInterestRate(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  const poolAddress = addressToBytes(event.address)
-  const pool = Pool.load(poolAddress)!
-
-  // record old rates
-  updateInterestRate.pool = pool.id
-  updateInterestRate.oldBorrowRate = pool.borrowRate
-  updateInterestRate.oldLendRate = pool.lendRate
-  updateInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
-  updateInterestRate.oldDepositFeeRate = pool.depositFeeRate
-
-  // update pool.borrowRate such that updatePool may update related rates and fees
-  pool.borrowRate = wadToDecimal(event.params.newRate)
-  updatePool(pool)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-
-  // record new rates
-  updateInterestRate.newBorrowRate = pool.borrowRate
-  updateInterestRate.newLendRate = pool.lendRate
-  updateInterestRate.newBorrowFeeRate = pool.borrowFeeRate
-  updateInterestRate.newDepositFeeRate = pool.depositFeeRate
-
-  updateInterestRate.blockNumber = event.block.number
-  updateInterestRate.blockTimestamp = event.block.timestamp
-  updateInterestRate.transactionHash = event.transaction.hash
-
-  // save entities to the store
-  pool.save()
-  updateInterestRate.save()
+  handleInterestRateEvent(event.address, event, event.params.newRate);
 }
