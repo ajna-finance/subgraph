@@ -1097,29 +1097,28 @@ export function handleResetInterestRate(event: ResetInterestRateEvent): void {
   )
   const poolAddress = addressToBytes(event.address)
   const pool = Pool.load(poolAddress)!
-  const ratesAndFees = getRatesAndFees(poolAddress)
-  updatePool(pool)
 
+  // record old rates
   resetInterestRate.pool = pool.id
   resetInterestRate.oldBorrowRate = pool.borrowRate
   resetInterestRate.oldLendRate = pool.lendRate
   resetInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
-  resetInterestRate.oldDepositFeeRate = pool.depositFeeRate
-  resetInterestRate.newBorrowRate = wadToDecimal(event.params.newRate)
+  resetInterestRate.oldDepositFeeRate = pool.depositFeeRate  
+
+  // update pool.borrowRate such that updatePool may update related rates and fees
+  pool.borrowRate = wadToDecimal(event.params.newRate)
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+
+  // record new rates
+  resetInterestRate.newBorrowRate = pool.borrowRate
   resetInterestRate.newLendRate = pool.lendRate
-  resetInterestRate.newBorrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
-  resetInterestRate.newDepositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
+  resetInterestRate.newBorrowFeeRate = pool.borrowFeeRate
+  resetInterestRate.newDepositFeeRate = pool.depositFeeRate
 
   resetInterestRate.blockNumber = event.block.number
   resetInterestRate.blockTimestamp = event.block.timestamp
   resetInterestRate.transactionHash = event.transaction.hash
-
-  // update pool state
-  pool.borrowRate = resetInterestRate.newBorrowRate
-  pool.lendRate = resetInterestRate.newLendRate
-  pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
-  pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
-  pool.txCount = pool.txCount.plus(ONE_BI)
 
   // save entities to the store
   pool.save()
@@ -1133,29 +1132,28 @@ export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   )
   const poolAddress = addressToBytes(event.address)
   const pool = Pool.load(poolAddress)!
-  const ratesAndFees = getRatesAndFees(poolAddress)
-  updatePool(pool)
 
+  // record old rates
   updateInterestRate.pool = pool.id
   updateInterestRate.oldBorrowRate = pool.borrowRate
   updateInterestRate.oldLendRate = pool.lendRate
   updateInterestRate.oldBorrowFeeRate = pool.borrowFeeRate
   updateInterestRate.oldDepositFeeRate = pool.depositFeeRate
-  updateInterestRate.newBorrowRate = wadToDecimal(event.params.newRate)
+
+  // update pool.borrowRate such that updatePool may update related rates and fees
+  pool.borrowRate = wadToDecimal(event.params.newRate)
+  updatePool(pool)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+
+  // record new rates
+  updateInterestRate.newBorrowRate = pool.borrowRate
   updateInterestRate.newLendRate = pool.lendRate
-  updateInterestRate.newBorrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
-  updateInterestRate.newDepositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
+  updateInterestRate.newBorrowFeeRate = pool.borrowFeeRate
+  updateInterestRate.newDepositFeeRate = pool.depositFeeRate
 
   updateInterestRate.blockNumber = event.block.number
   updateInterestRate.blockTimestamp = event.block.timestamp
   updateInterestRate.transactionHash = event.transaction.hash
-
-  // update pool state
-  pool.borrowRate = updateInterestRate.newBorrowRate
-  pool.lendRate = updateInterestRate.newLendRate
-  pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
-  pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
-  pool.txCount = pool.txCount.plus(ONE_BI)
 
   // save entities to the store
   pool.save()

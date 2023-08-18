@@ -266,14 +266,13 @@ export function updatePool(pool: Pool): void {
       token = Token.load(pool.collateralToken)!
       scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
       unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
-    }
-    else {
+    } else {
       scaleFactor = TEN_BI.pow(18) // assume 18 decimal factor for ERC721
       unnormalizedTokenBalance = getERC721TokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
     }
     pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 
-    // update lend rate and borrow fee, which change irrespective of borrow rate
+    // update rates and fees which change irrespective of borrow rate
     const ratesAndFees = getRatesAndFees(poolAddress)
     pool.lendRate = calculateLendRate(
       poolAddress,
@@ -282,6 +281,7 @@ export function updatePool(pool: Pool): void {
       poolPricesInfo,
       debtInfo.pendingDebt)
     pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
+    pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
 }
 
 // if absent, add a liquidation auction to the pool's collection of active liquidations
