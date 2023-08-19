@@ -775,7 +775,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   const kickerLendId         = getLendId(bucketId, bucketTakeLpAwarded.kicker)
   const kickerLend           = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucket.bucketIndex, bucketTakeLpAwarded.kicker)
   kickerLend.depositTime     = bucketTake.blockTimestamp
-  kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
+  kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedKicker)
   kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
   updateBucketLends(bucket, kickerLendId)
 
