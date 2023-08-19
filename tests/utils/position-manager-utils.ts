@@ -11,7 +11,7 @@ import {
   Transfer
 } from "../../generated/PositionManager/PositionManager"
 import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./common"
-import { handleMint } from "../../src/position-manager"
+import { handleMint } from "../../src/mappings/position-manager"
 import { bigIntToBytes } from "../../src/utils/convert"
 
 export function createApprovalEvent(

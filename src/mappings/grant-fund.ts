@@ -8,7 +8,7 @@ import {
   ProposalExecuted as ProposalExecutedEvent,
   DistributionPeriodStarted as DistributionPeriodStartedEvent,
   VoteCast as VoteCastEvent
-} from "../generated/GrantFund/GrantFund"
+} from "../../generated/GrantFund/GrantFund"
 import {
   DelegateRewardClaimed,
   DistributionPeriod,
@@ -24,16 +24,16 @@ import {
   ScreeningVote,
   VoteCast,
   DistributionPeriodVote
-} from "../generated/schema"
+} from "../../generated/schema"
 
-import { NEG_ONE_BD, THREE_PERCENT_BI, ZERO_BD, ZERO_BI } from './utils/constants'
-import { addressArrayToBytesArray, addressToBytes, bigIntArrayToBigDecimalArray, bigIntToBytes, bytesToBigInt, wadToDecimal } from "./utils/convert"
-import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal } from './utils/grants/proposal'
-import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from './utils/grants/distribution'
-import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateFundingVote, loadOrCreateScreeningVote } from './utils/grants/voter'
-import { getTreasury, loadOrCreateGrantFund } from './utils/grants/fund'
-import { loadOrCreateAccount } from './utils/account'
-import { wmul } from './utils/math'
+import { NEG_ONE_BD, THREE_PERCENT_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
+import { addressArrayToBytesArray, addressToBytes, bigIntArrayToBigDecimalArray, bigIntToBytes, bytesToBigInt, wadToDecimal } from "../utils/convert"
+import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal } from '../utils/grants/proposal'
+import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from '../utils/grants/distribution'
+import { getFundingStageVotingPower, getFundingVoteId, getFundingVotingPowerUsed, getScreeningStageVotingPower, getScreeningVoteId, loadOrCreateDistributionPeriodVote, loadOrCreateFundingVote, loadOrCreateScreeningVote } from '../utils/grants/voter'
+import { getTreasury, loadOrCreateGrantFund } from '../utils/grants/fund'
+import { loadOrCreateAccount } from '../utils/account'
+import { wmul } from '../utils/math'
 
 export function handleDelegateRewardClaimed(
   event: DelegateRewardClaimedEvent

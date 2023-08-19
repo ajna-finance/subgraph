@@ -1,8 +1,8 @@
 import { Address, BigInt, Bytes, ethereum, dataSource, log, BigDecimal } from "@graphprotocol/graph-ts"
 import { assert, createMockedFunction } from "matchstick-as"
 
-import { handlePoolCreated } from "../../src/erc-20-pool-factory"
-import { handlePoolCreated as handleERC721PoolCreated } from "../../src/erc-721-pool-factory"
+import { handlePoolCreated } from "../../src/mappings/erc-20-pool-factory"
+import { handlePoolCreated as handleERC721PoolCreated } from "../../src/mappings/erc-721-pool-factory"
 
 import { createPoolCreatedEvent } from "./erc-20-pool-factory-utils"
 import { createERC721PoolFactoryPoolCreatedEvent } from "./erc-721-pool-factory-utils"
@@ -15,7 +15,7 @@ import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
 import { BorrowerInfo } from "../../src/utils/pool/loan"
 import { wdiv, wmin, wmul } from "../../src/utils/math"
 import { createAddQuoteTokenEvent } from "./erc-721-pool-utils"
-import { handleAddQuoteToken } from "../../src/erc-721-pool"
+import { handleAddQuoteToken } from "../../src/mappings/erc-721-pool"
 
 /*************************/
 /*** Bucket Assertions ***/

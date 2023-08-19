@@ -7,7 +7,7 @@ import {
   afterAll
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { handleClaimRewards } from "../src/rewards-manager"
+import { handleClaimRewards } from "../src/mappings/rewards-manager"
 import { createClaimRewardsEvent } from "./utils/rewards-manager-utils"
 
 // Tests structure (matchstick-as >=0.5.0)

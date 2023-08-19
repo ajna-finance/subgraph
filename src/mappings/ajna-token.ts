@@ -2,15 +2,15 @@ import { Bytes } from "@graphprotocol/graph-ts"
 import {
   DelegateChanged as DelegateChangedEvent,
   DelegateVotesChanged as DelegateVotesChangedEvent,
-} from "../generated/AjnaToken/AjnaToken"
+} from "../../generated/AjnaToken/AjnaToken"
 import {
   Account,
   DelegateChanged,
   DelegateVotesChanged,
-} from "../generated/schema"
-import { loadOrCreateAccount } from "./utils/account"
-import { addressToBytes, bigIntToBytes, wadToDecimal } from "./utils/convert"
-import { addDelegator, removeDelegator } from "./utils/grants/voter"
+} from "../../generated/schema"
+import { loadOrCreateAccount } from "../utils/account"
+import { addressToBytes, bigIntToBytes, wadToDecimal } from "../utils/convert"
+import { addDelegator, removeDelegator } from "../utils/grants/voter"
 
 export function handleDelegateChanged(event: DelegateChangedEvent): void {
   let entity = new DelegateChanged(

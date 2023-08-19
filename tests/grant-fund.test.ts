@@ -16,7 +16,7 @@ import {
   handleDistributionPeriodStarted,
   handleVoteCast,
   handleFundedSlateUpdated,
-} from "../src/grant-fund";
+} from "../src/mappings/grant-fund";
 import {
   createDelegateRewardClaimedEvent,
   createFundTreasuryEvent,
