@@ -38,7 +38,7 @@ import {
   ZERO_BI,
 } from "../src/utils/constants";
 import { addressToBytes, bigIntToBytes, decimalToWad, wadToDecimal } from "../src/utils/convert";
-import { mockGetDistributionId, mockGetFundedProposalSlate, mockGetTreasury, mockGetVotesFunding, mockGetVotesScreening } from "./utils/common";
+import { mockGetDistributionId, mockGetFundedProposalSlate, mockGetTreasury, mockGetVotesFunding, mockGetVotesScreening } from "./utils/mock-contract-calls";
 import { getDistributionPeriodVoteId, getFundingVoteId, getScreeningVoteId } from "../src/utils/grants/voter";
 
 // Tests structure (matchstick-as >=0.5.0)

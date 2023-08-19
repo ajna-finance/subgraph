@@ -9,7 +9,8 @@ import {
   dataSourceMock
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts"
-import { createPool, mockGetRatesAndFees } from "./utils/common"
+import { createPool } from "./utils/common"
+import { mockGetRatesAndFees } from "./utils/mock-contract-calls"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, ONE_BI, ZERO_BI } from "../src/utils/constants"
 

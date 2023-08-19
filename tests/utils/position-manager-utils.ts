@@ -10,7 +10,7 @@ import {
   RedeemPosition,
   Transfer
 } from "../../generated/PositionManager/PositionManager"
-import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./common"
+import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./mock-contract-calls"
 import { handleMint } from "../../src/mappings/position-manager"
 import { bigIntToBytes } from "../../src/utils/convert"
 
