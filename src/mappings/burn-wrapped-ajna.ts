@@ -1,9 +1,9 @@
 import {
   Transfer as TransferEvent
-} from "../generated/BurnWrappedAjna/BurnWrappedAjna"
-import { BurnWrap } from "../generated/schema"
-import { ZERO_ADDRESS } from "./utils/constants"
-import { addressToBytes, wadToDecimal } from "./utils/convert"
+} from "../../generated/BurnWrappedAjna/BurnWrappedAjna"
+import { BurnWrap } from "../../generated/schema"
+import { ZERO_ADDRESS } from "../utils/constants"
+import { addressToBytes, wadToDecimal } from "../utils/convert"
 
 export function handleTransfer(
   event: TransferEvent

@@ -1,13 +1,13 @@
-import { PoolCreated as PoolCreatedEvent } from "../generated/ERC20PoolFactory/ERC20PoolFactory"
-import { PoolCreated, Token } from "../generated/schema"
-import { ERC20Pool } from "../generated/templates"
-import { ERC20Pool as ERC20PoolContract } from "../generated/templates/ERC20Pool/ERC20Pool"
+import { PoolCreated as PoolCreatedEvent } from "../../generated/ERC20PoolFactory/ERC20PoolFactory"
+import { PoolCreated, Token } from "../../generated/schema"
+import { ERC20Pool } from "../../generated/templates"
+import { ERC20Pool as ERC20PoolContract } from "../../generated/templates/ERC20Pool/ERC20Pool"
 
-import { ONE_BI, ZERO_BI } from "./utils/constants"
-import { addressToBytes, wadToDecimal } from "./utils/convert"
-import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "./utils/token-erc20"
-import { getRatesAndFees, loadOrCreatePool } from "./utils/pool/pool"
-import { loadOrCreateFactory } from "./utils/pool/pool-factory"
+import { ONE_BI, ZERO_BI } from "../utils/constants"
+import { addressToBytes, wadToDecimal } from "../utils/convert"
+import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "../utils/token-erc20"
+import { getRatesAndFees, loadOrCreatePool } from "../utils/pool/pool"
+import { loadOrCreateFactory } from "../utils/pool/pool-factory"
 import { Bytes } from "@graphprotocol/graph-ts"
 
 export function handlePoolCreated(event: PoolCreatedEvent): void {

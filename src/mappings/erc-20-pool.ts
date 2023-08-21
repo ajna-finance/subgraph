@@ -28,7 +28,7 @@ import {
   Take as TakeEvent,
   TransferLP as TransferLPEvent,
   UpdateInterestRate as UpdateInterestRateEvent
-} from "../generated/templates/ERC20Pool/ERC20Pool"
+} from "../../generated/templates/ERC20Pool/ERC20Pool"
 import {
   AddCollateral,
   AuctionSettle,
@@ -51,22 +51,22 @@ import {
   Settle,
   Take,
   Token
-} from "../generated/schema"
+} from "../../generated/schema"
 
-import { ZERO_BD, ONE_BI, TEN_BI, ZERO_BI } from "./utils/constants"
-import { addressToBytes, wadToDecimal } from "./utils/convert"
-import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
-import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "./utils/pool/bucket"
-import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
-import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
-import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "./utils/pool/liquidation"
-import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool } from "./utils/pool/pool"
-import { lpbValueInQuote } from "./utils/pool/lend"
-import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
-import { incrementTokenTxCount } from "./utils/token-erc20"
-import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
-import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
-import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./mappings/base/base-pool"
+import { ZERO_BD, ONE_BI, TEN_BI, ZERO_BI } from "../utils/constants"
+import { addressToBytes, wadToDecimal } from "../utils/convert"
+import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "../utils/account"
+import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../utils/pool/bucket"
+import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
+import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "../utils/pool/loan"
+import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "../utils/pool/liquidation"
+import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool } from "../utils/pool/pool"
+import { lpbValueInQuote } from "../utils/pool/lend"
+import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../utils/pool/reserve-auction"
+import { incrementTokenTxCount } from "../utils/token-erc20"
+import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
+import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
+import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./base/base-pool"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(

@@ -27,7 +27,7 @@ import {
   Take as TakeEvent,
   TransferLP as TransferLPEvent,
   UpdateInterestRate as UpdateInterestRateEvent
-} from "../generated/templates/ERC721Pool/ERC721Pool"
+} from "../../generated/templates/ERC721Pool/ERC721Pool"
 import {
   AddCollateralNFT,
   AuctionNFTSettle,
@@ -51,22 +51,22 @@ import {
   Token,
   ReserveAuctionTake,
   Lend
-} from "../generated/schema"
+} from "../../generated/schema"
 
-import { findAndRemoveTokenIds, getWadCollateralFloorTokens, incrementTokenTxCount } from "./utils/token-erc721"
-import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "./utils/account"
-import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "./utils/pool/bucket"
-import { addressToBytes, bigIntArrayToIntArray, decimalToWad, wadToDecimal } from "./utils/convert"
-import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD, ZERO_BI } from "./utils/constants"
-import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
-import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "./utils/pool/loan"
-import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "./utils/pool/liquidation"
-import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool } from "./utils/pool/pool"
-import { lpbValueInQuote } from "./utils/pool/lend"
-import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "./utils/pool/reserve-auction"
-import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./mappings/base/base-pool"
-import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "./utils/pool/lp-allowances"
-import { loadOrCreateTransferors, revokeTransferors } from "./utils/pool/lp-transferors"
+import { findAndRemoveTokenIds, getWadCollateralFloorTokens, incrementTokenTxCount } from "../utils/token-erc721"
+import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "../utils/account"
+import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../utils/pool/bucket"
+import { addressToBytes, bigIntArrayToIntArray, decimalToWad, wadToDecimal } from "../utils/convert"
+import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD, ZERO_BI } from "../utils/constants"
+import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
+import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "../utils/pool/loan"
+import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "../utils/pool/liquidation"
+import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
+import { lpbValueInQuote } from "../utils/pool/lend"
+import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../utils/pool/reserve-auction"
+import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./base/base-pool"
+import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
+import { loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
 
 
 /*******************************/

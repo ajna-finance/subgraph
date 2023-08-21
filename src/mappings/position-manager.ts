@@ -8,7 +8,7 @@ import {
   MoveLiquidity as MoveLiquidityEvent,
   RedeemPosition as RedeemPositionEvent,
   Transfer as TransferEvent
-} from "../generated/PositionManager/PositionManager"
+} from "../../generated/PositionManager/PositionManager"
 import {
   Approval,
   ApprovalForAll,
@@ -21,14 +21,14 @@ import {
   Position,
   RedeemPosition,
   Transfer
-} from "../generated/schema"
-import { getBucketId } from "./utils/pool/bucket"
-import { getDepositTime, lpbValueInQuote } from "./utils/pool/lend"
-import { ONE_BI, ZERO_BD } from "./utils/constants"
-import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
-import { getLendId, loadOrCreateLend } from "./utils/pool/lend"
-import { deletePosition, getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "./utils/position"
-import { getLenderInfo } from "./utils/pool/pool"
+} from "../../generated/schema"
+import { getBucketId } from "../utils/pool/bucket"
+import { getDepositTime, lpbValueInQuote } from "../utils/pool/lend"
+import { ONE_BI, ZERO_BD } from "../utils/constants"
+import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../utils/convert"
+import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
+import { deletePosition, getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "../utils/position"
+import { getLenderInfo } from "../utils/pool/pool"
 
 export function handleApproval(event: ApprovalEvent): void {
   const approval = new Approval(

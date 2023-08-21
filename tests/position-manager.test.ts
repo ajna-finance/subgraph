@@ -10,10 +10,11 @@ import {
   beforeEach
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { handleApproval, handleBurn, handleMemorializePosition, handleMint, handleMoveLiquidity, handleRedeemPosition } from "../src/position-manager"
+import { handleApproval, handleBurn, handleMemorializePosition, handleMint, handleMoveLiquidity, handleRedeemPosition } from "../src/mappings/position-manager"
 import { assertPosition, createApprovalEvent, createBurnEvent, createMemorializePositionEvent, createMintEvent, createMoveLiquidityEvent, createRedeemPositionEvent, mintPosition } from "./utils/position-manager-utils"
 import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
-import { create721Pool, mockGetLPBValueInQuote, mockGetLenderInfo, mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./utils/common"
+import { create721Pool } from "./utils/common"
+import { mockGetLPBValueInQuote, mockGetLenderInfo, mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./utils/mock-contract-calls"
 import { Lend } from "../generated/schema"
 import { getLendId } from "../src/utils/pool/lend"
 import { getBucketId } from "../src/utils/pool/bucket"

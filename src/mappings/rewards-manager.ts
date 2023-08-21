@@ -4,16 +4,16 @@ import {
   Stake as StakeEvent,
   Unstake as UnstakeEvent,
   UpdateExchangeRates as UpdateExchangeRatesEvent
-} from "../generated/RewardsManager/RewardsManager"
+} from "../../generated/RewardsManager/RewardsManager"
 import {
   ClaimRewards,
   MoveStakedLiquidity,
   Stake,
   Unstake,
   UpdateExchangeRates
-} from "../generated/schema"
-import { bigIntArrayToIntArray, wadToDecimal } from "./utils/convert"
-import { getPoolForToken } from "./utils/position"
+} from "../../generated/schema"
+import { bigIntArrayToIntArray, wadToDecimal } from "../utils/convert"
+import { getPoolForToken } from "../utils/position"
 
 export function handleClaimRewards(event: ClaimRewardsEvent): void {
   let entity = new ClaimRewards(

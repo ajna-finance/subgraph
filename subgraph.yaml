@@ -45,7 +45,7 @@ dataSources:
           handler: handleRedeemPosition
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
-      file: ./src/position-manager.ts
+      file: ./src/mappings/position-manager.ts
     network: goerli
   - kind: ethereum
     name: ERC20PoolFactory
@@ -71,7 +71,7 @@ dataSources:
       eventHandlers:
         - event: PoolCreated(address)
           handler: handlePoolCreated
-      file: ./src/erc-20-pool-factory.ts
+      file: ./src/mappings/erc-20-pool-factory.ts
     network: goerli
   - kind: ethereum
     name: RewardsManager
@@ -106,7 +106,7 @@ dataSources:
           handler: handleUnstake
         - event: UpdateExchangeRates(indexed address,indexed address,uint256[],uint256)
           handler: handleUpdateExchangeRates
-      file: ./src/rewards-manager.ts
+      file: ./src/mappings/rewards-manager.ts
     network: goerli
   - kind: ethereum
     name: ERC721PoolFactory
@@ -134,7 +134,7 @@ dataSources:
       eventHandlers:
         - event: PoolCreated(address)
           handler: handlePoolCreated
-      file: ./src/erc-721-pool-factory.ts
+      file: ./src/mappings/erc-721-pool-factory.ts
     network: goerli
   - kind: ethereum
     name: GrantFund
@@ -172,7 +172,7 @@ dataSources:
           handler: handleDistributionPeriodStarted
         - event: VoteCast(indexed address,uint256,uint8,uint256,string)
           handler: handleVoteCast
-      file: ./src/grant-fund.ts
+      file: ./src/mappings/grant-fund.ts
     network: goerli
   - kind: ethereum
     name: AjnaToken
@@ -196,7 +196,7 @@ dataSources:
           handler: handleDelegateChanged
         - event: DelegateVotesChanged(indexed address,uint256,uint256)
           handler: handleDelegateVotesChanged
-      file: ./src/ajna-token.ts
+      file: ./src/mappings/ajna-token.ts
   - kind: ethereum
     name: BurnWrappedAjna
     network: goerli
@@ -216,7 +216,7 @@ dataSources:
       eventHandlers:
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
-      file: ./src/burn-wrapped-ajna.ts
+      file: ./src/mappings/burn-wrapped-ajna.ts
 templates:
   - kind: ethereum
     name: ERC20Pool
@@ -316,7 +316,7 @@ templates:
           handler: handleTransferLP
         - event: UpdateInterestRate(uint256,uint256)
           handler: handleUpdateInterestRate
-      file: ./src/erc-20-pool.ts
+      file: ./src/mappings/erc-20-pool.ts
     network: goerli
   - kind: ethereum
     name: ERC721Pool
@@ -423,5 +423,5 @@ templates:
           handler: handleTransferLP
         - event: UpdateInterestRate(uint256,uint256)
           handler: handleUpdateInterestRate
-      file: ./src/erc-721-pool.ts
+      file: ./src/mappings/erc-721-pool.ts
     network: goerli
