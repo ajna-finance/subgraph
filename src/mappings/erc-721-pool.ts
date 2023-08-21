@@ -64,7 +64,7 @@ import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidat
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../utils/pool/reserve-auction"
-import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleTransferLP } from "./base/base-pool"
 import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
 import { loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
 
@@ -993,43 +993,7 @@ export function handleTransferLP(event: TransferLPEvent): void {
 
 // identical to ERC20Pool
 export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
-  // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
-  const reserveKick = new ReserveAuctionKick(
-    event.transaction.hash.concat(event.transaction.from)
-  )
-
-  const pool           = Pool.load(addressToBytes(event.address))!
-  const reserveAuction = loadOrCreateReserveAuction(pool.id, event.params.currentBurnEpoch)
-
-  reserveKick.kicker            = event.transaction.from
-  reserveKick.reserveAuction    = reserveAuction.id
-  reserveKick.pool              = pool.id
-  reserveKick.claimableReserves = wadToDecimal(event.params.claimableReservesRemaining)
-  reserveKick.startingPrice     = wadToDecimal(event.params.auctionPrice)
-
-  reserveKick.blockNumber = event.block.number
-  reserveKick.blockTimestamp = event.block.timestamp
-  reserveKick.transactionHash = event.transaction.hash
-
-  reserveAuction.claimableReservesRemaining = reserveKick.claimableReserves
-  reserveAuction.kick = reserveKick.id
-
-  // update pool state
-  pool.burnEpoch = event.params.currentBurnEpoch
-  updatePool(pool)
-  addReserveAuctionToPool(pool, reserveAuction)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-  reserveKick.kickerAward = reserveAuctionKickerReward(pool)
-
-  // update account state
-  const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
-  account.txCount = account.txCount.plus(ONE_BI)
-  updateAccountReserveAuctions(account, reserveAuction.id)
-
-  account.save()
-  pool.save()
-  reserveAuction.save()
-  reserveKick.save()
+  _handleReserveAuctionKick(event.address, event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
 }
 
 // identical to ERC20Pool

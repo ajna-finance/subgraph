@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, Bucket, MoveQuoteToken, Pool, RemoveQuoteToken, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, Bucket, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -13,14 +13,15 @@ import {
     TransferLP as TransferLPERC721Event
 } from "../../../generated/templates/ERC721Pool/ERC721Pool"
 
-import { loadOrCreateAccount, updateAccountLends, updateAccountPools } from "../../utils/account"
+import { loadOrCreateAccount, updateAccountLends, updateAccountPools, updateAccountReserveAuctions } from "../../utils/account"
 import { ONE_BI, ZERO_BD } from "../../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../../utils/convert"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../../utils/pool/bucket"
 import { getDepositTime, getLendId, loadOrCreateLend, lpbValueInQuote } from "../../utils/pool/lend"
-import { getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
+import { addReserveAuctionToPool, getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
 import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../utils/token-erc20"
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
+import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
 
 
 /*****************************/
@@ -450,6 +451,53 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
     pool.save()
     transferLP.save()
 }
+
+/*******************************/
+/*** Reserves Event Handlers ***/
+/*******************************/
+
+export function _handleReserveAuctionKick(poolAddress: Address, event: ethereum.Event, currentBurnEpoch: BigInt, claimableReservesRemaining: BigInt, auctionPrice: BigInt): void {
+  // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
+  const reserveKick = new ReserveAuctionKick(
+    event.transaction.hash.concat(event.transaction.from)
+  )
+  const pool           = Pool.load(addressToBytes(event.address))!
+  const reserveAuction = loadOrCreateReserveAuction(pool.id, currentBurnEpoch)
+
+  reserveKick.kicker            = event.transaction.from
+  reserveKick.reserveAuction    = reserveAuction.id
+  reserveKick.pool              = pool.id
+  reserveKick.claimableReserves = wadToDecimal(claimableReservesRemaining)
+  reserveKick.startingPrice     = wadToDecimal(auctionPrice)
+
+  reserveKick.blockNumber = event.block.number
+  reserveKick.blockTimestamp = event.block.timestamp
+  reserveKick.transactionHash = event.transaction.hash
+
+  reserveAuction.claimableReservesRemaining = reserveKick.claimableReserves
+  reserveAuction.kick = reserveKick.id
+
+  // update pool state
+  pool.burnEpoch = currentBurnEpoch
+  updatePool(pool)
+  addReserveAuctionToPool(pool, reserveAuction)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  reserveKick.kickerAward = reserveAuctionKickerReward(pool)
+
+  // update account state
+  const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountReserveAuctions(account, reserveAuction.id)
+
+  account.save()
+  pool.save()
+  reserveAuction.save()
+  reserveKick.save()
+}
+
+/***************************/
+/*** Pool Event Handlers ***/
+/***************************/
 
 export function _handleInterestRateEvent(poolAddress: Address, event: ethereum.Event, newRate: BigInt): void {
   const updateInterestRate = new UpdateInterestRate(

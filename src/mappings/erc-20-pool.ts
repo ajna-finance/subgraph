@@ -66,7 +66,7 @@ import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../utils
 import { incrementTokenTxCount } from "../utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
 import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
-import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleTransferLP } from "./base/base-pool"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -691,42 +691,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
 }
 
 export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
-  // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
-  const reserveKick = new ReserveAuctionKick(
-    event.transaction.hash.concat(event.transaction.from)
-  )
-  const pool           = Pool.load(addressToBytes(event.address))!
-  const reserveAuction = loadOrCreateReserveAuction(pool.id, event.params.currentBurnEpoch)
-
-  reserveKick.kicker            = event.transaction.from
-  reserveKick.reserveAuction    = reserveAuction.id
-  reserveKick.pool              = pool.id
-  reserveKick.claimableReserves = wadToDecimal(event.params.claimableReservesRemaining)
-  reserveKick.startingPrice     = wadToDecimal(event.params.auctionPrice)
-
-  reserveKick.blockNumber = event.block.number
-  reserveKick.blockTimestamp = event.block.timestamp
-  reserveKick.transactionHash = event.transaction.hash
-
-  reserveAuction.claimableReservesRemaining = reserveKick.claimableReserves
-  reserveAuction.kick = reserveKick.id
-
-  // update pool state
-  pool.burnEpoch = event.params.currentBurnEpoch
-  updatePool(pool)
-  addReserveAuctionToPool(pool, reserveAuction)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-  reserveKick.kickerAward = reserveAuctionKickerReward(pool)
-
-  // update account state
-  const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
-  account.txCount = account.txCount.plus(ONE_BI)
-  updateAccountReserveAuctions(account, reserveAuction.id)
-
-  account.save()
-  pool.save()
-  reserveAuction.save()
-  reserveKick.save()
+  _handleReserveAuctionKick(event.address, event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
 }
 
 export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
