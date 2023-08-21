@@ -161,6 +161,8 @@ type Lend @entity {
   id: Bytes!
   # bucket to which a lend was made
   bucket: Bucket!
+  # index of the bucket, for querying
+  bucketIndex: Int!
   # pool address
   poolAddress: String!
   # address of the lender

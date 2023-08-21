@@ -15,7 +15,7 @@ import { assertPosition, createApprovalEvent, createBurnEvent, createMemorialize
 import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
 import { create721Pool, mockGetLPBValueInQuote, mockGetLenderInfo, mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./utils/common"
 import { Lend } from "../generated/schema"
-import { getLendId, loadOrCreateLend } from "../src/utils/pool/lend"
+import { getLendId } from "../src/utils/pool/lend"
 import { getBucketId } from "../src/utils/pool/bucket"
 import { FIVE_PERCENT_BI, ZERO_BI } from "../src/utils/constants"
 
@@ -277,6 +277,7 @@ describe("Describe entity assertions", () => {
     const bucketId = getBucketId(pool, fromIndex.toU32())
     const lend = new Lend(getLendId(bucketId, lender))
     lend.bucket = bucketId
+    lend.bucketIndex = fromIndex.toU32()
     lend.depositTime = BigInt.fromI32(1000)
     lend.lender = lender
     lend.pool = pool
