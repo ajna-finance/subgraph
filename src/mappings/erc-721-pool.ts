@@ -251,7 +251,7 @@ export function handleAddCollateralNFT(event: AddCollateralNFTEvent): void {
 
     // update lend state
     const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, pool.id, addCollateralNFT.actor)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id, bucket.bucketIndex, addCollateralNFT.actor)
     lend.depositTime     = addCollateralNFT.blockTimestamp
     lend.lpb             = lend.lpb.plus(addCollateralNFT.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
@@ -370,7 +370,7 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   account.txCount = account.txCount.plus(ONE_BI)
 
   const lendId = getLendId(bucketId, accountId)
-  const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeCollateral.claimer)
+  const lend = loadOrCreateLend(bucketId, lendId, pool.id, bucket.bucketIndex, removeCollateral.claimer)
   if (removeCollateral.lpRedeemed.le(lend.lpb)){
     lend.lpb = lend.lpb.minus(removeCollateral.lpRedeemed)
   } else {
@@ -463,7 +463,7 @@ export function handleMergeOrRemoveCollateralNFT(
 
     // update lend state
     const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, pool.id, event.params.actor)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id, bucket.bucketIndex, event.params.actor)
     lend.depositTime = mergeOrRemove.blockTimestamp
     lend.lpb = wadToDecimal(getLenderInfoERC721Pool(pool.id, index, event.params.actor).lpBalance)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
@@ -769,9 +769,9 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   const lpAwardedId          = event.transaction.hash.concatI32(event.logIndex.toI32() - 1);
   const bucketTakeLpAwarded  = BucketTakeLPAwarded.load(lpAwardedId)!
   const kickerLendId         = getLendId(bucketId, bucketTakeLpAwarded.kicker)
-  const kickerLend           = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucketTakeLpAwarded.kicker)
+  const kickerLend           = loadOrCreateLend(bucketId, kickerLendId, pool.id, bucket.bucketIndex, bucketTakeLpAwarded.kicker)
   kickerLend.depositTime     = bucketTake.blockTimestamp
-  kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
+  kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedKicker)
   kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
   updateBucketLends(bucket, kickerLendId)
 
@@ -782,7 +782,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
 
   // update lend state for taker
   const takerLendId         = getLendId(bucketId, bucketTakeLpAwarded.taker)
-  const takerLend           = loadOrCreateLend(bucketId, takerLendId, pool.id, bucketTakeLpAwarded.taker)
+  const takerLend           = loadOrCreateLend(bucketId, takerLendId, pool.id, bucket.bucketIndex, bucketTakeLpAwarded.taker)
   takerLend.depositTime     = bucketTake.blockTimestamp
   takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
   takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, takerLend.lpb)

@@ -104,7 +104,7 @@ export function _handleAddQuoteToken(erc20Event: AddQuoteTokenERC20Event | null,
 
     // update lend state
     const lendId         = getLendId(bucketId, accountId)
-    const lend           = loadOrCreateLend(bucketId, lendId, pool.id, addQuoteToken.lender)
+    const lend           = loadOrCreateLend(bucketId, lendId, pool.id, bucket.bucketIndex, addQuoteToken.lender)
     lend.depositTime     = blockTimestamp
     lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
@@ -211,7 +211,7 @@ export function _handleMoveQuoteToken(erc20Event: MoveQuoteTokenERC20Event | nul
 
     // update from bucket lend state
     const fromBucketLendId = getLendId(fromBucketId, lender)
-    const fromBucketLend = loadOrCreateLend(fromBucketId, fromBucketLendId, pool.id, moveQuoteToken.lender)
+    const fromBucketLend = loadOrCreateLend(fromBucketId, fromBucketLendId, pool.id, fromBucket.bucketIndex, moveQuoteToken.lender)
     if (moveQuoteToken.lpRedeemedFrom.le(fromBucketLend.lpb)) {
         fromBucketLend.lpb = fromBucketLend.lpb.minus(moveQuoteToken.lpRedeemedFrom)
     } else {
@@ -223,7 +223,7 @@ export function _handleMoveQuoteToken(erc20Event: MoveQuoteTokenERC20Event | nul
 
     // update to bucket lend state
     const toBucketLendId = getLendId(toBucketId, lender)
-    const toBucketLend = loadOrCreateLend(toBucketId, toBucketLendId, pool.id, moveQuoteToken.lender)
+    const toBucketLend = loadOrCreateLend(toBucketId, toBucketLendId, pool.id, toBucket.bucketIndex, moveQuoteToken.lender)
     toBucketLend.depositTime = getDepositTime(fromBucketLend.depositTime, toBucketLend)
     toBucketLend.lpb = toBucketLend.lpb.plus(wadToDecimal(lpAwardedTo))
     toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket.bucketIndex, toBucketLend.lpb)
@@ -327,7 +327,7 @@ export function _handleRemoveQuoteToken(erc20Event: RemoveQuoteTokenERC20Event |
 
     // update lend state
     const lendId = getLendId(bucketId, accountId)
-    const lend = loadOrCreateLend(bucketId, lendId, pool.id, removeQuote.lender)
+    const lend = loadOrCreateLend(bucketId, lendId, pool.id, bucket.bucketIndex, removeQuote.lender)
     if (removeQuote.lpRedeemed.le(lend.lpb)) {
       lend.lpb = lend.lpb.minus(removeQuote.lpRedeemed)
     } else {
@@ -425,7 +425,7 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
 
       // event does not reveal LP amounts transferred for each bucket, so query the pool and update
       // remove old lend
-      const oldLend = loadOrCreateLend(bucketId, oldLendId, pool.id, transferLP.owner)
+      const oldLend = loadOrCreateLend(bucketId, oldLendId, pool.id, bucketIndex.toU32(), transferLP.owner)
       oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, owner).lpBalance)
       oldLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, oldLend.lpb)
       oldLend.save()
@@ -433,7 +433,7 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
       updateBucketLends(bucket, oldLendId)
 
       // add new lend
-      const newLend = loadOrCreateLend(bucketId, newLendId, pool.id, transferLP.newOwner)
+      const newLend = loadOrCreateLend(bucketId, newLendId, pool.id, bucketIndex.toU32(), transferLP.newOwner)
       const newLendInfo = getLenderInfo(pool.id, bucketIndex, newOwner)
       newLend.depositTime = newLendInfo.depositTime
       newLend.lpb = wadToDecimal(newLendInfo.lpBalance)
