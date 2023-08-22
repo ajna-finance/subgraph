@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, Bucket, MoveQuoteToken, Pool, RemoveQuoteToken, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, Bucket, Flashloan, LoanStamped, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -13,15 +13,57 @@ import {
     TransferLP as TransferLPERC721Event
 } from "../../../generated/templates/ERC721Pool/ERC721Pool"
 
-import { loadOrCreateAccount, updateAccountLends, updateAccountPools } from "../../utils/account"
-import { ONE_BI, ZERO_BD } from "../../utils/constants"
+import { loadOrCreateAccount, updateAccountLends, updateAccountPools, updateAccountReserveAuctions } from "../../utils/account"
+import { ONE_BI, TEN_BI, ZERO_BD } from "../../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../../utils/convert"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../../utils/pool/bucket"
 import { getDepositTime, getLendId, loadOrCreateLend, lpbValueInQuote } from "../../utils/pool/lend"
-import { getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
+import { addReserveAuctionToPool, getBurnInfo, getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
 import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../utils/token-erc20"
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
+import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
 
+
+/*******************************/
+/*** Borrower Event Handlers ***/
+/*******************************/
+
+export function _handleFlashLoan(event: ethereum.Event, tokenAddress: Address, borrower: Address, amount: BigInt): void {
+    const flashloan = new Flashloan(event.transaction.hash.concatI32(event.logIndex.toI32()))
+    const pool = Pool.load(addressToBytes(event.address))!
+    const token = Token.load(addressToBytes(tokenAddress))!
+    const scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+
+    flashloan.pool = pool.id
+    flashloan.borrower = borrower
+
+    const normalizedAmount = wadToDecimal(amount.times(scaleFactor))
+    flashloan.amount = normalizedAmount
+    if (token.id == pool.quoteToken) {
+      pool.quoteTokenFlashloaned = pool.quoteTokenFlashloaned.plus(normalizedAmount)
+    } else if (token.id == pool.collateralToken) {
+      pool.collateralFlashloaned = pool.collateralFlashloaned.plus(normalizedAmount)
+    }
+    token.txCount = token.txCount.plus(ONE_BI)
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    token.save()
+    pool.save()
+    flashloan.save()
+}
+
+export function _handleLoanStamped(event: ethereum.Event, borrower: Address): void {
+    const entity = new LoanStamped(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.borrower = borrower
+    entity.pool = addressToBytes(event.address)
+
+    entity.blockNumber = event.block.number
+    entity.blockTimestamp = event.block.timestamp
+    entity.transactionHash = event.transaction.hash
+    entity.save()
+}
 
 /*****************************/
 /*** Lender Event Handlers ***/
@@ -450,6 +492,106 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
     pool.save()
     transferLP.save()
 }
+
+/*******************************/
+/*** Reserves Event Handlers ***/
+/*******************************/
+
+export function _handleReserveAuctionKick(event: ethereum.Event, currentBurnEpoch: BigInt, claimableReservesRemaining: BigInt, auctionPrice: BigInt): void {
+  // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
+  const reserveKick = new ReserveAuctionKick(
+    event.transaction.hash.concat(event.transaction.from)
+  )
+  const pool           = Pool.load(addressToBytes(event.address))!
+  const reserveAuction = loadOrCreateReserveAuction(pool.id, currentBurnEpoch)
+
+  reserveKick.kicker            = event.transaction.from
+  reserveKick.reserveAuction    = reserveAuction.id
+  reserveKick.pool              = pool.id
+  reserveKick.claimableReserves = wadToDecimal(claimableReservesRemaining)
+  reserveKick.startingPrice     = wadToDecimal(auctionPrice)
+
+  reserveKick.blockNumber = event.block.number
+  reserveKick.blockTimestamp = event.block.timestamp
+  reserveKick.transactionHash = event.transaction.hash
+
+  reserveAuction.claimableReservesRemaining = reserveKick.claimableReserves
+  reserveAuction.kick = reserveKick.id
+
+  // update pool state
+  pool.burnEpoch = currentBurnEpoch
+  updatePool(pool)
+  addReserveAuctionToPool(pool, reserveAuction)
+  pool.txCount = pool.txCount.plus(ONE_BI)
+  reserveKick.kickerAward = reserveAuctionKickerReward(pool)
+
+  // update account state
+  const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
+  account.txCount = account.txCount.plus(ONE_BI)
+  updateAccountReserveAuctions(account, reserveAuction.id)
+
+  account.save()
+  pool.save()
+  reserveAuction.save()
+  reserveKick.save()
+}
+
+export function _handleReserveAuctionTake(event: ethereum.Event, currentBurnEpoch: BigInt, claimableReservesRemaining: BigInt, auctionPrice: BigInt): void {
+    const reserveTake = new ReserveAuctionTake(
+        event.transaction.hash.concat(event.transaction.from)
+    )
+    const pool           = Pool.load(addressToBytes(event.address))!
+    const reserveAuction = loadOrCreateReserveAuction(pool.id, currentBurnEpoch)
+
+    reserveTake.taker                      = event.transaction.from
+    reserveTake.reserveAuction             = reserveAuction.id
+    reserveTake.pool                       = pool.id
+    reserveTake.claimableReservesRemaining = wadToDecimal(claimableReservesRemaining)
+    reserveTake.auctionPrice               = wadToDecimal(auctionPrice)
+
+    // retrieve ajna burn information from the pool
+    const burnInfo = getBurnInfo(pool, currentBurnEpoch)
+    // update burn information of the reserve auction take
+    // since only one reserve auction can occur at a time, look at the difference since the last reserve auction
+    reserveTake.ajnaBurned = wadToDecimal(burnInfo.totalBurned).minus(pool.totalAjnaBurned)
+    reserveAuction.claimableReservesRemaining = reserveTake.claimableReservesRemaining
+    reserveAuction.lastTakePrice              = reserveTake.auctionPrice
+    reserveAuction.ajnaBurned                 = reserveAuction.ajnaBurned.plus(reserveTake.ajnaBurned)
+    reserveAuction.takes                      = reserveAuction.takes.concat([reserveTake.id])
+
+    // event does not provide amount purchased; use auctionPrice and ajnaBurned to calculate
+    reserveTake.quotePurchased = reserveTake.ajnaBurned.div(reserveTake.auctionPrice)
+
+    reserveTake.blockNumber = event.block.number
+    reserveTake.blockTimestamp = event.block.timestamp
+    reserveTake.transactionHash = event.transaction.hash
+
+    // update pool state
+    pool.totalAjnaBurned = wadToDecimal(burnInfo.totalBurned)
+    pool.totalInterestEarned = wadToDecimal(burnInfo.totalInterest)
+    updatePool(pool)
+    pool.txCount = pool.txCount.plus(ONE_BI)
+    if (isERC20Pool(pool)) {
+        incrementTokenTxCountERC20Pool(pool)
+    } else {
+        incrementTokenTxCountERC721Pool(pool)
+    }
+
+    // update account state
+    const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
+    account.txCount = account.txCount.plus(ONE_BI)
+    updateAccountReserveAuctions(account, reserveAuction.id)
+
+    // save entities to store
+    account.save()
+    pool.save()
+    reserveAuction.save()
+    reserveTake.save()
+}
+
+/***************************/
+/*** Pool Event Handlers ***/
+/***************************/
 
 export function _handleInterestRateEvent(poolAddress: Address, event: ethereum.Event, newRate: BigInt): void {
   const updateInterestRate = new UpdateInterestRate(
