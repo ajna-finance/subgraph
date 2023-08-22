@@ -54,7 +54,7 @@ import { addressToBytes, wadToDecimal } from "../utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "../utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../utils/pool/bucket"
 import { getLendId, loadOrCreateLend, removeLendFromStore } from "../utils/pool/lend"
-import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "../utils/pool/loan"
+import { getBorrowerInfo, getLoanId, loadOrCreateLoan, removeLoanFromStore } from "../utils/pool/loan"
 import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "../utils/pool/liquidation"
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
@@ -172,9 +172,12 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
   loan.t0debt = ZERO_BD
   loan.collateralPledged = auctionSettle.collateral
   loan.inLiquidation = false
-  loan.save()
 
-  // update auctionSettle pointers
+  // remove loan from store if necessary
+  const isRemoved = removeLoanFromStore(loan)
+  if (!isRemoved) loan.save()
+
+  // update auctionSettle pointers and save to store
   auctionSettle.pool = pool.id
   auctionSettle.loan = loan.id
   auctionSettle.save()
@@ -634,6 +637,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     pool.pledgedCollateral = pool.pledgedCollateral.minus(wadToDecimal(event.params.collateralPulled))
     updatePool(pool)
     pool.txCount = pool.txCount.plus(ONE_BI)
+    repayDebt.pool = pool.id
 
     // update tx count for a pools tokens
     incrementTokenTxCount(pool)
@@ -652,13 +656,13 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
 
     // update account loans if necessary
     updateAccountLoans(account, loan)
+    // remove loan from store if necessary
+    const isRemoved = removeLoanFromStore(loan)
+    if (!isRemoved) loan.save()
 
     // save entities to store
     account.save()
     pool.save()
-    loan.save()
-
-    repayDebt.pool = pool.id
   }
 
   repayDebt.save()

@@ -54,7 +54,7 @@ import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } fro
 import { addressToBytes, bigIntArrayToIntArray, decimalToWad, wadToDecimal } from "../utils/convert"
 import { ZERO_BD, ONE_BI, TEN_BI, ONE_BD, ONE_WAD_BI, EXP_18_BD, ZERO_BI } from "../utils/constants"
 import { getLendId, loadOrCreateLend, removeLendFromStore } from "../utils/pool/lend"
-import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan } from "../utils/pool/loan"
+import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan, removeLoanFromStore } from "../utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "../utils/pool/liquidation"
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
@@ -133,6 +133,8 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   pool.txCount = pool.txCount.plus(ONE_BI)
   // update tx count for a pools tokens
   incrementTokenTxCount(pool)
+  // associate pool with repayDebt event
+  repayDebt.pool = pool.id
 
   // update account state
   const accountId = addressToBytes(event.params.borrower)
@@ -154,14 +156,13 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
 
   // update account loans if necessary
   updateAccountLoans(account, loan)
-
-  // associate pool with repayDebt event
-  repayDebt.pool = pool.id
+  // remove loan from store if necessary
+  const isRemoved = removeLoanFromStore(loan)
+  if (!isRemoved) loan.save()
 
   // save entities to store
   account.save()
   pool.save()
-  loan.save()
   repayDebt.save()
 }
 
@@ -518,6 +519,7 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   // update loan state
   loan.t0debt = ZERO_BD
   loan.collateralPledged = auctionNFTSettle.collateral
+  loan.inLiquidation = false
 
   // rebalance tokenIds on auction settle
   // round down remaining collateral pledged, and slice that many tokenIds
@@ -529,15 +531,15 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   pool.tokenIdsPledged = findAndRemoveTokenIds(tokenIdsSettled, pool.tokenIdsPledged)
   // add the removed tokenIdsPledged to the pool bucketTokenIds
   pool.bucketTokenIds = pool.bucketTokenIds.concat(tokenIdsSettled)
-
-  loan.inLiquidation = false
-  loan.save()
   pool.save()
 
-  // update auctionNFTSettle pointers
+  // remove loan from store if necessary
+  const isRemoved = removeLoanFromStore(loan)
+  if (!isRemoved) loan.save()
+
+  // update auctionNFTSettle pointers and save to store
   auctionNFTSettle.pool = pool.id
   auctionNFTSettle.loan = loan.id
-
   auctionNFTSettle.save()
 }
 
