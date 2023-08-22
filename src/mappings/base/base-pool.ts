@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, Bucket, Flashloan, LoanStamped, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, Bucket, BucketBankruptcy, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -598,6 +598,55 @@ export function _handleReserveAuctionTake(event: ethereum.Event, currentBurnEpoc
 /***************************/
 /*** Pool Event Handlers ***/
 /***************************/
+
+export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lpForfeited: BigInt): void {
+    const bucketBankruptcy = new BucketBankruptcy(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    bucketBankruptcy.index = index.toU32()
+    bucketBankruptcy.lpForfeited = wadToDecimal(lpForfeited)
+
+    bucketBankruptcy.blockNumber = event.block.number
+    bucketBankruptcy.blockTimestamp = event.block.timestamp
+    bucketBankruptcy.transactionHash = event.transaction.hash
+
+    // update entities
+    const pool = Pool.load(addressToBytes(event.address))
+    if (pool != null) {
+    // update pool state
+    updatePool(pool)
+
+    // update bucket state to zero out bucket contents
+    const bucketId      = getBucketId(pool.id, index.toU32())
+    const bucket        = loadOrCreateBucket(pool.id, bucketId, index.toU32())
+    bucket.collateral   = ZERO_BD
+    bucket.deposit      = ZERO_BD
+    bucket.lpb          = ZERO_BD
+    bucket.exchangeRate = ZERO_BD
+
+    bucketBankruptcy.bucket = bucketId
+    bucketBankruptcy.pool = pool.id
+
+    // iterate through all bucket lends and set lend.lpb to zero
+    for (let i = 0; i < bucket.lends.length; i++) {
+        const lendId = bucket.lends[i]
+        const lend = Lend.load(lendId)!
+        lend.depositTime = bucketBankruptcy.blockTimestamp.plus(ONE_BI)
+        lend.lpb = ZERO_BD
+        lend.lpbValueInQuote = ZERO_BD
+        lend.save()
+        updateBucketLends(bucket, lend)
+        updateAccountLends(loadOrCreateAccount(lend.lender), lend)
+        removeLendFromStore(lend)
+    }
+
+    // save entities to store
+    pool.save()
+    bucket.save()
+    }
+
+    bucketBankruptcy.save()
+}
 
 export function _handleInterestRateEvent(poolAddress: Address, event: ethereum.Event, newRate: BigInt): void {
   const updateInterestRate = new UpdateInterestRate(

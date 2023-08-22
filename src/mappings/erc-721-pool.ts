@@ -58,7 +58,7 @@ import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan, removeLoanFromS
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "../utils/pool/liquidation"
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
-import { _handleAddQuoteToken, _handleFlashLoan, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleBucketBankruptcy, _handleFlashLoan, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleTransferLP } from "./base/base-pool"
 import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
 import { loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
 
@@ -255,54 +255,8 @@ export function handleMoveQuoteToken(event: MoveQuoteTokenEvent): void {
   _handleMoveQuoteToken(null, event)
 }
 
-// identical to ERC20Pool
 export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
-  const bucketBankruptcy = new BucketBankruptcy(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  bucketBankruptcy.index = event.params.index.toU32()
-  bucketBankruptcy.lpForfeited = wadToDecimal(event.params.lpForfeited)
-
-  bucketBankruptcy.blockNumber = event.block.number
-  bucketBankruptcy.blockTimestamp = event.block.timestamp
-  bucketBankruptcy.transactionHash = event.transaction.hash
-
-  // update entities
-  const pool = Pool.load(addressToBytes(event.address))
-  if (pool != null) {
-    // update pool state
-    updatePool(pool)
-
-    // update bucket state to zero out bucket contents
-    const bucketId      = getBucketId(pool.id, event.params.index.toU32())
-    const bucket        = loadOrCreateBucket(pool.id, bucketId, event.params.index.toU32())
-    bucket.collateral   = ZERO_BD
-    bucket.deposit      = ZERO_BD
-    bucket.lpb          = ZERO_BD
-    bucket.exchangeRate = ZERO_BD
-
-    bucketBankruptcy.bucket = bucketId
-    bucketBankruptcy.pool = pool.id
-
-    // iterate through all bucket lends and set lend.lpb to zero
-    for (let i = 0; i < bucket.lends.length; i++) {
-      const lendId = bucket.lends[i]
-      const lend = Lend.load(lendId)!
-      lend.depositTime = bucketBankruptcy.blockTimestamp.plus(ONE_BI)
-      lend.lpb = ZERO_BD
-      lend.lpbValueInQuote = ZERO_BD
-      lend.save()
-      updateBucketLends(bucket, lend)
-      updateAccountLends(loadOrCreateAccount(lend.lender), lend)
-      removeLendFromStore(lend)
-    }
-
-    // save entities to store
-    pool.save()
-    bucket.save()
-  }
-
-  bucketBankruptcy.save()
+  _handleBucketBankruptcy(event, event.params.index, event.params.lpForfeited)
 }
 
 export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
