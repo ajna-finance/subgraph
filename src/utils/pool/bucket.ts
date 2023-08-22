@@ -73,13 +73,12 @@ export function updateBucket(bucket: Bucket, bucketInfo: BucketInfo): void {
     bucket.exchangeRate = wadToDecimal(bucketInfo.exchangeRate)
 }
 
-export function updateBucketLends(bucket: Bucket, lendId: Bytes): void {
+export function updateBucketLends(bucket: Bucket, lend: Lend): void {
     const lends = bucket.lends
     // get current index of lend in bucket's list of lends
-    const index = lends.indexOf(lendId)
-    const lend = Lend.load(lendId)!
+    const index = lends.indexOf(lend.id)
     if (lend.lpb != ZERO_BD && index == -1) {
-        bucket.lends = bucket.lends.concat([lendId])
+        bucket.lends = bucket.lends.concat([lend.id])
     } else if (lend.lpb == ZERO_BD && index != -1) {
         bucket.lends.splice(index, 1)
     }

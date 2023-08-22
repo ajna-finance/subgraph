@@ -37,17 +37,13 @@ import {
   BucketTake,
   BucketTakeLPAwarded,
   DrawDebt,
-  Flashloan,
   Kick,
   Lend,
   LiquidationAuction,
   Loan,
-  LoanStamped,
   Pool,
   RemoveCollateral,
   RepayDebt,
-  ReserveAuctionKick,
-  ReserveAuctionTake,
   Settle,
   Take,
   Token
@@ -57,12 +53,11 @@ import { ZERO_BD, ONE_BI, TEN_BI, ZERO_BI } from "../utils/constants"
 import { addressToBytes, wadToDecimal } from "../utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles, updateAccountReserveAuctions } from "../utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../utils/pool/bucket"
-import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
+import { getLendId, loadOrCreateLend, removeLendFromStore } from "../utils/pool/lend"
 import { getBorrowerInfo, getLoanId, loadOrCreateLoan } from "../utils/pool/loan"
 import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "../utils/pool/liquidation"
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
-import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../utils/pool/reserve-auction"
 import { incrementTokenTxCount } from "../utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
 import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
@@ -108,7 +103,7 @@ export function handleAddCollateral(event: AddCollateralEvent): void {
     lend.depositTime     = addCollateral.blockTimestamp
     lend.lpb             = lend.lpb.plus(addCollateral.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
-    updateBucketLends(bucket, lend.id)
+    updateBucketLends(bucket, lend)
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
@@ -236,6 +231,9 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
       lend.lpb = ZERO_BD
       lend.lpbValueInQuote = ZERO_BD
       lend.save()
+      updateBucketLends(bucket, lend)
+      updateAccountLends(loadOrCreateAccount(lend.lender), lend)
+      removeLendFromStore(lend)
     }
 
     // save entities to store
@@ -323,7 +321,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   kickerLend.depositTime     = bucketTake.blockTimestamp
   kickerLend.lpb             = kickerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedKicker)
   kickerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, kickerLend.lpb)
-  updateBucketLends(bucket, kickerLendId)
+  updateBucketLends(bucket, kickerLend)
 
   // update kicker account state if they weren't a lender already
   const kickerAccountId = bucketTakeLpAwarded.kicker
@@ -336,7 +334,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   takerLend.depositTime     = bucketTake.blockTimestamp
   takerLend.lpb             = takerLend.lpb.plus(bucketTakeLpAwarded.lpAwardedTaker)
   takerLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, takerLend.lpb)
-  updateBucketLends(bucket, takerLendId)
+  updateBucketLends(bucket, takerLend)
 
   // update bucketTake pointers
   bucketTake.liquidationAuction = auction.id
@@ -589,14 +587,18 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
     }
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
 
-    // update account's list of pools and lends if necessary
+    // update bucket and account's list of pools and lends if necessary
+    updateBucketLends(bucket, lend)
     updateAccountPools(account, pool)
     updateAccountLends(account, lend)
+
+    // remove lend from store if necessary
+    const isRemoved = removeLendFromStore(lend)
+    if (!isRemoved) lend.save()
 
     // save entities to store
     account.save()
     bucket.save()
-    lend.save()
     pool.save()
 
     removeCollateral.bucket = bucket.id

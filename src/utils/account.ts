@@ -50,7 +50,6 @@ export function updateAccountLends(account: Account, lend: Lend): void {
       lends.push(lend.id)
     } else if (lend.lpb == ZERO_BD && index != -1) {
       lends.splice(index, 1)
-      store.remove("Lend", lend.id.toHexString())
     }
     account.lends = lends
 }
@@ -64,7 +63,6 @@ export function updateAccountLoans(account: Account, loan: Loan): void {
       loans.push(loan.id)
     } else if (loan.collateralPledged == ZERO_BD && loan.t0debt == ZERO_BD && index != -1) {
       loans.splice(index, 1)
-      store.remove("Loan", loan.id.toHexString())
     }
     account.loans = loans
 }
