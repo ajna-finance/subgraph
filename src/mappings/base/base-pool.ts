@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, Bucket, Flashloan, LoanStamped, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, Bucket, Flashloan, LoanStamped, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -18,7 +18,7 @@ import { ONE_BI, TEN_BI, ZERO_BD } from "../../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../../utils/convert"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../../utils/pool/bucket"
 import { getDepositTime, getLendId, loadOrCreateLend, lpbValueInQuote } from "../../utils/pool/lend"
-import { addReserveAuctionToPool, getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
+import { addReserveAuctionToPool, getBurnInfo, getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
 import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../utils/token-erc20"
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
@@ -62,6 +62,7 @@ export function _handleLoanStamped(event: ethereum.Event, borrower: Address): vo
     entity.blockNumber = event.block.number
     entity.blockTimestamp = event.block.timestamp
     entity.transactionHash = event.transaction.hash
+    entity.save()
 }
 
 /*****************************/
@@ -533,6 +534,59 @@ export function _handleReserveAuctionKick(event: ethereum.Event, currentBurnEpoc
   pool.save()
   reserveAuction.save()
   reserveKick.save()
+}
+
+export function _handleReserveAuctionTake(event: ethereum.Event, currentBurnEpoch: BigInt, claimableReservesRemaining: BigInt, auctionPrice: BigInt): void {
+    const reserveTake = new ReserveAuctionTake(
+        event.transaction.hash.concat(event.transaction.from)
+    )
+    const pool           = Pool.load(addressToBytes(event.address))!
+    const reserveAuction = loadOrCreateReserveAuction(pool.id, currentBurnEpoch)
+
+    reserveTake.taker                      = event.transaction.from
+    reserveTake.reserveAuction             = reserveAuction.id
+    reserveTake.pool                       = pool.id
+    reserveTake.claimableReservesRemaining = wadToDecimal(claimableReservesRemaining)
+    reserveTake.auctionPrice               = wadToDecimal(auctionPrice)
+
+    // retrieve ajna burn information from the pool
+    const burnInfo = getBurnInfo(pool, currentBurnEpoch)
+    // update burn information of the reserve auction take
+    // since only one reserve auction can occur at a time, look at the difference since the last reserve auction
+    reserveTake.ajnaBurned = wadToDecimal(burnInfo.totalBurned).minus(pool.totalAjnaBurned)
+    reserveAuction.claimableReservesRemaining = reserveTake.claimableReservesRemaining
+    reserveAuction.lastTakePrice              = reserveTake.auctionPrice
+    reserveAuction.ajnaBurned                 = reserveAuction.ajnaBurned.plus(reserveTake.ajnaBurned)
+    reserveAuction.takes                      = reserveAuction.takes.concat([reserveTake.id])
+
+    // event does not provide amount purchased; use auctionPrice and ajnaBurned to calculate
+    reserveTake.quotePurchased = reserveTake.ajnaBurned.div(reserveTake.auctionPrice)
+
+    reserveTake.blockNumber = event.block.number
+    reserveTake.blockTimestamp = event.block.timestamp
+    reserveTake.transactionHash = event.transaction.hash
+
+    // update pool state
+    pool.totalAjnaBurned = wadToDecimal(burnInfo.totalBurned)
+    pool.totalInterestEarned = wadToDecimal(burnInfo.totalInterest)
+    updatePool(pool)
+    pool.txCount = pool.txCount.plus(ONE_BI)
+    if (isERC20Pool(pool)) {
+        incrementTokenTxCountERC20Pool(pool)
+    } else {
+        incrementTokenTxCountERC721Pool(pool)
+    }
+
+    // update account state
+    const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
+    account.txCount = account.txCount.plus(ONE_BI)
+    updateAccountReserveAuctions(account, reserveAuction.id)
+
+    // save entities to store
+    account.save()
+    pool.save()
+    reserveAuction.save()
+    reserveTake.save()
 }
 
 /***************************/
