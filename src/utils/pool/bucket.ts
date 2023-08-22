@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
-import { Bucket } from "../../../generated/schema"
+import { Bucket, Lend } from "../../../generated/schema"
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
 import { poolInfoUtilsAddressTable, ONE_BD, ZERO_BD } from "../constants"
@@ -77,7 +77,10 @@ export function updateBucketLends(bucket: Bucket, lendId: Bytes): void {
     const lends = bucket.lends
     // get current index of lend in bucket's list of lends
     const index = lends.indexOf(lendId)
-    if (index == -1) {
+    const lend = Lend.load(lendId)!
+    if (lend.lpb != ZERO_BD && index == -1) {
         bucket.lends = bucket.lends.concat([lendId])
+    } else if (lend.lpb == ZERO_BD && index != -1) {
+        bucket.lends.splice(index, 1)
     }
 }

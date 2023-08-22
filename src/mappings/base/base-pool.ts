@@ -262,6 +262,7 @@ export function _handleMoveQuoteToken(erc20Event: MoveQuoteTokenERC20Event | nul
         fromBucketLend.lpb = ZERO_BD
     }
     fromBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, fromBucket.bucketIndex, fromBucketLend.lpb)
+    updateBucketLends(fromBucket, fromBucketLendId)
 
     // update to bucket lend state
     const toBucketLendId = getLendId(toBucketId, lender)
