@@ -1469,7 +1469,7 @@ describe("Describe entity assertions", () => {
     assert.entityCount("Account", 2)
     assert.entityCount("AddQuoteToken", 5)
     assert.entityCount("Bucket", 5)
-    assert.entityCount("Lend", 10)
+    assert.entityCount("Lend", 5)
     assert.entityCount("TransferLP", 1)
     assert.entityCount("Pool", 2)
 
