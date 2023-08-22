@@ -64,7 +64,7 @@ import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidat
 import { getBurnInfo, updatePool, addLiquidationToPool, addReserveAuctionToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../utils/pool/reserve-auction"
-import { _handleAddQuoteToken, _handleInterestRateEvent, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleFlashLoan, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleTransferLP } from "./base/base-pool"
 import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
 import { loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
 
@@ -173,40 +173,12 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
 
 // identical to ERC20Pool
 export function handleFlashloan(event: FlashloanEvent): void {
-  const flashloan = new Flashloan(event.transaction.hash.concatI32(event.logIndex.toI32()))
-  const pool = Pool.load(addressToBytes(event.address))!
-  const token = Token.load(addressToBytes(event.params.token))!
-  const scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
-
-  flashloan.pool = pool.id
-  flashloan.borrower = event.params.receiver
-
-  const normalizedAmount = wadToDecimal(event.params.amount.times(scaleFactor))
-  flashloan.amount = normalizedAmount
-  if (token.id == pool.quoteToken) {
-    pool.quoteTokenFlashloaned = pool.quoteTokenFlashloaned.plus(normalizedAmount)
-  } else if (token.id == pool.collateralToken) {
-    pool.collateralFlashloaned = pool.collateralFlashloaned.plus(normalizedAmount)
-  }
-  token.txCount = token.txCount.plus(ONE_BI)
-  pool.txCount = pool.txCount.plus(ONE_BI)
-
-  token.save()
-  pool.save()
-  flashloan.save()
+  _handleFlashLoan(event, event.params.token, event.params.receiver, event.params.amount)
 }
 
 // identical to ERC20Pool
 export function handleLoanStamped(event: LoanStampedEvent): void {
-  const entity = new LoanStamped(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.borrower = event.params.borrower
-  entity.pool = addressToBytes(event.address)
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  _handleLoanStamped(event, event.params.borrower)
 }
 
 /*****************************/
@@ -614,6 +586,7 @@ export function handleSettle(event: SettleEvent): void {
   settle.save()
 }
 
+// TODO: can this be abstracted?
 export function handleKick(event: KickEvent): void {
   const kick = new Kick(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -993,7 +966,7 @@ export function handleTransferLP(event: TransferLPEvent): void {
 
 // identical to ERC20Pool
 export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
-  _handleReserveAuctionKick(event.address, event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
+  _handleReserveAuctionKick(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
 }
 
 // identical to ERC20Pool

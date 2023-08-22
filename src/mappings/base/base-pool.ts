@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, Bucket, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, Bucket, Flashloan, LoanStamped, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -14,7 +14,7 @@ import {
 } from "../../../generated/templates/ERC721Pool/ERC721Pool"
 
 import { loadOrCreateAccount, updateAccountLends, updateAccountPools, updateAccountReserveAuctions } from "../../utils/account"
-import { ONE_BI, ZERO_BD } from "../../utils/constants"
+import { ONE_BI, TEN_BI, ZERO_BD } from "../../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../../utils/convert"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../../utils/pool/bucket"
 import { getDepositTime, getLendId, loadOrCreateLend, lpbValueInQuote } from "../../utils/pool/lend"
@@ -23,6 +23,46 @@ import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../u
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
 
+
+/*******************************/
+/*** Borrower Event Handlers ***/
+/*******************************/
+
+export function _handleFlashLoan(event: ethereum.Event, tokenAddress: Address, borrower: Address, amount: BigInt): void {
+    const flashloan = new Flashloan(event.transaction.hash.concatI32(event.logIndex.toI32()))
+    const pool = Pool.load(addressToBytes(event.address))!
+    const token = Token.load(addressToBytes(tokenAddress))!
+    const scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+
+    flashloan.pool = pool.id
+    flashloan.borrower = borrower
+
+    const normalizedAmount = wadToDecimal(amount.times(scaleFactor))
+    flashloan.amount = normalizedAmount
+    if (token.id == pool.quoteToken) {
+      pool.quoteTokenFlashloaned = pool.quoteTokenFlashloaned.plus(normalizedAmount)
+    } else if (token.id == pool.collateralToken) {
+      pool.collateralFlashloaned = pool.collateralFlashloaned.plus(normalizedAmount)
+    }
+    token.txCount = token.txCount.plus(ONE_BI)
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    token.save()
+    pool.save()
+    flashloan.save()
+}
+
+export function _handleLoanStamped(event: ethereum.Event, borrower: Address): void {
+    const entity = new LoanStamped(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.borrower = borrower
+    entity.pool = addressToBytes(event.address)
+
+    entity.blockNumber = event.block.number
+    entity.blockTimestamp = event.block.timestamp
+    entity.transactionHash = event.transaction.hash
+}
 
 /*****************************/
 /*** Lender Event Handlers ***/
@@ -456,7 +496,7 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
 /*** Reserves Event Handlers ***/
 /*******************************/
 
-export function _handleReserveAuctionKick(poolAddress: Address, event: ethereum.Event, currentBurnEpoch: BigInt, claimableReservesRemaining: BigInt, auctionPrice: BigInt): void {
+export function _handleReserveAuctionKick(event: ethereum.Event, currentBurnEpoch: BigInt, claimableReservesRemaining: BigInt, auctionPrice: BigInt): void {
   // create the ReserveAuctionKick entity (immutable) and ReserveAuction entity (mutable)
   const reserveKick = new ReserveAuctionKick(
     event.transaction.hash.concat(event.transaction.from)
