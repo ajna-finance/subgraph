@@ -440,7 +440,6 @@ export function handleMergeOrRemoveCollateralNFT(
     lend.lpb = wadToDecimal(getLenderInfoERC721Pool(pool.id, index, event.params.actor).lpBalance)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
     updateBucketLends(bucket, lendId)
-
     updateAccountLends(account, lend)
 
     // save entities to store
