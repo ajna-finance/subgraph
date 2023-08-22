@@ -354,10 +354,12 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   // splice the identified tokenIds out of pool.bucketTokenIds
   pool.bucketTokenIds = findAndRemoveTokenIds(tokenIdsToRemove, pool.bucketTokenIds)
 
-  // update account's list of pools and lends if necessary
+  // update bucket and account's list of pools and lends if necessary
+  updateBucketLends(bucket, lend)
   updateAccountPools(account, pool)
   updateAccountLends(account, lend)
-    // remove lend from store if necessary
+
+  // remove lend from store if necessary
   const isRemoved = removeLendFromStore(lend)
   if (!isRemoved) lend.save()
 
