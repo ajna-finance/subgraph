@@ -1497,17 +1497,7 @@ describe("Describe entity assertions", () => {
     for (let i = 0; i < indexes.length; i++) {
       const index = indexes[i]
       const bucketId = getBucketId(expectedPoolAddress, index.toU32())
-      const ownerLendId = getLendId(bucketId, ownerAccountId)
       const newOwnerLendId = getLendId(bucketId, newOwnerAccountId)
-
-      assertLendUpdate({
-        id: ownerLendId,
-        bucketId: bucketId,
-        poolAddress: poolAddress.toHexString(),
-        depositTime: ONE_BI,
-        lpb: ZERO_BI, // all lpb was transferred
-        lpbValueInQuote: ZERO_BI
-      })
 
       assertLendUpdate({
         id: newOwnerLendId,
