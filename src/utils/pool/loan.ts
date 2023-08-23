@@ -29,13 +29,12 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
     return loan
 }
 
-export function removeLoanFromStore(loan: Loan): bool {
+export function saveOrRemoveLoan(loan: Loan): void {
   // if loan was removed, return true, else false
   if (loan.collateralPledged.equals(ZERO_BD) && loan.t0debt.equals(ZERO_BD)) {
       store.remove("Loan", loan.id.toHexString())
-      return true
   } else {
-      return false
+      loan.save()
   }
 }
 

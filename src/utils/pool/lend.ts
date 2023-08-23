@@ -46,12 +46,11 @@ export function lpbValueInQuote(pool: Bytes, bucketIndex: u32, lpAmount: BigDeci
     return wadToDecimal(quoteTokenAmount)
 }
 
-export function removeLendFromStore(lend: Lend): bool {
+export function saveOrRemoveLend(lend: Lend): void {
     // if lend was removed, return true, else false
     if (lend.lpb.equals(ZERO_BD)) {
         store.remove("Lend", lend.id.toHexString())
-        return true
     } else {
-        return false
+        lend.save()
     }
 }

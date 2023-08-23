@@ -50,8 +50,8 @@ import { ZERO_BD, ONE_BI } from "../utils/constants"
 import { addressToBytes, wadToDecimal } from "../utils/convert"
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles } from "../utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../utils/pool/bucket"
-import { getLendId, loadOrCreateLend, removeLendFromStore } from "../utils/pool/lend"
-import { getBorrowerInfo, getLoanId, loadOrCreateLoan, removeLoanFromStore } from "../utils/pool/loan"
+import { getLendId, loadOrCreateLend, saveOrRemoveLend } from "../utils/pool/lend"
+import { getBorrowerInfo, getLoanId, loadOrCreateLoan, saveOrRemoveLoan } from "../utils/pool/loan"
 import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake } from "../utils/pool/liquidation"
 import { updatePool, addLiquidationToPool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
@@ -171,8 +171,7 @@ export function handleAuctionSettle(event: AuctionSettleEvent): void {
   loan.inLiquidation = false
 
   // remove loan from store if necessary
-  const isRemoved = removeLoanFromStore(loan)
-  if (!isRemoved) loan.save()
+  saveOrRemoveLoan(loan)
 
   // update auctionSettle pointers and save to store
   auctionSettle.pool = pool.id
@@ -548,8 +547,7 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
     updateAccountLends(account, lend)
 
     // remove lend from store if necessary
-    const isRemoved = removeLendFromStore(lend)
-    if (!isRemoved) lend.save()
+    saveOrRemoveLend(lend)
 
     // save entities to store
     account.save()
@@ -609,8 +607,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     // update account loans if necessary
     updateAccountLoans(account, loan)
     // remove loan from store if necessary
-    const isRemoved = removeLoanFromStore(loan)
-    if (!isRemoved) loan.save()
+    saveOrRemoveLoan(loan)
 
     // save entities to store
     account.save()

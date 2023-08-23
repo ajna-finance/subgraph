@@ -51,8 +51,8 @@ import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAcco
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../utils/pool/bucket"
 import { addressToBytes, decimalToWad, wadToDecimal } from "../utils/convert"
 import { ZERO_BD, ONE_BI, ONE_WAD_BI } from "../utils/constants"
-import { getLendId, loadOrCreateLend, removeLendFromStore } from "../utils/pool/lend"
-import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan, removeLoanFromStore } from "../utils/pool/loan"
+import { getLendId, loadOrCreateLend, saveOrRemoveLend } from "../utils/pool/lend"
+import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan, saveOrRemoveLoan } from "../utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "../utils/pool/liquidation"
 import { updatePool, addLiquidationToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
@@ -155,8 +155,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   // update account loans if necessary
   updateAccountLoans(account, loan)
   // remove loan from store if necessary
-  const isRemoved = removeLoanFromStore(loan)
-  if (!isRemoved) loan.save()
+  saveOrRemoveLoan(loan)
 
   // save entities to store
   account.save()
@@ -313,8 +312,7 @@ export function handleRemoveCollateral(event: RemoveCollateralEvent): void {
   updateAccountLends(account, lend)
 
   // remove lend from store if necessary
-  const isRemoved = removeLendFromStore(lend)
-  if (!isRemoved) lend.save()
+  saveOrRemoveLend(lend)
 
   // save entities to store
   account.save()
@@ -396,8 +394,7 @@ export function handleMergeOrRemoveCollateralNFT(
     updateBucketLends(bucket, lend)
     updateAccountLends(account, lend)
     // remove lend from store if necessary
-    const isRemoved = removeLendFromStore(lend)
-    if (!isRemoved) lend.save()
+    saveOrRemoveLend(lend)
 
     // save entities to store
     account.save()
@@ -486,8 +483,7 @@ export function handleAuctionNFTSettle(event: AuctionNFTSettleEvent): void {
   pool.save()
 
   // remove loan from store if necessary
-  const isRemoved = removeLoanFromStore(loan)
-  if (!isRemoved) loan.save()
+  saveOrRemoveLoan(loan)
 
   // update auctionNFTSettle pointers and save to store
   auctionNFTSettle.pool = pool.id
