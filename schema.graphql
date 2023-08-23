@@ -132,7 +132,6 @@ type Pool @entity {
   tokenIdsAllowed: [BigInt!]!
 }
 
-# TODO: associate PositonLend with bucket so bucketBankruptcy can properly update PositionLends
 type Bucket @entity {
   # bucket id: $poolAddress + '#' + $bucketIndex
   id: Bytes!

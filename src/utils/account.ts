@@ -78,7 +78,6 @@ export function updateAccountKicks(account: Account, kick: Kick): void {
     }
 }
 
-// TODO: determine the best way to delete positions that don't yet exist
 // update the list of Positions associated with an account, if it hasn't been added already
 export function updateAccountPositions(account: Account, position: Position): void {
     const positions = account.positions
@@ -88,6 +87,34 @@ export function updateAccountPositions(account: Account, position: Position): vo
         account.positions = account.positions.concat([position.id])
     }
 }
+
+// TODO: is the extra logic worth the code reuse?
+// export function updateAccountPositions(oldOwner: Account | null, newOwner: Account | null, position: Position): void {
+//     if (oldOwner == null && newOwner != null) {
+//         // mint position to new owner
+//         const positions = newOwner.positions
+//         const index = positions.indexOf(position.id)
+//         if (index == -1) {
+//             newOwner.positions = newOwner.positions.concat([position.id])
+//         }
+//     } else if (oldOwner != null && newOwner != null) {
+//         // transfer position to new owner
+//         const oldOwnerIndex = oldOwner.positions.indexOf(position.id)
+//         if (oldOwnerIndex != -1) {
+//             oldOwner.positions.splice(oldOwnerIndex, 1)
+//         }
+//         const newOwnerIndex = newOwner.positions.indexOf(position.id)
+//         if (newOwnerIndex == -1) {
+//             newOwner.positions = newOwner.positions.concat([position.id])
+//         }
+//     } else if (oldOwner != null && newOwner == null) {
+//         // burn position from old owner
+//         const oldOwnerIndex = oldOwner.positions.indexOf(position.id)
+//         if (oldOwnerIndex != -1) {
+//             oldOwner.positions.splice(oldOwnerIndex, 1)
+//         }
+//     }
+// }
 
 // update the list of reserve auctions interacted with by an account, if it hasn't been added already
 export function updateAccountReserveAuctions(account: Account, reserveAuctionId: Bytes): void {

@@ -154,11 +154,12 @@ export function handleMint(event: MintEvent): void {
   token.txCount = token.txCount.plus(ONE_BI);
 
   // associate the new position with the lender account
-  const ownerAccount = loadOrCreateAccount(mint.lender)
-  updateAccountPositions(ownerAccount, position)
+  const minterAccount = loadOrCreateAccount(mint.lender)
+  updateAccountPositions(minterAccount, position)
 
   // save entities to store
   mint.save()
+  minterAccount.save()
   position.save()
   token.save()
 }
@@ -315,6 +316,8 @@ export function handleTransfer(event: TransferEvent): void {
   if (index != -1) account.positions.splice(index, 1)
   updateAccountPositions(account, position)
 
+  // save entities to store
+  account.save()
   token.save();
   position.save()
   transfer.save()
