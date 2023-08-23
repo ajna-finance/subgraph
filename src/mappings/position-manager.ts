@@ -184,43 +184,24 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
 
   // load from index state
   const bucketIdFrom = getBucketId(moveLiquidity.pool, moveLiquidity.fromIndex)
-  const lendIdFrom   = getLendId(bucketIdFrom, moveLiquidity.lender)
-  const lendFrom     = loadOrCreateLend(bucketIdFrom, lendIdFrom, moveLiquidity.pool, moveLiquidity.fromIndex, moveLiquidity.lender)
-  const positionLendFromId = getPositionLendId(moveLiquidity.tokenId, BigInt.fromI32(moveLiquidity.fromIndex))
   const positionLendFrom = loadOrCreatePositionLend(moveLiquidity.tokenId, bucketIdFrom, moveLiquidity.fromIndex)
   const lpRedeemedFrom     = wadToDecimal(event.params.lpRedeemedFrom)
 
   // load to index state
   const bucketIdTo   = getBucketId(moveLiquidity.pool, moveLiquidity.toIndex)
-  const lendIdTo     = getLendId(bucketIdTo, moveLiquidity.lender)
-  const lendTo       = loadOrCreateLend(bucketIdTo, lendIdTo, moveLiquidity.pool, moveLiquidity.toIndex, moveLiquidity.lender)
-  const positionLendToId = getPositionLendId(moveLiquidity.tokenId, BigInt.fromI32(moveLiquidity.toIndex))
   const positionLendTo = loadOrCreatePositionLend(moveLiquidity.tokenId, bucketIdTo, moveLiquidity.toIndex)
   const positionLendToInfo = getPositionInfo(moveLiquidity.tokenId, BigInt.fromI32(moveLiquidity.toIndex))
 
-  // update lendTo and positionLendTo
-  const lendToInfo         = getLenderInfo(moveLiquidity.pool, event.params.toIndex, Address.fromBytes(lendTo.lender))
-  lendTo.depositTime       = lendToInfo.depositTime
-  lendTo.lpb               = wadToDecimal(lendToInfo.lpBalance)
-  lendTo.lpbValueInQuote   = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendTo.lpb)
+  // update positionLendTo
   positionLendTo.depositTime = positionLendToInfo.depositTime
   positionLendTo.lpb       = wadToDecimal(positionLendToInfo.lpb)
   positionLendTo.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, positionLendTo.lpb)
-  lendTo.save()
   positionLendTo.save()
 
   // associate positionLendTo with Bucket and Position if necessary
   updatePositionLends(positionLendTo)
 
-  // update lendFrom and PositionLendFrom
-  // update lendFrom lpb
-  if (lpRedeemedFrom.le(lendFrom.lpb)) {
-    lendFrom.lpb           = lendFrom.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
-  } else {
-    log.warning('handleMoveLiquidity: lender {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0', 
-    [moveLiquidity.lender.toHexString(), lpRedeemedFrom.toString(), lendFrom.lpb.toString()])
-    lendFrom.lpb = ZERO_BD
-  }
+  // update PositionLendFrom
   // update positionLendFrom lpb
   if (lpRedeemedFrom.le(positionLendFrom.lpb)) {
     positionLendFrom.lpb   = positionLendFrom.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
@@ -229,13 +210,7 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
     [moveLiquidity.lender.toHexString(), lpRedeemedFrom.toString(), positionLendFrom.lpb.toString()])
     positionLendFrom.lpb = ZERO_BD
   }
-
-  // update lpbValueInQuote for both entities
-  if (lendFrom.lpb.equals(ZERO_BD)) {
-    lendFrom.lpbValueInQuote = ZERO_BD
-  } else {
-    lendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.fromIndex, lendFrom.lpb)
-  }
+  // update positionLendFrom lpbValueInQuote
   if (positionLendFrom.lpb.equals(ZERO_BD)) {
     positionLendFrom.lpbValueInQuote = ZERO_BD
   } else {
@@ -244,7 +219,6 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
 
   // save entities to store
   saveOrRemovePositionLend(positionLendFrom)
-  saveOrRemoveLend(lendFrom)
   moveLiquidity.save()
   token.save()
 }

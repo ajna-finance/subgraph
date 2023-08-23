@@ -339,7 +339,6 @@ describe("Describe entity assertions", () => {
 
     // mock contract calls
     mockGetPositionInfo(tokenId, toIndex, expectedDepositTime, lpRedeemedTo)
-    mockGetLenderInfo(pool, toIndex, lender, lpRedeemedTo, expectedDepositTime)
     mockGetLPBValueInQuote(pool, lpRedeemedTo, toIndex, lpValueInQuote)
     mockGetLPBValueInQuote(pool, lpRedeemedTo, toIndex, lpValueInQuote)
     mockGetLPBValueInQuote(pool, lpb.minus(lpRedeemedFrom), fromIndex, lpValueInQuote)
@@ -365,7 +364,6 @@ describe("Describe entity assertions", () => {
     assert.entityCount("MemorializePosition", 1)
     assert.entityCount("Position", 1)
     assert.entityCount("PositionLend", 3)
-    assert.entityCount("Lend", 3)
     assert.entityCount("MoveLiquidity", 1)
   })
 
