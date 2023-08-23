@@ -7,6 +7,10 @@ import { getTokenName, getTokenSymbol, getTokenURI } from "./token-erc721"
 import { PositionManager } from "../../generated/PositionManager/PositionManager"
 import { bigIntToBytes } from "../utils/convert"
 
+/*****************************/
+/*** Constructor Functions ***/
+/*****************************/
+
 export function loadOrCreateLPToken(tokenAddress: Address): Token {
   const id = addressToBytes(tokenAddress)
   let token = Token.load(id)
@@ -62,8 +66,35 @@ export function deletePosition(tokenId: BigInt): void {
   store.remove('Position', bigIntToBytes(tokenId).toHexString())
 }
 
+export function deletePositionLend(positionLendId: Bytes): void {
+  store.remove('PositionLend', positionLendId.toHexString())
+}
+
+/*******************************/
+/*** Contract Call Functions ***/
+/*******************************/
+
 export function getPoolForToken(tokenId: BigInt): Address {
   const positionManagerAddress = positionManagerAddressTable.get(dataSource.network())!
   const positionManagerContract = PositionManager.bind(positionManagerAddress);
   return positionManagerContract.poolKey(tokenId)
+}
+
+export class PositionInfo {
+  lpb: BigInt
+  depositTime: BigInt
+  constructor(lpb: BigInt, depositTime: BigInt) {
+    this.lpb = lpb
+    this.depositTime = depositTime
+  }
+}
+export function getPositionInfo(tokenId: BigInt, bucketIndex: BigInt): PositionInfo {
+  const positionManagerAddress = positionManagerAddressTable.get(dataSource.network())!
+  const positionManagerContract = PositionManager.bind(positionManagerAddress);
+  const positionInfoResult = positionManagerContract.getPositionInfo(tokenId, bucketIndex)
+
+  return new PositionInfo(
+    positionInfoResult.value0,
+    positionInfoResult.value1
+  )
 }

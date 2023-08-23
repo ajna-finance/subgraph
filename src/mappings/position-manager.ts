@@ -27,7 +27,7 @@ import { getDepositTime, lpbValueInQuote } from "../utils/pool/lend"
 import { ONE_BI, ZERO_BD } from "../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../utils/convert"
 import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
-import { deletePosition, getPoolForToken, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend } from "../utils/position"
+import { deletePosition, getPoolForToken, getPositionInfo, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend } from "../utils/position"
 import { getLenderInfo } from "../utils/pool/pool"
 
 export function handleApproval(event: ApprovalEvent): void {
@@ -76,6 +76,7 @@ export function handleBurn(event: BurnEvent): void {
   burn.save()
 }
 
+// Lends are updated in the associated `TransferLP` event
 export function handleMemorializePosition(
   event: MemorializePositionEvent
 ): void {
@@ -108,15 +109,12 @@ export function handleMemorializePosition(
     // create PositionLend entity to track each lpb associated with the position
     const positionLendId = getPositionLendId(memorialize.tokenId, BigInt.fromI32(index))
     const positionLend = loadOrCreatePositionLend(positionLendId, bucketId, index)
-
-    // TODO: access the TransferLP event at the correct log index?
-    // TODO: track the lpb associated with each lend that was memorialized via RPC call
-    // positionLend.lpb =
+    const positionInfo = getPositionInfo(memorialize.tokenId, BigInt.fromI32(index))
+    //track the lpb and depositTime associated with each lend that was memorialized via RPC call
+    positionLend.depositTime = positionInfo.depositTime
+    positionLend.lpb = wadToDecimal(positionInfo.lpb)
     positionLend.lpbValueInQuote = lpbValueInQuote(memorialize.pool, index, positionLend.lpb)
     positionLend.save()
-
-    // Lends are updated in the associated `TransferLP` event
-
     // add PositionLend to position
     positionIndexes.push(positionLendId)
   }
