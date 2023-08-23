@@ -36,8 +36,7 @@ export function loadOrCreatePosition(tokenId: BigInt): Position {
     position.indexes = []
     position.owner = Bytes.empty()
     position.pool = Bytes.empty()
-    position.token = Bytes.empty()
-    position.tokenAddress = positionManagerAddress.toHexString()
+    position.token = addressToBytes(positionManagerAddress)
     position.tokenURI = getTokenURI(positionManagerAddress, tokenId)
   }
   return position

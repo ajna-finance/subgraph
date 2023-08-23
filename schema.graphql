@@ -706,15 +706,13 @@ type MergeOrRemoveCollateralNFT @entity(immutable: true) {
   # POSITION MANAGER ENTITIES #
   # # # # # # # # # # # # # # #
 
-# TODO: associate with LPToken
 type Position @entity {
   id: Bytes!                # byte encoded tokenId
   tokenId: BigInt           # tokenId
   indexes: [PositionLend!]! # list of PositionLends which constitute a position
   owner: Bytes!             # address of the position owner
   pool: Bytes!              # address of the pool that the position is associated with
-  token: Token!             # pointer to positionNFT
-  tokenAddress: String!     # address of the Position Manager Contract, encoded as hex string
+  token: Token!             # pointer to LPToken entity
   tokenURI: String!         # tokenURI of the positionNFT
 }
 

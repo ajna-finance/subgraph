@@ -99,6 +99,7 @@ describe("Describe entity assertions", () => {
     // check position attributes
     assertPosition(lender, pool, tokenId, tokenContractAddress)
 
+    // check entity count after mint and before burn
     assert.entityCount("Burn", 0)
     assert.entityCount("Mint", 1)
     assert.entityCount("Position", 1)
@@ -121,9 +122,11 @@ describe("Describe entity assertions", () => {
       `${tokenId}`
     )
 
+    // check entity count after burn
     assert.entityCount("Burn", 1)
     assert.entityCount("Mint", 1)
-    // assert.entityCount("Position", 1)
+    assert.entityCount("Position", 0)
+    assert.entityCount("Token", 3)
   })
 
   test("Mint", () => {
@@ -141,8 +144,24 @@ describe("Describe entity assertions", () => {
     // check position attributes
     assertPosition(lender, pool, tokenId, tokenContractAddress)
 
+    // check mint attributes
+    assert.fieldEquals(
+      "Mint",
+      `0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000`,
+      "lender",
+      `${lender.toHexString()}`
+    )
+    assert.fieldEquals(
+      "Mint",
+      `0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000`,
+      "tokenId",
+      `${tokenId}`
+    )
+
+    // check entity count
     assert.entityCount("Mint", 1)
     assert.entityCount("Position", 1)
+    assert.entityCount("Token", 3)
   })
 
   test("Memorialize", () => {
