@@ -275,7 +275,7 @@ describe("Describe entity assertions", () => {
     const fromIndex = BigInt.fromI32(5000)
     const toIndex = BigInt.fromI32(4000)
     const lpRedeemedFrom = BigInt.fromString("63380000000000000000") // 63.38
-    const lpRedeemedto = BigInt.fromString("62740000000000000000") // 62.74
+    const lpRedeemedTo = BigInt.fromString("62740000000000000000") // 62.74
     const lpValueInQuote = BigInt.fromString("64380000000000000000")
     const expectedDepositTime = BigInt.fromI32(1000)
 
@@ -330,17 +330,17 @@ describe("Describe entity assertions", () => {
     /**********************/
 
     // mock contract calls
-    mockGetPositionInfo(tokenId, toIndex, lend.depositTime, lpRedeemedFrom)
-    mockGetLenderInfo(pool, toIndex, lender, lpRedeemedto, expectedDepositTime)
-    mockGetLPBValueInQuote(pool, lpRedeemedFrom.minus(lpRedeemedto), fromIndex, lpValueInQuote)
-    mockGetLPBValueInQuote(pool, lpRedeemedFrom.minus(lpRedeemedto), fromIndex, lpValueInQuote)
-    mockGetLPBValueInQuote(pool, lpRedeemedto, toIndex, lpValueInQuote)
-    mockGetLPBValueInQuote(pool, lpRedeemedto, toIndex, lpValueInQuote)
+    mockGetPositionInfo(tokenId, toIndex, lend.depositTime, lpRedeemedTo)
+    mockGetLenderInfo(pool, toIndex, lender, lpRedeemedTo, expectedDepositTime)
+    mockGetLPBValueInQuote(pool, lpRedeemedFrom.minus(lpRedeemedTo), fromIndex, lpValueInQuote)
+    mockGetLPBValueInQuote(pool, lpRedeemedFrom.minus(lpRedeemedTo), fromIndex, lpValueInQuote)
+    mockGetLPBValueInQuote(pool, lpRedeemedTo, toIndex, lpValueInQuote)
+    mockGetLPBValueInQuote(pool, lpRedeemedTo, toIndex, lpValueInQuote)
 
-    const newMoveLiquidityEvent = createMoveLiquidityEvent(lender, tokenId, fromIndex, toIndex, lpRedeemedFrom, lpRedeemedto)
+    const newMoveLiquidityEvent = createMoveLiquidityEvent(lender, tokenId, fromIndex, toIndex, lpRedeemedFrom, lpRedeemedTo)
     handleMoveLiquidity(newMoveLiquidityEvent)
 
-    logStore()
+    // logStore()
 
     // check position attributes
     assertPosition(lender, pool, tokenId, tokenContractAddress)
@@ -349,7 +349,7 @@ describe("Describe entity assertions", () => {
     assert.entityCount("Mint", 1)
     assert.entityCount("MemorializePosition", 1)
     assert.entityCount("Position", 1)
-    assert.entityCount("PositionLend", 1)
+    assert.entityCount("PositionLend", 1) // FIXME: THIS SHOULD BE 2
     assert.entityCount("MoveLiquidity", 1)
   })
 
