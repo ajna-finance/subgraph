@@ -12,6 +12,7 @@ import {
 import {
   Approval,
   ApprovalForAll,
+  Bucket,
   Burn,
   MemorializePosition,
   Mint,
@@ -24,7 +25,7 @@ import { lpbValueInQuote, saveOrRemoveLend } from "../utils/pool/lend"
 import { ONE_BI, ZERO_BD } from "../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../utils/convert"
 import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
-import { deletePosition, getPoolForToken, getPositionInfo, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend, saveOrRemovePositionLend } from "../utils/position"
+import { deletePosition, getPoolForToken, getPositionInfo, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend, saveOrRemovePositionLend, updatePositionLends } from "../utils/position"
 import { getLenderInfo } from "../utils/pool/pool"
 import { getTokenURI } from "../utils/token-erc721"
 import { loadOrCreateAccount, updateAccountPositions } from "../utils/account"
@@ -101,23 +102,25 @@ export function handleMemorializePosition(
 
   log.info("handleMemorializePosition for lender {} token {}" , [accountId.toHexString(), memorialize.tokenId.toString()])
 
-  const positionIndexes = position.indexes;
   for (let i = 0; i < memorialize.indexes.length; i++) {
     const index = memorialize.indexes[i];
     const bucketId = getBucketId(poolAddress, index)
+    const bucket = Bucket.load(bucketId)!
+
     // create PositionLend entity to track each lpb associated with the position
     const positionLendId = getPositionLendId(memorialize.tokenId, BigInt.fromI32(index))
-    const positionLend = loadOrCreatePositionLend(positionLendId, bucketId, index)
+    const positionLend = loadOrCreatePositionLend(memorialize.tokenId, bucketId, index)
     const positionInfo = getPositionInfo(memorialize.tokenId, BigInt.fromI32(index))
     //track the lpb and depositTime associated with each lend that was memorialized via RPC call
     positionLend.depositTime = positionInfo.depositTime
     positionLend.lpb = wadToDecimal(positionInfo.lpb)
     positionLend.lpbValueInQuote = lpbValueInQuote(memorialize.pool, index, positionLend.lpb)
     positionLend.save()
-    // add PositionLend to position
-    positionIndexes.push(positionLendId)
+
+    // associate positionLend with Bucket and Position
+    updatePositionLends(positionLend)
+    bucket.save()
   }
-  position.indexes      = positionIndexes
 
   // save entities to store
   memorialize.save()
@@ -179,7 +182,7 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   const lendIdFrom   = getLendId(bucketIdFrom, moveLiquidity.lender)
   const lendFrom     = loadOrCreateLend(bucketIdFrom, lendIdFrom, moveLiquidity.pool, moveLiquidity.fromIndex, moveLiquidity.lender)
   const positionLendFromId = getPositionLendId(moveLiquidity.tokenId, BigInt.fromI32(moveLiquidity.fromIndex))
-  const positionLendFrom = loadOrCreatePositionLend(positionLendFromId, bucketIdFrom, moveLiquidity.fromIndex)
+  const positionLendFrom = loadOrCreatePositionLend(moveLiquidity.tokenId, bucketIdFrom, moveLiquidity.fromIndex)
   const lpRedeemedFrom     = wadToDecimal(event.params.lpRedeemedFrom)
 
   // load to index state
@@ -187,7 +190,7 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   const lendIdTo     = getLendId(bucketIdTo, moveLiquidity.lender)
   const lendTo       = loadOrCreateLend(bucketIdTo, lendIdTo, moveLiquidity.pool, moveLiquidity.toIndex, moveLiquidity.lender)
   const positionLendToId = getPositionLendId(moveLiquidity.tokenId, BigInt.fromI32(moveLiquidity.toIndex))
-  const positionLendTo = loadOrCreatePositionLend(positionLendToId, bucketIdTo, moveLiquidity.toIndex)
+  const positionLendTo = loadOrCreatePositionLend(moveLiquidity.tokenId, bucketIdTo, moveLiquidity.toIndex)
   const positionLendToInfo = getPositionInfo(moveLiquidity.tokenId, BigInt.fromI32(moveLiquidity.toIndex))
 
   // update lendTo and positionLendTo
@@ -200,6 +203,9 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   positionLendTo.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, positionLendTo.lpb)
   lendTo.save()
   positionLendTo.save()
+
+  // associate positionLendTo with Bucket and Position if necessary
+  updatePositionLends(positionLendTo)
 
   // update lendFrom and PositionLendFrom
   // update lendFrom lpb
@@ -257,19 +263,13 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
 
   log.info("handleRedeemPosition for lender {} token {}" , [accountId.toHexString(), redeem.tokenId.toString()])
 
+  // update positionLend entities for each index
   const positionIndexes = position.indexes;
   for (let index = 0; index < redeem.indexes.length; index++) {
     const bucketId = getBucketId(poolAddress, index)
-    const positionLendId = getPositionLendId(redeem.tokenId, BigInt.fromI32(index))
-    const positionLend = loadOrCreatePositionLend(positionLendId, bucketId, index)
+    const positionLend = loadOrCreatePositionLend(redeem.tokenId, bucketId, index)
     positionLend.lpb = ZERO_BD
     positionLend.lpbValueInQuote = ZERO_BD
-
-    // remove positionLend from position
-    const existingIndex = position.indexes.indexOf(positionLendId)
-    if (existingIndex != -1) {
-      positionIndexes.splice(existingIndex, 1)
-    }
     saveOrRemovePositionLend(positionLend)
   }
   position.indexes = positionIndexes

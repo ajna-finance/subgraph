@@ -49,7 +49,8 @@ export function getPositionLendId(tokenId: BigInt, bucketIndex: BigInt): Bytes {
   return bigIntToBytes(tokenId).concat(bigIntToBytes(bucketIndex))
 }
 
-export function loadOrCreatePositionLend(positionLendId: Bytes, bucketId: Bytes, bucketIndex: u32): PositionLend {
+export function loadOrCreatePositionLend(tokenId: BigInt, bucketId: Bytes, bucketIndex: u32): PositionLend {
+  const positionLendId = getPositionLendId(tokenId, BigInt.fromI32(bucketIndex))
   let positionLend = PositionLend.load(positionLendId)
   if (positionLend == null) {
     positionLend = new PositionLend(positionLendId) as PositionLend
@@ -57,6 +58,7 @@ export function loadOrCreatePositionLend(positionLendId: Bytes, bucketId: Bytes,
     positionLend.bucketIndex = bucketIndex
     positionLend.lpb = ZERO_BD
     positionLend.lpbValueInQuote = ZERO_BD
+    positionLend.tokenId = tokenId
   }
   return positionLend
 }
@@ -65,8 +67,42 @@ export function deletePosition(tokenId: BigInt): void {
   store.remove('Position', bigIntToBytes(tokenId).toHexString())
 }
 
+export function updatePositionLends(positionLend: PositionLend): void {
+  // add positionLend to bucket array if necessary
+  const bucket = Bucket.load(positionLend.bucket)!
+  const existingBucketIndex = bucket.positionLends.indexOf(positionLend.id)
+  if (existingBucketIndex != -1) {
+    bucket.positionLends = bucket.positionLends.concat([positionLend.id])
+  }
+
+  // add positionLend to position array if necessary
+  const position = Position.load(bigIntToBytes(positionLend.tokenId))!
+  const existingPositionIndex = position.indexes.indexOf(positionLend.id)
+  if (existingPositionIndex != -1) {
+    position.indexes = position.indexes.concat([positionLend.id])
+  }
+}
+
+// if necessary
+// remove association between PositionLend and Position and Buckets
+// remove from store
 export function saveOrRemovePositionLend(positionLend: PositionLend): void {
   if (positionLend.lpb.equals(ZERO_BD)) {
+    // remove positionLend from bucket array
+    const bucket = Bucket.load(positionLend.bucket)!
+    const existingBucketIndex = bucket.positionLends.indexOf(positionLend.id)
+    if (existingBucketIndex != -1) {
+      bucket.positionLends.splice(existingBucketIndex, 1)
+    }
+
+    // remove positionLend from account array
+    const position = Position.load(bigIntToBytes(positionLend.tokenId))!
+    const existingPositionIndex = position.indexes.indexOf(positionLend.id)
+    if (existingPositionIndex != -1) {
+      position.indexes.splice(existingPositionIndex, 1)
+    }
+
+    // remove positionLend from store
     store.remove('PositionLend', positionLend.id.toHexString())
   } else {
     positionLend.save()

@@ -78,6 +78,7 @@ export function updateAccountKicks(account: Account, kick: Kick): void {
     }
 }
 
+// TODO: determine the best way to delete positions that don't yet exist
 // update the list of Positions associated with an account, if it hasn't been added already
 export function updateAccountPositions(account: Account, position: Position): void {
     const positions = account.positions

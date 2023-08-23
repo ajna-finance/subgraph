@@ -132,6 +132,7 @@ type Pool @entity {
   tokenIdsAllowed: [BigInt!]!
 }
 
+# TODO: associate PositonLend with bucket so bucketBankruptcy can properly update PositionLends
 type Bucket @entity {
   # bucket id: $poolAddress + '#' + $bucketIndex
   id: Bytes!
@@ -153,6 +154,8 @@ type Bucket @entity {
   lpb: BigDecimal!
   # list of lends associated with the bucket
   lends: [Lend!]!
+  # list of PositionLends associated with the bucket
+  positionLends: [PositionLend!]!
 }
 
 # lend occurs per bucket in a pool
@@ -727,6 +730,7 @@ type PositionLend @entity {
   depositTime: BigInt! # time at which the position was deposited
   lpb: BigDecimal! # amount of LPB position has in the bucket
   lpbValueInQuote: BigDecimal! # quote equivalent value of LPB in the bucket
+  tokenId: BigInt! # tokenId of the position
 }
 
   # # # # # # # # # # # # # #
