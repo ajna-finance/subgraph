@@ -27,8 +27,9 @@ import { getDepositTime, lpbValueInQuote } from "../utils/pool/lend"
 import { ONE_BI, ZERO_BD } from "../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../utils/convert"
 import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
-import { deletePosition, getPoolForToken, getPositionInfo, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend } from "../utils/position"
+import { deletePosition, deletePositionLend, getPoolForToken, getPositionInfo, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend, saveOrRemovePositionLend } from "../utils/position"
 import { getLenderInfo } from "../utils/pool/pool"
+import { getTokenURI } from "../utils/token-erc721"
 
 export function handleApproval(event: ApprovalEvent): void {
   const approval = new Approval(
@@ -163,35 +164,61 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   moveLiquidity.fromIndex = event.params.fromIndex.toU32()
   moveLiquidity.toIndex = event.params.toIndex.toU32()
 
+  moveLiquidity.blockNumber = event.block.number
+  moveLiquidity.blockTimestamp = event.block.timestamp
+  moveLiquidity.transactionHash = event.transaction.hash
+
+  // load from index state
   const bucketIdFrom = getBucketId(moveLiquidity.pool, moveLiquidity.fromIndex)
   const lendIdFrom   = getLendId(bucketIdFrom, moveLiquidity.lender)
   const lendFrom     = loadOrCreateLend(bucketIdFrom, lendIdFrom, moveLiquidity.pool, moveLiquidity.fromIndex, moveLiquidity.lender)
+  const positionLendFromId = getPositionLendId(moveLiquidity.tokenId, BigInt.fromI32(moveLiquidity.fromIndex))
+  const positionLendFrom = loadOrCreatePositionLend(positionLendFromId, bucketIdFrom, moveLiquidity.fromIndex)
+  const lpRedeemedFrom     = wadToDecimal(event.params.lpRedeemedFrom)
+
+  // load to index state
   const bucketIdTo   = getBucketId(moveLiquidity.pool, moveLiquidity.toIndex)
   const lendIdTo     = getLendId(bucketIdTo, moveLiquidity.lender)
   const lendTo       = loadOrCreateLend(bucketIdTo, lendIdTo, moveLiquidity.pool, moveLiquidity.toIndex, moveLiquidity.lender)
+  const positionLendToId = getPositionLendId(moveLiquidity.tokenId, BigInt.fromI32(moveLiquidity.toIndex))
+  const positionLendTo = loadOrCreatePositionLend(positionLendToId, bucketIdTo, moveLiquidity.toIndex)
+  const positionLendToInfo = getPositionInfo(moveLiquidity.tokenId, BigInt.fromI32(moveLiquidity.toIndex))
 
+  // update lendTo and positionLendTo
   const lendToInfo         = getLenderInfo(moveLiquidity.pool, event.params.toIndex, Address.fromBytes(lendTo.lender))
   lendTo.depositTime       = lendToInfo.depositTime
   lendTo.lpb               = wadToDecimal(lendToInfo.lpBalance)
   lendTo.lpbValueInQuote   = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendTo.lpb)
-  const lpRedeemedFrom     = wadToDecimal(event.params.lpRedeemedFrom)
+  positionLendTo.depositTime = positionLendToInfo.depositTime
+  positionLendTo.lpb       = wadToDecimal(positionLendToInfo.lpb)
+  positionLendTo.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, positionLendTo.lpb)
+  lendTo.save()
+  positionLendTo.save()
+
+  // update lendFrom and PositionLendFrom
+  // update lpb
   if (lpRedeemedFrom.le(lendFrom.lpb)) {
     lendFrom.lpb           = lendFrom.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
+    positionLendFrom.lpb   = lendFrom.lpb
   } else {
     log.warning('handleMoveLiquidity: lender {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0', 
     [moveLiquidity.lender.toHexString(), lpRedeemedFrom.toString(), lendFrom.lpb.toString()])
     lendFrom.lpb = ZERO_BD
+    positionLendFrom.lpb = ZERO_BD
   }
-  lendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendFrom.lpb)
+  // update lpbValueInQuote
+  if (lendFrom.lpb.equals(ZERO_BD)) {
+    lendFrom.lpbValueInQuote = ZERO_BD
+    positionLendFrom.lpbValueInQuote = ZERO_BD
+  } else {
+    lendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendFrom.lpb)
+    positionLendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendFrom.lpb)
+  }
+  saveOrRemovePositionLend(positionLendFrom)
   lendFrom.save()
-  lendTo.save()
 
   const token = loadOrCreateLPToken(event.address)
   token.txCount = token.txCount.plus(ONE_BI);
-
-  moveLiquidity.blockNumber = event.block.number
-  moveLiquidity.blockTimestamp = event.block.timestamp
-  moveLiquidity.transactionHash = event.transaction.hash
 
   moveLiquidity.save()
   token.save()
@@ -219,12 +246,17 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   const positionIndexes = position.indexes;
   for (let index = 0; index < redeem.indexes.length; index++) {
     const bucketId = getBucketId(poolAddress, index)
-    const lendId = getLendId(bucketId, accountId)
-    // remove lends from position
-    const existingIndex = position.indexes.indexOf(lendId)
+    const positionLendId = getPositionLendId(redeem.tokenId, BigInt.fromI32(index))
+    const positionLend = loadOrCreatePositionLend(positionLendId, bucketId, index)
+    positionLend.lpb = ZERO_BD
+    positionLend.lpbValueInQuote = ZERO_BD
+
+    // remove positionLend from position
+    const existingIndex = position.indexes.indexOf(positionLendId)
     if (existingIndex != -1) {
       positionIndexes.splice(existingIndex, 1)
     }
+    deletePositionLend(positionLendId)
   }
   position.indexes = positionIndexes
 
@@ -257,6 +289,7 @@ export function handleTransfer(event: TransferEvent): void {
   token.txCount = token.txCount.plus(ONE_BI);
   const position = loadOrCreatePosition(transfer.tokenId)
   position.owner = event.params.to
+  position.tokenURI = getTokenURI(event.address, transfer.tokenId)
 
   token.save();
   position.save()

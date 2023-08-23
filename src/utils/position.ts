@@ -29,7 +29,6 @@ export function loadOrCreateLPToken(tokenAddress: Address): Token {
   return token
 }
 
-// TODO: associate this with LPToken
 export function loadOrCreatePosition(tokenId: BigInt): Position {
   const byteTokenId = bigIntToBytes(tokenId)
   const positionManagerAddress = positionManagerAddressTable.get(dataSource.network())!
@@ -68,6 +67,14 @@ export function deletePosition(tokenId: BigInt): void {
 
 export function deletePositionLend(positionLendId: Bytes): void {
   store.remove('PositionLend', positionLendId.toHexString())
+}
+
+export function saveOrRemovePositionLend(positionLend: PositionLend): void {
+  if (positionLend.lpb.equals(ZERO_BD)) {
+    deletePositionLend(positionLend.id)
+  } else {
+    positionLend.save()
+  }
 }
 
 /*******************************/
