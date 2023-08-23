@@ -14,7 +14,7 @@ import { handleApproval, handleBurn, handleMemorializePosition, handleMint, hand
 import { assertPosition, createApprovalEvent, createBurnEvent, createMemorializePositionEvent, createMintEvent, createMoveLiquidityEvent, createRedeemPositionEvent, mintPosition } from "./utils/position-manager-utils"
 import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
 import { create721Pool } from "./utils/common"
-import { mockGetLPBValueInQuote, mockGetLenderInfo, mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./utils/mock-contract-calls"
+import { mockGetLPBValueInQuote, mockGetLenderInfo, mockGetPoolKey } from "./utils/mock-contract-calls"
 import { Lend } from "../generated/schema"
 import { getLendId } from "../src/utils/pool/lend"
 import { getBucketId } from "../src/utils/pool/bucket"
@@ -241,7 +241,6 @@ describe("Describe entity assertions", () => {
     assert.entityCount("RedeemPosition", 1)
   })
 
-  // TODO: test handleTransferLP
   // identified an issue with the duplicate recording of lend info on handleMoveLiquidity and handleTransferLP
   test("MoveLiquidity", () => {
     assert.entityCount("Mint", 0)

@@ -1,9 +1,9 @@
 import { Address, BigInt, Bytes, dataSource, store } from "@graphprotocol/graph-ts"
 
-import { Position, Token } from "../../generated/schema"
-import { ONE_BI, ZERO_BI, positionManagerAddressTable } from "../utils/constants"
+import { Bucket, Position, PositionLend, Token } from "../../generated/schema"
+import { ONE_BI, ZERO_BD, ZERO_BI, positionManagerAddressTable } from "../utils/constants"
 import { addressToBytes } from "../utils/convert"
-import { getTokenName, getTokenSymbol } from "./token-erc721"
+import { getTokenName, getTokenSymbol, getTokenURI } from "./token-erc721"
 import { PositionManager } from "../../generated/PositionManager/PositionManager"
 import { bigIntToBytes } from "../utils/convert"
 
@@ -25,8 +25,10 @@ export function loadOrCreateLPToken(tokenAddress: Address): Token {
   return token
 }
 
+// TODO: associate this with LPToken
 export function loadOrCreatePosition(tokenId: BigInt): Position {
   const byteTokenId = bigIntToBytes(tokenId)
+  const positionManagerAddress = positionManagerAddressTable.get(dataSource.network())!
   let position = Position.load(byteTokenId)
   if (position == null) {
     position = new Position(byteTokenId) as Position
@@ -35,8 +37,26 @@ export function loadOrCreatePosition(tokenId: BigInt): Position {
     position.owner = Bytes.empty()
     position.pool = Bytes.empty()
     position.token = Bytes.empty()
+    position.tokenAddress = positionManagerAddress.toHexString()
+    position.tokenURI = getTokenURI(positionManagerAddress, tokenId)
   }
   return position
+}
+
+export function getPositionLendId(tokenId: BigInt, bucketIndex: BigInt): Bytes {
+  return bigIntToBytes(tokenId).concat(bigIntToBytes(bucketIndex))
+}
+
+export function loadOrCreatePositionLend(positionLendId: Bytes, bucketId: Bytes, bucketIndex: u32): PositionLend {
+  let positionLend = PositionLend.load(positionLendId)
+  if (positionLend == null) {
+    positionLend = new PositionLend(positionLendId) as PositionLend
+    positionLend.bucket = bucketId
+    positionLend.bucketIndex = bucketIndex
+    positionLend.lpb = ZERO_BD
+    positionLend.lpbValueInQuote = ZERO_BD
+  }
+  return positionLend
 }
 
 export function deletePosition(tokenId: BigInt): void {

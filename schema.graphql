@@ -706,13 +706,26 @@ type MergeOrRemoveCollateralNFT @entity(immutable: true) {
   # POSITION MANAGER ENTITIES #
   # # # # # # # # # # # # # # #
 
+# TODO: associate with LPToken
 type Position @entity {
-  id: Bytes!        # byte encoded tokenId
-  tokenId: BigInt   # tokenId
-  indexes: [Lend!]! # list of lends which constitute a position
-  owner: Bytes!     # address of the position owner
-  pool: Bytes!      # address of the pool that the position is associated with
-  token: Token!     # pointer to positionNFT
+  id: Bytes!                # byte encoded tokenId
+  tokenId: BigInt           # tokenId
+  indexes: [PositionLend!]! # list of PositionLends which constitute a position
+  owner: Bytes!             # address of the position owner
+  pool: Bytes!              # address of the pool that the position is associated with
+  token: Token!             # pointer to positionNFT
+  tokenAddress: String!     # address of the Position Manager Contract, encoded as hex string
+  tokenURI: String!         # tokenURI of the positionNFT
+}
+
+# TODO: add depositTime?
+# created to handle the seperate lpb positions for each bucket index
+type PositionLend @entity {
+  id: Bytes! # $positionId + '|' + $bucketIndex
+  bucket: Bucket! # pointer to associated Bucket entity
+  bucketIndex: BigInt! # index of the bucket with lpb
+  lpb: BigDecimal! # amount of LPB position has in the bucket
+  lpbValueInQuote: BigDecimal! # quote equivalent value of LPB in the bucket
 }
 
   # # # # # # # # # # # # # #

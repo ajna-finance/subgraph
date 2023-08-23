@@ -102,6 +102,18 @@ export function mockGetPoolKey(tokenId: BigInt, expectedPoolAddress: Address): v
     ])
 }
 
+export function mockGetTokenURI(tokenId: BigInt, expectedTokenURI: String): void {
+    createMockedFunction(
+        positionManagerAddressTable.get(dataSource.network())!,
+        'tokenURI',
+        'tokenURI(uint256):(string)'
+    )
+    .withArgs([ethereum.Value.fromUnsignedBigInt(tokenId)])
+    .returns([
+        ethereum.Value.fromString(expectedTokenURI),
+    ])
+}
+
 /***************************/
 /*** Pool Mock Functions ***/
 /***************************/

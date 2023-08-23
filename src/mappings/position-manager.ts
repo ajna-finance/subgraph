@@ -1,4 +1,4 @@
-import { Address, BigDecimal, log } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts"
 import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
@@ -27,7 +27,7 @@ import { getDepositTime, lpbValueInQuote } from "../utils/pool/lend"
 import { ONE_BI, ZERO_BD } from "../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../utils/convert"
 import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
-import { deletePosition, getPoolForToken, loadOrCreateLPToken, loadOrCreatePosition } from "../utils/position"
+import { deletePosition, getPoolForToken, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend } from "../utils/position"
 import { getLenderInfo } from "../utils/pool/pool"
 
 export function handleApproval(event: ApprovalEvent): void {
@@ -105,9 +105,20 @@ export function handleMemorializePosition(
   for (let i = 0; i < memorialize.indexes.length; i++) {
     const index = memorialize.indexes[i];
     const bucketId = getBucketId(poolAddress, index)
-    const lendId = getLendId(bucketId, accountId)
-    // add lend to position
-    positionIndexes.push(lendId)
+    // create PositionLend entity to track each lpb associated with the position
+    const positionLendId = getPositionLendId(memorialize.tokenId, BigInt.fromI32(index))
+    const positionLend = loadOrCreatePositionLend(positionLendId, bucketId, index)
+
+    // TODO: access the TransferLP event at the correct log index?
+    // TODO: track the lpb associated with each lend that was memorialized via RPC call
+    // positionLend.lpb =
+    positionLend.lpbValueInQuote = lpbValueInQuote(memorialize.pool, index, positionLend.lpb)
+    positionLend.save()
+
+    // Lends are updated in the associated `TransferLP` event
+
+    // add PositionLend to position
+    positionIndexes.push(positionLendId)
   }
   position.indexes      = positionIndexes
 

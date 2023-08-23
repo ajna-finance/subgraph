@@ -10,7 +10,7 @@ import {
   RedeemPosition,
   Transfer
 } from "../../generated/PositionManager/PositionManager"
-import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./mock-contract-calls"
+import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol, mockGetTokenURI } from "./mock-contract-calls"
 import { handleMint } from "../../src/mappings/position-manager"
 import { bigIntToBytes } from "../../src/utils/convert"
 
@@ -220,6 +220,8 @@ export function mintPosition(lender: Address, pool: Address, tokenId: BigInt, to
   mockGetPoolKey(tokenId, pool)
   mockGetTokenName(tokenContractAddress, "unknown")
   mockGetTokenSymbol(tokenContractAddress, "N/A")
+  const expectedTokenURI = "EXPECTED TOKEN URI"
+  mockGetTokenURI(tokenId, expectedTokenURI)
 
   const newMintEvent = createMintEvent(lender, pool, tokenId)
   handleMint(newMintEvent)
