@@ -15,18 +15,15 @@ import {
   FundTreasury,
   FundedSlate,
   FundedSlateUpdated,
-  FundingVote,
   Proposal,
   ProposalCreated,
   ProposalExecuted,
   ProposalParams,
   DistributionPeriodStarted,
-  ScreeningVote,
-  VoteCast,
-  DistributionPeriodVote
+  VoteCast
 } from "../../generated/schema"
 
-import { NEG_ONE_BD, THREE_PERCENT_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
+import { THREE_PERCENT_BI, ZERO_BD, ZERO_BI } from '../utils/constants'
 import { addressArrayToBytesArray, addressToBytes, bigIntArrayToBigDecimalArray, bigIntToBytes, bytesToBigInt, wadToDecimal } from "../utils/convert"
 import { getProposalParamsId, getProposalsInSlate, loadOrCreateProposal } from '../utils/grants/proposal'
 import { getCurrentDistributionId, getCurrentStage, loadOrCreateDistributionPeriod } from '../utils/grants/distribution'

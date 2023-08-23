@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, Bucket, Flashloan, LoanStamped, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, Bucket, BucketBankruptcy, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -17,7 +17,7 @@ import { loadOrCreateAccount, updateAccountLends, updateAccountPools, updateAcco
 import { ONE_BI, TEN_BI, ZERO_BD } from "../../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../../utils/convert"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../../utils/pool/bucket"
-import { getDepositTime, getLendId, loadOrCreateLend, lpbValueInQuote } from "../../utils/pool/lend"
+import { getDepositTime, getLendId, loadOrCreateLend, lpbValueInQuote, saveOrRemoveLend } from "../../utils/pool/lend"
 import { addReserveAuctionToPool, getBurnInfo, getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
 import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../utils/token-erc20"
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
@@ -150,7 +150,7 @@ export function _handleAddQuoteToken(erc20Event: AddQuoteTokenERC20Event | null,
     lend.depositTime     = blockTimestamp
     lend.lpb             = lend.lpb.plus(addQuoteToken.lpAwarded)
     lend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, lend.lpb)
-    updateBucketLends(bucket, lendId)
+    updateBucketLends(bucket, lend)
 
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
@@ -262,6 +262,7 @@ export function _handleMoveQuoteToken(erc20Event: MoveQuoteTokenERC20Event | nul
         fromBucketLend.lpb = ZERO_BD
     }
     fromBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, fromBucket.bucketIndex, fromBucketLend.lpb)
+    updateBucketLends(fromBucket, fromBucketLend)
 
     // update to bucket lend state
     const toBucketLendId = getLendId(toBucketId, lender)
@@ -269,7 +270,7 @@ export function _handleMoveQuoteToken(erc20Event: MoveQuoteTokenERC20Event | nul
     toBucketLend.depositTime = getDepositTime(fromBucketLend.depositTime, toBucketLend)
     toBucketLend.lpb = toBucketLend.lpb.plus(wadToDecimal(lpAwardedTo))
     toBucketLend.lpbValueInQuote = lpbValueInQuote(pool.id, toBucket.bucketIndex, toBucketLend.lpb)
-    updateBucketLends(toBucket, toBucketLend.id)
+    updateBucketLends(toBucket, toBucketLend)
 
     // update account state
     const accountId = addressToBytes(lender)
@@ -278,12 +279,13 @@ export function _handleMoveQuoteToken(erc20Event: MoveQuoteTokenERC20Event | nul
     // update account lends if necessary
     updateAccountLends(account, fromBucketLend)
     updateAccountLends(account, toBucketLend)
+    // remove lend from store if necessary
+    saveOrRemoveLend(fromBucketLend)
 
     // save entities to store
     pool.save()
     fromBucket.save()
     toBucket.save()
-    fromBucketLend.save()
     toBucketLend.save()
     account.save()
 
@@ -382,11 +384,12 @@ export function _handleRemoveQuoteToken(erc20Event: RemoveQuoteTokenERC20Event |
     // update account's list of pools and lends if necessary
     updateAccountPools(account, pool)
     updateAccountLends(account, lend)
+    // remove lend from store if necessary
+    saveOrRemoveLend(lend)
 
     // save entities to store
     account.save()
     bucket.save()
-    lend.save()
     pool.save()
 
     // associate removeQuoteToken event with relevant entities and save to the store
@@ -447,7 +450,7 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
     const quoteToken = Token.load(pool.quoteToken)!
     quoteToken.txCount = quoteToken.txCount.plus(ONE_BI)
     quoteToken.save()
-    // TODO: should this also call updatePool
+    // TODO: should this also call updatePool?
 
     log.info("handleTransferLP from {} to {}" , [transferLP.owner.toHexString(), transferLP.newOwner.toHexString()])
 
@@ -455,35 +458,36 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
     const oldOwnerAccount = Account.load(transferLP.owner)!
     const newOwnerAccount = loadOrCreateAccount(transferLP.newOwner)
     for (var i=0; i<indexes.length; ++i) {
-      const bucketIndex = indexes[i]
-      const bucketId = getBucketId(pool.id, bucketIndex.toU32())
-      const bucket = Bucket.load(bucketId)!
-      const oldLendId = getLendId(bucketId, transferLP.owner)
-      const newLendId = getLendId(bucketId, transferLP.newOwner)
+        const bucketIndex = indexes[i]
+        const bucketId = getBucketId(pool.id, bucketIndex.toU32())
+        const bucket = Bucket.load(bucketId)!
+        const oldLendId = getLendId(bucketId, transferLP.owner)
+        const newLendId = getLendId(bucketId, transferLP.newOwner)
 
-      // If PositionManager generated this event, it means either:
-      // Memorialize - transfer from lender to PositionManager, eliminating the lender's Lend
-      // Redeem      - transfer from PositionManager to lender, creating the lender's Lend
+        // If PositionManager generated this event, it means either:
+        // Memorialize - transfer from lender to PositionManager, eliminating the lender's Lend
+        // Redeem      - transfer from PositionManager to lender, creating the lender's Lend
 
-      // event does not reveal LP amounts transferred for each bucket, so query the pool and update
-      // remove old lend
-      const oldLend = loadOrCreateLend(bucketId, oldLendId, pool.id, bucketIndex.toU32(), transferLP.owner)
-      oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, owner).lpBalance)
-      oldLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, oldLend.lpb)
-      oldLend.save()
-      updateAccountLends(oldOwnerAccount, oldLend)
-      updateBucketLends(bucket, oldLendId)
+        // event does not reveal LP amounts transferred for each bucket, so query the pool and update
+        // remove old lend
+        const oldLend = loadOrCreateLend(bucketId, oldLendId, pool.id, bucketIndex.toU32(), transferLP.owner)
+        oldLend.lpb = wadToDecimal(getLenderInfo(pool.id, bucketIndex, owner).lpBalance)
+        oldLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, oldLend.lpb)
+        updateBucketLends(bucket, oldLend)
+        updateAccountLends(oldOwnerAccount, oldLend)
+        // remove lend from store if necessary
+        saveOrRemoveLend(oldLend)
 
-      // add new lend
-      const newLend = loadOrCreateLend(bucketId, newLendId, pool.id, bucketIndex.toU32(), transferLP.newOwner)
-      const newLendInfo = getLenderInfo(pool.id, bucketIndex, newOwner)
-      newLend.depositTime = newLendInfo.depositTime
-      newLend.lpb = wadToDecimal(newLendInfo.lpBalance)
-      newLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, newLend.lpb)
-      newLend.save()
-      updateAccountLends(newOwnerAccount, newLend)
-      updateBucketLends(bucket, newLendId)
-      bucket.save()
+        // add new lend
+        const newLend = loadOrCreateLend(bucketId, newLendId, pool.id, bucketIndex.toU32(), transferLP.newOwner)
+        const newLendInfo = getLenderInfo(pool.id, bucketIndex, newOwner)
+        newLend.depositTime = newLendInfo.depositTime
+        newLend.lpb = wadToDecimal(newLendInfo.lpBalance)
+        newLend.lpbValueInQuote = lpbValueInQuote(pool.id, bucket.bucketIndex, newLend.lpb)
+        newLend.save()
+        updateBucketLends(bucket, newLend)
+        updateAccountLends(newOwnerAccount, newLend)
+        bucket.save()
     }
 
     // save entities to the store
@@ -592,6 +596,55 @@ export function _handleReserveAuctionTake(event: ethereum.Event, currentBurnEpoc
 /***************************/
 /*** Pool Event Handlers ***/
 /***************************/
+
+export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lpForfeited: BigInt): void {
+    const bucketBankruptcy = new BucketBankruptcy(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    bucketBankruptcy.index = index.toU32()
+    bucketBankruptcy.lpForfeited = wadToDecimal(lpForfeited)
+
+    bucketBankruptcy.blockNumber = event.block.number
+    bucketBankruptcy.blockTimestamp = event.block.timestamp
+    bucketBankruptcy.transactionHash = event.transaction.hash
+
+    // update entities
+    const pool = Pool.load(addressToBytes(event.address))
+    if (pool != null) {
+    // update pool state
+    updatePool(pool)
+
+    // update bucket state to zero out bucket contents
+    const bucketId      = getBucketId(pool.id, index.toU32())
+    const bucket        = loadOrCreateBucket(pool.id, bucketId, index.toU32())
+    bucket.collateral   = ZERO_BD
+    bucket.deposit      = ZERO_BD
+    bucket.lpb          = ZERO_BD
+    bucket.exchangeRate = ZERO_BD
+
+    bucketBankruptcy.bucket = bucketId
+    bucketBankruptcy.pool = pool.id
+
+    // iterate through all bucket lends and set lend.lpb to zero
+    for (let i = 0; i < bucket.lends.length; i++) {
+        const lendId = bucket.lends[i]
+        const lend = Lend.load(lendId)!
+        lend.depositTime = bucketBankruptcy.blockTimestamp.plus(ONE_BI)
+        lend.lpb = ZERO_BD
+        lend.lpbValueInQuote = ZERO_BD
+        updateBucketLends(bucket, lend)
+        updateAccountLends(loadOrCreateAccount(lend.lender), lend)
+        // remove lend from store
+        saveOrRemoveLend(lend)
+    }
+
+    // save entities to store
+    pool.save()
+    bucket.save()
+    }
+
+    bucketBankruptcy.save()
+}
 
 export function _handleInterestRateEvent(poolAddress: Address, event: ethereum.Event, newRate: BigInt): void {
   const updateInterestRate = new UpdateInterestRate(
