@@ -108,6 +108,7 @@ export function createMemorializePositionEvent(
 }
 
 export function createMintEvent(
+  positionManagerAddress: Address,
   lender: Address,
   pool: Address,
   tokenId: BigInt
@@ -125,6 +126,8 @@ export function createMintEvent(
   mintEvent.parameters.push(
     new ethereum.EventParam("tokenId", ethereum.Value.fromUnsignedBigInt(tokenId))
   )
+
+  mintEvent.address = positionManagerAddress
 
   return mintEvent
 }
@@ -223,7 +226,7 @@ export function mintPosition(lender: Address, pool: Address, tokenId: BigInt, to
   const expectedTokenURI = "EXPECTED TOKEN URI"
   mockGetTokenURI(tokenId, expectedTokenURI)
 
-  const newMintEvent = createMintEvent(lender, pool, tokenId)
+  const newMintEvent = createMintEvent(tokenContractAddress, lender, pool, tokenId)
   handleMint(newMintEvent)
 }
 

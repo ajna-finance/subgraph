@@ -65,13 +65,9 @@ export function deletePosition(tokenId: BigInt): void {
   store.remove('Position', bigIntToBytes(tokenId).toHexString())
 }
 
-export function deletePositionLend(positionLendId: Bytes): void {
-  store.remove('PositionLend', positionLendId.toHexString())
-}
-
 export function saveOrRemovePositionLend(positionLend: PositionLend): void {
   if (positionLend.lpb.equals(ZERO_BD)) {
-    deletePositionLend(positionLend.id)
+    store.remove('PositionLend', positionLend.id.toHexString())
   } else {
     positionLend.save()
   }

@@ -114,6 +114,22 @@ export function mockGetTokenURI(tokenId: BigInt, expectedTokenURI: String): void
     ])
 }
 
+export function mockGetPositionInfo(tokenId: BigInt, bucketIndex: BigInt, expectedDepositTime: BigInt, expectedLPB: BigInt): void {
+    createMockedFunction(
+        positionManagerAddressTable.get(dataSource.network())!,
+        'getPositionInfo',
+        'getPositionInfo(uint256,uint256):(uint256,uint256)'
+    )
+    .withArgs([
+        ethereum.Value.fromUnsignedBigInt(tokenId),
+        ethereum.Value.fromUnsignedBigInt(bucketIndex)
+    ])
+    .returns([
+        ethereum.Value.fromUnsignedBigInt(expectedLPB),
+        ethereum.Value.fromUnsignedBigInt(expectedDepositTime),
+    ])
+}
+
 /***************************/
 /*** Pool Mock Functions ***/
 /***************************/

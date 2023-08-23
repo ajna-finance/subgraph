@@ -9,16 +9,16 @@ import {
   logStore,
   beforeEach
 } from "matchstick-as/assembly/index"
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
 import { handleApproval, handleBurn, handleMemorializePosition, handleMint, handleMoveLiquidity, handleRedeemPosition } from "../src/mappings/position-manager"
 import { assertPosition, createApprovalEvent, createBurnEvent, createMemorializePositionEvent, createMintEvent, createMoveLiquidityEvent, createRedeemPositionEvent, mintPosition } from "./utils/position-manager-utils"
 import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
 import { create721Pool } from "./utils/common"
-import { mockGetLPBValueInQuote, mockGetLenderInfo, mockGetPoolKey } from "./utils/mock-contract-calls"
+import { mockGetLPBValueInQuote, mockGetLenderInfo, mockGetPoolKey, mockGetPositionInfo } from "./utils/mock-contract-calls"
 import { Lend } from "../generated/schema"
 import { getLendId } from "../src/utils/pool/lend"
 import { getBucketId } from "../src/utils/pool/bucket"
-import { FIVE_PERCENT_BI, ZERO_BI } from "../src/utils/constants"
+import { FIVE_PERCENT_BI, ZERO_BI, positionManagerAddressTable } from "../src/utils/constants"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -270,8 +270,8 @@ describe("Describe entity assertions", () => {
     const lender = Address.fromString("0x0000000000000000000000000000000000000020")
     const pool = Address.fromString("0x0000000000000000000000000000000000000001")
     const tokenId = BigInt.fromI32(234)
-    const tokenContractAddress = Address.fromString("0xa16081f360e3847006db660bae1c6d1b2e17ec2a")
-    const indexes:BigInt[] = []
+    const tokenContractAddress = positionManagerAddressTable.get(dataSource.network())!
+    const indexes:BigInt[] = [BigInt.fromI32(5000)]
     const fromIndex = BigInt.fromI32(5000)
     const toIndex = BigInt.fromI32(4000)
     const lpRedeemedFrom = BigInt.fromString("63380000000000000000") // 63.38
@@ -305,32 +305,42 @@ describe("Describe entity assertions", () => {
     lend.lpbValueInQuote = wadToDecimal(lpValueInQuote)
     lend.save();
 
+    // mock contract calls
     mockGetPoolKey(tokenId, pool)
+    mockGetPositionInfo(tokenId, fromIndex, lend.depositTime, lpRedeemedFrom)
+    mockGetLPBValueInQuote(pool, lpRedeemedFrom, fromIndex, lpValueInQuote)
+
     // memorialize existing position
     const newMemorializeEvent = createMemorializePositionEvent(lender, tokenId, indexes)
     handleMemorializePosition(newMemorializeEvent)
 
     // check position attributes
     assertPosition(lender, pool, tokenId, tokenContractAddress)
-    // TODO: check index attributes
+    // TODO: check index attributes -> assertPositionLend
 
     assert.entityCount("Mint", 1)
     assert.entityCount("Lend", 1)
     assert.entityCount("MemorializePosition", 1)
     assert.entityCount("Position", 1)
+    assert.entityCount("PositionLend", 1)
     assert.entityCount("MoveLiquidity", 0)
 
     /**********************/
     /*** Move Liquidity ***/
     /**********************/
 
+    // mock contract calls
+    mockGetPositionInfo(tokenId, toIndex, lend.depositTime, lpRedeemedFrom)
     mockGetLenderInfo(pool, toIndex, lender, lpRedeemedto, expectedDepositTime)
-  
-    mockGetLPBValueInQuote(pool, lpRedeemedFrom, fromIndex, lpValueInQuote)
-    mockGetLPBValueInQuote(pool, ZERO_BI, toIndex, ZERO_BI)
+    mockGetLPBValueInQuote(pool, lpRedeemedFrom.minus(lpRedeemedto), fromIndex, lpValueInQuote)
+    mockGetLPBValueInQuote(pool, lpRedeemedFrom.minus(lpRedeemedto), fromIndex, lpValueInQuote)
     mockGetLPBValueInQuote(pool, lpRedeemedto, toIndex, lpValueInQuote)
+    mockGetLPBValueInQuote(pool, lpRedeemedto, toIndex, lpValueInQuote)
+
     const newMoveLiquidityEvent = createMoveLiquidityEvent(lender, tokenId, fromIndex, toIndex, lpRedeemedFrom, lpRedeemedto)
     handleMoveLiquidity(newMoveLiquidityEvent)
+
+    logStore()
 
     // check position attributes
     assertPosition(lender, pool, tokenId, tokenContractAddress)
@@ -339,6 +349,7 @@ describe("Describe entity assertions", () => {
     assert.entityCount("Mint", 1)
     assert.entityCount("MemorializePosition", 1)
     assert.entityCount("Position", 1)
+    assert.entityCount("PositionLend", 1)
     assert.entityCount("MoveLiquidity", 1)
   })
 
