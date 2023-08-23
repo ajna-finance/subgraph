@@ -261,7 +261,6 @@ describe("Describe entity assertions", () => {
     assert.entityCount("RedeemPosition", 1)
   })
 
-  // identified an issue with the duplicate recording of lend info on handleMoveLiquidity and handleTransferLP
   test("MoveLiquidity", () => {
     assert.entityCount("Mint", 0)
     assert.entityCount("MemorializePosition", 0)
@@ -325,7 +324,6 @@ describe("Describe entity assertions", () => {
 
     // check position attributes
     assertPosition(lender, pool, tokenId, tokenContractAddress)
-    // TODO: check index attributes -> assertPositionLend
 
     assert.entityCount("Account", 1)
     assert.entityCount("Mint", 1)
@@ -349,6 +347,10 @@ describe("Describe entity assertions", () => {
 
     const newMoveLiquidityEvent = createMoveLiquidityEvent(lender, tokenId, fromIndex, toIndex, lpRedeemedFrom, lpRedeemedTo)
     handleMoveLiquidity(newMoveLiquidityEvent)
+
+    /********************/
+    /*** Assert State ***/
+    /********************/
 
     // check position attributes
     assertPosition(lender, pool, tokenId, tokenContractAddress)
