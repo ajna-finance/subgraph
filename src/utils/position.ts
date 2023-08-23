@@ -69,10 +69,12 @@ export function deletePosition(tokenId: BigInt): void {
 
 export function updatePositionLends(positionLend: PositionLend): void {
   // add positionLend to bucket array if necessary
-  const bucket = Bucket.load(positionLend.bucket)!
-  const existingBucketIndex = bucket.positionLends.indexOf(positionLend.id)
-  if (existingBucketIndex != -1) {
-    bucket.positionLends = bucket.positionLends.concat([positionLend.id])
+  const bucket = Bucket.load(positionLend.bucket)
+  if (bucket != null) {
+    const existingBucketIndex = bucket.positionLends.indexOf(positionLend.id)
+    if (existingBucketIndex != -1) {
+      bucket.positionLends = bucket.positionLends.concat([positionLend.id])
+    }
   }
 
   // add positionLend to position array if necessary

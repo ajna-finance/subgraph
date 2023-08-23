@@ -23,7 +23,7 @@ import {
 import { getBucketId } from "../utils/pool/bucket"
 import { lpbValueInQuote, saveOrRemoveLend } from "../utils/pool/lend"
 import { ONE_BI, ZERO_BD } from "../utils/constants"
-import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../utils/convert"
+import { addressToBytes, bigIntArrayToIntArray, bigIntToBytes, wadToDecimal } from "../utils/convert"
 import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
 import { deletePosition, getPoolForToken, getPositionInfo, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend, saveOrRemovePositionLend, updatePositionLends } from "../utils/position"
 import { getLenderInfo } from "../utils/pool/pool"
@@ -71,6 +71,10 @@ export function handleBurn(event: BurnEvent): void {
   burn.blockTimestamp = event.block.timestamp
   burn.transactionHash = event.transaction.hash
 
+  // remove tokenId from account's list of positions
+  const account = loadOrCreateAccount(burn.lender)
+  const index = account.positions.indexOf(bigIntToBytes(burn.tokenId))
+  if (index != -1) account.positions.splice(index, 1)
   deletePosition(event.params.tokenId);
 
   burn.save()
@@ -304,6 +308,12 @@ export function handleTransfer(event: TransferEvent): void {
   const position = loadOrCreatePosition(transfer.tokenId)
   position.owner = event.params.to
   position.tokenURI = getTokenURI(event.address, transfer.tokenId)
+
+  // remove position from old account
+  const account = loadOrCreateAccount(transfer.from)
+  const index = account.positions.indexOf(bigIntToBytes(transfer.tokenId))
+  if (index != -1) account.positions.splice(index, 1)
+  updateAccountPositions(account, position)
 
   token.save();
   position.save()
