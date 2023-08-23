@@ -305,6 +305,7 @@ describe("Describe entity assertions", () => {
 
     // check position attributes
     assertPosition(lender, pool, tokenId, tokenContractAddress)
+    assert.entityCount("Account", 1)
 
     /****************************/
     /*** Memorialize Position ***/
@@ -326,6 +327,7 @@ describe("Describe entity assertions", () => {
     assertPosition(lender, pool, tokenId, tokenContractAddress)
     // TODO: check index attributes -> assertPositionLend
 
+    assert.entityCount("Account", 1)
     assert.entityCount("Mint", 1)
     assert.entityCount("Lend", 2)
     assert.entityCount("MemorializePosition", 1)
@@ -356,6 +358,7 @@ describe("Describe entity assertions", () => {
     assertPositionLend(getPositionLendId(tokenId, fromIndex).toHexString(), getBucketId(pool, fromIndex.toU32()).toHexString(), expectedDepositTime, lpb.minus(lpRedeemedFrom))
     assertPositionLend(getPositionLendId(tokenId, toIndex).toHexString(), getBucketId(pool, toIndex.toU32()).toHexString(), expectedDepositTime, lpRedeemedTo)
 
+    assert.entityCount("Account", 1)
     assert.entityCount("Mint", 1)
     assert.entityCount("MemorializePosition", 1)
     assert.entityCount("Position", 1)

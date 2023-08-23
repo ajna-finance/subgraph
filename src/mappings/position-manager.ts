@@ -311,13 +311,16 @@ export function handleTransfer(event: TransferEvent): void {
   position.tokenURI = getTokenURI(event.address, transfer.tokenId)
 
   // remove position from old account
-  const account = loadOrCreateAccount(transfer.from)
-  const index = account.positions.indexOf(bigIntToBytes(transfer.tokenId))
-  if (index != -1) account.positions.splice(index, 1)
-  updateAccountPositions(account, position)
+  const oldOwnerAccount = loadOrCreateAccount(transfer.from)
+  const index = oldOwnerAccount.positions.indexOf(bigIntToBytes(transfer.tokenId))
+  if (index != -1) oldOwnerAccount.positions.splice(index, 1)
+  // add position to new account
+  const newOwnerAccount = loadOrCreateAccount(transfer.to)
+  updateAccountPositions(newOwnerAccount, position)
 
   // save entities to store
-  account.save()
+  oldOwnerAccount.save()
+  newOwnerAccount.save()
   token.save();
   position.save()
   transfer.save()
