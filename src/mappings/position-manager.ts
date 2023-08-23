@@ -20,7 +20,7 @@ import {
   Transfer
 } from "../../generated/schema"
 import { getBucketId } from "../utils/pool/bucket"
-import { lpbValueInQuote } from "../utils/pool/lend"
+import { lpbValueInQuote, saveOrRemoveLend } from "../utils/pool/lend"
 import { ONE_BI, ZERO_BD } from "../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../utils/convert"
 import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
@@ -171,7 +171,7 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
     lendFrom.lpb = ZERO_BD
   }
   lendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendFrom.lpb)
-  lendFrom.save()
+  saveOrRemoveLend(lendFrom)
   lendTo.save()
 
   const token = loadOrCreateLPToken(event.address)
