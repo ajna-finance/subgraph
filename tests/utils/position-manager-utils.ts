@@ -12,7 +12,7 @@ import {
 } from "../../generated/PositionManager/PositionManager"
 import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol, mockGetTokenURI } from "./mock-contract-calls"
 import { handleMint } from "../../src/mappings/position-manager"
-import { bigIntToBytes } from "../../src/utils/convert"
+import { bigIntToBytes, wadToDecimal } from "../../src/utils/convert"
 
 export function createApprovalEvent(
   owner: Address,
@@ -251,5 +251,26 @@ export function assertPosition(lender: Address, pool: Address, tokenId: BigInt, 
     `${expectedTokenId}`,
     "token",
     `${tokenContractAddress.toHexString()}`
+  )
+}
+
+export function assertPositionLend(positionLendId: string, bucketId: string, expectedDepositTime: BigInt, lpb: BigInt): void {
+  assert.fieldEquals(
+    "PositionLend",
+    `${positionLendId}`,
+    "bucket",
+    `${bucketId}`
+  )
+  assert.fieldEquals(
+    "PositionLend",
+    `${positionLendId}`,
+    "depositTime",
+    `${expectedDepositTime}`
+  )
+  assert.fieldEquals(
+    "PositionLend",
+    `${positionLendId}`,
+    "lpb",
+    `${wadToDecimal(lpb)}`
   )
 }

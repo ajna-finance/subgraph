@@ -11,7 +11,7 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
 import { handleApproval, handleBurn, handleMemorializePosition, handleMint, handleMoveLiquidity, handleRedeemPosition } from "../src/mappings/position-manager"
-import { assertPosition, createApprovalEvent, createBurnEvent, createMemorializePositionEvent, createMintEvent, createMoveLiquidityEvent, createRedeemPositionEvent, mintPosition } from "./utils/position-manager-utils"
+import { assertPosition, assertPositionLend, createApprovalEvent, createBurnEvent, createMemorializePositionEvent, createMintEvent, createMoveLiquidityEvent, createRedeemPositionEvent, mintPosition } from "./utils/position-manager-utils"
 import { bigIntToBytes, wadToDecimal } from "../src/utils/convert"
 import { create721Pool, createAndHandleAddQuoteTokenEvent } from "./utils/common"
 import { mockGetLPBValueInQuote, mockGetLenderInfo, mockGetPoolKey, mockGetPositionInfo } from "./utils/mock-contract-calls"
@@ -19,6 +19,7 @@ import { Lend } from "../generated/schema"
 import { getLendId } from "../src/utils/pool/lend"
 import { getBucketId } from "../src/utils/pool/bucket"
 import { FIVE_PERCENT_BI, TWO_BI, ZERO_BI, positionManagerAddressTable } from "../src/utils/constants"
+import { getPositionLendId } from "../src/utils/position"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -349,6 +350,11 @@ describe("Describe entity assertions", () => {
 
     // check position attributes
     assertPosition(lender, pool, tokenId, tokenContractAddress)
+
+    // check index attributes
+    assertPositionLend(getPositionLendId(tokenId, indexes[1]).toHexString(), getBucketId(pool, indexes[1].toU32()).toHexString(), expectedDepositTime, lpb)
+    assertPositionLend(getPositionLendId(tokenId, fromIndex).toHexString(), getBucketId(pool, fromIndex.toU32()).toHexString(), expectedDepositTime, lpb.minus(lpRedeemedFrom))
+    assertPositionLend(getPositionLendId(tokenId, toIndex).toHexString(), getBucketId(pool, toIndex.toU32()).toHexString(), expectedDepositTime, lpRedeemedTo)
 
     assert.entityCount("Mint", 1)
     assert.entityCount("MemorializePosition", 1)
