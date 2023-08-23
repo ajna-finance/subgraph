@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes, dataSource, store } from "@graphprotocol/graph-ts"
 import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
 
 import { Loan }    from "../../../generated/schema"
@@ -27,6 +27,15 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
     }
 
     return loan
+}
+
+export function saveOrRemoveLoan(loan: Loan): void {
+  // if loan was removed, return true, else false
+  if (loan.collateralPledged.equals(ZERO_BD) && loan.t0debt.equals(ZERO_BD)) {
+      store.remove("Loan", loan.id.toHexString())
+  } else {
+      loan.save()
+  }
 }
 
 /**********************************/

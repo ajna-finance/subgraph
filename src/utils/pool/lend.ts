@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, Bytes, dataSource } from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, BigInt, Bytes, dataSource, store } from "@graphprotocol/graph-ts"
 import { Bucket, Lend } from "../../../generated/schema"
 import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
 
@@ -44,4 +44,13 @@ export function lpbValueInQuote(pool: Bytes, bucketIndex: u32, lpAmount: BigDeci
     )
 
     return wadToDecimal(quoteTokenAmount)
+}
+
+export function saveOrRemoveLend(lend: Lend): void {
+    // if lend was removed, return true, else false
+    if (lend.lpb.equals(ZERO_BD)) {
+        store.remove("Lend", lend.id.toHexString())
+    } else {
+        lend.save()
+    }
 }

@@ -9,7 +9,7 @@ import {
   DelegateVotesChanged,
 } from "../../generated/schema"
 import { loadOrCreateAccount } from "../utils/account"
-import { addressToBytes, bigIntToBytes, wadToDecimal } from "../utils/convert"
+import { addressToBytes, wadToDecimal } from "../utils/convert"
 import { addDelegator, removeDelegator } from "../utils/grants/voter"
 
 export function handleDelegateChanged(event: DelegateChangedEvent): void {

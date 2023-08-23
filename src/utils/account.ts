@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, store } from "@graphprotocol/graph-ts"
 import { Account, Kick, Lend, Loan, Pool, Position, Settle, Take } from "../../generated/schema"
 
 import { ZERO_BD, ZERO_BI } from "./constants"

@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts"
+import { Address, BigInt, log } from "@graphprotocol/graph-ts"
 import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
@@ -13,17 +13,14 @@ import {
   Approval,
   ApprovalForAll,
   Burn,
-  Lend,
   MemorializePosition,
   Mint,
   MoveLiquidity,
-  Pool,
-  Position,
   RedeemPosition,
   Transfer
 } from "../../generated/schema"
 import { getBucketId } from "../utils/pool/bucket"
-import { getDepositTime, lpbValueInQuote } from "../utils/pool/lend"
+import { lpbValueInQuote, saveOrRemoveLend } from "../utils/pool/lend"
 import { ONE_BI, ZERO_BD } from "../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../utils/convert"
 import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
@@ -150,8 +147,7 @@ export function handleMint(event: MintEvent): void {
   token.txCount = token.txCount.plus(ONE_BI);
 
   // associate the new position with the lender account
-  const ownerAccountId = addressToBytes(mint.lender)
-  const ownerAccount = loadOrCreateAccount(ownerAccountId)
+  const ownerAccount = loadOrCreateAccount(mint.lender)
   updateAccountPositions(ownerAccount, position)
 
   // save entities to store
@@ -237,7 +233,7 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
 
   // save entities to store
   saveOrRemovePositionLend(positionLendFrom)
-  lendFrom.save()
+  saveOrRemoveLend(lendFrom)
   moveLiquidity.save()
   token.save()
 }
