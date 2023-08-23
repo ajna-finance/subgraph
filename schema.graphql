@@ -234,6 +234,9 @@ type Account @entity {
   # amount of tokens delegated to this account
   tokensDelegated: BigDecimal!
 
+  # positions associated with the account
+  positions: [Position!]!
+
   # total number of transactions sent by the account
   txCount: BigInt!
 }

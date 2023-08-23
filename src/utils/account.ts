@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { Account, Kick, Lend, Loan, Pool, Settle, Take } from "../../generated/schema"
+import { Account, Kick, Lend, Loan, Pool, Position, Settle, Take } from "../../generated/schema"
 
 import { ZERO_BD, ZERO_BI } from "./constants"
 
@@ -14,6 +14,7 @@ export function loadOrCreateAccount(accountId: Bytes): Account {
       account.lends           = []
       account.loans           = []
       account.pools           = []
+      account.positions       = []
       account.reserveAuctions = []
       account.settles         = []
       account.takes           = []
@@ -74,6 +75,16 @@ export function updateAccountKicks(account: Account, kick: Kick): void {
     const index = kicks.indexOf(kick.id)
     if (index == -1) {
         account.kicks = account.kicks.concat([kick.id])
+    }
+}
+
+// update the list of Positions associated with an account, if it hasn't been added already
+export function updateAccountPositions(account: Account, position: Position): void {
+    const positions = account.positions
+    // get current index of position in account's list of positions
+    const index = positions.indexOf(position.id)
+    if (index == -1) {
+        account.positions = account.positions.concat([position.id])
     }
 }
 

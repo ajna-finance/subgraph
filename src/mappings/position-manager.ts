@@ -30,6 +30,7 @@ import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
 import { deletePosition, getPoolForToken, getPositionInfo, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend, saveOrRemovePositionLend } from "../utils/position"
 import { getLenderInfo } from "../utils/pool/pool"
 import { getTokenURI } from "../utils/token-erc721"
+import { loadOrCreateAccount, updateAccountPositions } from "../utils/account"
 
 export function handleApproval(event: ApprovalEvent): void {
   const approval = new Approval(
@@ -147,6 +148,11 @@ export function handleMint(event: MintEvent): void {
   const token = loadOrCreateLPToken(event.address)
   position.token = token.id
   token.txCount = token.txCount.plus(ONE_BI);
+
+  // associate the new position with the lender account
+  const ownerAccountId = addressToBytes(mint.lender)
+  const ownerAccount = loadOrCreateAccount(ownerAccountId)
+  updateAccountPositions(ownerAccount, position)
 
   // save entities to store
   mint.save()
