@@ -199,6 +199,7 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   lendTo.save()
   positionLendTo.save()
 
+  // TODO: properly update positionLendFrom
   // update lendFrom and PositionLendFrom
   // update lpb
   if (lpRedeemedFrom.le(lendFrom.lpb)) {
@@ -214,12 +215,12 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   if (lendFrom.lpb.equals(ZERO_BD)) {
     lendFrom.lpbValueInQuote = ZERO_BD
   } else {
-    lendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, lendFrom.lpb)
+    lendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.fromIndex, lendFrom.lpb)
   }
   if (positionLendFrom.lpb.equals(ZERO_BD)) {
     positionLendFrom.lpbValueInQuote = ZERO_BD
   } else {
-    positionLendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.toIndex, positionLendFrom.lpb)
+    positionLendFrom.lpbValueInQuote = lpbValueInQuote(moveLiquidity.pool, moveLiquidity.fromIndex, positionLendFrom.lpb)
   }
 
   // save entities to store

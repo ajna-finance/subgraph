@@ -7,6 +7,8 @@ import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, Res
 import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
 import { BorrowerInfo } from "../../src/utils/pool/loan"
 import { wdiv, wmin, wmul } from "../../src/utils/math"
+import { addressToBytes, decimalToWad } from "../../src/utils/convert"
+import { Pool } from "../../generated/schema"
 
 
 /*********************************/
@@ -371,6 +373,9 @@ export class PoolMockParams {
     collateralization: BigInt
     actualUtilization: BigInt
     targetUtilization: BigInt
+    // collateralTokenBalance: BigInt
+    // quoteTokenBalance: BigInt
+    // TODO: add quoteBalance and collateralBalance
 }
 // mock all pool poolInfoUtilis contract calls
 export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMockParams): void {
@@ -414,6 +419,13 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.targetUtilization
     )
     mockGetPoolUtilizationInfo(pool, expectedPoolUtilizationInfo)
+
+    // TODO: pass expected balance to mock balance calls
+    // load pool instance
+    const poolInstance = Pool.load(addressToBytes(pool))!
+    // mock token balance calls
+    mockTokenBalance(Address.fromBytes(poolInstance.collateralToken), pool, decimalToWad(poolInstance.collateralBalance))
+    mockTokenBalance(Address.fromBytes(poolInstance.quoteToken), pool, decimalToWad(poolInstance.quoteTokenBalance))
 
     mockGetRatesAndFees(
       pool, 
