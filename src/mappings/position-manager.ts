@@ -199,19 +199,25 @@ export function handleMoveLiquidity(event: MoveLiquidityEvent): void {
   lendTo.save()
   positionLendTo.save()
 
-  // TODO: properly update positionLendFrom
   // update lendFrom and PositionLendFrom
-  // update lpb
+  // update lendFrom lpb
   if (lpRedeemedFrom.le(lendFrom.lpb)) {
     lendFrom.lpb           = lendFrom.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
-    positionLendFrom.lpb   = positionLendFrom.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
   } else {
     log.warning('handleMoveLiquidity: lender {} redeemed more LP ({}) than Lend entity was aware of ({}); resetting to 0', 
     [moveLiquidity.lender.toHexString(), lpRedeemedFrom.toString(), lendFrom.lpb.toString()])
     lendFrom.lpb = ZERO_BD
+  }
+  // update positionLendFrom lpb
+  if (lpRedeemedFrom.le(positionLendFrom.lpb)) {
+    positionLendFrom.lpb   = positionLendFrom.lpb.minus(wadToDecimal(event.params.lpRedeemedFrom))
+  } else {
+    log.warning('handleMoveLiquidity: lender {} redeemed more LP ({}) than PositionLend entity was aware of ({}); resetting to 0',
+    [moveLiquidity.lender.toHexString(), lpRedeemedFrom.toString(), positionLendFrom.lpb.toString()])
     positionLendFrom.lpb = ZERO_BD
   }
-  // update lpbValueInQuote
+
+  // update lpbValueInQuote for both entities
   if (lendFrom.lpb.equals(ZERO_BD)) {
     lendFrom.lpbValueInQuote = ZERO_BD
   } else {
