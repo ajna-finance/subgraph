@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, dataSource, store } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, dataSource, log, store } from "@graphprotocol/graph-ts"
 
 import { Bucket, Position, PositionLend, Token } from "../../generated/schema"
 import { ONE_BI, ZERO_BD, ZERO_BI, positionManagerAddressTable } from "../utils/constants"
@@ -91,22 +91,30 @@ export function updatePositionLends(positionLend: PositionLend): void {
 export function saveOrRemovePositionLend(positionLend: PositionLend): void {
   if (positionLend.lpb.equals(ZERO_BD)) {
     // remove positionLend from bucket array
-    const bucket = Bucket.load(positionLend.bucket)!
-    const existingBucketIndex = bucket.positionLends.indexOf(positionLend.id)
-    const bucketPositionLends = bucket.positionLends
-    if (existingBucketIndex != -1) {
-      bucketPositionLends.splice(existingBucketIndex, 1)
+    const bucket = Bucket.load(positionLend.bucket)
+    if (bucket != null) {
+      const existingBucketIndex = bucket.positionLends.indexOf(positionLend.id)
+      const bucketPositionLends = bucket.positionLends
+      if (existingBucketIndex != -1) {
+        bucketPositionLends.splice(existingBucketIndex, 1)
+      }
+      bucket.positionLends = bucketPositionLends
+    } else {
+      log.warning("Bucket {} was not found", [positionLend.bucket.toHexString()])
     }
-    bucket.positionLends = bucketPositionLends
 
     // remove positionLend from account array
-    const position = Position.load(bigIntToBytes(positionLend.tokenId))!
-    const existingPositionIndex = position.indexes.indexOf(positionLend.id)
-    const positionIndexes = position.indexes
-    if (existingPositionIndex != -1) {
-      positionIndexes.splice(existingPositionIndex, 1)
+    const position = Position.load(bigIntToBytes(positionLend.tokenId))
+    if (position != null) {
+      const existingPositionIndex = position.indexes.indexOf(positionLend.id)
+      const positionIndexes = position.indexes
+      if (existingPositionIndex != -1) {
+        positionIndexes.splice(existingPositionIndex, 1)
+      }
+      position.indexes = positionIndexes
+    } else {
+      log.warning("Position for token {} was not found", [positionLend.tokenId.toString()])
     }
-    position.indexes = positionIndexes
 
     // remove positionLend from store
     store.remove('PositionLend', positionLend.id.toHexString())
