@@ -103,8 +103,7 @@ export function handleMemorializePosition(
   const position = loadOrCreatePosition(memorialize.tokenId)
 
   // get lend entities for each index with extant lpb
-  const addressNotBytes = getPoolForToken(memorialize.tokenId)
-  const poolAddress = addressToBytes(addressNotBytes)
+  const poolAddress = memorialize.pool
   const accountId = memorialize.lender
 
   log.info("handleMemorializePosition for lender {} token {}" , [accountId.toHexString(), memorialize.tokenId.toString()])
@@ -115,7 +114,6 @@ export function handleMemorializePosition(
     const bucket = Bucket.load(bucketId)!
 
     // create PositionLend entity to track each lpb associated with the position
-    const positionLendId = getPositionLendId(memorialize.tokenId, BigInt.fromI32(index))
     const positionLend = loadOrCreatePositionLend(memorialize.tokenId, bucketId, index)
     const positionInfo = getPositionInfo(memorialize.tokenId, BigInt.fromI32(index))
     //track the lpb and depositTime associated with each lend that was memorialized via RPC call
@@ -240,15 +238,16 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   redeem.transactionHash = event.transaction.hash
 
   const position = loadOrCreatePosition(redeem.tokenId)
+  const poolAddress = redeem.pool
   const accountId = redeem.lender
 
   log.info("handleRedeemPosition for lender {} token {}" , [accountId.toHexString(), redeem.tokenId.toString()])
 
   // update positionLend entities for each index
   const positionIndexes = position.indexes;
-  for (let index = 0; index < redeem.indexes.length; index++) {
-    log.info("handleRedeemPosition looking up pool {} bucket {}", [redeem.pool.toHexString(), index.toString()])
-    const bucketId = getBucketId(redeem.pool, index)
+  for (let i = 0; i < redeem.indexes.length; i++) {
+    const index = redeem.indexes[i];
+    const bucketId = getBucketId(poolAddress, index)
     const positionLend = loadOrCreatePositionLend(redeem.tokenId, bucketId, index)
     positionLend.lpb = ZERO_BD
     saveOrRemovePositionLend(positionLend)

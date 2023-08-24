@@ -99,22 +99,19 @@ export function saveOrRemovePositionLend(positionLend: PositionLend): void {
         bucketPositionLends.splice(existingBucketIndex, 1)
       }
       bucket.positionLends = bucketPositionLends
+      bucket.save()
     } else {
       log.warning("Bucket {} was not found", [positionLend.bucket.toHexString()])
     }
 
     // remove positionLend from account array
-    const position = Position.load(bigIntToBytes(positionLend.tokenId))
-    if (position != null) {
-      const existingPositionIndex = position.indexes.indexOf(positionLend.id)
-      const positionIndexes = position.indexes
-      if (existingPositionIndex != -1) {
-        positionIndexes.splice(existingPositionIndex, 1)
-      }
-      position.indexes = positionIndexes
-    } else {
-      log.warning("Position for token {} was not found", [positionLend.tokenId.toString()])
+    const position = Position.load(bigIntToBytes(positionLend.tokenId))!
+    const existingPositionIndex = position.indexes.indexOf(positionLend.id)
+    const positionIndexes = position.indexes
+    if (existingPositionIndex != -1) {
+      positionIndexes.splice(existingPositionIndex, 1)
     }
+    position.indexes = positionIndexes
 
     // remove positionLend from store
     store.remove('PositionLend', positionLend.id.toHexString())
