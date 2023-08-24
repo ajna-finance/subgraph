@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, dataSource, store } from "@graphprotocol/graph-ts"
+import { Address, BigInt, Bytes, dataSource, log, store } from "@graphprotocol/graph-ts"
 
 import { Bucket, Position, PositionLend, Token } from "../../generated/schema"
 import { ONE_BI, ZERO_BD, ZERO_BI, positionManagerAddressTable } from "../utils/constants"
@@ -98,6 +98,7 @@ export function saveOrRemovePositionLend(positionLend: PositionLend): void {
       bucketPositionLends.splice(existingBucketIndex, 1)
     }
     bucket.positionLends = bucketPositionLends
+    bucket.save()
 
     // remove positionLend from account array
     const position = Position.load(bigIntToBytes(positionLend.tokenId))!
