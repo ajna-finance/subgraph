@@ -251,7 +251,6 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
     const bucketId = getBucketId(poolAddress, index)
     const positionLend = loadOrCreatePositionLend(redeem.tokenId, bucketId, index)
     positionLend.lpb = ZERO_BD
-    positionLend.lpbValueInQuote = ZERO_BD
     saveOrRemovePositionLend(positionLend)
   }
   position.indexes = positionIndexes
