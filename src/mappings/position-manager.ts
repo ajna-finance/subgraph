@@ -74,9 +74,12 @@ export function handleBurn(event: BurnEvent): void {
   // remove tokenId from account's list of positions
   const account = loadOrCreateAccount(burn.lender)
   const index = account.positions.indexOf(bigIntToBytes(burn.tokenId))
-  if (index != -1) account.positions.splice(index, 1)
+  const accountPositions = account.positions
+  if (index != -1) accountPositions.splice(index, 1)
+  account.positions = accountPositions
   deletePosition(event.params.tokenId);
 
+  account.save()
   burn.save()
 }
 
@@ -287,7 +290,10 @@ export function handleTransfer(event: TransferEvent): void {
   // remove position from old account
   const oldOwnerAccount = loadOrCreateAccount(transfer.from)
   const index = oldOwnerAccount.positions.indexOf(bigIntToBytes(transfer.tokenId))
-  if (index != -1) oldOwnerAccount.positions.splice(index, 1)
+  const accountPositions = oldOwnerAccount.positions
+  if (index != -1) accountPositions.splice(index, 1)
+  oldOwnerAccount.positions = accountPositions
+
   // add position to new account
   const newOwnerAccount = loadOrCreateAccount(transfer.to)
   updateAccountPositions(newOwnerAccount, position)
