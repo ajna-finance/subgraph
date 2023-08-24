@@ -91,18 +91,14 @@ export function updatePositionLends(positionLend: PositionLend): void {
 export function saveOrRemovePositionLend(positionLend: PositionLend): void {
   if (positionLend.lpb.equals(ZERO_BD)) {
     // remove positionLend from bucket array
-    const bucket = Bucket.load(positionLend.bucket)
-    if (bucket != null) {
-      const existingBucketIndex = bucket.positionLends.indexOf(positionLend.id)
-      const bucketPositionLends = bucket.positionLends
-      if (existingBucketIndex != -1) {
-        bucketPositionLends.splice(existingBucketIndex, 1)
-      }
-      bucket.positionLends = bucketPositionLends
-      bucket.save()
-    } else {
-      log.warning("Bucket {} was not found", [positionLend.bucket.toHexString()])
+    const bucket = Bucket.load(positionLend.bucket)!
+    const existingBucketIndex = bucket.positionLends.indexOf(positionLend.id)
+    const bucketPositionLends = bucket.positionLends
+    if (existingBucketIndex != -1) {
+      bucketPositionLends.splice(existingBucketIndex, 1)
     }
+    bucket.positionLends = bucketPositionLends
+    bucket.save()
 
     // remove positionLend from account array
     const position = Position.load(bigIntToBytes(positionLend.tokenId))!
