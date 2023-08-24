@@ -240,7 +240,6 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   redeem.transactionHash = event.transaction.hash
 
   const position = loadOrCreatePosition(redeem.tokenId)
-  const poolAddress = addressToBytes(getPoolForToken(redeem.tokenId))
   const accountId = redeem.lender
 
   log.info("handleRedeemPosition for lender {} token {}" , [accountId.toHexString(), redeem.tokenId.toString()])
@@ -248,7 +247,8 @@ export function handleRedeemPosition(event: RedeemPositionEvent): void {
   // update positionLend entities for each index
   const positionIndexes = position.indexes;
   for (let index = 0; index < redeem.indexes.length; index++) {
-    const bucketId = getBucketId(poolAddress, index)
+    log.info("handleRedeemPosition looking up pool {} bucket {}", [redeem.pool.toHexString(), index.toString()])
+    const bucketId = getBucketId(redeem.pool, index)
     const positionLend = loadOrCreatePositionLend(redeem.tokenId, bucketId, index)
     positionLend.lpb = ZERO_BD
     saveOrRemovePositionLend(positionLend)
