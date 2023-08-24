@@ -153,6 +153,8 @@ type Bucket @entity {
   lpb: BigDecimal!
   # list of lends associated with the bucket
   lends: [Lend!]!
+  # list of PositionLends associated with the bucket
+  positionLends: [PositionLend!]!
 }
 
 # lend occurs per bucket in a pool
@@ -233,6 +235,9 @@ type Account @entity {
   distributionPeriodVotes: [DistributionPeriodVote!]!
   # amount of tokens delegated to this account
   tokensDelegated: BigDecimal!
+
+  # positions associated with the account
+  positions: [Position!]!
 
   # total number of transactions sent by the account
   txCount: BigInt!
@@ -707,12 +712,24 @@ type MergeOrRemoveCollateralNFT @entity(immutable: true) {
   # # # # # # # # # # # # # # #
 
 type Position @entity {
-  id: Bytes!        # byte encoded tokenId
-  tokenId: BigInt   # tokenId
-  indexes: [Lend!]! # list of lends which constitute a position
-  owner: Bytes!     # address of the position owner
-  pool: Bytes!      # address of the pool that the position is associated with
-  token: Token!     # pointer to positionNFT
+  id: Bytes!                # byte encoded tokenId
+  tokenId: BigInt           # tokenId
+  indexes: [PositionLend!]! # list of PositionLends which constitute a position
+  owner: Bytes!             # address of the position owner
+  pool: Bytes!              # address of the pool that the position is associated with
+  token: Token!             # pointer to LPToken entity
+  tokenURI: String!         # tokenURI of the positionNFT
+}
+
+# created to handle the seperate lpb positions for each bucket index
+type PositionLend @entity {
+  id: Bytes! # $positionId + '|' + $bucketIndex
+  bucket: Bucket! # pointer to associated Bucket entity
+  bucketIndex: Int! # index of the bucket with lpb
+  depositTime: BigInt! # time at which the position was deposited
+  lpb: BigDecimal! # amount of LPB position has in the bucket
+  lpbValueInQuote: BigDecimal! # quote equivalent value of LPB in the bucket
+  tokenId: BigInt! # tokenId of the position
 }
 
   # # # # # # # # # # # # # #

@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
 
-import { Bucket, Lend } from "../../../generated/schema"
+import { Bucket, Lend, PositionLend } from "../../../generated/schema"
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
 
 import { poolInfoUtilsAddressTable, ONE_BD, ZERO_BD } from "../constants"
@@ -53,15 +53,16 @@ export function loadOrCreateBucket(poolId: Bytes, bucketId: Bytes, index: u32): 
       // create new bucket if bucket hasn't already been loaded
       bucket = new Bucket(bucketId) as Bucket
 
-      bucket.bucketIndex  = index
-      bucket.bucketPrice  = indexToPrice(index)
-      bucket.poolAddress  = poolId.toHexString()
-      bucket.pool         = poolId
-      bucket.collateral   = ZERO_BD
-      bucket.deposit      = ZERO_BD
-      bucket.exchangeRate = ONE_BD
-      bucket.lpb          = ZERO_BD
-      bucket.lends        = []
+      bucket.bucketIndex   = index
+      bucket.bucketPrice   = indexToPrice(index)
+      bucket.poolAddress   = poolId.toHexString()
+      bucket.pool          = poolId
+      bucket.collateral    = ZERO_BD
+      bucket.deposit       = ZERO_BD
+      bucket.exchangeRate  = ONE_BD
+      bucket.lpb           = ZERO_BD
+      bucket.lends         = []
+      bucket.positionLends = []
     }
     return bucket
 }

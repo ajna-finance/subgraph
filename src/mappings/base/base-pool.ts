@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, Bucket, BucketBankruptcy, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, Bucket, BucketBankruptcy, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, PositionLend, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -22,6 +22,7 @@ import { addReserveAuctionToPool, getBurnInfo, getLenderInfo, isERC20Pool, updat
 import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../utils/token-erc20"
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
+import { saveOrRemovePositionLend } from "../../utils/position"
 
 
 /*******************************/
@@ -629,13 +630,19 @@ export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lp
     for (let i = 0; i < bucket.lends.length; i++) {
         const lendId = bucket.lends[i]
         const lend = Lend.load(lendId)!
-        lend.depositTime = bucketBankruptcy.blockTimestamp.plus(ONE_BI)
         lend.lpb = ZERO_BD
-        lend.lpbValueInQuote = ZERO_BD
         updateBucketLends(bucket, lend)
         updateAccountLends(loadOrCreateAccount(lend.lender), lend)
         // remove lend from store
         saveOrRemoveLend(lend)
+    }
+
+    // iterate through all bucket positionLends and set positionLend.lpb to zero
+    for (let i = 0; i < bucket.positionLends.length; i++) {
+        const positionLendId = bucket.positionLends[i]
+        const positionLend = PositionLend.load(positionLendId)!
+        positionLend.lpb = ZERO_BD
+        saveOrRemovePositionLend(positionLend)
     }
 
     // save entities to store

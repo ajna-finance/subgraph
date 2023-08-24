@@ -10,9 +10,9 @@ import {
   RedeemPosition,
   Transfer
 } from "../../generated/PositionManager/PositionManager"
-import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol } from "./mock-contract-calls"
+import { mockGetPoolKey, mockGetTokenName, mockGetTokenSymbol, mockGetTokenURI } from "./mock-contract-calls"
 import { handleMint } from "../../src/mappings/position-manager"
-import { bigIntToBytes } from "../../src/utils/convert"
+import { bigIntToBytes, wadToDecimal } from "../../src/utils/convert"
 
 export function createApprovalEvent(
   owner: Address,
@@ -108,6 +108,7 @@ export function createMemorializePositionEvent(
 }
 
 export function createMintEvent(
+  positionManagerAddress: Address,
   lender: Address,
   pool: Address,
   tokenId: BigInt
@@ -125,6 +126,8 @@ export function createMintEvent(
   mintEvent.parameters.push(
     new ethereum.EventParam("tokenId", ethereum.Value.fromUnsignedBigInt(tokenId))
   )
+
+  mintEvent.address = positionManagerAddress
 
   return mintEvent
 }
@@ -220,8 +223,10 @@ export function mintPosition(lender: Address, pool: Address, tokenId: BigInt, to
   mockGetPoolKey(tokenId, pool)
   mockGetTokenName(tokenContractAddress, "unknown")
   mockGetTokenSymbol(tokenContractAddress, "N/A")
+  const expectedTokenURI = "EXPECTED TOKEN URI"
+  mockGetTokenURI(tokenId, expectedTokenURI)
 
-  const newMintEvent = createMintEvent(lender, pool, tokenId)
+  const newMintEvent = createMintEvent(tokenContractAddress, lender, pool, tokenId)
   handleMint(newMintEvent)
 }
 
@@ -246,5 +251,26 @@ export function assertPosition(lender: Address, pool: Address, tokenId: BigInt, 
     `${expectedTokenId}`,
     "token",
     `${tokenContractAddress.toHexString()}`
+  )
+}
+
+export function assertPositionLend(positionLendId: string, bucketId: string, expectedDepositTime: BigInt, lpb: BigInt): void {
+  assert.fieldEquals(
+    "PositionLend",
+    `${positionLendId}`,
+    "bucket",
+    `${bucketId}`
+  )
+  assert.fieldEquals(
+    "PositionLend",
+    `${positionLendId}`,
+    "depositTime",
+    `${expectedDepositTime}`
+  )
+  assert.fieldEquals(
+    "PositionLend",
+    `${positionLendId}`,
+    "lpb",
+    `${wadToDecimal(lpb)}`
   )
 }
