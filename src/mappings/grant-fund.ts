@@ -295,7 +295,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
     const stage = getCurrentStage(voteCast.blockNumber, distributionPeriod)
 
     // proposal is in screening stage
-    if (stage === "SCREENING") {
+    if (stage == "SCREENING") {
       const screeningVotesCast = wadToDecimal(event.params.weight)
       proposal.screeningVotesReceived = proposal.screeningVotesReceived.plus(screeningVotesCast)
       distributionPeriod.screeningVotesCast = distributionPeriod.screeningVotesCast.plus(event.params.weight.toBigDecimal())
@@ -325,7 +325,7 @@ export function handleVoteCast(event: VoteCastEvent): void {
       // save screeningVote to the store
       screeningVote.save()
     }
-    else if (stage === "FUNDING") {
+    else if (stage == "FUNDING") {
       // create FundingVote entity
       const fundingVote = loadOrCreateFundingVote(getFundingVoteId(proposalId, voter.id, distributionId))
 
