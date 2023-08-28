@@ -266,13 +266,10 @@ export function updatePool(pool: Pool): void {
       token = Token.load(pool.collateralToken)!
       scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
       unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
-      log.info("calculated scalefactor {} for {} pool with {} decimals", [scaleFactor.toString(), pool.poolType, token.decimals.toString()])
     } else {
       scaleFactor = TEN_BI.pow(18) // assume 18 decimal factor for ERC721
       unnormalizedTokenBalance = getERC721TokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
-      log.info("calculated scalefactor {} for {} pool", [scaleFactor.toString(), pool.poolType])
     }
-    log.info("multiplying token balance {} by scalefactor {} gives {}", [unnormalizedTokenBalance.toString(), scaleFactor.toString(), unnormalizedTokenBalance.times(scaleFactor).toString()])
     pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 
     // update rates and fees which change irrespective of borrow rate
