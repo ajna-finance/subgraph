@@ -262,7 +262,7 @@ export function updatePool(pool: Pool): void {
     pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
     // update collateral token balances
     // use the appropriate contract for querying balanceOf the pool
-    if (pool.poolType === 'Fungible') {
+    if (pool.poolType == 'Fungible') {
       token = Token.load(pool.collateralToken)!
       scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
       unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
