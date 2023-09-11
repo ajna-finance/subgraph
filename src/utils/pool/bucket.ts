@@ -79,8 +79,9 @@ export function updateBucketLends(bucket: Bucket, lend: Lend): void {
     // get current index of lend in bucket's list of lends
     const index = lends.indexOf(lend.id)
     if (lend.lpb != ZERO_BD && index == -1) {
-        bucket.lends = bucket.lends.concat([lend.id])
+      lends.push(lend.id)
     } else if (lend.lpb == ZERO_BD && index != -1) {
-        bucket.lends.splice(index, 1)
+      lends.splice(index, 1)
     }
+    bucket.lends = lends
 }

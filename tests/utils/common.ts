@@ -73,6 +73,12 @@ export function assertLendUpdate(params: LendUpdatedParams): void {
     assert.fieldEquals(
         "Lend",
         `${params.id.toHexString()}`,
+        "poolAddress",
+        `${params.poolAddress}`
+    )
+    assert.fieldEquals(
+        "Lend",
+        `${params.id.toHexString()}`,
         "depositTime",
         `${params.depositTime}`
     )

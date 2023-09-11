@@ -610,9 +610,10 @@ export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lp
     bucketBankruptcy.transactionHash = event.transaction.hash
 
     // update entities
-    const pool = Pool.load(addressToBytes(event.address))
-    if (pool != null) {
+    const pool = Pool.load(addressToBytes(event.address))!
+
     // update pool state
+    log.info("_handleBucketBankruptcy updating pool {} for bankruptcy in bucket {}", [event.address.toHexString(), index.toString()])
     updatePool(pool)
 
     // update bucket state to zero out bucket contents
@@ -648,8 +649,6 @@ export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lp
     // save entities to store
     pool.save()
     bucket.save()
-    }
-
     bucketBankruptcy.save()
 }
 
