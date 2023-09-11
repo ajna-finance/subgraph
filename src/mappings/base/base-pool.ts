@@ -630,6 +630,7 @@ export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lp
     // iterate through all bucket lends and set lend.lpb to zero
     for (let i = 0; i < bucket.lends.length; i++) {
         const lendId = bucket.lends[i]
+        log.info("_handleBucketBankruptcy loading lend {}", [lendId.toHexString()])
         const lend = Lend.load(lendId)!
         lend.lpb = ZERO_BD
         log.info("_handleBucketBankruptcy upadating bucket lends for {}", [lend.lender.toHexString()])
