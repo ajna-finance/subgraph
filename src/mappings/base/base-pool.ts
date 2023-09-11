@@ -642,8 +642,10 @@ export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lp
     }
 
     // iterate through all bucket positionLends and set positionLend.lpb to zero
+    log.info("_handleBucketBankruptcy bucket has {} positionLends", [bucket.positionLends.length.toString()])
     for (let i = 0; i < bucket.positionLends.length; i++) {
         const positionLendId = bucket.positionLends[i]
+        log.info("_handleBucketBankruptcy loading positionLend {}", [positionLendId.toHexString()])
         const positionLend = PositionLend.load(positionLendId)!
         positionLend.lpb = ZERO_BD
         log.info("_handleBucketBankruptcy calling saveOrRemovePositionLend for token {}", [positionLend.tokenId.toString()])
