@@ -29,7 +29,7 @@
       "startBlock": 17913208
     }
   },
-  "polygon": {
+  "matic": {
     "ERC20PoolFactory": {
       "address": "0x7f18C4DAfA5AEF9B0C4baF47e426bc57494ceE33",
       "startBlock": 46312499
