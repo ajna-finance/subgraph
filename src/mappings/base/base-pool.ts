@@ -610,9 +610,10 @@ export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lp
     bucketBankruptcy.transactionHash = event.transaction.hash
 
     // update entities
-    const pool = Pool.load(addressToBytes(event.address))
-    if (pool != null) {
+    const pool = Pool.load(addressToBytes(event.address))!
+
     // update pool state
+    log.info("_handleBucketBankruptcy updating pool {} for bankruptcy in bucket {}", [event.address.toHexString(), index.toString()])
     updatePool(pool)
 
     // update bucket state to zero out bucket contents
@@ -631,9 +632,12 @@ export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lp
         const lendId = bucket.lends[i]
         const lend = Lend.load(lendId)!
         lend.lpb = ZERO_BD
+        log.info("_handleBucketBankruptcy upadating bucket lends for {}", [lend.lender.toHexString()])
         updateBucketLends(bucket, lend)
+        log.info("_handleBucketBankruptcy upadating account lends for {}", [lend.lender.toHexString()])
         updateAccountLends(loadOrCreateAccount(lend.lender), lend)
         // remove lend from store
+        log.info("_handleBucketBankruptcy calling saveOrRemoveLend for {}", [lend.lender.toHexString()])
         saveOrRemoveLend(lend)
     }
 
@@ -642,14 +646,14 @@ export function _handleBucketBankruptcy(event: ethereum.Event, index: BigInt, lp
         const positionLendId = bucket.positionLends[i]
         const positionLend = PositionLend.load(positionLendId)!
         positionLend.lpb = ZERO_BD
+        log.info("_handleBucketBankruptcy calling saveOrRemovePositionLend for token {}", [positionLend.tokenId.toString()])
         saveOrRemovePositionLend(positionLend)
     }
 
     // save entities to store
+    log.info("_handleBucketBankruptcy saving entities", [])
     pool.save()
     bucket.save()
-    }
-
     bucketBankruptcy.save()
 }
 
