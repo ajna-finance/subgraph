@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { LPAllowance, LPAllowances } from "../../../generated/schema";
+import { BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { LPAllowance, LPAllowanceList } from "../../../generated/schema";
 import { wadToDecimal } from "../convert";
 
 export function getAllowancesId(poolId: Bytes, lenderId: Bytes, spenderId: Bytes): Bytes {
@@ -10,11 +10,11 @@ export function getAllowanceId(allowancesId: Bytes, index: BigInt): Bytes {
   return allowancesId.concat(Bytes.fromUTF8('|' + index.toString()))
 }
 
-export function loadOrCreateAllowances(poolId: Bytes, lenderId: Bytes, spenderId: Bytes): LPAllowances {
+export function loadOrCreateAllowances(poolId: Bytes, lenderId: Bytes, spenderId: Bytes): LPAllowanceList {
   let id = getAllowancesId(poolId, lenderId, spenderId)
-  let entity = LPAllowances.load(id)
+  let entity = LPAllowanceList.load(id)
   if (entity == null) {
-    entity = new LPAllowances(id) as LPAllowances
+    entity = new LPAllowanceList(id) as LPAllowanceList
     entity.pool = poolId
     entity.lender = lenderId
     entity.spender = spenderId
@@ -23,7 +23,7 @@ export function loadOrCreateAllowances(poolId: Bytes, lenderId: Bytes, spenderId
   return entity;
 }
 
-export function increaseAllowances(entity: LPAllowances, indexes: Array<BigInt>, amounts: Array<BigInt>): void {
+export function increaseAllowances(entity: LPAllowanceList, indexes: Array<BigInt>, amounts: Array<BigInt>): void {
   const id = entity.id;
   const entityAllowances = entity.allowances;
   for (var i=0; i<indexes.length; ++i) {
@@ -42,7 +42,7 @@ export function increaseAllowances(entity: LPAllowances, indexes: Array<BigInt>,
   entity.allowances = entityAllowances
 }
 
-export function decreaseAllowances(entity: LPAllowances, indexes: Array<BigInt>, amounts: Array<BigInt>): void {
+export function decreaseAllowances(entity: LPAllowanceList, indexes: Array<BigInt>, amounts: Array<BigInt>): void {
   const id = entity.id;
   const entityAllowances = entity.allowances;
   for (var i=0; i<indexes.length; ++i) {
@@ -64,7 +64,7 @@ export function decreaseAllowances(entity: LPAllowances, indexes: Array<BigInt>,
   entity.allowances = entityAllowances
 }
 
-export function revokeAllowances(entity: LPAllowances, indexes: Array<BigInt>): void {
+export function revokeAllowances(entity: LPAllowanceList, indexes: Array<BigInt>): void {
   const id = entity.id;
   const entityAllowances = entity.allowances;
   for (var i=0; i<indexes.length; ++i) {

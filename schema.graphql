@@ -290,13 +290,13 @@ type LPTransferorList @entity {
 
 # represents a LP allowance for a single bucket
 type LPAllowance @entity {
-  id: Bytes!          # LPAllowances.id + '|' + $index
+  id: Bytes!          # LPAllowanceList.id + '|' + $index
   index: Int!         # bucket index where an allowance has been granted
   amount: BigDecimal! # size of the allowance (measured in LP)
 }
 
 # updated upon Increase/Decrease/RevokeLPAllowance
-type LPAllowances @entity {
+type LPAllowanceList @entity {
   id: Bytes! # $poolAddress + '|' + $lender + '|' + $spender
   pool: Pool! # pool in which LP allowances have been granted
   lender: Bytes! # address of the lender who has granted an allowance
