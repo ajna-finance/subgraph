@@ -1,4 +1,4 @@
-import { BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
+import { log } from "@graphprotocol/graph-ts"
 
 import {
   AddCollateral as AddCollateralEvent,
@@ -56,7 +56,6 @@ import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidati
 import { updatePool, addLiquidationToPool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
 import { incrementTokenTxCount } from "../utils/token-erc20"
-import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
 import { _handleAddQuoteToken, _handleApproveLPTransferors, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {

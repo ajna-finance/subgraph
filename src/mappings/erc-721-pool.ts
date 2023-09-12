@@ -1,7 +1,8 @@
-import { ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
+import { ByteArray, Bytes, ethereum } from "@graphprotocol/graph-ts"
 import {
   AddCollateralNFT as AddCollateralNFTEvent,
   AddQuoteToken as AddQuoteTokenEvent,
+  ApproveLPTransferors as ApproveLPTransferorsEvent,
   AuctionNFTSettle as AuctionNFTSettleEvent,
   BucketBankruptcy as BucketBankruptcyEvent,
   BucketTake as BucketTakeEvent,
@@ -56,7 +57,7 @@ import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan, saveOrRemoveLoa
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "../utils/pool/liquidation"
 import { updatePool, addLiquidationToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
-import { _handleAddQuoteToken, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleApproveLPTransferors, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
 
 /*******************************/
 /*** Borrower Event Handlers ***/
@@ -839,12 +840,11 @@ export function handleTake(event: TakeEvent): void {
 /*** LPB Management Event Handlers ***/
 /*************************************/
 
-// TODO: add to 721 schema
-// export function handleApproveLPTransferors(
-//   event: ApproveLPTransferorsEvent
-// ): void {
-//   _handleApproveLPTransferors(event, event.params.lender, event.params.transferors)
-// }
+export function handleApproveLPTransferors(
+  event: ApproveLPTransferorsEvent
+): void {
+  _handleApproveLPTransferors(event, event.params.lender, event.params.transferors)
+}
 
 // identical to ERC20Pool
 export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
