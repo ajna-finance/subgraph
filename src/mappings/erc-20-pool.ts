@@ -1,4 +1,4 @@
-import { BigInt, Bytes, dataSource, log } from "@graphprotocol/graph-ts"
+import { log } from "@graphprotocol/graph-ts"
 
 import {
   AddCollateral as AddCollateralEvent,
@@ -56,9 +56,7 @@ import { getLiquidationAuctionId, getAuctionInfoERC20Pool, loadOrCreateLiquidati
 import { updatePool, addLiquidationToPool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
 import { incrementTokenTxCount } from "../utils/token-erc20"
-import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
-import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
-import { _handleAddQuoteToken, _handleBucketBankruptcy, _handleFlashLoan, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleApproveLPTransferors, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -126,16 +124,6 @@ export function handleAddQuoteToken(event: AddQuoteTokenEvent): void {
   // TODO: get compiler to ignore this line's INFO output
   event = changetype<AddQuoteTokenEvent | null>(event)!
   _handleAddQuoteToken(event, null)
-}
-
-export function handleApproveLPTransferors(
-  event: ApproveLPTransferorsEvent
-): void {
-  const poolId = addressToBytes(event.address)
-  const entity = loadOrCreateTransferors(poolId, event.params.lender)
-  approveTransferors(entity, event.params.transferors)
-
-  entity.save()
 }
 
 // ERC20Pool only
@@ -331,21 +319,6 @@ export function handleBucketTakeLPAwarded(
   bucketTake.save()
 }
 
-export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
-  const poolId = addressToBytes(event.address)
-  const lender = event.transaction.from
-  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  decreaseAllowances(entity, event.params.indexes, event.params.amounts)
-
-  const pool = Pool.load(poolId)
-  if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-    pool.save()
-  }
-
-  entity.save()
-}
-
 export function handleDrawDebt(event: DrawDebtEvent): void {
   const drawDebt = new DrawDebt(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -399,21 +372,6 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
 
 export function handleFlashloan(event: FlashloanEvent): void {
   _handleFlashLoan(event, event.params.token, event.params.receiver, event.params.amount)
-}
-
-export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
-  const poolId = addressToBytes(event.address)
-  const lender = event.transaction.from
-  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  increaseAllowances(entity, event.params.indexes, event.params.amounts)
-
-  const pool = Pool.load(poolId)
-  if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-    pool.save()
-  }
-
-  entity.save()
 }
 
 export function handleKick(event: KickEvent): void {
@@ -617,49 +575,6 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   repayDebt.save()
 }
 
-export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
-  _handleReserveAuctionKick(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
-}
-
-export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
-  _handleReserveAuctionTake(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
-}
-
-export function handleResetInterestRate(event: ResetInterestRateEvent): void {
-  _handleInterestRateEvent(event.address, event, event.params.newRate);
-}
-
-export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
-  const poolId = addressToBytes(event.address)
-  const lender = event.transaction.from
-  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  revokeAllowances(entity, event.params.indexes)
-
-  const pool = Pool.load(poolId)
-  if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-    pool.save()
-  }
-
-  entity.save()
-}
-
-export function handleRevokeLPTransferors(
-  event: RevokeLPTransferorsEvent
-): void {
-  const poolId = addressToBytes(event.address)
-  const entity = loadOrCreateTransferors(poolId, event.params.lender)
-  revokeTransferors(entity, event.params.transferors)
-
-  const pool = Pool.load(poolId)
-  if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-    pool.save()
-  }
-
-  entity.save()
-}
-
 export function handleTake(event: TakeEvent): void {
   const take = new Take(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -779,11 +694,59 @@ export function handleSettle(event: SettleEvent): void {
   settle.save()
 }
 
+/*************************************/
+/*** LPB Management Event Handlers ***/
+/*************************************/
+
+export function handleApproveLPTransferors(
+  event: ApproveLPTransferorsEvent
+): void {
+  _handleApproveLPTransferors(event, event.params.lender, event.params.transferors)
+}
+
+export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
+  _handleDecreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
+}
+
+export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
+  _handleIncreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
+}
+
+export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
+  _handleRevokeLPAllowance(event, event.params.spender, event.params.indexes)
+}
+
+export function handleRevokeLPTransferors(
+  event: RevokeLPTransferorsEvent
+): void {
+  _handleRevokeLPTransferors(event, event.params.lender, event.params.transferors)
+}
+
 export function handleTransferLP(event: TransferLPEvent): void {
   event = changetype<TransferLPEvent | null>(event)!
   _handleTransferLP(event, null)
 }
 
+/***************************/
+/*** Pool Event Handlers ***/
+/***************************/
+
+export function handleResetInterestRate(event: ResetInterestRateEvent): void {
+  _handleInterestRateEvent(event.address, event, event.params.newRate);
+}
+
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   _handleInterestRateEvent(event.address, event, event.params.newRate);
+}
+
+/*******************************/
+/*** Reserves Event Handlers ***/
+/*******************************/
+
+export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
+  _handleReserveAuctionKick(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
+}
+
+export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
+  _handleReserveAuctionTake(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
 }

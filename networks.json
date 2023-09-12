@@ -12,10 +12,6 @@
       "address": "0x0000000000000000000000000000000000000000",
       "startBlock": 17622995
     },
-    "RewardsManager": {
-      "address": "0x0000000000000000000000000000000000000000",
-      "startBlock": 17622995
-    },
     "GrantFund": {
       "address": "0x0000000000000000000000000000000000000000",
       "startBlock": 17622995
@@ -39,10 +35,6 @@
       "startBlock": 46312499
     },
     "PositionManager": {
-      "address": "0x0000000000000000000000000000000000000000",
-      "startBlock": 46312499
-    },
-    "RewardsManager": {
       "address": "0x0000000000000000000000000000000000000000",
       "startBlock": 46312499
     },
@@ -72,10 +64,6 @@
       "address": "0x23E2EFF19bd50BfCF0364B7dCA01004D5cce41f9",
       "startBlock": 9289397
     },
-    "RewardsManager": {
-      "address": "0x994dE190dd763Af3126FcC8EdC139275937d800b",
-      "startBlock": 9289397
-    },
     "GrantFund": {
       "address": "0x881b4dFF6C72babA6f5eA60f34A61410c1EA1ec2",
       "startBlock": 9297080
@@ -99,10 +87,6 @@
       "startBlock": 38580888
     },
     "PositionManager": {
-      "address": "0x0000000000000000000000000000000000000000",
-      "startBlock": 38580888
-    },
-    "RewardsManager": {
       "address": "0x0000000000000000000000000000000000000000",
       "startBlock": 38580888
     },
@@ -130,10 +114,6 @@
     },
     "PositionManager": {
       "address": "0x6548dF23A854f72335902e58a1e59B50bb3f11F1",
-      "startBlock": 0
-    },
-    "RewardsManager": {
-      "address": "0xdF7403003a16c49ebA5883bB5890d474794cea5a",
       "startBlock": 0
     },
     "GrantFund": {

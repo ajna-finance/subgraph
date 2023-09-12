@@ -290,13 +290,13 @@ type LPTransferorList @entity {
 
 # represents a LP allowance for a single bucket
 type LPAllowance @entity {
-  id: Bytes!          # LPAllowances.id + '|' + $index
+  id: Bytes!          # LPAllowanceList.id + '|' + $index
   index: Int!         # bucket index where an allowance has been granted
   amount: BigDecimal! # size of the allowance (measured in LP)
 }
 
 # updated upon Increase/Decrease/RevokeLPAllowance
-type LPAllowances @entity {
+type LPAllowanceList @entity {
   id: Bytes! # $poolAddress + '|' + $lender + '|' + $spender
   pool: Pool! # pool in which LP allowances have been granted
   lender: Bytes! # address of the lender who has granted an allowance
@@ -772,93 +772,6 @@ type RedeemPosition @entity(immutable: true) {
   lender: Bytes!   # address
   tokenId: BigInt! # uint256
   indexes: [Int!]! # uint256[]
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-  # # # # # # # # # # # # # # #
-  # REWARDS MANAGER ENTITIES  #
-  # # # # # # # # # # # # # # #
-
-type StakedPosition @entity {
-  id: Bytes! # byte encoded tokenId
-  position: Position! # pointer to associated Position entity
-  epochs: [EpochReward!]! # list of EpochRewards associated to a staked position
-  stakedEpoch: Int! # epoch in which the position was staked
-  lastClaimedEpoch: Int! # last epoch which the position staked or claimed rewards in
-  # lpAtStakeTime: BigDecimal! # the amount of LPB associated with a given index TODO: store information per index?
-  # rateAtStakeTime: BigDecimal! # the exchange rate at a given index at stake time
-}
-
-type EpochReward @entity {
-  id: Bytes! # byte encoded epoch + '|' + $StakedPosition.id
-  rewardsClaimed: BigDecimal! # ajna tokens claimed in this epoch
-  updateRewardsClaimed: BigDecimal!
-  totalRewardsClaimed: BigDecimal!
-}
-
-# TODO: is this entity necessary? if so referenced by index in stakedposition list
-# house state tracking information about a staked position in a single bucket index
-type StakedLiquidity @entity {
-  id: Bytes! # $lendId + '|' + $StakedPosition.id
-  lpAtStakeTime: BigDecimal!   # the amount of LPB associated with a given index
-  rateAtStakeTime: BigDecimal! # the exchange rate at a given index at stake time
-}
-
-  # # # # # # # # # # # # # #
-  # REWARDS MANAGER EVENTS  #
-  # # # # # # # # # # # # # #
-
-type ClaimRewards @entity(immutable: true) {
-  id: Bytes!
-  owner: Bytes!             # address
-  pool: Pool!
-  tokenId: BigInt!          # uint256
-  epochsClaimed: [BigInt!]! # uint256[]
-  amount: BigDecimal!       # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type MoveStakedLiquidity @entity(immutable: true) {
-  id: Bytes!
-  tokenId: BigInt!     # uint256
-  pool: Pool!
-  fromIndexes: [Int!]! # uint256
-  toIndexes: [Int!]!   # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type Stake @entity(immutable: true) {
-  id: Bytes!
-  owner: Bytes!    # address
-  pool: Pool!
-  tokenId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type Unstake @entity(immutable: true) {
-  id: Bytes!
-  owner: Bytes!    # address
-  pool: Pool!
-  tokenId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type UpdateExchangeRates @entity(immutable: true) {
-  id: Bytes!
-  caller: Bytes!             # address
-  pool: Pool!
-  indexesUpdated: [BigInt!]! # uint256[]
-  rewardsClaimed: BigInt!    # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
