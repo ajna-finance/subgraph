@@ -57,9 +57,6 @@ import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidat
 import { updatePool, addLiquidationToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
 import { _handleAddQuoteToken, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
-import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
-import { loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
-
 
 /*******************************/
 /*** Borrower Event Handlers ***/
@@ -842,54 +839,25 @@ export function handleTake(event: TakeEvent): void {
 /*** LPB Management Event Handlers ***/
 /*************************************/
 
+// TODO: add to 721 schema
+// export function handleApproveLPTransferors(
+//   event: ApproveLPTransferorsEvent
+// ): void {
+//   _handleApproveLPTransferors(event, event.params.lender, event.params.transferors)
+// }
+
 // identical to ERC20Pool
 export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
-  // const poolId = addressToBytes(event.address)
-  // const lender = event.transaction.from
-  // const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  // decreaseAllowances(entity, event.params.indexes, event.params.amounts)
-
-  // const pool = Pool.load(poolId)
-  // if (pool != null) {
-  //   pool.txCount = pool.txCount.plus(ONE_BI)
-  //   pool.save()
-  // }
-
-  // entity.save()
   _handleDecreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
 }
 
 // identical to ERC20Pool
 export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
-  // const poolId = addressToBytes(event.address)
-  // const lender = event.transaction.from
-  // const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  // increaseAllowances(entity, event.params.indexes, event.params.amounts)
-
-  // const pool = Pool.load(poolId)
-  // if (pool != null) {
-  //   pool.txCount = pool.txCount.plus(ONE_BI)
-  //   pool.save()
-  // }
-
-  // entity.save()
   _handleIncreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
 }
 
 // identical to ERC20Pool
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
-  // const poolId = addressToBytes(event.address)
-  // const lender = event.transaction.from
-  // const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  // revokeAllowances(entity, event.params.indexes)
-
-  // const pool = Pool.load(poolId)
-  // if (pool != null) {
-  //   pool.txCount = pool.txCount.plus(ONE_BI)
-  //   pool.save()
-  // }
-
-  // entity.save()
   _handleRevokeLPAllowance(event, event.params.spender, event.params.indexes)
 }
 
@@ -897,37 +865,12 @@ export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
 export function handleRevokeLPTransferors(
   event: RevokeLPTransferorsEvent
 ): void {
-  // const poolId = addressToBytes(event.address)
-  // const entity = loadOrCreateTransferors(poolId, event.params.lender)
-  // revokeTransferors(entity, event.params.transferors)
-
-  // const pool = Pool.load(poolId)
-  // if (pool != null) {
-  //   pool.txCount = pool.txCount.plus(ONE_BI)
-  //   pool.save()
-  // }
-
-  // entity.save()
   _handleRevokeLPTransferors(event, event.params.lender, event.params.transferors)
 }
 
 export function handleTransferLP(event: TransferLPEvent): void {
   event = changetype<TransferLPEvent | null>(event)!
   _handleTransferLP(null, event)
-}
-
-/*******************************/
-/*** Reserves Event Handlers ***/
-/*******************************/
-
-// identical to ERC20Pool
-export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
-  _handleReserveAuctionKick(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
-}
-
-// identical to ERC20Pool
-export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
-  _handleReserveAuctionTake(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
 }
 
 /***************************/
@@ -942,4 +885,18 @@ export function handleResetInterestRate(event: ResetInterestRateEvent): void {
 // identical to ERC20Pool
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   _handleInterestRateEvent(event.address, event, event.params.newRate);
+}
+
+/*******************************/
+/*** Reserves Event Handlers ***/
+/*******************************/
+
+// identical to ERC20Pool
+export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
+  _handleReserveAuctionKick(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
+}
+
+// identical to ERC20Pool
+export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
+  _handleReserveAuctionTake(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
 }

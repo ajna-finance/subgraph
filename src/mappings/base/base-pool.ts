@@ -24,7 +24,7 @@ import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
 import { saveOrRemovePositionLend } from "../../utils/position"
 import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "../../utils/pool/lp-allowances"
-import { loadOrCreateTransferors, revokeTransferors } from "../../utils/pool/lp-transferors"
+import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "../../utils/pool/lp-transferors"
 
 
 /*******************************/
@@ -503,6 +503,19 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
 /*************************************/
 /*** LPB Management Event Handlers ***/
 /*************************************/
+
+export function _handleApproveLPTransferors(event: ethereum.Event, lender: Address, transferors: Address[]): void {
+    const poolId = addressToBytes(event.address)
+    const entity = loadOrCreateTransferors(poolId, lender)
+    approveTransferors(entity, transferors)
+
+    const pool = Pool.load(poolId)!
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // save entities to the store
+    pool.save()
+    entity.save()
+}
 
 export function _handleDecreaseLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
     const poolId = addressToBytes(event.address)
