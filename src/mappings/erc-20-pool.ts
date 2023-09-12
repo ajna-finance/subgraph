@@ -58,7 +58,7 @@ import { lpbValueInQuote } from "../utils/pool/lend"
 import { incrementTokenTxCount } from "../utils/token-erc20"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "../utils/pool/lp-transferors"
 import { loadOrCreateAllowances, increaseAllowances, decreaseAllowances, revokeAllowances } from "../utils/pool/lp-allowances"
-import { _handleAddQuoteToken, _handleBucketBankruptcy, _handleFlashLoan, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
 
 export function handleAddCollateral(event: AddCollateralEvent): void {
   const addCollateral = new AddCollateral(
@@ -332,18 +332,19 @@ export function handleBucketTakeLPAwarded(
 }
 
 export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
-  const poolId = addressToBytes(event.address)
-  const lender = event.transaction.from
-  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  decreaseAllowances(entity, event.params.indexes, event.params.amounts)
+  // const poolId = addressToBytes(event.address)
+  // const lender = event.transaction.from
+  // const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  // decreaseAllowances(entity, event.params.indexes, event.params.amounts)
 
-  const pool = Pool.load(poolId)
-  if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-    pool.save()
-  }
+  // const pool = Pool.load(poolId)
+  // if (pool != null) {
+  //   pool.txCount = pool.txCount.plus(ONE_BI)
+  //   pool.save()
+  // }
 
-  entity.save()
+  // entity.save()
+  _handleDecreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
 }
 
 export function handleDrawDebt(event: DrawDebtEvent): void {
@@ -402,18 +403,19 @@ export function handleFlashloan(event: FlashloanEvent): void {
 }
 
 export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
-  const poolId = addressToBytes(event.address)
-  const lender = event.transaction.from
-  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  increaseAllowances(entity, event.params.indexes, event.params.amounts)
+  // const poolId = addressToBytes(event.address)
+  // const lender = event.transaction.from
+  // const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  // increaseAllowances(entity, event.params.indexes, event.params.amounts)
 
-  const pool = Pool.load(poolId)
-  if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-    pool.save()
-  }
+  // const pool = Pool.load(poolId)
+  // if (pool != null) {
+  //   pool.txCount = pool.txCount.plus(ONE_BI)
+  //   pool.save()
+  // }
 
-  entity.save()
+  // entity.save()
+  _handleIncreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
 }
 
 export function handleKick(event: KickEvent): void {
@@ -630,34 +632,36 @@ export function handleResetInterestRate(event: ResetInterestRateEvent): void {
 }
 
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
-  const poolId = addressToBytes(event.address)
-  const lender = event.transaction.from
-  const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
-  revokeAllowances(entity, event.params.indexes)
+  // const poolId = addressToBytes(event.address)
+  // const lender = event.transaction.from
+  // const entity = loadOrCreateAllowances(poolId, lender, event.params.spender)
+  // revokeAllowances(entity, event.params.indexes)
 
-  const pool = Pool.load(poolId)
-  if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-    pool.save()
-  }
+  // const pool = Pool.load(poolId)
+  // if (pool != null) {
+  //   pool.txCount = pool.txCount.plus(ONE_BI)
+  //   pool.save()
+  // }
 
-  entity.save()
+  // entity.save()
+  _handleRevokeLPAllowance(event, event.params.spender, event.params.indexes)
 }
 
 export function handleRevokeLPTransferors(
   event: RevokeLPTransferorsEvent
 ): void {
-  const poolId = addressToBytes(event.address)
-  const entity = loadOrCreateTransferors(poolId, event.params.lender)
-  revokeTransferors(entity, event.params.transferors)
+  // const poolId = addressToBytes(event.address)
+  // const entity = loadOrCreateTransferors(poolId, event.params.lender)
+  // revokeTransferors(entity, event.params.transferors)
 
-  const pool = Pool.load(poolId)
-  if (pool != null) {
-    pool.txCount = pool.txCount.plus(ONE_BI)
-    pool.save()
-  }
+  // const pool = Pool.load(poolId)
+  // if (pool != null) {
+  //   pool.txCount = pool.txCount.plus(ONE_BI)
+  //   pool.save()
+  // }
 
-  entity.save()
+  // entity.save()
+  _handleRevokeLPTransferors(event, event.params.lender, event.params.transferors)
 }
 
 export function handleTake(event: TakeEvent): void {

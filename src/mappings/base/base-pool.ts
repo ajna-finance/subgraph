@@ -23,6 +23,8 @@ import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../u
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
 import { saveOrRemovePositionLend } from "../../utils/position"
+import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "../../utils/pool/lp-allowances"
+import { loadOrCreateTransferors, revokeTransferors } from "../../utils/pool/lp-transferors"
 
 
 /*******************************/
@@ -496,6 +498,65 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
     newOwnerAccount.save()
     pool.save()
     transferLP.save()
+}
+
+/*************************************/
+/*** LPB Management Event Handlers ***/
+/*************************************/
+
+export function _handleDecreaseLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
+    const poolId = addressToBytes(event.address)
+    const lender = event.transaction.from
+    const entity = loadOrCreateAllowances(poolId, lender, spender)
+    decreaseAllowances(entity, indexes, amounts)
+
+    const pool = Pool.load(poolId)!
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // save entities to the store
+    pool.save()
+    entity.save()
+}
+
+export function _handleIncreaseLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
+    const poolId = addressToBytes(event.address)
+    const lender = event.transaction.from
+    const entity = loadOrCreateAllowances(poolId, lender, spender)
+    increaseAllowances(entity, indexes, amounts)
+
+    const pool = Pool.load(poolId)!
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // save entities to the store
+    pool.save()
+    entity.save()
+}
+
+export function _handleRevokeLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[]): void {
+    const poolId = addressToBytes(event.address)
+    const lender = event.transaction.from
+    const entity = loadOrCreateAllowances(poolId, lender, spender)
+    revokeAllowances(entity, indexes)
+
+    const pool = Pool.load(poolId)!
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // save entities to the store
+    pool.save()
+    entity.save()
+}
+
+export function _handleRevokeLPTransferors(event: ethereum.Event, lender: Address, transferors: Address[]): void {
+    const poolId = addressToBytes(event.address)
+    const entity = loadOrCreateTransferors(poolId, lender)
+    revokeTransferors(entity, transferors)
+
+    const pool = Pool.load(poolId)!
+    pool.txCount = pool.txCount.plus(ONE_BI)
+
+    // save entities to the store
+    pool.save()
+    entity.save()
 }
 
 /*******************************/
