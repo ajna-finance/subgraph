@@ -187,15 +187,16 @@ export function handleBucketBankruptcy(event: BucketBankruptcyEvent): void {
 }
 
 export function handleBucketTake(event: BucketTakeEvent): void {
-  const bucketTakeId    = event.transaction.hash.concatI32(event.logIndex.toI32());
-  const bucketTake      = BucketTake.load(bucketTakeId)!
-  bucketTake.borrower   = event.params.borrower
-  bucketTake.taker      = event.transaction.from
-  bucketTake.index      = event.params.index.toU32()
-  bucketTake.amount     = wadToDecimal(event.params.amount)
-  bucketTake.collateral = wadToDecimal(event.params.collateral)
-  bucketTake.bondChange = wadToDecimal(event.params.bondChange)
-  bucketTake.isReward   = event.params.isReward
+  const bucketTakeId      = event.transaction.hash.concatI32(event.logIndex.toI32());
+  const bucketTake        = BucketTake.load(bucketTakeId)!
+  bucketTake.borrower     = event.params.borrower
+  bucketTake.taker        = event.transaction.from
+  bucketTake.index        = event.params.index.toU32()
+  bucketTake.amount       = wadToDecimal(event.params.amount)
+  bucketTake.collateral   = wadToDecimal(event.params.collateral)
+  bucketTake.auctionPrice = bucketTake.amount.div(bucketTake.collateral)
+  bucketTake.bondChange   = wadToDecimal(event.params.bondChange)
+  bucketTake.isReward     = event.params.isReward
 
   bucketTake.blockNumber     = event.block.number
   bucketTake.blockTimestamp  = event.block.timestamp
@@ -229,10 +230,8 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   // update liquidation auction state
   const auctionId = loan.liquidationAuction!
   const auction   = LiquidationAuction.load(auctionId)!
-  updateLiquidationAuction(auction, auctionInfo, auctionStatus)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus, bucketTake.auctionPrice)
   auction.bucketTakes = auction.bucketTakes.concat([bucketTake.id])
-
-  bucketTake.auctionPrice = wadToDecimal(auctionStatus.price)
 
   // update kick and pool for the change in bond as a result of the take
   const kick = Kick.load(auction.kick)!
@@ -420,7 +419,7 @@ export function handleKick(event: KickEvent): void {
   // update liquidation auction state
   const auctionId = getLiquidationAuctionId(pool.id, loan.id, kick.blockNumber)
   const auction = loadOrCreateLiquidationAuction(pool.id, auctionId, kick, loan)
-  updateLiquidationAuction(auction, auctionInfo, auctionStatus, false)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus)
 
   kick.kickMomp = wadToDecimal(auctionInfo.kickMomp)
   kick.startingPrice = wadToDecimal(auctionStatus.price)
@@ -579,12 +578,13 @@ export function handleTake(event: TakeEvent): void {
   const take = new Take(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  take.borrower   = event.params.borrower
-  take.taker      = event.transaction.from
-  take.amount     = wadToDecimal(event.params.amount)
-  take.collateral = wadToDecimal(event.params.collateral)
-  take.bondChange = wadToDecimal(event.params.bondChange)
-  take.isReward   = event.params.isReward
+  take.borrower     = event.params.borrower
+  take.taker        = event.transaction.from
+  take.amount       = wadToDecimal(event.params.amount)
+  take.collateral   = wadToDecimal(event.params.collateral)
+  take.auctionPrice = take.amount.div(take.collateral)
+  take.bondChange   = wadToDecimal(event.params.bondChange)
+  take.isReward     = event.params.isReward
 
   take.blockNumber = event.block.number
   take.blockTimestamp = event.block.timestamp
@@ -615,11 +615,10 @@ export function handleTake(event: TakeEvent): void {
   auction.takes = auction.takes.concat([take.id])
   const auctionInfo = getAuctionInfoERC20Pool(take.borrower, pool)
   const auctionStatus = getAuctionStatus(pool, event.params.borrower)
-  updateLiquidationAuction(auction, auctionInfo, auctionStatus)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus, take.auctionPrice)
 
   const collateralPurchased = wadToDecimal(event.params.collateral)
   pool.pledgedCollateral    = pool.pledgedCollateral.minus(collateralPurchased)
-  take.auctionPrice         = wadToDecimal(auctionStatus.price)
 
   // update kick and pool for the change in bond as a result of the take
   const kick = Kick.load(auction.kick)!
@@ -678,7 +677,7 @@ export function handleSettle(event: SettleEvent): void {
   const auction   = LiquidationAuction.load(auctionId)!
   const auctionInfo = getAuctionInfoERC20Pool(settle.borrower, pool)
   const auctionStatus = getAuctionStatus(pool, event.params.borrower)
-  updateLiquidationAuction(auction, auctionInfo, auctionStatus, false, true)
+  updateLiquidationAuction(auction, auctionInfo, auctionStatus)
   auction.settles = auction.settles.concat([settle.id])
 
   // update settle pointers
@@ -690,7 +689,6 @@ export function handleSettle(event: SettleEvent): void {
   account.save()
   auction.save()
   pool.save()
-
   settle.save()
 }
 

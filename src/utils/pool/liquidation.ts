@@ -74,18 +74,18 @@ export function updateLiquidationAuction(
   liquidationAuction: LiquidationAuction, 
   auctionInfo: AuctionInfo, 
   auctionStatus: AuctionStatus,
-  isTake: bool = true,
-  isSettle: bool = false): void {
-    if (!isSettle) {
-      if (isTake) liquidationAuction.lastTakePrice = wadToDecimal(auctionStatus.price)
-      liquidationAuction.bondFactor   = wadToDecimal(auctionInfo.bondFactor)
-      liquidationAuction.bondSize     = wadToDecimal(auctionInfo.bondSize)
-      liquidationAuction.kickTime     = auctionInfo.kickTime
-      liquidationAuction.neutralPrice = wadToDecimal(auctionInfo.neutralPrice)
+  lastTakePrice: BigDecimal | null = null): void {
+    // kickTime of 0 indicates auction was settled and auctionInfo/auctionStatus have no useful information
+    if (auctionInfo.kickTime != ZERO_BI) {
+      liquidationAuction.collateralRemaining = wadToDecimal(auctionStatus.collateral)
+      liquidationAuction.debtRemaining       = wadToDecimal(auctionStatus.debtToCover)  
+      liquidationAuction.bondFactor          = wadToDecimal(auctionInfo.bondFactor)
+      liquidationAuction.bondSize            = wadToDecimal(auctionInfo.bondSize)
+      liquidationAuction.kickTime            = auctionInfo.kickTime
+      liquidationAuction.neutralPrice        = wadToDecimal(auctionInfo.neutralPrice)
     }
-
-    liquidationAuction.collateralRemaining = wadToDecimal(auctionStatus.collateral)
-    liquidationAuction.debtRemaining       = wadToDecimal(auctionStatus.debtToCover)
+    if (lastTakePrice) 
+      liquidationAuction.lastTakePrice = lastTakePrice
 }
 
 export class AuctionInfo {
