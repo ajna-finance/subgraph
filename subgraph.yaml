@@ -74,41 +74,6 @@ dataSources:
       file: ./src/mappings/erc-20-pool-factory.ts
     network: goerli
   - kind: ethereum
-    name: RewardsManager
-    source:
-      abi: RewardsManager
-      address: "0x994dE190dd763Af3126FcC8EdC139275937d800b"
-      startBlock: 9289397
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      entities:
-        - ClaimRewards
-        - MoveStakedLiquidity
-        - Stake
-        - Unstake
-        - UpdateExchangeRates
-      abis:
-        - name: RewardsManager
-          file: ./abis/RewardsManager.json
-        - name: PositionManager
-          file: ./abis/PositionManager.json
-      eventHandlers:
-        - event: ClaimRewards(indexed address,indexed address,indexed
-            uint256,uint256[],uint256)
-          handler: handleClaimRewards
-        - event: MoveStakedLiquidity(uint256,uint256[],uint256[])
-          handler: handleMoveStakedLiquidity
-        - event: Stake(indexed address,indexed address,indexed uint256)
-          handler: handleStake
-        - event: Unstake(indexed address,indexed address,indexed uint256)
-          handler: handleUnstake
-        - event: UpdateExchangeRates(indexed address,indexed address,uint256[],uint256)
-          handler: handleUpdateExchangeRates
-      file: ./src/mappings/rewards-manager.ts
-    network: goerli
-  - kind: ethereum
     name: ERC721PoolFactory
     source:
       abi: ERC721PoolFactory

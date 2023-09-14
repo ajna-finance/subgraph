@@ -1,7 +1,8 @@
-import { ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
+import { ByteArray, Bytes, ethereum } from "@graphprotocol/graph-ts"
 import {
   AddCollateralNFT as AddCollateralNFTEvent,
   AddQuoteToken as AddQuoteTokenEvent,
+  ApproveLPTransferors as ApproveLPTransferorsEvent,
   AuctionNFTSettle as AuctionNFTSettleEvent,
   BucketBankruptcy as BucketBankruptcyEvent,
   BucketTake as BucketTakeEvent,
@@ -56,7 +57,7 @@ import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan, saveOrRemoveLoa
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "../utils/pool/liquidation"
 import { updatePool, addLiquidationToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
-import { _handleAddQuoteToken, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleApproveLPTransferors, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
 
 /*******************************/
 /*** Borrower Event Handlers ***/
@@ -839,29 +840,24 @@ export function handleTake(event: TakeEvent): void {
 /*** LPB Management Event Handlers ***/
 /*************************************/
 
-// TODO: add to 721 schema
-// export function handleApproveLPTransferors(
-//   event: ApproveLPTransferorsEvent
-// ): void {
-//   _handleApproveLPTransferors(event, event.params.lender, event.params.transferors)
-// }
+export function handleApproveLPTransferors(
+  event: ApproveLPTransferorsEvent
+): void {
+  _handleApproveLPTransferors(event, event.params.lender, event.params.transferors)
+}
 
-// identical to ERC20Pool
 export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
   _handleDecreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
 }
 
-// identical to ERC20Pool
 export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
   _handleIncreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
 }
 
-// identical to ERC20Pool
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
   _handleRevokeLPAllowance(event, event.params.spender, event.params.indexes)
 }
 
-// identical to ERC20Pool
 export function handleRevokeLPTransferors(
   event: RevokeLPTransferorsEvent
 ): void {
@@ -877,12 +873,10 @@ export function handleTransferLP(event: TransferLPEvent): void {
 /*** Pool Event Handlers ***/
 /***************************/
 
-// identical to ERC20Pool
 export function handleResetInterestRate(event: ResetInterestRateEvent): void {
   _handleInterestRateEvent(event.address, event, event.params.newRate);
 }
 
-// identical to ERC20Pool
 export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
   _handleInterestRateEvent(event.address, event, event.params.newRate);
 }
@@ -891,12 +885,10 @@ export function handleUpdateInterestRate(event: UpdateInterestRateEvent): void {
 /*** Reserves Event Handlers ***/
 /*******************************/
 
-// identical to ERC20Pool
 export function handleReserveAuctionKick(event: KickReserveAuctionEvent): void {
   _handleReserveAuctionKick(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
 }
 
-// identical to ERC20Pool
 export function handleReserveAuctionTake(event: ReserveAuctionEvent): void {
   _handleReserveAuctionTake(event, event.params.currentBurnEpoch, event.params.claimableReservesRemaining, event.params.auctionPrice)
 }
