@@ -1,5 +1,3 @@
-# TODO: track approvals?
-# TODO: track token liquidity across all Ajna pools
 # this supports both ERC20 and ERC721 tokens, as union types aren't currently supported
 type Token @entity {
   # token address
@@ -14,11 +12,12 @@ type Token @entity {
   tokenType: String! # ERC20 or ERC721
   # number of pools including this token
   poolCount: BigInt!
+  # list of pools including this token
+  pools: [Pool!]!
   # total supply of the token
   totalSupply: BigInt
   # transactions across all pools that include this token
   txCount: BigInt!
-  # TODO: track which tokenIds have been used in pools?
 }
 
 

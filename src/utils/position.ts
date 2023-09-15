@@ -24,6 +24,7 @@ export function loadOrCreateLPToken(tokenAddress: Address): Token {
     token.tokenType   = "ERC721"
     token.poolCount   = ONE_BI
     token.totalSupply = ONE_BI
+    token.pools       = []
   }
 
   return token

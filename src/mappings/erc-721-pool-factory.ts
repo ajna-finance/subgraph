@@ -6,7 +6,7 @@ import { ERC721Pool as ERC721PoolContract } from "../../generated/templates/ERC7
 import { ONE_BI, ZERO_BI } from "../utils/constants"
 import { addressToBytes, wadToDecimal } from "../utils/convert"
 import { loadOrCreateFactory } from "../utils/pool/pool-factory"
-import { getPoolSubsetHash, getRatesAndFees, loadOrCreatePool } from "../utils/pool/pool"
+import { getPoolSubsetHash, getRatesAndFees, loadOrCreatePool, updateTokenPools } from "../utils/pool/pool"
 import { getTokenName as getTokenNameERC721, getTokenSymbol as getTokenSymbolERC721} from "../utils/token-erc721"
 import { getTokenDecimals, getTokenName, getTokenSymbol, getTokenTotalSupply } from "../utils/token-erc20"
 import { BigInt, ByteArray, Bytes, ethereum } from "@graphprotocol/graph-ts"
@@ -76,6 +76,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     collateralToken.txCount = ZERO_BI
     collateralToken.poolCount = ONE_BI
     collateralToken.tokenType = "ERC721"
+    collateralToken.pools = []
   } else {
     collateralToken.poolCount = collateralToken.poolCount.plus(ONE_BI)
   }
@@ -90,6 +91,7 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
     quoteToken.txCount = ZERO_BI
     quoteToken.tokenType = "ERC20"
     quoteToken.poolCount = ONE_BI
+    quoteToken.pools = []
   } else {
     quoteToken.poolCount = quoteToken.poolCount.plus(ONE_BI)
   }
@@ -97,6 +99,10 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   // create pool entity
   const pool = loadOrCreatePool(event.params.pool_)
   ERC721Pool.create(event.params.pool_) // create pool template
+
+  // update list of pools including these tokens
+  updateTokenPools(collateralToken, pool)
+  updateTokenPools(quoteToken, pool)
 
   // record pool metadata
   pool.createdAtTimestamp = event.block.timestamp
