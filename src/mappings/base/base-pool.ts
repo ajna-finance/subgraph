@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, Bucket, BucketBankruptcy, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, PositionLend, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, BondWithdrawn, Bucket, BucketBankruptcy, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, PositionLend, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -569,6 +569,25 @@ export function _handleRevokeLPTransferors(event: ethereum.Event, lender: Addres
 
     // save entities to the store
     pool.save()
+    entity.save()
+}
+
+/**********************************/
+/*** Liquidation Event Handlers ***/
+/**********************************/
+
+export function _handleBondWithdrawn(event: ethereum.Event, kicker: Address, reciever: Address, amount: BigInt): void {
+    const entity = new BondWithdrawn(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.kicker = kicker
+    entity.reciever = reciever
+    entity.amount = wadToDecimal(amount)
+
+    entity.blockNumber = event.block.number
+    entity.blockTimestamp = event.block.timestamp
+    entity.transactionHash = event.transaction.hash
+
     entity.save()
 }
 
