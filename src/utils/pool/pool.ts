@@ -481,9 +481,8 @@ export function depositUpToIndex(poolAddress: Address, index: u32): BigInt {
 }
 
 export function updateTokenPools(token: Token, pool: Pool): void {
-  const pools = token.pools
   // get current index of pool in token's list of pools
-  const index = pools.indexOf(pool.id)
+  const index = token.pools.indexOf(pool.id)
   if (index == -1) {
       token.pools = token.pools.concat([pool.id])
   }
