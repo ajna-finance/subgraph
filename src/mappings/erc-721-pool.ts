@@ -419,7 +419,7 @@ export function handleMergeOrRemoveCollateralNFT(
 /*** Liquidation Event Handlers ***/
 /**********************************/
 
-// identical to ERC20Pool
+// TODO: move to base pool
 export function handleBondWithdrawn(event: BondWithdrawnEvent): void {
   const entity = new BondWithdrawn(
     event.transaction.hash.concatI32(event.logIndex.toI32())
