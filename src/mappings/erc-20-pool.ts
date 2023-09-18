@@ -712,7 +712,7 @@ export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void
 }
 
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {
-  _handleRevokeLPAllowance(event, event.params.spender, event.params.indexes)
+  _handleRevokeLPAllowance(event, event.params.owner, event.params.spender, event.params.indexes)
 }
 
 export function handleRevokeLPTransferors(

@@ -545,10 +545,9 @@ export function _handleIncreaseLPAllowance(event: ethereum.Event, owner: Address
     lpAllowanceList.save()
 }
 
-export function _handleRevokeLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[]): void {
+export function _handleRevokeLPAllowance(event: ethereum.Event, owner: Address, spender: Address, indexes: BigInt[]): void {
     const poolId = addressToBytes(event.address)
-    const lender = event.transaction.from
-    const entity = loadOrCreateAllowances(poolId, lender, spender)
+    const entity = loadOrCreateAllowances(poolId, owner, spender)
     revokeAllowances(entity, indexes)
 
     const pool = Pool.load(poolId)!

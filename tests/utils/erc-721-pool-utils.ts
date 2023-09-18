@@ -231,6 +231,7 @@ export function createIncreaseLPAllowanceEvent(
 
 export function createRevokeLPAllowanceEvent(
   pool: Address,
+  owner: Address,
   spender: Address,
   indexes: Array<BigInt>
 ): RevokeLPAllowance {
@@ -238,6 +239,9 @@ export function createRevokeLPAllowanceEvent(
 
   revokeLPAllowanceEvent.parameters = new Array()
 
+  revokeLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam("owner", ethereum.Value.fromAddress(owner))
+  )
   revokeLPAllowanceEvent.parameters.push(
     new ethereum.EventParam("spender", ethereum.Value.fromAddress(spender))
   )

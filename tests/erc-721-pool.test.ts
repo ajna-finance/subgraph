@@ -11,8 +11,8 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { Account, Lend, Loan } from "../generated/schema"
-import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick, handleAuctionNFTSettle, handleSettle, handleTake, handleBucketTakeLPAwarded, handleBucketTake, handleTransferLP, handleApproveLPTransferors, handleIncreaseLPAllowance, handleDecreaseLPAllowance } from "../src/mappings/erc-721-pool"
-import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent, createAuctionNFTSettleEvent, createSettleEvent, createTakeEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createTransferLPEvent, createApproveLPTransferorsEvent, createIncreaseLPAllowanceEvent, createDecreaseLPAllowanceEvent } from "./utils/erc-721-pool-utils"
+import { handleAddCollateralNFT, handleAddQuoteToken, handleDrawDebtNFT, handleRepayDebt, handleMergeOrRemoveCollateralNFT, handleRemoveCollateral, handleKick, handleAuctionNFTSettle, handleSettle, handleTake, handleBucketTakeLPAwarded, handleBucketTake, handleTransferLP, handleApproveLPTransferors, handleIncreaseLPAllowance, handleDecreaseLPAllowance, handleRevokeLPAllowance, handleRevokeLPTransferors } from "../src/mappings/erc-721-pool"
+import { createAddCollateralNFTEvent, createAddQuoteTokenEvent, createDrawDebtNFTEvent, createRepayDebtEvent, createMergeOrRemoveCollateralNFTEvent, createRemoveCollateralEvent, createKickEvent, createAuctionNFTSettleEvent, createSettleEvent, createTakeEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createTransferLPEvent, createApproveLPTransferorsEvent, createIncreaseLPAllowanceEvent, createDecreaseLPAllowanceEvent, createRevokeLPAllowanceEvent, createRevokeLPTransferorsEvent } from "./utils/erc-721-pool-utils"
 
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, TWO_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
 import { assertBucketUpdate, assertLendUpdate, create721Pool, createAndHandleAddQuoteTokenEvent, createPool } from "./utils/common"
@@ -25,7 +25,7 @@ import { wdiv, wmul } from "../src/utils/math"
 import { getLendId } from "../src/utils/pool/lend"
 import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/pool/liquidation"
 import { getTransferorId } from "../src/utils/pool/lp-transferors"
-import { getAllowancesId } from "../src/utils/pool/lp-allowances"
+import { getAllowanceId, getAllowancesId } from "../src/utils/pool/lp-allowances"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -1523,8 +1523,6 @@ describe("Describe entity assertions", () => {
     const expectedLenderAddress = addressToBytes(lender)
     const expectedSpenderAddress = addressToBytes(spender)
 
-    // TODO: add quote token?
-
     /******************************************/
     /*** Approve Transferors and Allowances ***/
     /******************************************/
@@ -1567,6 +1565,12 @@ describe("Describe entity assertions", () => {
       "lender",
       `${lender.toHexString()}`
     )
+    assert.fieldEquals(
+      "LPTransferorList",
+      `${lpTransferorListId.toHexString()}`,
+      "transferors",
+      "[0x0000000000000000000000000000000000000005]"
+    )
 
     // check LPAllowanceList state
     const lpAllowanceListId = getAllowancesId(expectedPoolAddress, expectedLenderAddress, expectedSpenderAddress)
@@ -1588,10 +1592,58 @@ describe("Describe entity assertions", () => {
       "spender",
       `${spender.toHexString()}`
     )
+
+    // check each LPAllowance entities state
+    for (let i = 0; i < indexes.length; i++) {
+      const allowanceId = getAllowanceId(lpAllowanceListId, indexes[i])
+      assert.fieldEquals(
+        "LPAllowance",
+        `${allowanceId.toHexString()}`,
+        "index",
+        `${indexes[i]}`
+      )
+      assert.fieldEquals(
+        "LPAllowance",
+        `${allowanceId.toHexString()}`,
+        "amount",
+        `${wadToDecimal(BigInt.fromI32(500))}`
+      )
+    }
+
+    /************************/
+    /*** Revoke Approvals ***/
+    /************************/
+
     // _handleRevokeLPAllowance
+    const newRevokedLPAllowanceEvent = createRevokeLPAllowanceEvent(poolAddress, lender, spender, indexes)
+    handleRevokeLPAllowance(newRevokedLPAllowanceEvent)
 
     // _handleRevokeLPTransferors
+    const newRevokedLPTransferorsEvent = createRevokeLPTransferorsEvent(poolAddress, lender, transferors)
+    handleRevokeLPTransferors(newRevokedLPTransferorsEvent)
 
+    /********************/
+    /*** Assert State ***/
+    /********************/
+
+    // check entities have been stored
+    assert.entityCount("LPTransferorList", 1)
+    assert.entityCount("LPAllowance", 0)
+    assert.entityCount("LPAllowanceList", 1)
+    assert.entityCount("Pool", 2)
+
+    assert.fieldEquals(
+      "LPTransferorList",
+      `${lpTransferorListId.toHexString()}`,
+      "transferors",
+      "[]"
+    )
+    assert.fieldEquals(
+      "LPAllowanceList",
+      `${lpAllowanceListId.toHexString()}`,
+      "allowances",
+      "[]"
+    )
   })
 
   // TODO: finish implementing once a mergeOrRemoveCollateralNFT calldata becomes available
