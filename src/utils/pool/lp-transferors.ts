@@ -1,5 +1,6 @@
 import { Address, Bytes } from "@graphprotocol/graph-ts"
-import { LPTransferorList, Pool } from "../../../generated/schema";
+import { LPTransferorList} from "../../../generated/schema";
+import { addressToBytes } from "../convert";
 
 export function getTransferorId(poolId: Bytes, lenderId: Bytes): Bytes {
   return poolId.concat(Bytes.fromUTF8('|' + lenderId.toString()));
@@ -21,7 +22,7 @@ export function approveTransferors(entity: LPTransferorList, transferorsApproved
   // iterate through newly-approved transferors, pushing each transfer if not already there
   const entityTransferors = entity.transferors
   for (var i=0; i<transferorsApproved.length; ++i) {
-    const approved = transferorsApproved[i]
+    const approved = addressToBytes(transferorsApproved[i])
     if (entityTransferors.indexOf(approved) == -1)
       entityTransferors.push(approved)
   }

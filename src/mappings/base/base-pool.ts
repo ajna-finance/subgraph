@@ -504,45 +504,45 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
 /*** LPB Management Event Handlers ***/
 /*************************************/
 
+// TODO: should we also store the increase/decrease/revoke events?
+
 export function _handleApproveLPTransferors(event: ethereum.Event, lender: Address, transferors: Address[]): void {
     const poolId = addressToBytes(event.address)
-    const entity = loadOrCreateTransferors(poolId, lender)
-    approveTransferors(entity, transferors)
+    const lpTransferorList = loadOrCreateTransferors(poolId, addressToBytes(lender))
+    approveTransferors(lpTransferorList, transferors)
 
     const pool = Pool.load(poolId)!
     pool.txCount = pool.txCount.plus(ONE_BI)
 
     // save entities to the store
     pool.save()
-    entity.save()
+    lpTransferorList.save()
 }
 
-export function _handleDecreaseLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
+export function _handleDecreaseLPAllowance(event: ethereum.Event, owner: Address, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
     const poolId = addressToBytes(event.address)
-    const lender = event.transaction.from
-    const entity = loadOrCreateAllowances(poolId, lender, spender)
-    decreaseAllowances(entity, indexes, amounts)
+    const lpAllowanceList = loadOrCreateAllowances(poolId, addressToBytes(owner), addressToBytes(spender))
+    decreaseAllowances(lpAllowanceList, indexes, amounts)
 
     const pool = Pool.load(poolId)!
     pool.txCount = pool.txCount.plus(ONE_BI)
 
     // save entities to the store
     pool.save()
-    entity.save()
+    lpAllowanceList.save()
 }
 
-export function _handleIncreaseLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
+export function _handleIncreaseLPAllowance(event: ethereum.Event, owner: Address, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
     const poolId = addressToBytes(event.address)
-    const lender = event.transaction.from
-    const entity = loadOrCreateAllowances(poolId, lender, spender)
-    increaseAllowances(entity, indexes, amounts)
+    const lpAllowanceList = loadOrCreateAllowances(poolId, addressToBytes(owner), addressToBytes(spender))
+    increaseAllowances(lpAllowanceList, indexes, amounts)
 
     const pool = Pool.load(poolId)!
     pool.txCount = pool.txCount.plus(ONE_BI)
 
     // save entities to the store
     pool.save()
-    entity.save()
+    lpAllowanceList.save()
 }
 
 export function _handleRevokeLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[]): void {

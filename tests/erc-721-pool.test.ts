@@ -24,6 +24,8 @@ import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
 import { wdiv, wmul } from "../src/utils/math"
 import { getLendId } from "../src/utils/pool/lend"
 import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/pool/liquidation"
+import { getTransferorId } from "../src/utils/pool/lp-transferors"
+import { getAllowancesId } from "../src/utils/pool/lp-allowances"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
@@ -1518,6 +1520,8 @@ describe("Describe entity assertions", () => {
     const transferors = [Address.fromString("0x0000000000000000000000000000000000000005")]
     const indexes = [BigInt.fromI32(234), BigInt.fromI32(345), BigInt.fromI32(456), BigInt.fromI32(567), BigInt.fromI32(789)]
     let amounts = [BigInt.fromI32(1000), BigInt.fromI32(1000), BigInt.fromI32(1000), BigInt.fromI32(1000), BigInt.fromI32(1000)]
+    const expectedLenderAddress = addressToBytes(lender)
+    const expectedSpenderAddress = addressToBytes(spender)
 
     // TODO: add quote token?
 
@@ -1547,25 +1551,43 @@ describe("Describe entity assertions", () => {
     assert.entityCount("LPTransferorList", 1)
     assert.entityCount("LPAllowance", 5)
     assert.entityCount("LPAllowanceList", 1)
-    assert.entityCount("ApproveLPTransferors", 1)
-    assert.entityCount("DecreaseLPAllowance", 1)
-    assert.entityCount("IncreaseLPAllowance", 1)
     assert.entityCount("Pool", 2)
 
     // check LPTransferorList state
+    const lpTransferorListId = getTransferorId(expectedPoolAddress, expectedLenderAddress)
     assert.fieldEquals(
       "LPTransferorList",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      `${lpTransferorListId.toHexString()}`,
       "pool",
       `${expectedPoolAddress.toHexString()}`
     )
     assert.fieldEquals(
       "LPTransferorList",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a01000000",
+      `${lpTransferorListId.toHexString()}`,
       "lender",
       `${lender.toHexString()}`
     )
 
+    // check LPAllowanceList state
+    const lpAllowanceListId = getAllowancesId(expectedPoolAddress, expectedLenderAddress, expectedSpenderAddress)
+    assert.fieldEquals(
+      "LPAllowanceList",
+      `${lpAllowanceListId.toHexString()}`,
+      "pool",
+      `${expectedPoolAddress.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LPAllowanceList",
+      `${lpAllowanceListId.toHexString()}`,
+      "lender",
+      `${lender.toHexString()}`
+    )
+    assert.fieldEquals(
+      "LPAllowanceList",
+      `${lpAllowanceListId.toHexString()}`,
+      "spender",
+      `${spender.toHexString()}`
+    )
     // _handleRevokeLPAllowance
 
     // _handleRevokeLPTransferors

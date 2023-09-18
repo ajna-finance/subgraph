@@ -704,11 +704,11 @@ export function handleApproveLPTransferors(
 }
 
 export function handleDecreaseLPAllowance(event: DecreaseLPAllowanceEvent): void {
-  _handleDecreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
+  _handleDecreaseLPAllowance(event, event.params.owner, event.params.spender, event.params.indexes, event.params.amounts)
 }
 
 export function handleIncreaseLPAllowance(event: IncreaseLPAllowanceEvent): void {
-  _handleIncreaseLPAllowance(event, event.params.spender, event.params.indexes, event.params.amounts)
+  _handleIncreaseLPAllowance(event, event.params.owner, event.params.spender, event.params.indexes, event.params.amounts)
 }
 
 export function handleRevokeLPAllowance(event: RevokeLPAllowanceEvent): void {

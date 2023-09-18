@@ -160,7 +160,7 @@ export function createApproveLPTransferorsEvent(
 
 export function createDecreaseLPAllowanceEvent(
   pool: Address,
-  lender: Address,
+  owner: Address,
   spender: Address,
   indexes: Array<BigInt>,
   amounts: Array<BigInt>
@@ -169,6 +169,9 @@ export function createDecreaseLPAllowanceEvent(
 
   decreaseLPAllowanceEvent.parameters = new Array()
 
+  decreaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam("owner", ethereum.Value.fromAddress(owner))
+  )
   decreaseLPAllowanceEvent.parameters.push(
     new ethereum.EventParam("spender", ethereum.Value.fromAddress(spender))
   )
@@ -187,14 +190,13 @@ export function createDecreaseLPAllowanceEvent(
 
   // update transaction to expected addresses
   decreaseLPAllowanceEvent.address = pool
-  decreaseLPAllowanceEvent.transaction.from = lender
 
   return decreaseLPAllowanceEvent
 }
 
 export function createIncreaseLPAllowanceEvent(
   pool: Address,
-  lender: Address,
+  owner: Address,
   spender: Address,
   indexes: Array<BigInt>,
   amounts: Array<BigInt>
@@ -203,6 +205,9 @@ export function createIncreaseLPAllowanceEvent(
 
   increaseLPAllowanceEvent.parameters = new Array()
 
+  increaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam("owner", ethereum.Value.fromAddress(owner))
+  )
   increaseLPAllowanceEvent.parameters.push(
     new ethereum.EventParam("spender", ethereum.Value.fromAddress(spender))
   )
@@ -220,7 +225,6 @@ export function createIncreaseLPAllowanceEvent(
   )
   // update transaction to expected addresses
   increaseLPAllowanceEvent.address = pool
-  increaseLPAllowanceEvent.transaction.from = lender
 
   return increaseLPAllowanceEvent
 }
