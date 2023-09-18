@@ -479,3 +479,11 @@ export function depositUpToIndex(poolAddress: Address, index: u32): BigInt {
   const poolContract = ERC20Pool.bind(poolAddress)
   return poolContract.depositUpToIndex(BigInt.fromU32(index));
 }
+
+export function updateTokenPools(token: Token, pool: Pool): void {
+  // get current index of pool in token's list of pools
+  const index = token.pools.indexOf(pool.id)
+  if (index == -1) {
+      token.pools = token.pools.concat([pool.id])
+  }
+}
