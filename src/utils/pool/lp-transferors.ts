@@ -1,4 +1,4 @@
-import { Address, Bytes } from "@graphprotocol/graph-ts"
+import { Address, Bytes, store } from "@graphprotocol/graph-ts"
 import { LPTransferorList} from "../../../generated/schema";
 import { addressToBytes } from "../convert";
 
@@ -39,4 +39,12 @@ export function revokeTransferors(entity: LPTransferorList, transferorsRevoked: 
       entityTransferors.splice(indexToRemove, 1)
   }
   entity.transferors = entityTransferors
+}
+
+export function saveOrRemoveTranserors(entity: LPTransferorList): void {
+  if (entity.transferors.length == 0) {
+    store.remove('LPTransferorList', entity.id.toHexString())
+  } else {
+    entity.save()
+  }
 }

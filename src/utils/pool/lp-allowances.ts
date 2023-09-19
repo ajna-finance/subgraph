@@ -89,3 +89,19 @@ export function revokeAllowances(entity: LPAllowanceList, indexes: Array<BigInt>
   }
   entity.allowances = entityAllowances
 }
+
+export function saveOrRemoveAllowances(entity: LPAllowanceList): void {
+  if (entity.allowances.length == 0) {
+    store.remove('LPAllowanceList', entity.id.toHexString())
+  } else {
+    entity.save()
+  }
+}
+
+export function saveOrRemoveTranserors(entity: LPTransferorList): void {
+  if (entity.transferors.length == 0) {
+    store.remove('LPTransferorList', entity.id.toHexString())
+  } else {
+    entity.save()
+  }
+}

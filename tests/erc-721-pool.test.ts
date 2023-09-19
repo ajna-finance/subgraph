@@ -1627,23 +1627,10 @@ describe("Describe entity assertions", () => {
     /********************/
 
     // check entities have been stored
-    assert.entityCount("LPTransferorList", 1)
+    assert.entityCount("LPTransferorList", 0)
     assert.entityCount("LPAllowance", 0)
-    assert.entityCount("LPAllowanceList", 1)
+    assert.entityCount("LPAllowanceList", 0)
     assert.entityCount("Pool", 2)
-
-    assert.fieldEquals(
-      "LPTransferorList",
-      `${lpTransferorListId.toHexString()}`,
-      "transferors",
-      "[]"
-    )
-    assert.fieldEquals(
-      "LPAllowanceList",
-      `${lpAllowanceListId.toHexString()}`,
-      "allowances",
-      "[]"
-    )
   })
 
   // TODO: finish implementing once a mergeOrRemoveCollateralNFT calldata becomes available
