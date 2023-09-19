@@ -97,11 +97,3 @@ export function saveOrRemoveAllowances(entity: LPAllowanceList): void {
     entity.save()
   }
 }
-
-export function saveOrRemoveTranserors(entity: LPTransferorList): void {
-  if (entity.transferors.length == 0) {
-    store.remove('LPTransferorList', entity.id.toHexString())
-  } else {
-    entity.save()
-  }
-}

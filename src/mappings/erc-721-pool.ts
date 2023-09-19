@@ -56,7 +56,7 @@ import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan, saveOrRemoveLoa
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "../utils/pool/liquidation"
 import { updatePool, addLiquidationToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
-import { _handleAddQuoteToken, _handleApproveLPTransferors, _handleBondWithdrawn, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleApproveLPTransferors, _handleBondWithdrawn, _handleBucketBankruptcy, _handleBucketTakeLPAwarded, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
 
 
 /*******************************/
@@ -718,24 +718,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
 
 // identical to ERC20Pool
 export function handleBucketTakeLPAwarded(event: BucketTakeLPAwardedEvent): void {
-  const lpAwardedId                   = event.transaction.hash.concatI32(event.logIndex.toI32());
-  const bucketTakeLpAwarded           = new BucketTakeLPAwarded(lpAwardedId)
-  bucketTakeLpAwarded.taker           = event.params.taker
-  bucketTakeLpAwarded.pool            = addressToBytes(event.address)
-  bucketTakeLpAwarded.kicker          = event.params.kicker
-  bucketTakeLpAwarded.lpAwardedTaker  = wadToDecimal(event.params.lpAwardedTaker)
-  bucketTakeLpAwarded.lpAwardedKicker = wadToDecimal(event.params.lpAwardedKicker)
-
-  bucketTakeLpAwarded.blockNumber     = event.block.number
-  bucketTakeLpAwarded.blockTimestamp  = event.block.timestamp
-  bucketTakeLpAwarded.transactionHash = event.transaction.hash
-  bucketTakeLpAwarded.save()
-
-  // since this is emitted immediately before BucketTakeEvent, create BucketTake entity to associate it with this LP award
-  const bucketTakeId   = event.transaction.hash.concatI32(event.logIndex.toI32() + 1)
-  const bucketTake     = loadOrCreateBucketTake(bucketTakeId)
-  bucketTake.lpAwarded = lpAwardedId
-  bucketTake.save()
+  _handleBucketTakeLPAwarded(event, event.params.kicker, event.params.taker, event.params.lpAwardedKicker, event.params.lpAwardedTaker)
 }
 
 export function handleTake(event: TakeEvent): void {

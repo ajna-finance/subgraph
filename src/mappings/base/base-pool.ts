@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, BondWithdrawn, Bucket, BucketBankruptcy, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, PositionLend, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, BondWithdrawn, Bucket, BucketBankruptcy, BucketTakeLPAwarded, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, PositionLend, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -25,6 +25,7 @@ import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../ut
 import { saveOrRemovePositionLend } from "../../utils/position"
 import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances, saveOrRemoveAllowances } from "../../utils/pool/lp-allowances"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors, saveOrRemoveTranserors } from "../../utils/pool/lp-transferors"
+import { loadOrCreateBucketTake } from "../../utils/pool/liquidation"
 
 
 /*******************************/
@@ -588,6 +589,28 @@ export function _handleBondWithdrawn(event: ethereum.Event, kicker: Address, rec
     entity.transactionHash = event.transaction.hash
 
     entity.save()
+}
+
+// emitted along with BucketTake
+export function _handleBucketTakeLPAwarded(event: ethereum.Event, kicker: Address, taker: Address, lpAwardedKicker: BigInt, lpAwardedTaker: BigInt): void {
+    const lpAwardedId                   = event.transaction.hash.concatI32(event.logIndex.toI32());
+    const bucketTakeLpAwarded           = new BucketTakeLPAwarded(lpAwardedId)
+    bucketTakeLpAwarded.taker           = taker
+    bucketTakeLpAwarded.pool            = addressToBytes(event.address)
+    bucketTakeLpAwarded.kicker          = kicker
+    bucketTakeLpAwarded.lpAwardedTaker  = wadToDecimal(lpAwardedTaker)
+    bucketTakeLpAwarded.lpAwardedKicker = wadToDecimal(lpAwardedKicker)
+
+    bucketTakeLpAwarded.blockNumber     = event.block.number
+    bucketTakeLpAwarded.blockTimestamp  = event.block.timestamp
+    bucketTakeLpAwarded.transactionHash = event.transaction.hash
+    bucketTakeLpAwarded.save()
+
+    // since this is emitted immediately before BucketTakeEvent, create BucketTake entity to associate it with this LP award
+    const bucketTakeId   = event.transaction.hash.concatI32(event.logIndex.toI32() + 1)
+    const bucketTake     = loadOrCreateBucketTake(bucketTakeId)
+    bucketTake.lpAwarded = lpAwardedId
+    bucketTake.save()
 }
 
 /*******************************/
