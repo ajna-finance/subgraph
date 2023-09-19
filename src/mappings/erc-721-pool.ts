@@ -161,12 +161,10 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
   repayDebt.save()
 }
 
-// identical to ERC20Pool
 export function handleFlashloan(event: FlashloanEvent): void {
   _handleFlashLoan(event, event.params.token, event.params.receiver, event.params.amount)
 }
 
-// identical to ERC20Pool
 export function handleLoanStamped(event: LoanStampedEvent): void {
   _handleLoanStamped(event, event.params.borrower)
 }
@@ -524,7 +522,6 @@ export function handleSettle(event: SettleEvent): void {
   settle.save()
 }
 
-// TODO: can this be abstracted?
 export function handleKick(event: KickEvent): void {
   const kick = new Kick(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -716,7 +713,6 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   takerLend.save()
 }
 
-// identical to ERC20Pool
 export function handleBucketTakeLPAwarded(event: BucketTakeLPAwardedEvent): void {
   _handleBucketTakeLPAwarded(event, event.params.kicker, event.params.taker, event.params.lpAwardedKicker, event.params.lpAwardedTaker)
 }

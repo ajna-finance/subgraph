@@ -505,8 +505,6 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
 /*** LPB Management Event Handlers ***/
 /*************************************/
 
-// TODO: should we also store the increase/decrease/revoke events?
-
 export function _handleApproveLPTransferors(event: ethereum.Event, lender: Address, transferors: Address[]): void {
     const poolId = addressToBytes(event.address)
     const lpTransferorList = loadOrCreateTransferors(poolId, addressToBytes(lender))
