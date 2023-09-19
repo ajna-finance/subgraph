@@ -34,7 +34,6 @@ import {
   AuctionNFTSettle,
   BucketTake,
   BucketTakeLPAwarded,
-  BondWithdrawn,
   DrawDebtNFT,
   LiquidationAuction,
   Loan,
@@ -57,7 +56,8 @@ import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan, saveOrRemoveLoa
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "../utils/pool/liquidation"
 import { updatePool, addLiquidationToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
-import { _handleAddQuoteToken, _handleApproveLPTransferors, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
+import { _handleAddQuoteToken, _handleApproveLPTransferors, _handleBondWithdrawn, _handleBucketBankruptcy, _handleDecreaseLPAllowance, _handleFlashLoan, _handleIncreaseLPAllowance, _handleInterestRateEvent, _handleLoanStamped, _handleMoveQuoteToken, _handleRemoveQuoteToken, _handleReserveAuctionKick, _handleReserveAuctionTake, _handleRevokeLPAllowance, _handleRevokeLPTransferors, _handleTransferLP } from "./base/base-pool"
+
 
 /*******************************/
 /*** Borrower Event Handlers ***/
@@ -419,20 +419,8 @@ export function handleMergeOrRemoveCollateralNFT(
 /*** Liquidation Event Handlers ***/
 /**********************************/
 
-// identical to ERC20Pool
 export function handleBondWithdrawn(event: BondWithdrawnEvent): void {
-  const entity = new BondWithdrawn(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.kicker = event.params.kicker
-  entity.reciever = event.params.reciever
-  entity.amount = wadToDecimal(event.params.amount)
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  _handleBondWithdrawn(event, event.params.kicker, event.params.reciever, event.params.amount)
 }
 
 // emitted concurrently with `Settle`
