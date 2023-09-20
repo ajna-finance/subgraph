@@ -1,5 +1,5 @@
 import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
-import { Account, AddQuoteToken, BondWithdrawn, Bucket, BucketBankruptcy, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, PositionLend, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
+import { Account, AddQuoteToken, BondWithdrawn, Bucket, BucketBankruptcy, BucketTakeLPAwarded, Flashloan, Lend, LoanStamped, MoveQuoteToken, Pool, PositionLend, RemoveQuoteToken, ReserveAuctionKick, ReserveAuctionTake, Token, TransferLP, UpdateInterestRate } from "../../../generated/schema"
 import {
     AddQuoteToken as AddQuoteTokenERC20Event,
     MoveQuoteToken as MoveQuoteTokenERC20Event,
@@ -23,8 +23,9 @@ import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../u
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
 import { saveOrRemovePositionLend } from "../../utils/position"
-import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances } from "../../utils/pool/lp-allowances"
-import { approveTransferors, loadOrCreateTransferors, revokeTransferors } from "../../utils/pool/lp-transferors"
+import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances, saveOrRemoveAllowances } from "../../utils/pool/lp-allowances"
+import { approveTransferors, loadOrCreateTransferors, revokeTransferors, saveOrRemoveTranserors } from "../../utils/pool/lp-transferors"
+import { loadOrCreateBucketTake } from "../../utils/pool/liquidation"
 
 
 /*******************************/
@@ -506,70 +507,67 @@ export function _handleTransferLP(erc20Event: TransferLPERC20Event | null, erc72
 
 export function _handleApproveLPTransferors(event: ethereum.Event, lender: Address, transferors: Address[]): void {
     const poolId = addressToBytes(event.address)
-    const entity = loadOrCreateTransferors(poolId, lender)
-    approveTransferors(entity, transferors)
+    const lpTransferorList = loadOrCreateTransferors(poolId, addressToBytes(lender))
+    approveTransferors(lpTransferorList, transferors)
 
     const pool = Pool.load(poolId)!
     pool.txCount = pool.txCount.plus(ONE_BI)
 
     // save entities to the store
     pool.save()
-    entity.save()
+    lpTransferorList.save()
 }
 
-export function _handleDecreaseLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
+export function _handleDecreaseLPAllowance(event: ethereum.Event, owner: Address, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
     const poolId = addressToBytes(event.address)
-    const lender = event.transaction.from
-    const entity = loadOrCreateAllowances(poolId, lender, spender)
-    decreaseAllowances(entity, indexes, amounts)
+    const lpAllowanceList = loadOrCreateAllowances(poolId, addressToBytes(owner), addressToBytes(spender))
+    decreaseAllowances(lpAllowanceList, indexes, amounts)
 
     const pool = Pool.load(poolId)!
     pool.txCount = pool.txCount.plus(ONE_BI)
 
     // save entities to the store
     pool.save()
-    entity.save()
+    saveOrRemoveAllowances(lpAllowanceList)
 }
 
-export function _handleIncreaseLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
+export function _handleIncreaseLPAllowance(event: ethereum.Event, owner: Address, spender: Address, indexes: BigInt[], amounts: BigInt[]): void {
     const poolId = addressToBytes(event.address)
-    const lender = event.transaction.from
-    const entity = loadOrCreateAllowances(poolId, lender, spender)
-    increaseAllowances(entity, indexes, amounts)
+    const lpAllowanceList = loadOrCreateAllowances(poolId, addressToBytes(owner), addressToBytes(spender))
+    increaseAllowances(lpAllowanceList, indexes, amounts)
 
     const pool = Pool.load(poolId)!
     pool.txCount = pool.txCount.plus(ONE_BI)
 
     // save entities to the store
     pool.save()
-    entity.save()
+    lpAllowanceList.save()
 }
 
-export function _handleRevokeLPAllowance(event: ethereum.Event, spender: Address, indexes: BigInt[]): void {
+export function _handleRevokeLPAllowance(event: ethereum.Event, owner: Address, spender: Address, indexes: BigInt[]): void {
     const poolId = addressToBytes(event.address)
-    const lender = event.transaction.from
-    const entity = loadOrCreateAllowances(poolId, lender, spender)
-    revokeAllowances(entity, indexes)
+    const lpAllowanceList = loadOrCreateAllowances(poolId, owner, spender)
+    revokeAllowances(lpAllowanceList, indexes)
 
     const pool = Pool.load(poolId)!
     pool.txCount = pool.txCount.plus(ONE_BI)
 
     // save entities to the store
     pool.save()
-    entity.save()
+    saveOrRemoveAllowances(lpAllowanceList)
 }
 
 export function _handleRevokeLPTransferors(event: ethereum.Event, lender: Address, transferors: Address[]): void {
     const poolId = addressToBytes(event.address)
-    const entity = loadOrCreateTransferors(poolId, lender)
-    revokeTransferors(entity, transferors)
+    const lpTransferorList = loadOrCreateTransferors(poolId, lender)
+    revokeTransferors(lpTransferorList, transferors)
 
     const pool = Pool.load(poolId)!
     pool.txCount = pool.txCount.plus(ONE_BI)
 
     // save entities to the store
     pool.save()
-    entity.save()
+    saveOrRemoveTranserors(lpTransferorList)
 }
 
 /**********************************/
@@ -589,6 +587,28 @@ export function _handleBondWithdrawn(event: ethereum.Event, kicker: Address, rec
     entity.transactionHash = event.transaction.hash
 
     entity.save()
+}
+
+// emitted along with BucketTake
+export function _handleBucketTakeLPAwarded(event: ethereum.Event, kicker: Address, taker: Address, lpAwardedKicker: BigInt, lpAwardedTaker: BigInt): void {
+    const lpAwardedId                   = event.transaction.hash.concatI32(event.logIndex.toI32());
+    const bucketTakeLpAwarded           = new BucketTakeLPAwarded(lpAwardedId)
+    bucketTakeLpAwarded.taker           = taker
+    bucketTakeLpAwarded.pool            = addressToBytes(event.address)
+    bucketTakeLpAwarded.kicker          = kicker
+    bucketTakeLpAwarded.lpAwardedTaker  = wadToDecimal(lpAwardedTaker)
+    bucketTakeLpAwarded.lpAwardedKicker = wadToDecimal(lpAwardedKicker)
+
+    bucketTakeLpAwarded.blockNumber     = event.block.number
+    bucketTakeLpAwarded.blockTimestamp  = event.block.timestamp
+    bucketTakeLpAwarded.transactionHash = event.transaction.hash
+    bucketTakeLpAwarded.save()
+
+    // since this is emitted immediately before BucketTakeEvent, create BucketTake entity to associate it with this LP award
+    const bucketTakeId   = event.transaction.hash.concatI32(event.logIndex.toI32() + 1)
+    const bucketTake     = loadOrCreateBucketTake(bucketTakeId)
+    bucketTake.lpAwarded = lpAwardedId
+    bucketTake.save()
 }
 
 /*******************************/

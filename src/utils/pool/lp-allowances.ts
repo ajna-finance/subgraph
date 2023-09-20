@@ -1,4 +1,4 @@
-import { BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes, store } from "@graphprotocol/graph-ts"
 import { LPAllowance, LPAllowanceList } from "../../../generated/schema";
 import { wadToDecimal } from "../convert";
 
@@ -27,17 +27,20 @@ export function increaseAllowances(entity: LPAllowanceList, indexes: Array<BigIn
   const id = entity.id;
   const entityAllowances = entity.allowances;
   for (var i=0; i<indexes.length; ++i) {
-    const aid = getAllowanceId(id, indexes[i])
+    const index = indexes[i]
+    const aid = getAllowanceId(id, index)
     let allowance = LPAllowance.load(aid)
     if (allowance == null) {
       // create a new allowance if first time
       allowance = new LPAllowance(aid)
       allowance.amount = wadToDecimal(amounts[i])
+      allowance.index = index.toI32()
       entityAllowances.push(aid)
     } else {
       // increase existing allowance
       allowance.amount = allowance.amount.plus(wadToDecimal(amounts[i]))
     }
+    allowance.save()
   }
   entity.allowances = entityAllowances
 }
@@ -53,11 +56,15 @@ export function decreaseAllowances(entity: LPAllowanceList, indexes: Array<BigIn
       if (decrease.lt(allowance.amount)) {
           // decrease existing allowance
         allowance.amount = allowance.amount.minus(decrease)
+        allowance.save()
       } else {
         // delete the allowance
         const indexToRemove = entityAllowances.indexOf(aid)
         if (indexToRemove != -1)
           entityAllowances.splice(indexToRemove, 1)
+
+        // remove allowance from the store
+        store.remove('LPAllowance', aid.toHexString())
       }
     }
   }
@@ -75,7 +82,18 @@ export function revokeAllowances(entity: LPAllowanceList, indexes: Array<BigInt>
       const indexToRemove = entityAllowances.indexOf(aid)
       if (indexToRemove != -1)
         entityAllowances.splice(indexToRemove, 1)
+
+      // remove allowance from the store
+      store.remove('LPAllowance', aid.toHexString())
     }
   }
   entity.allowances = entityAllowances
+}
+
+export function saveOrRemoveAllowances(entity: LPAllowanceList): void {
+  if (entity.allowances.length == 0) {
+    store.remove('LPAllowanceList', entity.id.toHexString())
+  } else {
+    entity.save()
+  }
 }

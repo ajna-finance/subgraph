@@ -3,17 +3,22 @@ import { ethereum, Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import {
   AddCollateralNFT,
   AddQuoteToken,
+  ApproveLPTransferors,
   AuctionNFTSettle,
   BucketBankruptcy,
   BucketTake,
   BucketTakeLPAwarded,
+  DecreaseLPAllowance,
   DrawDebtNFT,
   Flashloan,
+  IncreaseLPAllowance,
   Kick,
   KickReserveAuction,
   MergeOrRemoveCollateralNFT,
   RemoveCollateral,
   RepayDebt,
+  RevokeLPAllowance,
+  RevokeLPTransferors,
   ReserveAuction,
   Settle,
   Take,
@@ -126,6 +131,155 @@ export function createAuctionNFTSettleEvent(
   auctionNftSettleEvent.address = pool
 
   return auctionNftSettleEvent
+}
+
+export function createApproveLPTransferorsEvent(
+  pool: Address,
+  lender: Address,
+  transferors: Array<Address>
+): ApproveLPTransferors {
+  let approveLPTransferorsEvent = changetype<ApproveLPTransferors>(newMockEvent())
+
+  approveLPTransferorsEvent.parameters = new Array()
+
+  approveLPTransferorsEvent.parameters.push(
+    new ethereum.EventParam("lender", ethereum.Value.fromAddress(lender))
+  )
+  approveLPTransferorsEvent.parameters.push(
+    new ethereum.EventParam(
+      "transferors",
+      ethereum.Value.fromAddressArray(transferors)
+    )
+  )
+
+  // update transaction target to the expected pool address
+  approveLPTransferorsEvent.address = pool
+
+  return approveLPTransferorsEvent
+}
+
+export function createDecreaseLPAllowanceEvent(
+  pool: Address,
+  owner: Address,
+  spender: Address,
+  indexes: Array<BigInt>,
+  amounts: Array<BigInt>
+): DecreaseLPAllowance {
+  let decreaseLPAllowanceEvent = changetype<DecreaseLPAllowance>(newMockEvent())
+
+  decreaseLPAllowanceEvent.parameters = new Array()
+
+  decreaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam("owner", ethereum.Value.fromAddress(owner))
+  )
+  decreaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam("spender", ethereum.Value.fromAddress(spender))
+  )
+  decreaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam(
+      "indexes",
+      ethereum.Value.fromUnsignedBigIntArray(indexes)
+    )
+  )
+  decreaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam(
+      "amounts",
+      ethereum.Value.fromUnsignedBigIntArray(amounts)
+    )
+  )
+
+  // update transaction to expected addresses
+  decreaseLPAllowanceEvent.address = pool
+
+  return decreaseLPAllowanceEvent
+}
+
+export function createIncreaseLPAllowanceEvent(
+  pool: Address,
+  owner: Address,
+  spender: Address,
+  indexes: Array<BigInt>,
+  amounts: Array<BigInt>
+): IncreaseLPAllowance {
+  let increaseLPAllowanceEvent = changetype<IncreaseLPAllowance>(newMockEvent())
+
+  increaseLPAllowanceEvent.parameters = new Array()
+
+  increaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam("owner", ethereum.Value.fromAddress(owner))
+  )
+  increaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam("spender", ethereum.Value.fromAddress(spender))
+  )
+  increaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam(
+      "indexes",
+      ethereum.Value.fromUnsignedBigIntArray(indexes)
+    )
+  )
+  increaseLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam(
+      "amounts",
+      ethereum.Value.fromUnsignedBigIntArray(amounts)
+    )
+  )
+  // update transaction to expected addresses
+  increaseLPAllowanceEvent.address = pool
+
+  return increaseLPAllowanceEvent
+}
+
+export function createRevokeLPAllowanceEvent(
+  pool: Address,
+  owner: Address,
+  spender: Address,
+  indexes: Array<BigInt>
+): RevokeLPAllowance {
+  let revokeLPAllowanceEvent = changetype<RevokeLPAllowance>(newMockEvent())
+
+  revokeLPAllowanceEvent.parameters = new Array()
+
+  revokeLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam("owner", ethereum.Value.fromAddress(owner))
+  )
+  revokeLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam("spender", ethereum.Value.fromAddress(spender))
+  )
+  revokeLPAllowanceEvent.parameters.push(
+    new ethereum.EventParam(
+      "indexes",
+      ethereum.Value.fromUnsignedBigIntArray(indexes)
+    )
+  )
+  // update transaction target to the expected pool address
+  revokeLPAllowanceEvent.address = pool
+
+  return revokeLPAllowanceEvent
+}
+
+export function createRevokeLPTransferorsEvent(
+  pool: Address,
+  lender: Address,
+  transferors: Array<Address>
+): RevokeLPTransferors {
+  let revokeLPTransferorsEvent = changetype<RevokeLPTransferors>(newMockEvent())
+
+  revokeLPTransferorsEvent.parameters = new Array()
+
+  revokeLPTransferorsEvent.parameters.push(
+    new ethereum.EventParam("lender", ethereum.Value.fromAddress(lender))
+  )
+  revokeLPTransferorsEvent.parameters.push(
+    new ethereum.EventParam(
+      "transferors",
+      ethereum.Value.fromAddressArray(transferors)
+    )
+  )
+
+  // update transaction target to the expected pool address
+  revokeLPTransferorsEvent.address = pool
+
+  return revokeLPTransferorsEvent
 }
 
 export function createBucketBankruptcyEvent(
