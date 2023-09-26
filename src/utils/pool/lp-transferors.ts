@@ -33,7 +33,7 @@ export function revokeTransferors(entity: LPTransferorList, transferorsRevoked: 
   // iterate through, removing each revoked transferor
   const entityTransferors = entity.transferors
   for (var i=0; i<transferorsRevoked.length; ++i) {
-    const revoked = transferorsRevoked[i]
+    const revoked = addressToBytes(transferorsRevoked[i])
     const indexToRemove = entityTransferors.indexOf(revoked)
     if (indexToRemove != -1)
       entityTransferors.splice(indexToRemove, 1)
@@ -41,7 +41,7 @@ export function revokeTransferors(entity: LPTransferorList, transferorsRevoked: 
   entity.transferors = entityTransferors
 }
 
-export function saveOrRemoveTranserors(entity: LPTransferorList): void {
+export function saveOrRemoveTransferors(entity: LPTransferorList): void {
   if (entity.transferors.length == 0) {
     store.remove('LPTransferorList', entity.id.toHexString())
   } else {
