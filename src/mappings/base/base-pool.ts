@@ -24,7 +24,7 @@ import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../
 import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
 import { saveOrRemovePositionLend } from "../../utils/position"
 import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances, saveOrRemoveAllowances } from "../../utils/pool/lp-allowances"
-import { approveTransferors, loadOrCreateTransferors, revokeTransferors, saveOrRemoveTranserors } from "../../utils/pool/lp-transferors"
+import { approveTransferors, loadOrCreateTransferors, revokeTransferors, saveOrRemoveTransferors } from "../../utils/pool/lp-transferors"
 import { loadOrCreateBucketTake } from "../../utils/pool/liquidation"
 
 
@@ -546,7 +546,7 @@ export function _handleIncreaseLPAllowance(event: ethereum.Event, owner: Address
 
 export function _handleRevokeLPAllowance(event: ethereum.Event, owner: Address, spender: Address, indexes: BigInt[]): void {
     const poolId = addressToBytes(event.address)
-    const lpAllowanceList = loadOrCreateAllowances(poolId, owner, spender)
+    const lpAllowanceList = loadOrCreateAllowances(poolId, addressToBytes(owner), addressToBytes(spender))
     revokeAllowances(lpAllowanceList, indexes)
 
     const pool = Pool.load(poolId)!
@@ -559,7 +559,7 @@ export function _handleRevokeLPAllowance(event: ethereum.Event, owner: Address, 
 
 export function _handleRevokeLPTransferors(event: ethereum.Event, lender: Address, transferors: Address[]): void {
     const poolId = addressToBytes(event.address)
-    const lpTransferorList = loadOrCreateTransferors(poolId, lender)
+    const lpTransferorList = loadOrCreateTransferors(poolId, addressToBytes(lender))
     revokeTransferors(lpTransferorList, transferors)
 
     const pool = Pool.load(poolId)!
@@ -567,7 +567,7 @@ export function _handleRevokeLPTransferors(event: ethereum.Event, lender: Addres
 
     // save entities to the store
     pool.save()
-    saveOrRemoveTranserors(lpTransferorList)
+    saveOrRemoveTransferors(lpTransferorList)
 }
 
 /**********************************/
