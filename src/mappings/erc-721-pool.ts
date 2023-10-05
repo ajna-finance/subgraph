@@ -1,4 +1,4 @@
-import { ByteArray, Bytes, ethereum } from "@graphprotocol/graph-ts"
+import { ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 import {
   AddCollateralNFT as AddCollateralNFTEvent,
   AddQuoteToken as AddQuoteTokenEvent,
@@ -355,6 +355,7 @@ export function handleMergeOrRemoveCollateralNFT(
 
   // use transaction metadata to access the list of removalIndexes
   const dataWithoutSelector = event.transaction.input.subarray(4)
+  log.warning("mergeOrRemove event.transaction.input {}", [event.transaction.input.toHexString()])
   //prepend a "tuple" prefix (function params are arrays, not tuples)
   const tuplePrefix = ByteArray.fromHexString(
     '0x0000000000000000000000000000000000000000000000000000000000000020'
@@ -405,6 +406,7 @@ export function handleMergeOrRemoveCollateralNFT(
     pool.bucketTokenIds = findAndRemoveTokenIds(tokenIdsToRemove, pool.bucketTokenIds)
   }
 
+  mergeOrRemove.pool = pool.id
   updateAccountPools(account, pool)
 
   // save entities to store
