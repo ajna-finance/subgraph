@@ -405,6 +405,7 @@ export function handleMergeOrRemoveCollateralNFT(
     pool.bucketTokenIds = findAndRemoveTokenIds(tokenIdsToRemove, pool.bucketTokenIds)
   }
 
+  mergeOrRemove.pool = pool.id
   updateAccountPools(account, pool)
 
   // save entities to store
