@@ -641,7 +641,6 @@ export function _handleReserveAuctionKick(event: ethereum.Event, currentBurnEpoc
   updatePool(pool)
   addReserveAuctionToPool(pool, reserveAuction)
   pool.txCount = pool.txCount.plus(ONE_BI)
-  reserveKick.kickerAward = reserveAuctionKickerReward(pool)
 
   // update account state
   const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))
