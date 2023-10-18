@@ -24,10 +24,3 @@ export function loadOrCreateReserveAuction(poolId: Bytes, burnEpoch: BigInt): Re
     }
     return reserveAuction
 }
-
-// TODO: check calculation of pool claimable reserves
-export function reserveAuctionKickerReward(pool: Pool): BigDecimal {
-    // kicker award = claimableReserves * 0.01
-    return BigDecimal.fromString(`${pool.claimableReserves}`)
-        .times(BigDecimal.fromString("0.01"))
-}
