@@ -54,15 +54,15 @@
   "goerli": {
     "ERC20PoolFactory": {
       "address": "0x14F2474fB5ea9DF82059053c4F85A8C803Ab10C9",
-      "startBlock": 9289397
+      "startBlock": 9888337
     },
     "ERC721PoolFactory": {
       "address": "0xb0d1c875B240EE9f6C2c3284a31b10f1EC6De7d2",
-      "startBlock": 9289397
+      "startBlock": 9888337
     },
     "PositionManager": {
       "address": "0xC4114D90F51960854ab574297Cf7CC131d445F29",
-      "startBlock": 9289397
+      "startBlock": 9888337
     },
     "GrantFund": {
       "address": "0x881b4dFF6C72babA6f5eA60f34A61410c1EA1ec2",
