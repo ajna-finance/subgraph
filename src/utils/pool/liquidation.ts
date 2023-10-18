@@ -102,8 +102,7 @@ export class AuctionInfo {
     head: Address
     next: Address
     prev: Address
-    alreadyTaken: bool
-    constructor(kicker: Address, bondFactor: BigInt, bondSize: BigInt, kickTime: BigInt, referencePrice: BigInt, neutralPrice: BigInt, head: Address, next: Address, prev: Address, alreadyTaken: bool) {
+    constructor(kicker: Address, bondFactor: BigInt, bondSize: BigInt, kickTime: BigInt, referencePrice: BigInt, neutralPrice: BigInt, head: Address, next: Address, prev: Address) {
         this.kicker = kicker
         this.bondFactor = bondFactor
         this.bondSize = bondSize
@@ -113,7 +112,6 @@ export class AuctionInfo {
         this.head = head
         this.next = next
         this.prev = prev
-        this.alreadyTaken = alreadyTaken
     }
 }
 export function getAuctionInfoERC20Pool(borrower: Bytes, pool: Pool): AuctionInfo {
@@ -128,8 +126,7 @@ export function getAuctionInfoERC20Pool(borrower: Bytes, pool: Pool): AuctionInf
         auctionInfoResult.value5,
         auctionInfoResult.value6,
         auctionInfoResult.value7,
-        auctionInfoResult.value8,
-        auctionInfoResult.value9
+        auctionInfoResult.value8
     )
     return auctionInfo
 }
@@ -145,8 +142,7 @@ export function getAuctionInfoERC721Pool(borrower: Bytes, pool: Pool): AuctionIn
         auctionInfoResult.value5,
         auctionInfoResult.value6,
         auctionInfoResult.value7,
-        auctionInfoResult.value8,
-        auctionInfoResult.value9
+        auctionInfoResult.value8
     )
     return auctionInfo
 }

@@ -799,7 +799,6 @@ describe("Describe entity assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
-    const alreadyTaken = false
 
     // mock required contract calls
     let expectedAuctionInfo = new AuctionInfo(
@@ -811,8 +810,7 @@ describe("Describe entity assertions", () => {
       neutralPrice,
       head,
       next,
-      prev,
-      false
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 
@@ -1194,7 +1192,6 @@ describe("Describe entity assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
-    const alreadyTaken = false
 
     // mock required contract calls
     let expectedAuctionInfo = new AuctionInfo(
@@ -1206,8 +1203,7 @@ describe("Describe entity assertions", () => {
       neutralPrice,
       head,
       next,
-      prev,
-      false
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 

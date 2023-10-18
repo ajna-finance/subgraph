@@ -267,8 +267,7 @@ export function mockGetAuctionInfo(borrower: Address, pool: Address, expectedInf
             ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice),
             ethereum.Value.fromAddress(expectedInfo.head),
             ethereum.Value.fromAddress(expectedInfo.next),
-            ethereum.Value.fromAddress(expectedInfo.prev),
-            ethereum.Value.fromBoolean(expectedInfo.alreadyTaken)
+            ethereum.Value.fromAddress(expectedInfo.prev)
         ])
 }
 

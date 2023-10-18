@@ -634,7 +634,6 @@ describe("ERC20Pool assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
-    const alreadyTaken = false
     const startPrice = neutralPrice.times(BigInt.fromU32(32))
     const expectedAuctionInfo = new AuctionInfo(
       kicker,
@@ -645,8 +644,7 @@ describe("ERC20Pool assertions", () => {
       neutralPrice,
       head,
       next,
-      prev,
-      alreadyTaken
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
     const expectedAuctionStatus = new AuctionStatus(
@@ -818,7 +816,6 @@ describe("ERC20Pool assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
-    const alreadyTaken = false
 
     let expectedAuctionInfo = new AuctionInfo(
       kicker,
@@ -829,8 +826,7 @@ describe("ERC20Pool assertions", () => {
       neutralPrice,
       head,
       next,
-      prev,
-      false
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 
@@ -866,8 +862,7 @@ describe("ERC20Pool assertions", () => {
       neutralPrice,
       head,
       next,
-      prev,
-      alreadyTaken
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
     const expectedAuctionStatus = new AuctionStatus(
@@ -1009,7 +1004,6 @@ describe("ERC20Pool assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
-    const alreadyTaken = false
     let expectedAuctionInfo = new AuctionInfo(
       kicker,
       bondFactor,
@@ -1019,8 +1013,7 @@ describe("ERC20Pool assertions", () => {
       neutralPrice,
       head,
       next,
-      prev,
-      alreadyTaken
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 
@@ -1049,8 +1042,7 @@ describe("ERC20Pool assertions", () => {
       neutralPrice,
       head,
       next,
-      prev,
-      alreadyTaken
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
     const expectedAuctionStatus = new AuctionStatus(
@@ -1204,7 +1196,6 @@ describe("ERC20Pool assertions", () => {
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
-    const alreadyTaken = false
     let expectedAuctionInfo = new AuctionInfo(
       kicker,
       bondFactor,
@@ -1214,8 +1205,7 @@ describe("ERC20Pool assertions", () => {
       neutralPrice,
       head,
       next,
-      prev,
-      alreadyTaken
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 
