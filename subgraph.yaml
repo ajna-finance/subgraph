@@ -227,6 +227,8 @@ templates:
           file: ./abis/ERC20Pool.json
         - name: PoolInfoUtils
           file: ./abis/PoolInfoUtils.json
+        - name: PoolInfoUtilsMulticall
+          file: ./abis/PoolInfoUtilsMulticall.json
       eventHandlers:
         - event: AddCollateral(indexed address,indexed uint256,uint256,uint256)
           handler: handleAddCollateral
@@ -332,6 +334,8 @@ templates:
           file: ./abis/ERC721Pool.json
         - name: PoolInfoUtils
           file: ./abis/PoolInfoUtils.json
+        - name: PoolInfoUtilsMulticall
+          file: ./abis/PoolInfoUtilsMulticall.json
       eventHandlers:
         - event: AddCollateralNFT(indexed address,indexed uint256,uint256[],uint256)
           handler: handleAddCollateralNFT

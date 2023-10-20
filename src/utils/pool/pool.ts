@@ -11,6 +11,7 @@ import { getTokenBalance } from '../token-erc20'
 import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
 import { wmul, wdiv } from '../math'
 import { ERC721PoolFactory } from '../../../generated/ERC721PoolFactory/ERC721PoolFactory'
+import { BucketInfo } from './bucket';
 
 
 export function getPoolAddress(poolId: Bytes): Address {
@@ -274,6 +275,102 @@ export function updatePool(pool: Pool): void {
     pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
     pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
 }
+
+export function updatePoolMulticall(pool: Pool): void {
+  // get pool details and bucket info
+  const poolDetailsAndBucketInfo = getPoolDetailsAndBucketInfo(pool)
+
+  // update pool loan information
+  const poolLoansInfo = getPoolLoansInfo(pool)
+  pool.poolSize       = wadToDecimal(poolLoansInfo.poolSize)
+  pool.loansCount     = poolLoansInfo.loansCount
+  pool.maxBorrower    = poolLoansInfo.maxBorrower
+  pool.inflator       = wadToDecimal(poolLoansInfo.pendingInflator)
+
+
+  // update pool prices information
+  const poolPricesInfo = poolDetailsAndBucketInfo.poolPricesInfo
+  pool.hpb = wadToDecimal(poolPricesInfo.hpb)
+  pool.hpbIndex = poolPricesInfo.hpbIndex.toU32()
+  pool.htp = wadToDecimal(poolPricesInfo.htp)
+  pool.htpIndex = poolPricesInfo.htpIndex.toU32()
+  pool.lup = wadToDecimal(poolPricesInfo.lup)
+  pool.lupIndex = poolPricesInfo.lupIndex.toU32()
+
+  // update reserve auction information
+  const poolReservesInfo = poolDetailsAndBucketInfo.reservesInfo
+  pool.reserves = wadToDecimal(poolReservesInfo.reserves)
+  pool.claimableReserves = wadToDecimal(poolReservesInfo.claimableReserves)
+  pool.claimableReservesRemaining = wadToDecimal(poolReservesInfo.claimableReservesRemaining)
+
+  // update pool utilization information
+  const poolUtilizationInfo = poolDetailsAndBucketInfo.poolUtilizationInfo
+  pool.minDebtAmount     = wadToDecimal(poolUtilizationInfo.minDebtAmount)
+  pool.actualUtilization = wadToDecimal(poolUtilizationInfo.actualUtilization)
+  pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
+
+
+  // update pool token balances
+  // update quote token balances, this is common between all pool types
+  const poolAddress = Address.fromBytes(pool.id)
+  let token = Token.load(pool.quoteToken)!
+  let scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+  let unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
+  pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
+  // update collateral token balances
+  // use the appropriate contract for querying balanceOf the pool
+  if (pool.poolType == 'Fungible') {
+    token = Token.load(pool.collateralToken)!
+    scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+    unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+  } else {
+    scaleFactor = TEN_BI.pow(18) // assume 18 decimal factor for ERC721
+    unnormalizedTokenBalance = getERC721TokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+  }
+  pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
+
+  // update rates and fees which change irrespective of borrow rate
+  const ratesAndFees = getRatesAndFees(poolAddress)
+  pool.lendRate = calculateLendRate(
+    poolAddress,
+    decimalToWad(pool.borrowRate),
+    ratesAndFees.lenderInterestMargin,
+    poolPricesInfo,
+    debtInfo.pendingDebt)
+  pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
+  pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
+}
+
+export class PoolDetailsAndBucketInfo {
+  poolPricesInfo: PoolPricesInfo
+  reservesInfo: ReservesInfo
+  poolUtilizationInfo: PoolUtilizationInfo
+  bucketInfo: BucketInfo
+  constructor(poolPricesInfo: PoolPricesInfo, reservesInfo: ReservesInfo, poolUtilizationInfo: PoolUtilizationInfo, bucketInfo: BucketInfo) {
+    this.poolPricesInfo = poolPricesInfo
+    this.reservesInfo = reservesInfo
+    this.poolUtilizationInfo = poolUtilizationInfo
+    this.bucketInfo = bucketInfo
+  }
+}
+export function getPoolDetailsAndBucketInfo(pool: Pool): PoolDetailsAndBucketInfo {
+  const poolInfoUtilsMulticallAddress = poolInfoUtilsMulticallAddressTable.get(dataSource.network())!
+  const poolInfoUtilsMulticallContract = PoolInfoUtilsMulticall.bind(poolInfoUtilsMulticallAddress)
+  const poolDetailsAndBucketInfoResult = poolInfoUtilsMulticallContract.poolUtilizationInfo(Address.fromBytes(pool.id))
+
+  const poolDetailsAndBucketInfo = new PoolDetailsAndBucketInfo(
+      new PoolPricesInfo(poolDetailsAndBucketInfoResult.value0),
+      new ReservesInfo(poolDetailsAndBucketInfoResult.value1),
+      new PoolUtilizationInfo(poolDetailsAndBucketInfoResult.value2),
+      new BucketInfo(poolDetailsAndBucketInfoResult.value3)
+  )
+  return poolDetailsAndBucketInfo
+}
+
+  // TODO: rearrange into organized sections
+  /****************/
+  /*** Pointers ***/
+  /****************/
 
 // if absent, add a liquidation auction to the pool's collection of active liquidations
 export function addLiquidationToPool(pool: Pool, liquidationAuction: LiquidationAuction): void {
