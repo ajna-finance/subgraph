@@ -1,11 +1,12 @@
-import { BigDecimal, BigInt, Bytes, Address, dataSource, log } from '@graphprotocol/graph-ts'
+import { BigDecimal, BigInt, Bytes, Address, dataSource, ethereum, log } from '@graphprotocol/graph-ts'
 
 import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../../generated/schema"
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
+import { PoolInfoUtilsMulticall, PoolInfoUtilsMulticall__poolDetailsAndBucketInfoResultPoolPriceInfo_Struct } from '../../../generated/templates/ERC20Pool/PoolInfoUtilsMulticall'
 
-import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, poolInfoUtilsAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
+import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, poolInfoUtilsAddressTable, poolInfoUtilsMulticallAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
 import { addressToBytes, decimalToWad, wadToDecimal } from '../convert'
 import { getTokenBalance } from '../token-erc20'
 import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
@@ -287,6 +288,10 @@ export function updatePoolMulticall(pool: Pool): void {
   pool.maxBorrower    = poolLoansInfo.maxBorrower
   pool.inflator       = wadToDecimal(poolLoansInfo.pendingInflator)
 
+  // update amount of debt in pool
+  const debtInfo = isERC20Pool(pool) ? getDebtInfo(pool) : getDebtInfoERC721Pool(pool)
+  pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
+
 
   // update pool prices information
   const poolPricesInfo = poolDetailsAndBucketInfo.poolPricesInfo
@@ -341,28 +346,51 @@ export function updatePoolMulticall(pool: Pool): void {
   pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
 }
 
+// convert from internal struct to PoolPricesInfo
+export function buildPoolPricesInfo(poolPricesInfoInternal: PoolInfoUtilsMulticall__poolDetailsAndBucketInfoResultPoolPriceInfo_Struct): PoolPricesInfo {
+  const poolPricesInfo = new PoolPricesInfo(
+    poolPricesInfoInternal.hpb,
+    poolPricesInfoInternal.hpbIndex,
+    poolPricesInfoInternal.htp,
+    poolPricesInfoInternal.htpIndex,
+    poolPricesInfoInternal.lup,
+    poolPricesInfoInternal.lupIndex
+  )
+  return poolPricesInfo
+}
+
 export class PoolDetailsAndBucketInfo {
   poolPricesInfo: PoolPricesInfo
   reservesInfo: ReservesInfo
   poolUtilizationInfo: PoolUtilizationInfo
-  bucketInfo: BucketInfo
-  constructor(poolPricesInfo: PoolPricesInfo, reservesInfo: ReservesInfo, poolUtilizationInfo: PoolUtilizationInfo, bucketInfo: BucketInfo) {
+  constructor(poolPricesInfo: PoolPricesInfo, reservesInfo: ReservesInfo, poolUtilizationInfo: PoolUtilizationInfo) {
     this.poolPricesInfo = poolPricesInfo
     this.reservesInfo = reservesInfo
     this.poolUtilizationInfo = poolUtilizationInfo
-    this.bucketInfo = bucketInfo
   }
 }
 export function getPoolDetailsAndBucketInfo(pool: Pool): PoolDetailsAndBucketInfo {
   const poolInfoUtilsMulticallAddress = poolInfoUtilsMulticallAddressTable.get(dataSource.network())!
   const poolInfoUtilsMulticallContract = PoolInfoUtilsMulticall.bind(poolInfoUtilsMulticallAddress)
-  const poolDetailsAndBucketInfoResult = poolInfoUtilsMulticallContract.poolUtilizationInfo(Address.fromBytes(pool.id))
+  // TODO: replace current hardcoded bucket index with a dynamic one
+  const poolDetailsAndBucketInfoResult = poolInfoUtilsMulticallContract.poolDetailsAndBucketInfo(Address.fromBytes(pool.id), BigInt.fromI32(2000))
 
+  // FIXME: currently ignoring BucketInfo
   const poolDetailsAndBucketInfo = new PoolDetailsAndBucketInfo(
-      new PoolPricesInfo(poolDetailsAndBucketInfoResult.value0),
-      new ReservesInfo(poolDetailsAndBucketInfoResult.value1),
-      new PoolUtilizationInfo(poolDetailsAndBucketInfoResult.value2),
-      new BucketInfo(poolDetailsAndBucketInfoResult.value3)
+      buildPoolPricesInfo(poolDetailsAndBucketInfoResult.value0),
+      new ReservesInfo(
+        poolDetailsAndBucketInfoResult.value1.reserves,
+        poolDetailsAndBucketInfoResult.value1.claimableReserves,
+        poolDetailsAndBucketInfoResult.value1.claimableReservesRemaining,
+        poolDetailsAndBucketInfoResult.value1.auctionPrice,
+        poolDetailsAndBucketInfoResult.value1.timeRemaining
+      ),
+      new PoolUtilizationInfo(
+        poolDetailsAndBucketInfoResult.value2.poolMinDebtAmount,
+        poolDetailsAndBucketInfoResult.value2.poolCollateralization,
+        poolDetailsAndBucketInfoResult.value2.poolActualUtilization,
+        poolDetailsAndBucketInfoResult.value2.poolTargetUtilization
+      )
   )
   return poolDetailsAndBucketInfo
 }
