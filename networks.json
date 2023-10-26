@@ -65,8 +65,8 @@
       "startBlock": 9888337
     },
     "GrantFund": {
-      "address": "0x881b4dFF6C72babA6f5eA60f34A61410c1EA1ec2",
-      "startBlock": 9297080
+      "address": "0x17C7eb98aD29c8C07C2842C4B64342142C405aF4",
+      "startBlock": 9929353
     },
     "AjnaToken": {
       "address": "0xaadebCF61AA7Da0573b524DE57c67aDa797D46c5",
@@ -121,10 +121,12 @@
       "startBlock": 0
     },
     "AjnaToken": {
-      "address": "0x3c55A1F2Dde70ce9481621c67Eb4F6d1d1CB8dBc"
+      "address": "0x3c55A1F2Dde70ce9481621c67Eb4F6d1d1CB8dBc",
+      "startBlock": 0
     },
     "BurnWrappedAjna": {
-      "address": "0x19FCc2FFFc1AB0f56f3e706a76021560F557241d"
+      "address": "0x19FCc2FFFc1AB0f56f3e706a76021560F557241d",
+      "startBlock": 0
     }
   }
 }
