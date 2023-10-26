@@ -4,7 +4,7 @@ import { LiquidationAuction, Pool, ReserveAuction, Token } from "../../../genera
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from '../../../generated/templates/ERC721Pool/ERC721Pool'
 import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUtils'
-import { PoolInfoUtilsMulticall, PoolInfoUtilsMulticall__poolDetailsAndBucketInfoResultPoolPriceInfo_Struct } from '../../../generated/templates/ERC20Pool/PoolInfoUtilsMulticall'
+import { PoolInfoUtilsMulticall } from '../../../generated/templates/ERC20Pool/PoolInfoUtilsMulticall'
 
 import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, poolInfoUtilsAddressTable, poolInfoUtilsMulticallAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
 import { addressToBytes, decimalToWad, wadToDecimal } from '../convert'
@@ -279,10 +279,10 @@ export function updatePool(pool: Pool): void {
 
 export function updatePoolMulticall(pool: Pool): void {
   // get pool details and bucket info
-  const poolDetailsAndBucketInfo = getPoolDetailsAndBucketInfo(pool)
+  const poolDetails = getPoolDetailsMulticall(pool)
 
   // update pool loan information
-  const poolLoansInfo = getPoolLoansInfo(pool)
+  const poolLoansInfo = poolDetails.poolLoansInfo
   pool.poolSize       = wadToDecimal(poolLoansInfo.poolSize)
   pool.loansCount     = poolLoansInfo.loansCount
   pool.maxBorrower    = poolLoansInfo.maxBorrower
@@ -292,9 +292,8 @@ export function updatePoolMulticall(pool: Pool): void {
   const debtInfo = isERC20Pool(pool) ? getDebtInfo(pool) : getDebtInfoERC721Pool(pool)
   pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
 
-
   // update pool prices information
-  const poolPricesInfo = poolDetailsAndBucketInfo.poolPricesInfo
+  const poolPricesInfo = poolDetails.poolPricesInfo
   pool.hpb = wadToDecimal(poolPricesInfo.hpb)
   pool.hpbIndex = poolPricesInfo.hpbIndex.toU32()
   pool.htp = wadToDecimal(poolPricesInfo.htp)
@@ -303,17 +302,16 @@ export function updatePoolMulticall(pool: Pool): void {
   pool.lupIndex = poolPricesInfo.lupIndex.toU32()
 
   // update reserve auction information
-  const poolReservesInfo = poolDetailsAndBucketInfo.reservesInfo
+  const poolReservesInfo = poolDetails.reservesInfo
   pool.reserves = wadToDecimal(poolReservesInfo.reserves)
   pool.claimableReserves = wadToDecimal(poolReservesInfo.claimableReserves)
   pool.claimableReservesRemaining = wadToDecimal(poolReservesInfo.claimableReservesRemaining)
 
   // update pool utilization information
-  const poolUtilizationInfo = poolDetailsAndBucketInfo.poolUtilizationInfo
+  const poolUtilizationInfo = poolDetails.poolUtilizationInfo
   pool.minDebtAmount     = wadToDecimal(poolUtilizationInfo.minDebtAmount)
   pool.actualUtilization = wadToDecimal(poolUtilizationInfo.actualUtilization)
   pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
-
 
   // update pool token balances
   // update quote token balances, this is common between all pool types
@@ -335,7 +333,7 @@ export function updatePoolMulticall(pool: Pool): void {
   pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 
   // update rates and fees which change irrespective of borrow rate
-  const ratesAndFees = getRatesAndFees(poolAddress)
+  const ratesAndFees = poolDetails.ratesAndFeesInfo
   pool.lendRate = calculateLendRate(
     poolAddress,
     decimalToWad(pool.borrowRate),
@@ -346,53 +344,61 @@ export function updatePoolMulticall(pool: Pool): void {
   pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
 }
 
-// convert from internal struct to PoolPricesInfo
-export function buildPoolPricesInfo(poolPricesInfoInternal: PoolInfoUtilsMulticall__poolDetailsAndBucketInfoResultPoolPriceInfo_Struct): PoolPricesInfo {
-  const poolPricesInfo = new PoolPricesInfo(
-    poolPricesInfoInternal.hpb,
-    poolPricesInfoInternal.hpbIndex,
-    poolPricesInfoInternal.htp,
-    poolPricesInfoInternal.htpIndex,
-    poolPricesInfoInternal.lup,
-    poolPricesInfoInternal.lupIndex
-  )
-  return poolPricesInfo
-}
-
-export class PoolDetailsAndBucketInfo {
+export class PoolDetails {
+  poolLoansInfo: LoansInfo
   poolPricesInfo: PoolPricesInfo
+  ratesAndFeesInfo: RatesAndFees
   reservesInfo: ReservesInfo
   poolUtilizationInfo: PoolUtilizationInfo
-  constructor(poolPricesInfo: PoolPricesInfo, reservesInfo: ReservesInfo, poolUtilizationInfo: PoolUtilizationInfo) {
+  constructor(poolLoansInfo: LoansInfo, poolPricesInfo: PoolPricesInfo, ratesAndFeesInfo: RatesAndFees, reservesInfo: ReservesInfo, poolUtilizationInfo: PoolUtilizationInfo) {
+    this.poolLoansInfo = poolLoansInfo
     this.poolPricesInfo = poolPricesInfo
+    this.ratesAndFeesInfo = ratesAndFeesInfo
     this.reservesInfo = reservesInfo
     this.poolUtilizationInfo = poolUtilizationInfo
   }
 }
-export function getPoolDetailsAndBucketInfo(pool: Pool): PoolDetailsAndBucketInfo {
+export function getPoolDetailsMulticall(pool: Pool): PoolDetails {
   const poolInfoUtilsMulticallAddress = poolInfoUtilsMulticallAddressTable.get(dataSource.network())!
   const poolInfoUtilsMulticallContract = PoolInfoUtilsMulticall.bind(poolInfoUtilsMulticallAddress)
-  // TODO: replace current hardcoded bucket index with a dynamic one
-  const poolDetailsAndBucketInfoResult = poolInfoUtilsMulticallContract.poolDetailsAndBucketInfo(Address.fromBytes(pool.id), BigInt.fromI32(2000))
+  const poolDetailsMulticallResult = poolInfoUtilsMulticallContract.poolDetailsMulticall(Address.fromBytes(pool.id))
 
-  // FIXME: currently ignoring BucketInfo
-  const poolDetailsAndBucketInfo = new PoolDetailsAndBucketInfo(
-      buildPoolPricesInfo(poolDetailsAndBucketInfoResult.value0),
+  const poolDetails = new PoolDetails(
+      new LoansInfo(
+        poolDetailsMulticallResult.value0.poolSize,
+        poolDetailsMulticallResult.value0.loansCount,
+        poolDetailsMulticallResult.value0.maxBorrower,
+        poolDetailsMulticallResult.value0.pendingInflator,
+        poolDetailsMulticallResult.value0.pendingInterestFactor
+      ),
+      new PoolPricesInfo(
+        poolDetailsMulticallResult.value1.hpb,
+        poolDetailsMulticallResult.value1.hpbIndex,
+        poolDetailsMulticallResult.value1.htp,
+        poolDetailsMulticallResult.value1.htpIndex,
+        poolDetailsMulticallResult.value1.lup,
+        poolDetailsMulticallResult.value1.lupIndex
+      ),
+      new RatesAndFees(
+        poolDetailsMulticallResult.value2.lenderInterestMargin,
+        poolDetailsMulticallResult.value2.borrowFeeRate,
+        poolDetailsMulticallResult.value2.depositFeeRate
+      ),
       new ReservesInfo(
-        poolDetailsAndBucketInfoResult.value1.reserves,
-        poolDetailsAndBucketInfoResult.value1.claimableReserves,
-        poolDetailsAndBucketInfoResult.value1.claimableReservesRemaining,
-        poolDetailsAndBucketInfoResult.value1.auctionPrice,
-        poolDetailsAndBucketInfoResult.value1.timeRemaining
+        poolDetailsMulticallResult.value3.reserves,
+        poolDetailsMulticallResult.value3.claimableReserves,
+        poolDetailsMulticallResult.value3.claimableReservesRemaining,
+        poolDetailsMulticallResult.value3.auctionPrice,
+        poolDetailsMulticallResult.value3.timeRemaining
       ),
       new PoolUtilizationInfo(
-        poolDetailsAndBucketInfoResult.value2.poolMinDebtAmount,
-        poolDetailsAndBucketInfoResult.value2.poolCollateralization,
-        poolDetailsAndBucketInfoResult.value2.poolActualUtilization,
-        poolDetailsAndBucketInfoResult.value2.poolTargetUtilization
+        poolDetailsMulticallResult.value4.poolMinDebtAmount,
+        poolDetailsMulticallResult.value4.poolCollateralization,
+        poolDetailsMulticallResult.value4.poolActualUtilization,
+        poolDetailsMulticallResult.value4.poolTargetUtilization
       )
   )
-  return poolDetailsAndBucketInfo
+  return poolDetails
 }
 
   // TODO: rearrange into organized sections
