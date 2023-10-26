@@ -2,8 +2,8 @@ import { Address, BigInt, Bytes, ethereum, dataSource, log, BigDecimal } from "@
 import { createMockedFunction } from "matchstick-as"
 
 import { BucketInfo } from "../../src/utils/pool/bucket"
-import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
-import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool/pool"
+import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI, poolInfoUtilsMulticallAddressTable } from '../../src/utils/constants';
+import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo, PoolDetails } from '../../src/utils/pool/pool';
 import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
 import { BorrowerInfo } from "../../src/utils/pool/loan"
 import { wdiv, wmin, wmul } from "../../src/utils/math"
@@ -251,6 +251,53 @@ export function mockGetPoolUtilizationInfo(pool: Address, expectedInfo: PoolUtil
             ethereum.Value.fromUnsignedBigInt(expectedInfo.collateralization),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.actualUtilization),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.targetUtilization)
+        ])
+}
+
+// https://github.com/LimeChain/matchstick/issues/376
+export function mockGetPoolDetailsMulticall(pool: Address, expectedPoolDetails: PoolDetails): void {
+    const expectedPoolLoansInfo = new ethereum.tuple();
+    expectedPoolLoansInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolLoansInfo.poolSize));
+    expectedPoolLoansInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolLoansInfo.loansCount));
+    expectedPoolLoansInfo.push(ethereum.Value.fromAddress(expectedPoolDetails.poolLoansInfo.maxBorrower));
+    expectedPoolLoansInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolLoansInfo.pendingInflator));
+    expectedPoolLoansInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolLoansInfo.pendingInterestFactor));
+
+    const expectedPoolPricesInfo = new ethereum.tuple();
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.hpb));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.hpbIndex));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.htp));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.htpIndex));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.lup));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.lupIndex));
+
+    const expectedRatesAndFeesInfo = new ethereum.tuple();
+    expectedRatesAndFeesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.ratesAndFeesInfo.lenderInterestMargin));
+    expectedRatesAndFeesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.ratesAndFeesInfo.borrowFeeRate));
+    expectedRatesAndFeesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.ratesAndFeesInfo.depositFeeRate));
+
+    const expectedPoolReservesInfo = new ethereum.tuple();
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.reserves));
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.claimableReserves));
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.claimableReservesRemaining));
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.reserveAuctionPrice));
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.reserveAuctionTimeRemaining));
+
+    const expectedPoolUtilizationInfo = new ethereum.tuple();
+    expectedPoolUtilizationInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolUtilizationInfo.minDebtAmount));
+    expectedPoolUtilizationInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolUtilizationInfo.collateralization));
+    expectedPoolUtilizationInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolUtilizationInfo.actualUtilization));
+    expectedPoolUtilizationInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolUtilizationInfo.targetUtilization));
+
+    createMockedFunction(poolInfoUtilsMulticallAddressTable.get(dataSource.network())!, 'poolDetailsMulticall', 'poolDetailsMulticall(address):((uint256,uint256,address,uint256,uint256),(uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256),(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256))')
+        .withArgs([ethereum.Value.fromAddress(pool)])
+        // TODO: create new expecte tuple containings the retrieved params from each struct
+        .returns([
+            ethereum.Value.fromTuple(expectedPoolLoansInfo),
+            ethereum.Value.fromTuple(expectedPoolPricesInfo),
+            ethereum.Value.fromTuple(expectedRatesAndFeesInfo),
+            ethereum.Value.fromTuple(expectedPoolReservesInfo),
+            ethereum.Value.fromTuple(expectedPoolUtilizationInfo)
         ])
 }
 
