@@ -7,7 +7,7 @@
     "build-and-test-clean": "rm -rf generated && graph codegen && graph build && graph test",
     "create-local": "graph create --node http://localhost:8020/ ajna",
     "remove-local": "graph remove --node http://localhost:8020/ ajna",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 ajna -l rc7",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 ajna -l rc8",
     "test": "graph test"
   },
   "dependencies": {

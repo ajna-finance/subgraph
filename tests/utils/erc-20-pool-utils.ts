@@ -8,6 +8,7 @@ import {
   BucketTake,
   BucketTakeLPAwarded,
   DrawDebt,
+  Flashloan,
   Kick,
   KickReserveAuction,
   MoveQuoteToken,
@@ -254,6 +255,31 @@ export function createDrawDebtEvent(
   drawDebtEvent.address = pool
 
   return drawDebtEvent
+}
+
+export function createFlashLoanEvent(
+  pool: Address,
+  reciever: Address,
+  token: Address,
+  amount: BigInt
+): Flashloan {
+  let flashLoanEvent = changetype<Flashloan>(newMockEvent())
+
+  flashLoanEvent.parameters = new Array()
+
+  flashLoanEvent.parameters.push(
+    new ethereum.EventParam("reciever", ethereum.Value.fromAddress(reciever))
+  )
+  flashLoanEvent.parameters.push(
+    new ethereum.EventParam("token", ethereum.Value.fromAddress(token))
+  )
+  flashLoanEvent.parameters.push(
+    new ethereum.EventParam("amount", ethereum.Value.fromUnsignedBigInt(amount))
+  )
+
+  flashLoanEvent.address = pool
+
+  return flashLoanEvent
 }
 
 export function createKickEvent(

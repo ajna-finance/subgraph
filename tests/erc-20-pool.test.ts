@@ -10,8 +10,8 @@ import {
   logStore,
 } from "matchstick-as/assembly/index"
 import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuctionKick, handleReserveAuctionTake, handleTake, handleUpdateInterestRate } from "../src/mappings/erc-20-pool"
-import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketBankruptcyEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionKickEvent, createReserveAuctionTakeEvent, createTakeEvent, createUpdateInterestRateEvent } from "./utils/erc-20-pool-utils"
+import { handleAddCollateral, handleAddQuoteToken, handleBucketBankruptcy, handleBucketTake, handleBucketTakeLPAwarded, handleDrawDebt, handleFlashloan, handleKick, handleMoveQuoteToken, handleRepayDebt, handleReserveAuctionKick, handleReserveAuctionTake, handleTake, handleUpdateInterestRate } from "../src/mappings/erc-20-pool"
+import { createAddCollateralEvent, createAddQuoteTokenEvent, createBucketBankruptcyEvent, createBucketTakeEvent, createBucketTakeLPAwardedEvent, createDrawDebtEvent, createFlashLoanEvent, createKickEvent, createMoveQuoteTokenEvent, createRepayDebtEvent, createReserveAuctionKickEvent, createReserveAuctionTakeEvent, createTakeEvent, createUpdateInterestRateEvent } from "./utils/erc-20-pool-utils"
 import {
   assertBucketUpdate,
   assertLendUpdate,
@@ -1616,6 +1616,20 @@ describe("ERC20Pool assertions", () => {
       "borrowRate",
       `${wadToDecimal(newInterestRate)}`
     )
+  })
+
+  test("FlashLoan", () => {
+    // mock parameters
+    const poolAddress = Address.fromString("0x0000000000000000000000000000000000000001")
+    const reciever = Address.fromString("0x0000000000000000000000000000000000000002")
+    const token = Address.fromString("0x0000000000000000000000000000000000000012")
+    const amount = BigInt.fromString("567529276179422528643")          // 567.529276179422528643 * 1e18
+
+    const flashLoanEvent = createFlashLoanEvent(poolAddress, reciever, token, amount)
+    handleFlashloan(flashLoanEvent)
+
+    assert.entityCount("Flashloan", 1)
+
   })
 
 })
