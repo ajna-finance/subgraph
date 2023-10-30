@@ -383,7 +383,6 @@ export function mockDepositUpToIndex(pool: Address, index: BigInt, expectedInfo:
       ])
 }
 
-// TODO: reuse this for PoolDetails?
 export class PoolMockParams {
     // loans info mock params
     poolSize: BigInt

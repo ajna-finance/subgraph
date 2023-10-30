@@ -7,7 +7,7 @@ import { PoolInfoUtils } from '../../../generated/templates/ERC20Pool/PoolInfoUt
 import { PoolInfoUtilsMulticall } from '../../../generated/templates/ERC20Pool/PoolInfoUtilsMulticall'
 
 import { MAX_PRICE, MAX_PRICE_INDEX, ONE_BD, poolInfoUtilsAddressTable, poolInfoUtilsMulticallAddressTable, TEN_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../constants"
-import { addressToBytes, decimalToWad, wadToDecimal } from '../convert'
+import { addressToBytes, decimalToWad, wadToDecimal } from '../convert';
 import { getTokenBalance } from '../token-erc20'
 import { getTokenBalance as getERC721TokenBalance } from '../token-erc721'
 import { wmul, wdiv } from '../math'
@@ -83,17 +83,14 @@ export function getRatesAndFees(poolId: Bytes): RatesAndFees {
 }
 
 export function calculateLendRate(
-  poolAddress: Address, 
   borrowRate: BigInt, 
-  lenderInterestMargin: BigInt, 
-  poolPricesInfo: PoolPricesInfo, 
+  lenderInterestMargin: BigInt,
+  meaningfulDeposit: BigInt,
   debt: BigInt
 ): BigDecimal {
-  const meaningfulPriceIndex = max(poolPricesInfo.lupIndex.toU32(), poolPricesInfo.htpIndex.toU32())
-  const meaningfulDeposit = depositUpToIndex(poolAddress, meaningfulPriceIndex)
   if (meaningfulDeposit.equals(ZERO_BI)) return ZERO_BD
   const utilization = wdiv(debt, meaningfulDeposit)
-  return wadToDecimal(wmul(wmul(borrowRate,lenderInterestMargin), utilization))
+  return wadToDecimal(wmul(wmul(borrowRate, lenderInterestMargin), utilization))
 }
 
 export class LoansInfo {
@@ -224,10 +221,6 @@ export function updatePool(pool: Pool): void {
   pool.maxBorrower    = poolLoansInfo.maxBorrower
   pool.inflator       = wadToDecimal(poolLoansInfo.pendingInflator)
 
-  // update amount of debt in pool
-  const debtInfo = isERC20Pool(pool) ? getDebtInfo(pool) : getDebtInfoERC721Pool(pool)
-  pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
-
   // update pool prices information
   const poolPricesInfo = poolDetails.poolPricesInfo
   pool.hpb = wadToDecimal(poolPricesInfo.hpb)
@@ -249,33 +242,46 @@ export function updatePool(pool: Pool): void {
   pool.actualUtilization = wadToDecimal(poolUtilizationInfo.actualUtilization)
   pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
 
+  // FIXME: replace t0debt?
+  // // update amount of debt in pool
+  // const debtInfo = isERC20Pool(pool) ? getDebtInfo(pool) : getDebtInfoERC721Pool(pool)
+  // pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
+
   // update pool token balances
-  // update quote token balances, this is common between all pool types
-  const poolAddress = Address.fromBytes(pool.id)
-  let token = Token.load(pool.quoteToken)!
-  let scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
-  let unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
-  pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
-  // update collateral token balances
-  // use the appropriate contract for querying balanceOf the pool
-  if (pool.poolType == 'Fungible') {
-    token = Token.load(pool.collateralToken)!
-    scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
-    unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
-  } else {
-    scaleFactor = TEN_BI.pow(18) // assume 18 decimal factor for ERC721
-    unnormalizedTokenBalance = getERC721TokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
-  }
-  pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
+  const meaningfulPriceIndex = max(poolPricesInfo.lupIndex.toU32(), poolPricesInfo.htpIndex.toU32())
+  const poolBalanceDetails = getPoolBalanceDetails(pool, meaningfulPriceIndex)
+  pool.quoteTokenBalance = wadToDecimal(poolBalanceDetails.quoteTokenBalance)
+  pool.collateralBalance = wadToDecimal(poolBalanceDetails.collateralTokenBalance)
+  // FIXME: update t0debt -> need to take into account pending debt?
+  // update pool debt info
+  pool.t0debt = wadToDecimal(poolBalanceDetails.debt)
+
+  // // update pool token balances
+  // // update quote token balances, this is common between all pool types
+  // const poolAddress = Address.fromBytes(pool.id)
+  // let token = Token.load(pool.quoteToken)!
+  // let scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+  // let unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
+  // pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
+  // // update collateral token balances
+  // // use the appropriate contract for querying balanceOf the pool
+  // if (pool.poolType == 'Fungible') {
+  //   token = Token.load(pool.collateralToken)!
+  //   scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
+  //   unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+  // } else {
+  //   scaleFactor = TEN_BI.pow(18) // assume 18 decimal factor for ERC721
+  //   unnormalizedTokenBalance = getERC721TokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
+  // }
+  // pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 
   // update rates and fees which change irrespective of borrow rate
   const ratesAndFees = poolDetails.ratesAndFeesInfo
   pool.lendRate = calculateLendRate(
-    poolAddress,
     decimalToWad(pool.borrowRate),
     ratesAndFees.lenderInterestMargin,
-    poolPricesInfo,
-    debtInfo.pendingDebt)
+    poolBalanceDetails.depositUpToIndex,
+    poolBalanceDetails.debt)
   pool.borrowFeeRate = wadToDecimal(ratesAndFees.borrowFeeRate)
   pool.depositFeeRate = wadToDecimal(ratesAndFees.depositFeeRate)
 }
@@ -335,6 +341,41 @@ export function getPoolDetailsMulticall(pool: Pool): PoolDetails {
       )
   )
   return poolDetails
+}
+
+export class PoolBalanceDetails {
+  debt: BigInt
+  accruedDebt: BigInt
+  debtInAuction: BigInt
+  t0Debt2ToCollateral: BigInt
+  depositUpToIndex: BigInt
+  quoteTokenBalance: BigInt
+  collateralTokenBalance: BigInt
+  constructor(debt: BigInt, accruedDebt: BigInt, debtInAuction: BigInt, t0Debt2ToCollateral: BigInt, depositUpToIndex: BigInt, quoteTokenBalance: BigInt, collateralTokenBalance: BigInt) {
+    this.debt = debt
+    this.accruedDebt = accruedDebt
+    this.debtInAuction = debtInAuction
+    this.t0Debt2ToCollateral = t0Debt2ToCollateral
+    this.depositUpToIndex = depositUpToIndex
+    this.quoteTokenBalance = quoteTokenBalance
+    this.collateralTokenBalance = collateralTokenBalance
+  }
+}
+export function getPoolBalanceDetails(pool: Pool, meaningFulIndex: BigInt): PoolBalanceDetails {
+  const poolInfoUtilsMulticallAddress = poolInfoUtilsMulticallAddressTable.get(dataSource.network())!
+  const poolInfoUtilsMulticallContract = PoolInfoUtilsMulticall.bind(poolInfoUtilsMulticallAddress)
+  const poolBalanceDetailsResult = poolInfoUtilsMulticallContract.poolBalanceDetails(Address.fromBytes(pool.id), meaningFulIndex, pool.quoteToken, pool.collateralToken, pool.poolType != 'Fungible')
+
+  const poolBalanceDetails = new PoolBalanceDetails(
+    poolBalanceDetailsResult.value0.debt,
+    poolBalanceDetailsResult.value0.accruedDebt,
+    poolBalanceDetailsResult.value0.debtInAuction,
+    poolBalanceDetailsResult.value0.t0Debt2ToCollateral,
+    poolBalanceDetailsResult.value0.depositUpToIndex,
+    poolBalanceDetailsResult.value0.quoteTokenBalance,
+    poolBalanceDetailsResult.value0.collateralTokenBalance
+  )
+  return poolBalanceDetails
 }
 
   // TODO: rearrange into organized sections
@@ -414,6 +455,7 @@ export function getBurnInfoERC721Pool(pool: Pool, burnEpoch: BigInt): BurnInfo {
   return burnInfo
 }
 
+// FIXME: this needs to be updated
 export class DebtInfo {
     pendingDebt: BigInt
     accruedDebt: BigInt
