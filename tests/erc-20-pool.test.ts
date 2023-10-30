@@ -21,7 +21,7 @@ import {
 import { mockGetAuctionInfo, mockGetAuctionStatus, mockGetBorrowerInfo, mockGetBucketInfo, mockGetBurnInfo, mockGetCurrentBurnEpoch, mockGetDebtInfo, mockGetLPBValueInQuote, mockGetLenderInfo, mockGetRatesAndFees, mockPoolInfoUtilsPoolUpdateCalls, mockTokenBalance } from "./utils/mock-contract-calls"
 import { BucketInfo, getBucketId } from "../src/utils/pool/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
-import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, TWO_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from "../src/utils/constants"
+import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, TWO_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from '../src/utils/constants';
 import { Account, Lend, Loan, Pool } from "../generated/schema"
 import { getLendId } from "../src/utils/pool/lend"
 import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
@@ -467,11 +467,34 @@ describe("ERC20Pool assertions", () => {
     const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const collateralPledged = BigInt.fromI32(1067)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
-
-    const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
-    mockGetDebtInfo(poolAddress, expectedPoolDebtInfo)
+    const index = BigInt.fromI32(234)
 
     const inflator = BigInt.fromString("1002804000000000000")
+
+    mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
+      poolSize: ZERO_BI,
+      debt: amountBorrowed,
+      loansCount: ONE_BI,
+      maxBorrower: borrower,
+      inflator: inflator,
+      hpb: ZERO_BI, //TODO: indexToPrice(price)
+      hpbIndex: index,
+      htp: ZERO_BI, //TODO: indexToPrice(price)
+      htpIndex: ZERO_BI,
+      lup: lup,
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
+      reserves: ZERO_BI,
+      claimableReserves: ZERO_BI,
+      claimableReservesRemaining: ZERO_BI,
+      reserveAuctionPrice: ZERO_BI,
+      currentBurnEpoch: BigInt.fromI32(9998102),
+      reserveAuctionTimeRemaining: ZERO_BI,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI
+    })
+
     const expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator), 
       collateralPledged, 

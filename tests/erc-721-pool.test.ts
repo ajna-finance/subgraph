@@ -256,12 +256,34 @@ describe("Describe entity assertions", () => {
     const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345)]
     const amountPledged = BigInt.fromString("2000000000000000000")
     const lup = BigInt.fromString("9529276179422528643") //   9.529276179422528643 * 1e18
-
-    // mock required contract calls
-    const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
-    mockGetDebtInfo(poolAddress, expectedPoolDebtInfo)
+    const index = BigInt.fromI32(123)
 
     const inflator = BigInt.fromString("1002804000000000000")
+
+    mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
+      poolSize: ZERO_BI,
+      debt: amountBorrowed,
+      loansCount: ONE_BI,
+      maxBorrower: borrower,
+      inflator: inflator,
+      hpb: ZERO_BI, //TODO: indexToPrice(price)
+      hpbIndex: index,
+      htp: ZERO_BI, //TODO: indexToPrice(price)
+      htpIndex: ZERO_BI,
+      lup: lup,
+      lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
+      reserves: ZERO_BI,
+      claimableReserves: ZERO_BI,
+      claimableReservesRemaining: ZERO_BI,
+      reserveAuctionPrice: ZERO_BI,
+      currentBurnEpoch: BigInt.fromI32(9998102),
+      reserveAuctionTimeRemaining: ZERO_BI,
+      minDebtAmount: ZERO_BI,
+      collateralization: ONE_WAD_BI,
+      actualUtilization: ZERO_BI,
+      targetUtilization: ONE_WAD_BI
+    })
+
     const expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged,
