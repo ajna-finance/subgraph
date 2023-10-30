@@ -40,6 +40,82 @@
         "internalType": "address",
         "name": "ajnaPool_",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "index_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "quoteTokenAddress_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "collateralTokenAddress_",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "isNFT_",
+        "type": "bool"
+      }
+    ],
+    "name": "poolBalanceDetails",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "debt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accruedDebt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "debtInAuction",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "t0Debt2ToCollateral",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "depositUpToIndex",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "quoteTokenBalance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "collateralTokenBalance",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct PoolInfoUtilsMulticall.PoolBalanceDetails",
+        "name": "poolBalanceDetails_",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "ajnaPool_",
+        "type": "address"
       }
     ],
     "name": "poolDetailsMulticall",
