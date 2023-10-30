@@ -242,11 +242,6 @@ export function updatePool(pool: Pool): void {
   pool.actualUtilization = wadToDecimal(poolUtilizationInfo.actualUtilization)
   pool.targetUtilization = wadToDecimal(poolUtilizationInfo.targetUtilization)
 
-  // FIXME: replace t0debt?
-  // // update amount of debt in pool
-  // const debtInfo = isERC20Pool(pool) ? getDebtInfo(pool) : getDebtInfoERC721Pool(pool)
-  // pool.t0debt = wadToDecimal(wdiv(debtInfo.pendingDebt, poolLoansInfo.pendingInflator))
-
   // update pool token balances
   const meaningfulPriceIndex = max(poolPricesInfo.lupIndex.toU32(), poolPricesInfo.htpIndex.toU32())
   const poolBalanceDetails = getPoolBalanceDetails(pool, BigInt.fromI32(meaningfulPriceIndex))
@@ -256,25 +251,6 @@ export function updatePool(pool: Pool): void {
   // FIXME: update t0debt -> need to take into account pending debt?
   // update pool debt info
   pool.t0debt = wadToDecimal(poolBalanceDetails.debt)
-
-  // // update pool token balances
-  // // update quote token balances, this is common between all pool types
-  // const poolAddress = Address.fromBytes(pool.id)
-  // let token = Token.load(pool.quoteToken)!
-  // let scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
-  // let unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.quoteToken), poolAddress)
-  // pool.quoteTokenBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
-  // // update collateral token balances
-  // // use the appropriate contract for querying balanceOf the pool
-  // if (pool.poolType == 'Fungible') {
-  //   token = Token.load(pool.collateralToken)!
-  //   scaleFactor = TEN_BI.pow(18 - token.decimals as u8)
-  //   unnormalizedTokenBalance = getTokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
-  // } else {
-  //   scaleFactor = TEN_BI.pow(18) // assume 18 decimal factor for ERC721
-  //   unnormalizedTokenBalance = getERC721TokenBalance(Address.fromBytes(pool.collateralToken), poolAddress)
-  // }
-  // pool.collateralBalance = wadToDecimal(unnormalizedTokenBalance.times(scaleFactor))
 
   // update rates and fees which change irrespective of borrow rate
   const ratesAndFees = poolDetails.ratesAndFeesInfo

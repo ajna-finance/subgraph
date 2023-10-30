@@ -487,16 +487,14 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
     const poolInstance = Pool.load(addressToBytes(pool))!
     const depositUpToIndex = wmul(params.poolSize, params.actualUtilization)
     const meaningfulIndex = BigInt.fromI32(max(params.lupIndex.toI32(), params.htpIndex.toI32()))
-
-    // TODO: check if is NFT pool
-    // const isNFT = pool.
+    const isNFT = poolInstance.poolType != 'Fungible'
 
     mockGetPoolBalanceDetails(
         pool,
         meaningfulIndex,
         Address.fromBytes(poolInstance.quoteToken),
         Address.fromBytes(poolInstance.collateralToken),
-        false, // FIXME: set correct isNFT value here
+        isNFT,
         new PoolBalanceDetails(
             params.debt,
             ZERO_BI,
@@ -507,16 +505,6 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
             decimalToWad(poolInstance.collateralBalance)
         )
     )
-
-    // const expectedPoolDebtInfo = new DebtInfo(params.debt, ZERO_BI, ZERO_BI, ZERO_BI)
-    // mockGetDebtInfo(pool, expectedPoolDebtInfo)
-
-    // // TODO: pass expected balance to mock balance calls
-    // // mock token balance calls
-    // mockTokenBalance(Address.fromBytes(poolInstance.collateralToken), pool, decimalToWad(poolInstance.collateralBalance))
-    // mockTokenBalance(Address.fromBytes(poolInstance.quoteToken), pool, decimalToWad(poolInstance.quoteTokenBalance))
-
-    // mockDepositUpToIndex(pool, params.lupIndex, wmul(params.poolSize, params.actualUtilization))
 }
 
 /****************************/
