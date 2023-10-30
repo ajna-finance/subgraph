@@ -86,7 +86,6 @@ type Pool @entity {
   htpIndex: Int! # current highest threshold price index
   lup: BigDecimal! # current lowest utilized price
   lupIndex: Int! # current lowest utilized price index  
-  momp: BigDecimal! # most optimistic matching price
 
   # RESERVES INFORMATION
   # current reserves contractQuoteBalance + poolDebt - pool.depositSize()
@@ -264,6 +263,7 @@ type LiquidationAuction @entity {
   bondSize: BigDecimal!            # bond provided by kicker to initate auction
   bondFactor: BigDecimal!          # bond factor determining the reward or penalty for the kicker
   neutralPrice: BigDecimal!        # price at which kicker will have their bond returned without penalty or reward
+  referencePrice: BigDecimal!      # max(HTP, NP) used in auction price curve
 }
 
 # tracks the reserve auction process across multiple takes in a single auction
@@ -420,7 +420,6 @@ type Flashloan @entity(immutable: true) {
 type Kick @entity {
   id: Bytes!
   kicker: Bytes!             # address of the kicker
-  kickMomp: BigDecimal!      # pool MOMP at the time of kicking
   pool: Pool!                # Pool in which a kick occurred
   loan: Loan!                # Loan which was kicked
   locked: BigDecimal!        # amount of quote from the bond locked in the kick (updated on take)  TODO: rename bondLocked
@@ -503,7 +502,6 @@ type RepayDebt @entity(immutable: true) {
 type ReserveAuctionKick @entity(immutable: true) {
   id: Bytes!                      # transaction.hash + transaction.from
   kicker: Bytes                   # address of the taker, null if emitted as start of event
-  kickerAward: BigDecimal!        # amount of quote rewarded to kicker for starting reserves auction
   reserveAuction: ReserveAuction! # reserve auction in which the take is occuring
   pool: Pool!                     # pool in which the auction was kicked
   claimableReserves: BigDecimal!  # uint256 initial amount of claimable reserves in the auction

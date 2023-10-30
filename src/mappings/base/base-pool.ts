@@ -21,7 +21,7 @@ import { getDepositTime, getLendId, loadOrCreateLend, lpbValueInQuote, saveOrRem
 import { addReserveAuctionToPool, getBurnInfo, getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
 import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../utils/token-erc20"
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
-import { loadOrCreateReserveAuction, reserveAuctionKickerReward } from "../../utils/pool/reserve-auction"
+import { loadOrCreateReserveAuction } from "../../utils/pool/reserve-auction"
 import { saveOrRemovePositionLend } from "../../utils/position"
 import { decreaseAllowances, increaseAllowances, loadOrCreateAllowances, revokeAllowances, saveOrRemoveAllowances } from "../../utils/pool/lp-allowances"
 import { approveTransferors, loadOrCreateTransferors, revokeTransferors, saveOrRemoveTransferors } from "../../utils/pool/lp-transferors"
@@ -641,7 +641,6 @@ export function _handleReserveAuctionKick(event: ethereum.Event, currentBurnEpoc
   updatePool(pool)
   addReserveAuctionToPool(pool, reserveAuction)
   pool.txCount = pool.txCount.plus(ONE_BI)
-  reserveKick.kickerAward = reserveAuctionKickerReward(pool)
 
   // update account state
   const account   = loadOrCreateAccount(addressToBytes(event.transaction.from))

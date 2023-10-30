@@ -31,12 +31,12 @@ export const MAX_BUCKET_INDEX = 4156;
 export const poolInfoUtilsAddressTable = new TypedMap<string, Address>()
 poolInfoUtilsAddressTable.set('mainnet', Address.fromString('0x154FFf344f426F99E328bacf70f4Eb632210ecdc'))
 poolInfoUtilsAddressTable.set('matic', Address.fromString('0xA9Ada58DD3c820b30D3bf5B490226F2ef92107bA'))
-poolInfoUtilsAddressTable.set('goerli', Address.fromString('0xBB61407715cDf92b2784E9d2F1675c4B8505cBd8'))
+poolInfoUtilsAddressTable.set('goerli', Address.fromString('0x08F304cBeA7FAF48C93C27ae1305E220913a571d'))
 poolInfoUtilsAddressTable.set('mumbai', Address.fromString('0x39250241CC84Dadb1cDFE3A1a717631e2aA603eB'))
-poolInfoUtilsAddressTable.set('ganache', Address.fromString('0x6c5c7fD98415168ada1930d44447790959097482'))
+poolInfoUtilsAddressTable.set('ganache', Address.fromString('0xab56A77bDFe82b36875e92CE717fE533C1709A9D'))
 export const positionManagerAddressTable = new TypedMap<string, Address>()
-positionManagerAddressTable.set('goerli', Address.fromString('0x23E2EFF19bd50BfCF0364B7dCA01004D5cce41f9'))
-positionManagerAddressTable.set('ganache', Address.fromString('0x6548dF23A854f72335902e58a1e59B50bb3f11F1'))
+positionManagerAddressTable.set('goerli', Address.fromString('0xC4114D90F51960854ab574297Cf7CC131d445F29'))
+positionManagerAddressTable.set('ganache', Address.fromString('0x502dD41556B128C23F8B715dBEEBB73D1F1Feb67'))
 
 // GrantFund constants
 export const CHALLENGE_PERIOD_LENGTH    = BigInt.fromI32(50400)

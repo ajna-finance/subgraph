@@ -36,6 +36,11 @@
   },
   {
     "inputs": [],
+    "name": "AuctionNotTakeable",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "AuctionPriceGtBucketPrice",
     "type": "error"
   },
@@ -317,11 +322,6 @@
   {
     "inputs": [],
     "name": "ReserveAuctionTooSoon",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "TakeNotPastCooldown",
     "type": "error"
   },
   {
@@ -1265,7 +1265,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "kickMomp_",
+        "name": "referencePrice_",
         "type": "uint256"
       },
       {
@@ -1287,11 +1287,6 @@
         "internalType": "address",
         "name": "prev_",
         "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "alreadyTaken_",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -2212,7 +2207,13 @@
       }
     ],
     "name": "repayDebt",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "amountRepaid_",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -2324,7 +2325,13 @@
       }
     ],
     "name": "take",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "collateralTaken_",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },

@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, Value, dataSource } from "@graphprotocol/graph-ts"
 
-import { LiquidationAuction, Kick, Loan, Pool, BucketTake } from "../../../generated/schema"
+import { LiquidationAuction, Kick, Loan, Pool, BucketTake } from '../../../generated/schema';
 import { ERC20Pool } from '../../../generated/templates/ERC20Pool/ERC20Pool'
 import { ERC721Pool } from "../../../generated/templates/ERC721Pool/ERC721Pool"
 import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUtils"
@@ -81,6 +81,7 @@ export function updateLiquidationAuction(
       liquidationAuction.bondSize            = wadToDecimal(auctionInfo.bondSize)
       liquidationAuction.kickTime            = auctionInfo.kickTime
       liquidationAuction.neutralPrice        = wadToDecimal(auctionInfo.neutralPrice)
+      liquidationAuction.referencePrice      = wadToDecimal(auctionInfo.referencePrice)
     }
 
     // update remaining quantities even if auction was settled and they are 0
@@ -96,23 +97,21 @@ export class AuctionInfo {
     bondFactor: BigInt
     bondSize: BigInt
     kickTime: BigInt
-    kickMomp: BigInt
+    referencePrice: BigInt
     neutralPrice: BigInt
     head: Address
     next: Address
     prev: Address
-    alreadyTaken: bool
-    constructor(kicker: Address, bondFactor: BigInt, bondSize: BigInt, kickTime: BigInt, kickMomp: BigInt, neutralPrice: BigInt, head: Address, next: Address, prev: Address, alreadyTaken: bool) {
+    constructor(kicker: Address, bondFactor: BigInt, bondSize: BigInt, kickTime: BigInt, referencePrice: BigInt, neutralPrice: BigInt, head: Address, next: Address, prev: Address) {
         this.kicker = kicker
         this.bondFactor = bondFactor
         this.bondSize = bondSize
         this.kickTime = kickTime
-        this.kickMomp = kickMomp
+        this.referencePrice = referencePrice
         this.neutralPrice = neutralPrice
         this.head = head
         this.next = next
         this.prev = prev
-        this.alreadyTaken = alreadyTaken
     }
 }
 export function getAuctionInfoERC20Pool(borrower: Bytes, pool: Pool): AuctionInfo {
@@ -127,8 +126,7 @@ export function getAuctionInfoERC20Pool(borrower: Bytes, pool: Pool): AuctionInf
         auctionInfoResult.value5,
         auctionInfoResult.value6,
         auctionInfoResult.value7,
-        auctionInfoResult.value8,
-        auctionInfoResult.value9
+        auctionInfoResult.value8
     )
     return auctionInfo
 }
@@ -144,8 +142,7 @@ export function getAuctionInfoERC721Pool(borrower: Bytes, pool: Pool): AuctionIn
         auctionInfoResult.value5,
         auctionInfoResult.value6,
         auctionInfoResult.value7,
-        auctionInfoResult.value8,
-        auctionInfoResult.value9
+        auctionInfoResult.value8
     )
     return auctionInfo
 }

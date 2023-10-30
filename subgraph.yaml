@@ -6,8 +6,8 @@ dataSources:
     name: PositionManager
     source:
       abi: PositionManager
-      address: "0x23E2EFF19bd50BfCF0364B7dCA01004D5cce41f9"
-      startBlock: 9289397
+      address: "0xC4114D90F51960854ab574297Cf7CC131d445F29"
+      startBlock: 9888337
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -51,8 +51,8 @@ dataSources:
     name: ERC20PoolFactory
     source:
       abi: ERC20PoolFactory
-      address: "0x01Da8a85A5B525D476cA2b51e44fe7087fFafaFF"
-      startBlock: 9289397
+      address: "0x14F2474fB5ea9DF82059053c4F85A8C803Ab10C9"
+      startBlock: 9888337
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -77,8 +77,8 @@ dataSources:
     name: ERC721PoolFactory
     source:
       abi: ERC721PoolFactory
-      address: "0x37048D43A65748409B04f4051eEd9480BEf68c82"
-      startBlock: 9289397
+      address: "0xb0d1c875B240EE9f6C2c3284a31b10f1EC6De7d2"
+      startBlock: 9888337
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

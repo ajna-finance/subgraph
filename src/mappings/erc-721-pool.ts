@@ -572,7 +572,6 @@ export function handleKick(event: KickEvent): void {
   const auction = loadOrCreateLiquidationAuction(pool.id, auctionId, kick, loan)
   updateLiquidationAuction(auction, auctionInfo, auctionStatus)
 
-  kick.kickMomp = wadToDecimal(auctionInfo.kickMomp)
   kick.startingPrice = wadToDecimal(auctionStatus.price)
   kick.pool = pool.id
   kick.loan = loan.id

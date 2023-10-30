@@ -58,14 +58,6 @@ export function getLenderInfoERC721Pool(poolId: Bytes, bucketIndex: BigInt, lend
   )
 }
 
-// retrieve the current pool MOMP by calling PoolInfoUtils.momp()
-export function getMomp(poolId: Bytes): BigDecimal {
-  const poolInfoUtilsAddress = poolInfoUtilsAddressTable.get(dataSource.network())!
-  const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
-  const pool = Pool.load(poolId)
-  return wadToDecimal(poolInfoUtilsContract.momp(Address.fromBytes(poolId)))
-}
-
 export class RatesAndFees {
   lenderInterestMargin: BigInt
   borrowFeeRate: BigInt
@@ -239,7 +231,6 @@ export function updatePool(pool: Pool): void {
     pool.htpIndex = poolPricesInfo.htpIndex.toU32()
     pool.lup = wadToDecimal(poolPricesInfo.lup)
     pool.lupIndex = poolPricesInfo.lupIndex.toU32()
-    pool.momp = getMomp(pool.id)
 
     // update reserve auction information
     const poolReservesInfo = getPoolReservesInfo(pool)
@@ -440,7 +431,6 @@ export function loadOrCreatePool(id: Bytes): Pool {
     pool.htpIndex = 0
     pool.lup = MAX_PRICE
     pool.lupIndex = MAX_PRICE_INDEX
-    pool.momp = ZERO_BD
 
     // reserve auction information
     pool.reserves = ZERO_BD

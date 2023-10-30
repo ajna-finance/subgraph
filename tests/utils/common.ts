@@ -352,7 +352,6 @@ export function createAndHandleAddQuoteTokenEvent(poolAddress: Address, lender: 
         htpIndex: ZERO_BI,
         lup: lup,
         lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
-        momp: BigInt.fromI32(623803),
         reserves: ZERO_BI,
         claimableReserves: ZERO_BI,
         claimableReservesRemaining: ZERO_BI,

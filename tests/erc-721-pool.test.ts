@@ -95,7 +95,6 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
       lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
-      momp: BigInt.fromU32(623804),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -187,7 +186,6 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: lup,
       lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
-      momp: BigInt.fromI32(623803),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -579,7 +577,6 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: MAX_PRICE_BI,
       lupIndex: BigInt.fromU32(MAX_PRICE_INDEX),
-      momp: BigInt.fromU32(623804),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -797,12 +794,11 @@ describe("Describe entity assertions", () => {
     const bondFactor = ONE_WAD_BI
     const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const kickTime = BigInt.fromI32(123)
-    const kickMomp = BigInt.fromI32(456)
+    const referencePrice = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
-    const alreadyTaken = false
 
     // mock required contract calls
     let expectedAuctionInfo = new AuctionInfo(
@@ -810,12 +806,11 @@ describe("Describe entity assertions", () => {
       bondFactor,
       bond,
       kickTime,
-      kickMomp,
+      referencePrice,
       neutralPrice,
       head,
       next,
-      prev,
-      false
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 
@@ -1103,7 +1098,6 @@ describe("Describe entity assertions", () => {
       htpIndex: ZERO_BI,
       lup: lup,
       lupIndex: BigInt.fromU32(MAX_PRICE_INDEX), //TODO: indexToPrice(lup)
-      momp: BigInt.fromI32(623803),
       reserves: ZERO_BI,
       claimableReserves: ZERO_BI,
       claimableReservesRemaining: ZERO_BI,
@@ -1193,12 +1187,11 @@ describe("Describe entity assertions", () => {
     const bondFactor = ONE_WAD_BI
     const debt = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const kickTime = BigInt.fromI32(123)
-    const kickMomp = BigInt.fromI32(456)
+    const referencePrice = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
-    const alreadyTaken = false
 
     // mock required contract calls
     let expectedAuctionInfo = new AuctionInfo(
@@ -1206,12 +1199,11 @@ describe("Describe entity assertions", () => {
       bondFactor,
       bond,
       kickTime,
-      kickMomp,
+      referencePrice,
       neutralPrice,
       head,
       next,
-      prev,
-      false
+      prev
     )
     mockGetAuctionInfo(borrower, poolAddress, expectedAuctionInfo)
 
