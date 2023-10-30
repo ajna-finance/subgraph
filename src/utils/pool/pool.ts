@@ -249,8 +249,9 @@ export function updatePool(pool: Pool): void {
 
   // update pool token balances
   const meaningfulPriceIndex = max(poolPricesInfo.lupIndex.toU32(), poolPricesInfo.htpIndex.toU32())
-  const poolBalanceDetails = getPoolBalanceDetails(pool, meaningfulPriceIndex)
+  const poolBalanceDetails = getPoolBalanceDetails(pool, BigInt.fromI32(meaningfulPriceIndex))
   pool.quoteTokenBalance = wadToDecimal(poolBalanceDetails.quoteTokenBalance)
+  // FIXME: If isNFT then don't convert wadToDecimal?
   pool.collateralBalance = wadToDecimal(poolBalanceDetails.collateralTokenBalance)
   // FIXME: update t0debt -> need to take into account pending debt?
   // update pool debt info
@@ -364,16 +365,16 @@ export class PoolBalanceDetails {
 export function getPoolBalanceDetails(pool: Pool, meaningFulIndex: BigInt): PoolBalanceDetails {
   const poolInfoUtilsMulticallAddress = poolInfoUtilsMulticallAddressTable.get(dataSource.network())!
   const poolInfoUtilsMulticallContract = PoolInfoUtilsMulticall.bind(poolInfoUtilsMulticallAddress)
-  const poolBalanceDetailsResult = poolInfoUtilsMulticallContract.poolBalanceDetails(Address.fromBytes(pool.id), meaningFulIndex, pool.quoteToken, pool.collateralToken, pool.poolType != 'Fungible')
+  const poolBalanceDetailsResult = poolInfoUtilsMulticallContract.poolBalanceDetails(Address.fromBytes(pool.id), meaningFulIndex, Address.fromBytes(pool.quoteToken), Address.fromBytes(pool.collateralToken), pool.poolType != 'Fungible')
 
   const poolBalanceDetails = new PoolBalanceDetails(
-    poolBalanceDetailsResult.value0.debt,
-    poolBalanceDetailsResult.value0.accruedDebt,
-    poolBalanceDetailsResult.value0.debtInAuction,
-    poolBalanceDetailsResult.value0.t0Debt2ToCollateral,
-    poolBalanceDetailsResult.value0.depositUpToIndex,
-    poolBalanceDetailsResult.value0.quoteTokenBalance,
-    poolBalanceDetailsResult.value0.collateralTokenBalance
+    poolBalanceDetailsResult.debt,
+    poolBalanceDetailsResult.accruedDebt,
+    poolBalanceDetailsResult.debtInAuction,
+    poolBalanceDetailsResult.t0Debt2ToCollateral,
+    poolBalanceDetailsResult.depositUpToIndex,
+    poolBalanceDetailsResult.quoteTokenBalance,
+    poolBalanceDetailsResult.collateralTokenBalance
   )
   return poolBalanceDetails
 }
