@@ -29,6 +29,7 @@ import { deletePosition, getPoolForToken, getPositionInfo, getPositionLendId, lo
 import { getLenderInfo } from "../utils/pool/pool"
 import { getTokenURI } from "../utils/token-erc721"
 import { loadOrCreateAccount, updateAccountPositions } from "../utils/account"
+import { ONE_BI, ZERO_ADDRESS, ZERO_BD } from "../utils/constants";
 
 export function handleApproval(event: ApprovalEvent): void {
   const approval = new Approval(
@@ -281,25 +282,31 @@ export function handleTransfer(event: TransferEvent): void {
   const token = loadOrCreateLPToken(event.address);
   transfer.token = token.id;
   token.txCount = token.txCount.plus(ONE_BI);
-  const position = loadOrCreatePosition(transfer.tokenId)
-  position.owner = event.params.to
-  position.tokenURI = getTokenURI(event.address, transfer.tokenId)
+
+  if (event.params.to != ZERO_ADDRESS) {
+    const position = loadOrCreatePosition(transfer.tokenId);
+    position.owner = event.params.to;
+    position.tokenURI = getTokenURI(event.address, transfer.tokenId);
+
+    // add position to new account
+    const newOwnerAccount = loadOrCreateAccount(transfer.to);
+    updateAccountPositions(newOwnerAccount, position);
+
+    position.save();
+    newOwnerAccount.save();
+  }
 
   // remove position from old account
-  const oldOwnerAccount = loadOrCreateAccount(transfer.from)
-  const index = oldOwnerAccount.positions.indexOf(bigIntToBytes(transfer.tokenId))
-  const accountPositions = oldOwnerAccount.positions
-  if (index != -1) accountPositions.splice(index, 1)
-  oldOwnerAccount.positions = accountPositions
-
-  // add position to new account
-  const newOwnerAccount = loadOrCreateAccount(transfer.to)
-  updateAccountPositions(newOwnerAccount, position)
+  const oldOwnerAccount = loadOrCreateAccount(transfer.from);
+  const index = oldOwnerAccount.positions.indexOf(
+    bigIntToBytes(transfer.tokenId)
+  );
+  const accountPositions = oldOwnerAccount.positions;
+  if (index != -1) accountPositions.splice(index, 1);
+  oldOwnerAccount.positions = accountPositions;
 
   // save entities to store
-  oldOwnerAccount.save()
-  newOwnerAccount.save()
+  oldOwnerAccount.save();
   token.save();
-  position.save()
-  transfer.save()
+  transfer.save();
 }
