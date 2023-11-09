@@ -713,7 +713,7 @@ type Position @entity {
   tokenId: BigInt           # tokenId
   indexes: [PositionLend!]! # list of PositionLends which constitute a position
   owner: Bytes!             # address of the position owner
-  pool: Bytes!              # address of the pool that the position is associated with
+  pool: Pool!               # pool that the position is associated with
   token: Token!             # pointer to LPToken entity
   tokenURI: String!         # tokenURI of the positionNFT
 }
