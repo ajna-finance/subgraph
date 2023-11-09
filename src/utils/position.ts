@@ -73,16 +73,18 @@ export function updatePositionLends(positionLend: PositionLend): void {
   const bucket = Bucket.load(positionLend.bucket)
   if (bucket != null) {
     const existingBucketIndex = bucket.positionLends.indexOf(positionLend.id)
-    if (existingBucketIndex != -1) {
+    if (existingBucketIndex == -1) {
       bucket.positionLends = bucket.positionLends.concat([positionLend.id])
+      bucket.save()
     }
   }
 
   // add positionLend to position array if necessary
-  const position = Position.load(bigIntToBytes(positionLend.tokenId))!
+  const position = loadOrCreatePosition(positionLend.tokenId)
   const existingPositionIndex = position.indexes.indexOf(positionLend.id)
-  if (existingPositionIndex != -1) {
+  if (existingPositionIndex == -1) {
     position.indexes = position.indexes.concat([positionLend.id])
+    position.save()
   }
 }
 

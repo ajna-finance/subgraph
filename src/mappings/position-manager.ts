@@ -1,4 +1,4 @@
-import { Address, BigInt, log } from "@graphprotocol/graph-ts"
+import { BigInt, log } from "@graphprotocol/graph-ts"
 import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
@@ -21,12 +21,9 @@ import {
   Transfer
 } from "../../generated/schema"
 import { getBucketId } from "../utils/pool/bucket"
-import { lpbValueInQuote, saveOrRemoveLend } from "../utils/pool/lend"
-import { ONE_BI, ZERO_BD } from "../utils/constants"
+import { lpbValueInQuote } from "../utils/pool/lend"
 import { addressToBytes, bigIntArrayToIntArray, bigIntToBytes, wadToDecimal } from "../utils/convert"
-import { getLendId, loadOrCreateLend } from "../utils/pool/lend"
-import { deletePosition, getPoolForToken, getPositionInfo, getPositionLendId, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend, saveOrRemovePositionLend, updatePositionLends } from "../utils/position"
-import { getLenderInfo } from "../utils/pool/pool"
+import { deletePosition, getPoolForToken, getPositionInfo, loadOrCreateLPToken, loadOrCreatePosition, loadOrCreatePositionLend, saveOrRemovePositionLend, updatePositionLends } from "../utils/position"
 import { getTokenURI } from "../utils/token-erc721"
 import { loadOrCreateAccount, updateAccountPositions } from "../utils/account"
 import { ONE_BI, ZERO_ADDRESS, ZERO_BD } from "../utils/constants";
@@ -100,9 +97,6 @@ export function handleMemorializePosition(
   memorialize.blockTimestamp = event.block.timestamp
   memorialize.transactionHash = event.transaction.hash
 
-  // update entities
-  const position = loadOrCreatePosition(memorialize.tokenId)
-
   // get lend entities for each index with extant lpb
   const poolAddress = memorialize.pool
   const accountId = memorialize.lender
@@ -125,12 +119,10 @@ export function handleMemorializePosition(
 
     // associate positionLend with Bucket and Position
     updatePositionLends(positionLend)
-    bucket.save()
   }
 
   // save entities to store
   memorialize.save()
-  position.save()
 }
 
 export function handleMint(event: MintEvent): void {
