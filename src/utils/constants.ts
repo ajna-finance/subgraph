@@ -35,7 +35,7 @@ poolInfoUtilsAddressTable.set('goerli', Address.fromString('0x08F304cBeA7FAF48C9
 poolInfoUtilsAddressTable.set('mumbai', Address.fromString('0x39250241CC84Dadb1cDFE3A1a717631e2aA603eB'))
 poolInfoUtilsAddressTable.set('ganache', Address.fromString('0xab56A77bDFe82b36875e92CE717fE533C1709A9D'))
 export const poolInfoUtilsMulticallAddressTable = new TypedMap<string, Address>()
-poolInfoUtilsMulticallAddressTable.set('goerli', Address.fromString('0x12874db433dBF1D0f3c73B39F96B009093A56E0E'))
+poolInfoUtilsMulticallAddressTable.set('goerli', Address.fromString('0xc0374Fd9d3824C6ad9866df4043469CE6fe45d8D'))
 poolInfoUtilsMulticallAddressTable.set('ganache', Address.fromString('0x1d00b2f5861457F8503a481774903E36872Ea17d'))
 export const positionManagerAddressTable = new TypedMap<string, Address>()
 positionManagerAddressTable.set('goerli', Address.fromString('0xC4114D90F51960854ab574297Cf7CC131d445F29'))

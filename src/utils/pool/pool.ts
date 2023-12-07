@@ -246,9 +246,7 @@ export function updatePool(pool: Pool): void {
   const meaningfulPriceIndex = max(poolPricesInfo.lupIndex.toU32(), poolPricesInfo.htpIndex.toU32())
   const poolBalanceDetails = getPoolBalanceDetails(pool, BigInt.fromI32(meaningfulPriceIndex))
   pool.quoteTokenBalance = wadToDecimal(poolBalanceDetails.quoteTokenBalance)
-  // FIXME: If isNFT then don't convert wadToDecimal?
   pool.collateralBalance = wadToDecimal(poolBalanceDetails.collateralTokenBalance)
-  // FIXME: update t0debt -> need to take into account pending debt?
   // update pool debt info
   pool.t0debt = wadToDecimal(poolBalanceDetails.debt)
 

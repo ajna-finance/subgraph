@@ -455,7 +455,6 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.lupIndex
     )
     const expectedRatesAndFeesInfo = new RatesAndFees(
-        // FIXME: set correct lim value here
         BigInt.fromString("10000000000000000"),  // 0.01 * 1e18
         BigInt.fromString("850000000000000000"), // 0.85 * 1e18
         BigInt.fromString("50000000000000000")   // 0.05 * 1e18
