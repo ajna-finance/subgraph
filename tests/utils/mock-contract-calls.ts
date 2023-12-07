@@ -5,7 +5,7 @@ import { BucketInfo } from "../../src/utils/pool/bucket"
 import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI, poolInfoUtilsMulticallAddressTable } from '../../src/utils/constants';
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo, PoolDetails, RatesAndFees, PoolBalanceDetails, depositUpToIndex } from '../../src/utils/pool/pool';
 import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
-import { BorrowerInfo } from "../../src/utils/pool/loan"
+import { BorrowerInfo, thresholdPrice } from '../../src/utils/pool/loan';
 import { wdiv, wmin, wmul } from "../../src/utils/math"
 import { addressToBytes, decimalToWad } from "../../src/utils/convert"
 import { Pool } from "../../generated/schema"
@@ -326,7 +326,7 @@ export function mockGetPoolBalanceDetails(pool: Address, meaningfulIndex: BigInt
 
 // mock auctionInfo contract calls
 export function mockGetAuctionInfo(borrower: Address, pool: Address, expectedInfo: AuctionInfo): void {
-    createMockedFunction(pool, 'auctionInfo', 'auctionInfo(address):(address,uint256,uint256,uint256,uint256,uint256,address,address,address)')
+    createMockedFunction(pool, 'auctionInfo', 'auctionInfo(address):(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address,address)')
         .withArgs([ethereum.Value.fromAddress(borrower)])
         .returns([
             ethereum.Value.fromAddress(expectedInfo.kicker),
@@ -335,6 +335,7 @@ export function mockGetAuctionInfo(borrower: Address, pool: Address, expectedInf
             ethereum.Value.fromUnsignedBigInt(expectedInfo.kickTime),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.referencePrice),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice),
+            ethereum.Value.fromUnsignedBigInt(expectedInfo.thresholdPrice),
             ethereum.Value.fromAddress(expectedInfo.head),
             ethereum.Value.fromAddress(expectedInfo.next),
             ethereum.Value.fromAddress(expectedInfo.prev)
@@ -344,15 +345,18 @@ export function mockGetAuctionInfo(borrower: Address, pool: Address, expectedInf
 // mock auctionStatus poolInfoUtils calls
 export function mockGetAuctionStatus(pool: Address, borrower: Address, expectedInfo: AuctionStatus): void {
   createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 
-  'auctionStatus', 'auctionStatus(address,address):(uint256,uint256,uint256,bool,uint256,uint256)')
+  'auctionStatus', 'auctionStatus(address,address):(uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256)')
   .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
   .returns([
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.kickTime),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.debtToCover),
-      ethereum.Value.fromBoolean(expectedInfo.isCollateralized),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.price),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice)
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.kickTime),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.debtToCover),
+        ethereum.Value.fromBoolean(expectedInfo.isCollateralized),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.price),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.referencePrice),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.thresholdPrice),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.bondFactor)
   ])
 }
 

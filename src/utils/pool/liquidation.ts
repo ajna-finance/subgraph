@@ -7,6 +7,7 @@ import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUt
 
 import { wadToDecimal } from "../convert"
 import { ONE_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI, poolInfoUtilsAddressTable } from "../constants"
+import { thresholdPrice } from './loan';
 
 export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, kickBlock: BigInt): Bytes {
     return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + kickBlock.toString()))
@@ -82,6 +83,7 @@ export function updateLiquidationAuction(
       liquidationAuction.kickTime            = auctionInfo.kickTime
       liquidationAuction.neutralPrice        = wadToDecimal(auctionInfo.neutralPrice)
       liquidationAuction.referencePrice      = wadToDecimal(auctionInfo.referencePrice)
+      liquidationAuction.thresholdPrice      = wadToDecimal(auctionInfo.thresholdPrice)
     }
 
     // update remaining quantities even if auction was settled and they are 0
@@ -99,16 +101,18 @@ export class AuctionInfo {
     kickTime: BigInt
     referencePrice: BigInt
     neutralPrice: BigInt
+    thresholdPrice: BigInt
     head: Address
     next: Address
     prev: Address
-    constructor(kicker: Address, bondFactor: BigInt, bondSize: BigInt, kickTime: BigInt, referencePrice: BigInt, neutralPrice: BigInt, head: Address, next: Address, prev: Address) {
+    constructor(kicker: Address, bondFactor: BigInt, bondSize: BigInt, kickTime: BigInt, referencePrice: BigInt, neutralPrice: BigInt, thresholdPrice: BigInt, head: Address, next: Address, prev: Address) {
         this.kicker = kicker
         this.bondFactor = bondFactor
         this.bondSize = bondSize
         this.kickTime = kickTime
         this.referencePrice = referencePrice
         this.neutralPrice = neutralPrice
+        this.thresholdPrice = thresholdPrice
         this.head = head
         this.next = next
         this.prev = prev
@@ -126,7 +130,8 @@ export function getAuctionInfoERC20Pool(borrower: Bytes, pool: Pool): AuctionInf
         auctionInfoResult.value5,
         auctionInfoResult.value6,
         auctionInfoResult.value7,
-        auctionInfoResult.value8
+        auctionInfoResult.value8,
+        auctionInfoResult.value9
     )
     return auctionInfo
 }
@@ -142,7 +147,8 @@ export function getAuctionInfoERC721Pool(borrower: Bytes, pool: Pool): AuctionIn
         auctionInfoResult.value5,
         auctionInfoResult.value6,
         auctionInfoResult.value7,
-        auctionInfoResult.value8
+        auctionInfoResult.value8,
+        auctionInfoResult.value9
     )
     return auctionInfo
 }
@@ -154,13 +160,19 @@ export class AuctionStatus {
     isCollateralized: bool
     price: BigInt
     neutralPrice: BigInt
-    constructor(kickTime: BigInt, collateral: BigInt, debtToCover: BigInt, isCollateralized: bool, price: BigInt, neutralPrice: BigInt) {
+    referencePrice: BigInt
+    thresholdPrice: BigInt
+    bondFactor: BigInt
+    constructor(kickTime: BigInt, collateral: BigInt, debtToCover: BigInt, isCollateralized: bool, price: BigInt, neutralPrice: BigInt, referencePrice: BigInt, thresholdPrice: BigInt, bondFactor: BigInt) {
       this.kickTime = kickTime
       this.collateral = collateral
       this.debtToCover = debtToCover
       this.isCollateralized = isCollateralized
       this.price = price
       this.neutralPrice = neutralPrice
+      this.referencePrice = referencePrice
+      this.thresholdPrice = thresholdPrice
+      this.bondFactor = bondFactor
     }
 }
 export function getAuctionStatus(pool: Pool, borrower: Address): AuctionStatus {
@@ -173,6 +185,9 @@ export function getAuctionStatus(pool: Pool, borrower: Address): AuctionStatus {
       result.value2,
       result.value3,
       result.value4,
-      result.value5
+      result.value5,
+      result.value6,
+      result.value7,
+      result.value8
     )
 }

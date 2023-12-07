@@ -20,7 +20,7 @@ import { mockGetAuctionInfo, mockGetAuctionStatus, mockGetBorrowerInfo, mockGetB
 import { BucketInfo, getBucketId } from "../src/utils/pool/bucket"
 import { addressToBytes, wadToDecimal } from "../src/utils/convert"
 import { DebtInfo } from "../src/utils/pool/pool"
-import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
+import { BorrowerInfo, getLoanId, thresholdPrice } from '../src/utils/pool/loan';
 import { wdiv, wmul } from "../src/utils/math"
 import { getLendId } from "../src/utils/pool/lend"
 import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/pool/liquidation"
@@ -818,6 +818,7 @@ describe("Describe entity assertions", () => {
     const kickTime = BigInt.fromI32(123)
     const referencePrice = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
+    const thresholdPrice = debt.div(amountPledged)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
@@ -830,6 +831,7 @@ describe("Describe entity assertions", () => {
       kickTime,
       referencePrice,
       neutralPrice,
+      thresholdPrice,
       head,
       next,
       prev
@@ -842,7 +844,10 @@ describe("Describe entity assertions", () => {
       debt,
       false,
       wmul(neutralPrice, BigInt.fromString("1020000000000000000")), // take price = neutral price * 1.02
-      neutralPrice
+      neutralPrice,
+      referencePrice,
+      thresholdPrice,
+      bondFactor
     )
     mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
 
@@ -1211,6 +1216,7 @@ describe("Describe entity assertions", () => {
     const kickTime = BigInt.fromI32(123)
     const referencePrice = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
+    const thresholdPrice = debt.div(amountPledged)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
@@ -1223,6 +1229,7 @@ describe("Describe entity assertions", () => {
       kickTime,
       referencePrice,
       neutralPrice,
+      thresholdPrice,
       head,
       next,
       prev
@@ -1235,7 +1242,10 @@ describe("Describe entity assertions", () => {
       debt,
       false,
       wmul(neutralPrice, BigInt.fromString("1020000000000000000")), // take price = neutral price * 1.02
-      neutralPrice
+      neutralPrice,
+      referencePrice,
+      thresholdPrice,
+      bondFactor
     )
     mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
 

@@ -24,7 +24,7 @@ import { addressToBytes, wadToDecimal } from "../src/utils/convert"
 import { FIVE_PERCENT_BI, MAX_PRICE, MAX_PRICE_BI, MAX_PRICE_INDEX, ONE_BI, ONE_PERCENT_BI, ONE_WAD_BI, TWO_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI } from '../src/utils/constants';
 import { Account, Lend, Loan, Pool } from "../generated/schema"
 import { getLendId } from "../src/utils/pool/lend"
-import { BorrowerInfo, getLoanId } from "../src/utils/pool/loan"
+import { BorrowerInfo, getLoanId, thresholdPrice } from '../src/utils/pool/loan';
 import { AuctionInfo, AuctionStatus, getLiquidationAuctionId } from "../src/utils/pool/liquidation"
 import { BurnInfo, DebtInfo } from "../src/utils/pool/pool"
 import { getReserveAuctionId } from "../src/utils/pool/reserve-auction"
@@ -654,6 +654,7 @@ describe("ERC20Pool assertions", () => {
     const kickTime = BigInt.fromI32(123)
     const neutralPrice = BigInt.fromI32(456)
     const referencePrice = BigInt.fromI32(456)
+    const thresholdPrice = debt.div(collateral)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
@@ -665,6 +666,7 @@ describe("ERC20Pool assertions", () => {
       kickTime,
       referencePrice,
       neutralPrice,
+      thresholdPrice,
       head,
       next,
       prev
@@ -676,7 +678,10 @@ describe("ERC20Pool assertions", () => {
       debt,
       false,
       startPrice,
-      neutralPrice
+      neutralPrice,
+      referencePrice,
+      thresholdPrice,
+      bondFactor
     )
     mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
 
@@ -836,6 +841,7 @@ describe("ERC20Pool assertions", () => {
     const kickTime = BigInt.fromI32(123)
     const referencePrice = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
+    const thresholdPrice = debt.div(collateral)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
@@ -847,6 +853,7 @@ describe("ERC20Pool assertions", () => {
       kickTime,
       referencePrice,
       neutralPrice,
+      thresholdPrice,
       head,
       next,
       prev
@@ -883,6 +890,7 @@ describe("ERC20Pool assertions", () => {
       kickTime,
       referencePrice,
       neutralPrice,
+      thresholdPrice,
       head,
       next,
       prev
@@ -894,7 +902,10 @@ describe("ERC20Pool assertions", () => {
       debt,
       false,
       wmul(neutralPrice, BigInt.fromString("970000000000000000")), // take price = neutral price * 0.97
-      neutralPrice
+      neutralPrice,
+      referencePrice,
+      thresholdPrice,
+      bondFactor
     )
     mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
     expectedBorrowerInfo = new BorrowerInfo(
@@ -1024,6 +1035,7 @@ describe("ERC20Pool assertions", () => {
     const kickTime = BigInt.fromI32(123)
     const referencePrice = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
+    const thresholdPrice = debt.div(collateral)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
@@ -1034,6 +1046,7 @@ describe("ERC20Pool assertions", () => {
       kickTime,
       referencePrice,
       neutralPrice,
+      thresholdPrice,
       head,
       next,
       prev
@@ -1063,6 +1076,7 @@ describe("ERC20Pool assertions", () => {
       kickTime,
       referencePrice,
       neutralPrice,
+      thresholdPrice,
       head,
       next,
       prev
@@ -1074,7 +1088,10 @@ describe("ERC20Pool assertions", () => {
       debt,
       false,
       wmul(neutralPrice, BigInt.fromString("1020000000000000000")), // take price = neutral price * 1.02
-      neutralPrice
+      neutralPrice,
+      referencePrice,
+      thresholdPrice,
+      bondFactor
     )
     mockGetAuctionStatus(poolAddress, borrower, expectedAuctionStatus)
 
@@ -1216,6 +1233,7 @@ describe("ERC20Pool assertions", () => {
     const kickTime = BigInt.fromI32(123)
     const referencePrice = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
+    const thresholdPrice = debt.div(collateral)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
@@ -1226,6 +1244,7 @@ describe("ERC20Pool assertions", () => {
       kickTime,
       referencePrice,
       neutralPrice,
+      thresholdPrice,
       head,
       next,
       prev
