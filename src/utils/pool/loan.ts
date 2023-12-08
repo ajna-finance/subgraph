@@ -21,7 +21,7 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
       loan.poolAddress         = poolId.toHexString()
       loan.collateralPledged   = ZERO_BD
       loan.t0debt              = ZERO_BD
-      loan.thresholdPrice      = ZERO_BD
+      loan.t0ThresholdPrice    = ZERO_BD
       loan.inLiquidation       = false
       loan.liquidationAuction  = null
       loan.tokenIdsPledged     = []
@@ -47,10 +47,12 @@ export class BorrowerInfo {
   t0debt: BigInt
   collateral: BigInt
   t0Np: BigInt
-  constructor(t0debt: BigInt, collateral: BigInt, t0Np: BigInt) {
+  t0ThresholdPrice: BigInt
+  constructor(t0debt: BigInt, collateral: BigInt, t0Np: BigInt, t0ThresholdPrice: BigInt) {
     this.t0debt = t0debt
     this.collateral = collateral
     this.t0Np = t0Np
+    this.t0ThresholdPrice = t0ThresholdPrice
   }
 }
 export function getBorrowerInfo(borrower: Bytes, poolId: Bytes): BorrowerInfo {
@@ -60,7 +62,8 @@ export function getBorrowerInfo(borrower: Bytes, poolId: Bytes): BorrowerInfo {
   return new BorrowerInfo(
     borrowerInfoResult.value0,
     borrowerInfoResult.value1,
-    borrowerInfoResult.value2
+    borrowerInfoResult.value2,
+    borrowerInfoResult.value3
   )
 }
 
@@ -71,7 +74,8 @@ export function getBorrowerInfoERC721Pool(borrower: Bytes, poolId: Bytes): Borro
   return new BorrowerInfo(
     borrowerInfoResult.value0,
     borrowerInfoResult.value1,
-    borrowerInfoResult.value2
+    borrowerInfoResult.value2,
+    borrowerInfoResult.value3
   )
 }
 

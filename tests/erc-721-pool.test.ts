@@ -257,8 +257,8 @@ describe("Describe entity assertions", () => {
     const amountPledged = BigInt.fromString("2000000000000000000")
     const lup = BigInt.fromString("9529276179422528643") //   9.529276179422528643 * 1e18
     const index = BigInt.fromI32(123)
-
     const inflator = BigInt.fromString("1002804000000000000")
+    const thresholdPrice = amountBorrowed.div(amountPledged)
 
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: ZERO_BI,
@@ -287,7 +287,8 @@ describe("Describe entity assertions", () => {
     const expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged,
-      BigInt.fromString("8766934085068726351"))
+      BigInt.fromString("8766934085068726351")),
+      thresholdPrice
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     const newDrawDebtEvent = createDrawDebtNFTEvent(
@@ -404,6 +405,7 @@ describe("Describe entity assertions", () => {
     const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345)]
     const amountPledged = BigInt.fromString("2000000000000000000")
     let lup = BigInt.fromString("9529276179422528643") //   9.529276179422528643 * 1e18
+    const thresholdPrice = amountBorrowed.div(amountPledged)
 
     // mock required contract calls
     const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
@@ -413,7 +415,8 @@ describe("Describe entity assertions", () => {
     let expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged,
-      BigInt.fromString("8766934085068726351"))
+      BigInt.fromString("8766934085068726351")),
+      thresholdPrice
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     const newDrawDebtEvent = createDrawDebtNFTEvent(
@@ -456,7 +459,7 @@ describe("Describe entity assertions", () => {
     const quoteRepaid = BigInt.fromString("567111000000000000000")     // 567.111  * 1e18
     const collateralPulled = BigInt.fromString("1000000000000000000") //  1 * 1e18
 
-    expectedBorrowerInfo = new BorrowerInfo(quoteRepaid, collateralPulled, BigInt.fromString("501250000000000000"))
+    expectedBorrowerInfo = new BorrowerInfo(quoteRepaid, collateralPulled, BigInt.fromString("501250000000000000"), thresholdPrice)
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     const newRepayDebtEvent = createRepayDebtEvent(
@@ -759,6 +762,7 @@ describe("Describe entity assertions", () => {
     const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345), BigInt.fromI32(456), BigInt.fromI32(567), BigInt.fromI32(789)]
     const amountPledged = BigInt.fromString("5000000000000000000") // 5 * 1e18
     const lup = BigInt.fromString("9529276179422528643") //   9.529276179422528643 * 1e18
+    const thresholdPrice = amountBorrowed.div(amountPledged)
 
     // mock required contract calls
     const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
@@ -768,7 +772,8 @@ describe("Describe entity assertions", () => {
     let expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged,
-      BigInt.fromString("8766934085068726351"))
+      BigInt.fromString("8766934085068726351")),
+      thresholdPrice
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // create and handle DrawDebt event
@@ -877,7 +882,8 @@ describe("Describe entity assertions", () => {
     expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged.minus(collateralToTake),
-      BigInt.fromString("8766934085068726351"))
+      BigInt.fromString("8766934085068726351")),
+      thresholdPrice
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // create and handle Take event
@@ -1157,6 +1163,7 @@ describe("Describe entity assertions", () => {
     const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345), BigInt.fromI32(456), BigInt.fromI32(567), BigInt.fromI32(789)]
     const amountPledged = BigInt.fromString("5000000000000000000") // 5 * 1e18
+    const thresholdPrice = amountBorrowed.div(amountPledged)
 
     // mock required contract calls
     const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
@@ -1166,7 +1173,8 @@ describe("Describe entity assertions", () => {
     let expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged,
-      BigInt.fromString("8766934085068726351"))
+      BigInt.fromString("8766934085068726351")),
+      thresholdPrice
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // create and handle DrawDebt event
@@ -1306,7 +1314,8 @@ describe("Describe entity assertions", () => {
     expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged.minus(collateralToTake),
-      BigInt.fromString("8766934085068726351"))
+      BigInt.fromString("8766934085068726351")),
+      thresholdPrice
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock bucket take event

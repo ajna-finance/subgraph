@@ -46,7 +46,7 @@ import {
 } from "../../generated/schema"
 
 import { ZERO_BD, ONE_BI } from "../utils/constants"
-import { addressToBytes, wadToDecimal } from "../utils/convert"
+import { addressToBytes, wadToDecimal } from '../utils/convert';
 import { loadOrCreateAccount, updateAccountLends, updateAccountLoans, updateAccountPools, updateAccountKicks, updateAccountTakes, updateAccountSettles } from "../utils/account"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../utils/pool/bucket"
 import { getLendId, loadOrCreateLend, saveOrRemoveLend } from "../utils/pool/lend"
@@ -97,6 +97,8 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
     const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
     loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
     loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
+    loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
+    loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
 
     // update account's list of pools and loans if necessary
     updateAccountPools(account, pool)
@@ -149,6 +151,8 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     const borrowerInfo     = getBorrowerInfo(accountId, pool.id)
     loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
     loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
+    loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
+    loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
 
     // update account loans if necessary
     updateAccountLoans(account, loan)
@@ -437,6 +441,8 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
+  loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
+  loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
 
   // retrieve auction information on the take's auction
   const auctionInfo   = getAuctionInfoERC20Pool(bucketTake.borrower, pool)
@@ -550,6 +556,8 @@ export function handleTake(event: TakeEvent): void {
   const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
+  loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
+  loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
 
   // update liquidation auction state
   const auctionId = loan.liquidationAuction!

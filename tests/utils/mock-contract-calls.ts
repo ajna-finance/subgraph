@@ -142,7 +142,8 @@ export function mockGetBorrowerInfo(pool: Address, borrower: Address, expectedIn
     .returns([
       ethereum.Value.fromUnsignedBigInt(expectedInfo.t0debt),
       ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.t0Np)
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.t0Np),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.t0ThresholdPrice)
     ])
 }
 

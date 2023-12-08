@@ -468,8 +468,8 @@ describe("ERC20Pool assertions", () => {
     const collateralPledged = BigInt.fromI32(1067)
     const lup = BigInt.fromString("9529276179422528643") // 9.529276179422528643 * 1e18
     const index = BigInt.fromI32(234)
-
     const inflator = BigInt.fromString("1002804000000000000")
+    const thresholdPrice = amountBorrowed.div(collateralPledged)
 
     mockPoolInfoUtilsPoolUpdateCalls(poolAddress, {
       poolSize: ZERO_BI,
@@ -498,7 +498,8 @@ describe("ERC20Pool assertions", () => {
     const expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator), 
       collateralPledged, 
-      BigInt.fromString("8766934085068726351"))
+      BigInt.fromString("8766934085068726351")),
+      thresholdPrice
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock drawDebt event
@@ -597,9 +598,11 @@ describe("ERC20Pool assertions", () => {
     const quoteRepaid = BigInt.fromString("567111000000000000000")     // 567.111  * 1e18
     const collateralPulled = BigInt.fromString("13400500000000000000") //  13.4005 * 1e18
     const lup = BigInt.fromString("63480000000000000000")              //  63.48   * 1e18
+    const thresholdPrice = quoteRepaid.div(collateralPulled)
 
+    // TODO: fix mismatch between using pre-repay and post-repay update returns
     const expectedBorrowerInfo = new BorrowerInfo(quoteRepaid, collateralPulled, BigInt.fromString("501250000000000000"))
-    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo, thresholdPrice)
 
     const newRepayDebtEvent = createRepayDebtEvent(
       poolAddress,
@@ -864,7 +867,8 @@ describe("ERC20Pool assertions", () => {
     let expectedBorrowerInfo = new BorrowerInfo(
       wdiv(debt, inflator), 
       collateral, 
-      wdiv(neutralPrice, inflator))
+      wdiv(neutralPrice, inflator)),
+      thresholdPrice
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock kick event
@@ -911,7 +915,8 @@ describe("ERC20Pool assertions", () => {
     expectedBorrowerInfo = new BorrowerInfo(
       wdiv(debt, inflator), 
       collateral.minus(amountToTake), 
-      wdiv(neutralPrice, inflator))
+      wdiv(neutralPrice, inflator)),
+      thresholdPrice
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock take event

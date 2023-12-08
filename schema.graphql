@@ -194,7 +194,7 @@ type Loan @entity {
   # collateral tokens deposited in a pool by the borrower
   collateralPledged: BigDecimal!
   # borrower's threshold price in t0 terms
-  thresholdPrice: BigDecimal!
+  t0ThresholdPrice: BigDecimal!
   # list of tokenIds pledged by the borrower
   tokenIdsPledged: [BigInt!]!
   # debt in T0 terms, useful when the caller knows the pending inflator
@@ -266,7 +266,7 @@ type LiquidationAuction @entity {
   bondFactor: BigDecimal!          # bond factor determining the reward or penalty for the kicker
   neutralPrice: BigDecimal!        # price at which kicker will have their bond returned without penalty or reward
   referencePrice: BigDecimal!      # max(HTP, NP) used in auction price curve
-  thresholdPrice: BigDecimal!      # borrower's threshold price
+  thresholdPrice: BigDecimal!      # Threshold price stamped on the liquidation at time of kick
 }
 
 # tracks the reserve auction process across multiple takes in a single auction
