@@ -137,7 +137,7 @@ export function mockGetPositionInfo(tokenId: BigInt, bucketIndex: BigInt, expect
 /***************************/
 
 export function mockGetBorrowerInfo(pool: Address, borrower: Address, expectedInfo: BorrowerInfo): void {
-  createMockedFunction(pool, 'borrowerInfo', 'borrowerInfo(address):(uint256,uint256,uint256)')
+  createMockedFunction(pool, 'borrowerInfo', 'borrowerInfo(address):(uint256,uint256,uint256,uint256)')
     .withArgs([ethereum.Value.fromAddress(borrower)])
     .returns([
       ethereum.Value.fromUnsignedBigInt(expectedInfo.t0debt),

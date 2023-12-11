@@ -498,8 +498,9 @@ describe("ERC20Pool assertions", () => {
     const expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator), 
       collateralPledged, 
-      BigInt.fromString("8766934085068726351")),
+      BigInt.fromString("8766934085068726351"),
       thresholdPrice
+    )
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock drawDebt event
@@ -601,8 +602,8 @@ describe("ERC20Pool assertions", () => {
     const thresholdPrice = quoteRepaid.div(collateralPulled)
 
     // TODO: fix mismatch between using pre-repay and post-repay update returns
-    const expectedBorrowerInfo = new BorrowerInfo(quoteRepaid, collateralPulled, BigInt.fromString("501250000000000000"))
-    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo, thresholdPrice)
+    const expectedBorrowerInfo = new BorrowerInfo(quoteRepaid, collateralPulled, BigInt.fromString("501250000000000000"), thresholdPrice)
+    mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     const newRepayDebtEvent = createRepayDebtEvent(
       poolAddress,
@@ -867,8 +868,9 @@ describe("ERC20Pool assertions", () => {
     let expectedBorrowerInfo = new BorrowerInfo(
       wdiv(debt, inflator), 
       collateral, 
-      wdiv(neutralPrice, inflator)),
+      wdiv(neutralPrice, inflator),
       thresholdPrice
+    )
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock kick event
@@ -915,8 +917,9 @@ describe("ERC20Pool assertions", () => {
     expectedBorrowerInfo = new BorrowerInfo(
       wdiv(debt, inflator), 
       collateral.minus(amountToTake), 
-      wdiv(neutralPrice, inflator)),
+      wdiv(neutralPrice, inflator),
       thresholdPrice
+    )
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock take event

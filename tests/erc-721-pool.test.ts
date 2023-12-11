@@ -287,8 +287,9 @@ describe("Describe entity assertions", () => {
     const expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged,
-      BigInt.fromString("8766934085068726351")),
+      BigInt.fromString("8766934085068726351"),
       thresholdPrice
+    )
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     const newDrawDebtEvent = createDrawDebtNFTEvent(
@@ -415,8 +416,9 @@ describe("Describe entity assertions", () => {
     let expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged,
-      BigInt.fromString("8766934085068726351")),
+      BigInt.fromString("8766934085068726351"),
       thresholdPrice
+    )
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     const newDrawDebtEvent = createDrawDebtNFTEvent(
@@ -762,7 +764,7 @@ describe("Describe entity assertions", () => {
     const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345), BigInt.fromI32(456), BigInt.fromI32(567), BigInt.fromI32(789)]
     const amountPledged = BigInt.fromString("5000000000000000000") // 5 * 1e18
     const lup = BigInt.fromString("9529276179422528643") //   9.529276179422528643 * 1e18
-    const thresholdPrice = amountBorrowed.div(amountPledged)
+    let thresholdPrice = amountBorrowed.div(amountPledged)
 
     // mock required contract calls
     const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
@@ -772,8 +774,9 @@ describe("Describe entity assertions", () => {
     let expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged,
-      BigInt.fromString("8766934085068726351")),
+      BigInt.fromString("8766934085068726351"),
       thresholdPrice
+    )
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // create and handle DrawDebt event
@@ -823,7 +826,7 @@ describe("Describe entity assertions", () => {
     const kickTime = BigInt.fromI32(123)
     const referencePrice = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
-    const thresholdPrice = debt.div(amountPledged)
+    thresholdPrice = debt.div(amountPledged)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
@@ -882,8 +885,9 @@ describe("Describe entity assertions", () => {
     expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged.minus(collateralToTake),
-      BigInt.fromString("8766934085068726351")),
+      BigInt.fromString("8766934085068726351"),
       thresholdPrice
+    )
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // create and handle Take event
@@ -1163,7 +1167,7 @@ describe("Describe entity assertions", () => {
     const amountBorrowed = BigInt.fromString("567529276179422528643") // 567.529276179422528643 * 1e18
     const tokenIdsPledged = [BigInt.fromI32(234), BigInt.fromI32(345), BigInt.fromI32(456), BigInt.fromI32(567), BigInt.fromI32(789)]
     const amountPledged = BigInt.fromString("5000000000000000000") // 5 * 1e18
-    const thresholdPrice = amountBorrowed.div(amountPledged)
+    let thresholdPrice = amountBorrowed.div(amountPledged)
 
     // mock required contract calls
     const expectedPoolDebtInfo = new DebtInfo(amountBorrowed, ZERO_BI, ZERO_BI, ZERO_BI)
@@ -1173,8 +1177,9 @@ describe("Describe entity assertions", () => {
     let expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged,
-      BigInt.fromString("8766934085068726351")),
+      BigInt.fromString("8766934085068726351"),
       thresholdPrice
+    )
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // create and handle DrawDebt event
@@ -1224,7 +1229,7 @@ describe("Describe entity assertions", () => {
     const kickTime = BigInt.fromI32(123)
     const referencePrice = BigInt.fromI32(456)
     const neutralPrice = BigInt.fromI32(456)
-    const thresholdPrice = debt.div(amountPledged)
+    thresholdPrice = debt.div(amountPledged)
     const head = Address.fromString("0x0000000000000000000000000000000000000000")
     const next = Address.fromString("0x0000000000000000000000000000000000000000")
     const prev = Address.fromString("0x0000000000000000000000000000000000000000")
@@ -1314,8 +1319,9 @@ describe("Describe entity assertions", () => {
     expectedBorrowerInfo = new BorrowerInfo(
       wdiv(amountBorrowed, inflator),
       amountPledged.minus(collateralToTake),
-      BigInt.fromString("8766934085068726351")),
+      BigInt.fromString("8766934085068726351"),
       thresholdPrice
+    )
     mockGetBorrowerInfo(poolAddress, borrower, expectedBorrowerInfo)
 
     // mock bucket take event

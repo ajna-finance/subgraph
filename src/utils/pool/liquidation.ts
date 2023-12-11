@@ -7,7 +7,6 @@ import { PoolInfoUtils } from "../../../generated/templates/ERC20Pool/PoolInfoUt
 
 import { wadToDecimal } from "../convert"
 import { ONE_BI, ZERO_ADDRESS, ZERO_BD, ZERO_BI, poolInfoUtilsAddressTable } from "../constants"
-import { thresholdPrice } from './loan';
 
 export function getLiquidationAuctionId(poolId: Bytes, loanId: Bytes, kickBlock: BigInt): Bytes {
     return poolId.concat(Bytes.fromUTF8('|' + loanId.toString() + '|' + kickBlock.toString()))
