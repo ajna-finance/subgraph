@@ -141,7 +141,7 @@
         "internalType": "uint256"
       },
       {
-        "name": "thresholdPrice_",
+        "name": "debtToCollateral_",
         "type": "uint256",
         "internalType": "uint256"
       },
@@ -618,6 +618,38 @@
       }
     ],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getBorrowerTokenIds",
+    "inputs": [
+      {
+        "name": "borrower_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getBucketTokenIds",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -1170,6 +1202,11 @@
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -1316,38 +1353,6 @@
   {
     "type": "function",
     "name": "totalAuctionsInPool",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "totalBorrowerTokens",
-    "inputs": [
-      {
-        "name": "borrower_",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "totalBucketTokens",
     "inputs": [],
     "outputs": [
       {
@@ -2265,17 +2270,17 @@
   },
   {
     "type": "error",
-    "name": "AllowanceAlreadySet",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "AlreadyInitialized",
     "inputs": []
   },
   {
     "type": "error",
     "name": "AmountLTMinDebt",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AuctionActive",
     "inputs": []
   },
   {
@@ -2391,11 +2396,6 @@
   {
     "type": "error",
     "name": "LUPBelowHTP",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "LUPGreaterThanTP",
     "inputs": []
   },
   {
@@ -2516,11 +2516,6 @@
   },
   {
     "type": "error",
-    "name": "PoolUnderCollateralized",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "PriceBelowLUP",
     "inputs": []
   },
@@ -2561,7 +2556,7 @@
   },
   {
     "type": "error",
-    "name": "ZeroThresholdPrice",
+    "name": "ZeroDebtToCollateral",
     "inputs": []
   }
 ]

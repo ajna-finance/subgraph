@@ -193,12 +193,14 @@ type Loan @entity {
   liquidationAuction: LiquidationAuction
   # collateral tokens deposited in a pool by the borrower
   collateralPledged: BigDecimal!
-  # borrower's threshold price in t0 terms
-  t0ThresholdPrice: BigDecimal!
+  # borrower's threshold price
+  thresholdPrice: BigDecimal!
   # list of tokenIds pledged by the borrower
   tokenIdsPledged: [BigInt!]!
   # debt in T0 terms, useful when the caller knows the pending inflator
   t0debt: BigDecimal!
+  # borrowers t0 neutral price
+  t0Np: BigDecimal!
 }
 
 type Account @entity {

@@ -46,7 +46,7 @@
         "internalType": "uint256"
       },
       {
-        "name": "thresholdPrice_",
+        "name": "debtToCollateral_",
         "type": "uint256",
         "internalType": "uint256"
       },
@@ -120,7 +120,7 @@
         "internalType": "uint256"
       },
       {
-        "name": "thresholdPrice_",
+        "name": "debtToCollateral_",
         "type": "uint256",
         "internalType": "uint256"
       },
@@ -198,6 +198,11 @@
       },
       {
         "name": "t0Np_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "thresholdPrice_",
         "type": "uint256",
         "internalType": "uint256"
       }

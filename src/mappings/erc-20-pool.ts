@@ -98,7 +98,7 @@ export function handleDrawDebt(event: DrawDebtEvent): void {
     loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
     loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
     loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
-    loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
+    loan.thresholdPrice    = wadToDecimal(borrowerInfo.thresholdPrice)
 
     // update account's list of pools and loans if necessary
     updateAccountPools(account, pool)
@@ -152,7 +152,7 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
     loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
     loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
     loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
-    loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
+    loan.thresholdPrice    = wadToDecimal(borrowerInfo.thresholdPrice)
 
     // update account loans if necessary
     updateAccountLoans(account, loan)
@@ -442,7 +442,7 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
   loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
-  loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
+  loan.thresholdPrice    = wadToDecimal(borrowerInfo.thresholdPrice)
 
   // retrieve auction information on the take's auction
   const auctionInfo   = getAuctionInfoERC20Pool(bucketTake.borrower, pool)
@@ -557,7 +557,7 @@ export function handleTake(event: TakeEvent): void {
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
   loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
-  loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
+  loan.thresholdPrice    = wadToDecimal(borrowerInfo.thresholdPrice)
 
   // update liquidation auction state
   const auctionId = loan.liquidationAuction!

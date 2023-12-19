@@ -52,7 +52,7 @@ import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } fro
 import { addressToBytes, decimalToWad, wadToDecimal } from "../utils/convert"
 import { ZERO_BD, ONE_BI, ONE_WAD_BI } from "../utils/constants"
 import { getLendId, loadOrCreateLend, saveOrRemoveLend } from "../utils/pool/lend"
-import { getBorrowerInfoERC721Pool, getLoanId, loadOrCreateLoan, saveOrRemoveLoan } from "../utils/pool/loan"
+import { getBorrowerInfo, getLoanId, loadOrCreateLoan, saveOrRemoveLoan } from "../utils/pool/loan"
 import { getLiquidationAuctionId, loadOrCreateLiquidationAuction, updateLiquidationAuction, getAuctionStatus, loadOrCreateBucketTake, getAuctionInfoERC721Pool } from "../utils/pool/liquidation"
 import { updatePool, addLiquidationToPool, getLenderInfoERC721Pool } from "../utils/pool/pool"
 import { lpbValueInQuote } from "../utils/pool/lend"
@@ -92,11 +92,11 @@ export function handleDrawDebtNFT(event: DrawDebtNFTEvent): void {
   // update loan state
   const loanId = getLoanId(pool.id, accountId)
   const loan = loadOrCreateLoan(loanId, pool.id, drawDebtNFT.borrower)
-  const borrowerInfo     = getBorrowerInfoERC721Pool(addressToBytes(event.params.borrower), pool.id)
+  const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
   loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
-  loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
+  loan.thresholdPrice    = wadToDecimal(borrowerInfo.thresholdPrice)
   loan.tokenIdsPledged   = loan.tokenIdsPledged.concat(event.params.tokenIdsPledged)
 
   // update account's list of pools and loans if necessary
@@ -141,11 +141,11 @@ export function handleRepayDebt(event: RepayDebtEvent): void {
 
   const loanId = getLoanId(pool.id, accountId)
   const loan = loadOrCreateLoan(loanId, pool.id, repayDebt.borrower)
-  const borrowerInfo = getBorrowerInfoERC721Pool(accountId, pool.id)
+  const borrowerInfo = getBorrowerInfo(accountId, pool.id)
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
   loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
-  loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
+  loan.thresholdPrice    = wadToDecimal(borrowerInfo.thresholdPrice)
 
   // retrieve the tokenIdsPledged that were pulled in this event
   const numberOfTokensPulled = event.params.collateralPulled.div(ONE_WAD_BI).toI32()
@@ -626,11 +626,11 @@ export function handleBucketTake(event: BucketTakeEvent): void {
   // update loan state
   const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
   const loan = loadOrCreateLoan(loanId, pool.id, addressToBytes(event.params.borrower))
-  const borrowerInfo     = getBorrowerInfoERC721Pool(addressToBytes(event.params.borrower), pool.id)
+  const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
   loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
-  loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
+  loan.thresholdPrice    = wadToDecimal(borrowerInfo.thresholdPrice)
 
   // unique to ERC721Pools
   // remove collateral taken from loan and pool
@@ -754,11 +754,11 @@ export function handleTake(event: TakeEvent): void {
   // update loan state
   const loanId = getLoanId(pool.id, addressToBytes(event.params.borrower))
   const loan   = Loan.load(loanId)!
-  const borrowerInfo     = getBorrowerInfoERC721Pool(addressToBytes(event.params.borrower), pool.id)
+  const borrowerInfo     = getBorrowerInfo(addressToBytes(event.params.borrower), pool.id)
   loan.collateralPledged = wadToDecimal(borrowerInfo.collateral)
   loan.t0debt            = wadToDecimal(borrowerInfo.t0debt)
   loan.t0Np              = wadToDecimal(borrowerInfo.t0Np)
-  loan.t0ThresholdPrice  = wadToDecimal(borrowerInfo.t0ThresholdPrice)
+  loan.thresholdPrice    = wadToDecimal(borrowerInfo.thresholdPrice)
 
   // remove tokenIdsTaken from loan and pool tokenIdsPledged
   const numberOfTokensToTake = getWadCollateralFloorTokens(event.params.collateral).toI32()

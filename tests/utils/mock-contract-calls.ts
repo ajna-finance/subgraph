@@ -5,7 +5,7 @@ import { BucketInfo } from "../../src/utils/pool/bucket"
 import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI, poolInfoUtilsMulticallAddressTable } from '../../src/utils/constants';
 import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo, PoolDetails, RatesAndFees, PoolBalanceDetails, depositUpToIndex } from '../../src/utils/pool/pool';
 import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
-import { BorrowerInfo, thresholdPrice } from '../../src/utils/pool/loan';
+import { BorrowerInfo } from '../../src/utils/pool/loan';
 import { wdiv, wmin, wmul } from "../../src/utils/math"
 import { addressToBytes, decimalToWad } from "../../src/utils/convert"
 import { Pool } from "../../generated/schema"
@@ -137,13 +137,13 @@ export function mockGetPositionInfo(tokenId: BigInt, bucketIndex: BigInt, expect
 /***************************/
 
 export function mockGetBorrowerInfo(pool: Address, borrower: Address, expectedInfo: BorrowerInfo): void {
-  createMockedFunction(pool, 'borrowerInfo', 'borrowerInfo(address):(uint256,uint256,uint256,uint256)')
-    .withArgs([ethereum.Value.fromAddress(borrower)])
+  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'borrowerInfo', 'borrowerInfo(address,address):(uint256,uint256,uint256,uint256)')
+    .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
     .returns([
       ethereum.Value.fromUnsignedBigInt(expectedInfo.t0debt),
       ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
       ethereum.Value.fromUnsignedBigInt(expectedInfo.t0Np),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.t0ThresholdPrice)
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.thresholdPrice)
     ])
 }
 
