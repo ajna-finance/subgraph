@@ -231,8 +231,10 @@ type Account @entity {
   rewardsClaimed: BigDecimal!
   # voting state for each distribution period
   distributionPeriodVotes: [DistributionPeriodVote!]!
-  # amount of tokens delegated to this account
-  tokensDelegated: BigDecimal!
+  # amount of tokens delegated by this user to a single delegated voter
+  tokensDelegatedFrom: BigDecimal!
+  # cumulative amount of tokens delegated from multiple users to this voter
+  tokensDelegatedTo: BigDecimal!
 
   # positions associated with the account
   positions: [Position!]!
@@ -961,6 +963,7 @@ type DelegateChanged @entity(immutable: true) {
 
 type DelegateVotesChanged @entity(immutable: true) {
   id: Bytes!
+  delegator: Bytes! # address
   delegate: Bytes! # address
   previousBalance: BigDecimal! # uint256
   newBalance: BigDecimal! # uint256

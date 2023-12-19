@@ -53,6 +53,7 @@ export function handleDelegateVotesChanged(
   let entity = new DelegateVotesChanged(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
+  entity.delegator = event.transaction.from
   entity.delegate = event.params.delegate
   entity.previousBalance = wadToDecimal(event.params.previousBalance)
   entity.newBalance = wadToDecimal(event.params.newBalance)
@@ -62,10 +63,14 @@ export function handleDelegateVotesChanged(
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
 
+  const delegator = loadOrCreateAccount(entity.delegator)
+  delegator.tokensDelegatedFrom = entity.newBalance
+
   const delegateId = addressToBytes(event.params.delegate)
   const delegate = loadOrCreateAccount(delegateId)
-  delegate.tokensDelegated = delegate.tokensDelegated.plus(changeInBalance)
+  delegate.tokensDelegatedTo = delegate.tokensDelegatedTo.plus(changeInBalance)
 
+  delegator.save()
   delegate.save()
   entity.save()
 }
