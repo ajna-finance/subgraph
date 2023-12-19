@@ -53,7 +53,7 @@ export function handleDelegateVotesChanged(
   let entity = new DelegateVotesChanged(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.delegator = event.transaction.from
+  entity.delegator = event.transaction.to!
   entity.delegate = event.params.delegate
   entity.previousBalance = wadToDecimal(event.params.previousBalance)
   entity.newBalance = wadToDecimal(event.params.newBalance)
