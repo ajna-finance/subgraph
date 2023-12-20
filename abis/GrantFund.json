@@ -12,11 +12,6 @@
   },
   {
     "inputs": [],
-    "name": "AlreadyVoted",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "DelegateRewardInvalid",
     "type": "error"
   },
