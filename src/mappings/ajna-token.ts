@@ -1,4 +1,5 @@
 import { Bytes } from "@graphprotocol/graph-ts"
+import { log } from "@graphprotocol/graph-ts"
 import {
   DelegateChanged as DelegateChangedEvent,
   DelegateVotesChanged as DelegateVotesChangedEvent,
@@ -76,12 +77,16 @@ export function handleAjnaTokenTransfer(
   event: AjnaTokenTransferEvent
 ): void {
   const ajnaToken = event.transaction.to!
+  log.info('handleAjnaTokenTransfer tx.from {} tx.to {}', [event.transaction.from.toHexString(), event.transaction.to!.toHexString()])
 
   const fromAccount  = loadOrCreateAccount(addressToBytes(event.params.from))
   fromAccount.tokens = wadToDecimal(getTokenBalance(ajnaToken, event.params.from))
   fromAccount.save()
+  log.info('handleAjnaTokenTransfer from {} balance {}', [fromAccount.id.toHexString(), fromAccount.tokens.toString()])
 
   const toAccount  = loadOrCreateAccount(addressToBytes(event.params.to))
   toAccount.tokens = wadToDecimal(getTokenBalance(ajnaToken, event.params.to))
   toAccount.save()
+  log.info('handleAjnaTokenTransfer to {} balance {}', [fromAccount.id.toHexString(), fromAccount.tokens.toString()])
+  
 }
