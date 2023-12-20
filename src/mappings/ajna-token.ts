@@ -2,6 +2,7 @@ import { Bytes } from "@graphprotocol/graph-ts"
 import {
   DelegateChanged as DelegateChangedEvent,
   DelegateVotesChanged as DelegateVotesChangedEvent,
+  AjnaTokenTransfer as AjnaTokenTransferEvent,
 } from "../../generated/AjnaToken/AjnaToken"
 import {
   Account,
@@ -11,6 +12,7 @@ import {
 import { loadOrCreateAccount } from "../utils/account"
 import { addressToBytes, wadToDecimal } from "../utils/convert"
 import { addDelegator, removeDelegator } from "../utils/grants/voter"
+import { getTokenBalance } from "../utils/token-erc20"
 
 export function handleDelegateChanged(event: DelegateChangedEvent): void {
   let entity = new DelegateChanged(
@@ -68,4 +70,18 @@ export function handleDelegateVotesChanged(
 
   delegate.save()
   entity.save()
+}
+
+export function handleAjnaTokenTransfer(
+  event: AjnaTokenTransferEvent
+): void {
+  const ajnaToken = event.transaction.from
+
+  const fromAccount  = loadOrCreateAccount(addressToBytes(event.params.from))
+  fromAccount.tokens = wadToDecimal(getTokenBalance(ajnaToken, event.params.from))
+  fromAccount.save()
+
+  const toAccount  = loadOrCreateAccount(addressToBytes(event.params.to))
+  toAccount.tokens = wadToDecimal(getTokenBalance(ajnaToken, event.params.to))
+  toAccount.save()
 }

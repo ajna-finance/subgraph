@@ -223,6 +223,8 @@ type Account @entity {
   proposalsCreated: [Proposal!]!
   # ecosystem coordination proposals passed and funded 
   proposalsExecuted: [Proposal!]!
+  # balance of AJNA tokens this account holds
+  tokens: BigDecimal!
   # account to which this account is delegating votes
   delegatedTo: Account
   # accounts from which votes are delegated

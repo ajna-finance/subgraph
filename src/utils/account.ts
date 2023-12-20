@@ -24,6 +24,7 @@ export function loadOrCreateAccount(accountId: Bytes): Account {
       account.delegatedFrom           = []
       account.rewardsClaimed          = ZERO_BD
       account.distributionPeriodVotes = []
+      account.tokens                  = ZERO_BD
       account.tokensDelegated         = ZERO_BD
 
       account.txCount = ZERO_BI

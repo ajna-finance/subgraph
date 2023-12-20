@@ -161,6 +161,8 @@ dataSources:
           handler: handleDelegateChanged
         - event: DelegateVotesChanged(indexed address,uint256,uint256)
           handler: handleDelegateVotesChanged
+        - event: AjnaTokenTransfer(indexed address,indexed address,uint256)
+          handler: handleAjnaTokenTransfer
       file: ./src/mappings/ajna-token.ts
   - kind: ethereum
     name: BurnWrappedAjna
