@@ -2,10 +2,10 @@ import { Address, BigInt, Bytes, ethereum, dataSource, log, BigDecimal } from "@
 import { createMockedFunction } from "matchstick-as"
 
 import { BucketInfo } from "../../src/utils/pool/bucket"
-import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI } from "../../src/utils/constants"
-import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo } from "../../src/utils/pool/pool"
+import { positionManagerAddressTable, poolInfoUtilsAddressTable, ZERO_BI, ONE_BI, poolInfoUtilsMulticallAddressTable } from '../../src/utils/constants';
+import { BurnInfo, DebtInfo, LoansInfo, PoolPricesInfo, PoolUtilizationInfo, ReservesInfo, PoolDetails, RatesAndFees, PoolBalanceDetails, depositUpToIndex } from '../../src/utils/pool/pool';
 import { AuctionInfo, AuctionStatus } from "../../src/utils/pool/liquidation"
-import { BorrowerInfo } from "../../src/utils/pool/loan"
+import { BorrowerInfo } from '../../src/utils/pool/loan';
 import { wdiv, wmin, wmul } from "../../src/utils/math"
 import { addressToBytes, decimalToWad } from "../../src/utils/convert"
 import { Pool } from "../../generated/schema"
@@ -137,12 +137,13 @@ export function mockGetPositionInfo(tokenId: BigInt, bucketIndex: BigInt, expect
 /***************************/
 
 export function mockGetBorrowerInfo(pool: Address, borrower: Address, expectedInfo: BorrowerInfo): void {
-  createMockedFunction(pool, 'borrowerInfo', 'borrowerInfo(address):(uint256,uint256,uint256)')
-    .withArgs([ethereum.Value.fromAddress(borrower)])
+  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'borrowerInfo', 'borrowerInfo(address,address):(uint256,uint256,uint256,uint256)')
+    .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
     .returns([
       ethereum.Value.fromUnsignedBigInt(expectedInfo.t0debt),
       ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.t0Np)
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.t0Np),
+      ethereum.Value.fromUnsignedBigInt(expectedInfo.thresholdPrice)
     ])
 }
 
@@ -181,7 +182,7 @@ export function mockGetRatesAndFees(pool: Address, expectedLenderInterestMargin:
   createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'borrowFeeRate', 'borrowFeeRate(address):(uint256)')
       .withArgs([ethereum.Value.fromAddress(pool)])
       .returns([ethereum.Value.fromUnsignedBigInt(expectedBorrowFeeRate)])
-  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'unutilizedDepositFeeRate', 'unutilizedDepositFeeRate(address):(uint256)')
+  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'depositFeeRate', 'depositFeeRate(address):(uint256)')
       .withArgs([ethereum.Value.fromAddress(pool)])
       .returns([ethereum.Value.fromUnsignedBigInt(expectedDepositFeeRate)])
 }
@@ -254,9 +255,79 @@ export function mockGetPoolUtilizationInfo(pool: Address, expectedInfo: PoolUtil
         ])
 }
 
+// https://github.com/LimeChain/matchstick/issues/376
+export function mockGetPoolDetailsMulticall(pool: Address, expectedPoolDetails: PoolDetails): void {
+    const expectedPoolLoansInfo = new ethereum.Tuple();
+    expectedPoolLoansInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolLoansInfo.poolSize));
+    expectedPoolLoansInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolLoansInfo.loansCount));
+    expectedPoolLoansInfo.push(ethereum.Value.fromAddress(expectedPoolDetails.poolLoansInfo.maxBorrower));
+    expectedPoolLoansInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolLoansInfo.pendingInflator));
+    expectedPoolLoansInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolLoansInfo.pendingInterestFactor));
+
+    const expectedPoolPricesInfo = new ethereum.Tuple();
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.hpb));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.hpbIndex));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.htp));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.htpIndex));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.lup));
+    expectedPoolPricesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolPricesInfo.lupIndex));
+
+    const expectedRatesAndFeesInfo = new ethereum.Tuple();
+    expectedRatesAndFeesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.ratesAndFeesInfo.lenderInterestMargin));
+    expectedRatesAndFeesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.ratesAndFeesInfo.borrowFeeRate));
+    expectedRatesAndFeesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.ratesAndFeesInfo.depositFeeRate));
+
+    const expectedPoolReservesInfo = new ethereum.Tuple();
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.reserves));
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.claimableReserves));
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.claimableReservesRemaining));
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.reserveAuctionPrice));
+    expectedPoolReservesInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.reservesInfo.reserveAuctionTimeRemaining));
+
+    const expectedPoolUtilizationInfo = new ethereum.Tuple();
+    expectedPoolUtilizationInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolUtilizationInfo.minDebtAmount));
+    expectedPoolUtilizationInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolUtilizationInfo.collateralization));
+    expectedPoolUtilizationInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolUtilizationInfo.actualUtilization));
+    expectedPoolUtilizationInfo.push(ethereum.Value.fromUnsignedBigInt(expectedPoolDetails.poolUtilizationInfo.targetUtilization));
+
+    createMockedFunction(poolInfoUtilsMulticallAddressTable.get(dataSource.network())!, 'poolDetailsMulticall', 'poolDetailsMulticall(address):((uint256,uint256,address,uint256,uint256),(uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256),(uint256,uint256,uint256,uint256,uint256),(uint256,uint256,uint256,uint256))')
+        .withArgs([ethereum.Value.fromAddress(pool)])
+        .returns([
+            ethereum.Value.fromTuple(expectedPoolLoansInfo),
+            ethereum.Value.fromTuple(expectedPoolPricesInfo),
+            ethereum.Value.fromTuple(expectedRatesAndFeesInfo),
+            ethereum.Value.fromTuple(expectedPoolReservesInfo),
+            ethereum.Value.fromTuple(expectedPoolUtilizationInfo)
+        ])
+}
+
+// https://github.com/LimeChain/matchstick/issues/376
+export function mockGetPoolBalanceDetails(pool: Address, meaningfulIndex: BigInt, quoteToken: Address, collateralToken: Address, isNFT: bool, expectedPoolBalanceDetails: PoolBalanceDetails): void {
+    const expectedPoolBalanceDetailsTuple = new ethereum.Tuple();
+    expectedPoolBalanceDetailsTuple.push(ethereum.Value.fromUnsignedBigInt(expectedPoolBalanceDetails.debt));
+    expectedPoolBalanceDetailsTuple.push(ethereum.Value.fromUnsignedBigInt(expectedPoolBalanceDetails.accruedDebt));
+    expectedPoolBalanceDetailsTuple.push(ethereum.Value.fromUnsignedBigInt(expectedPoolBalanceDetails.debtInAuction));
+    expectedPoolBalanceDetailsTuple.push(ethereum.Value.fromUnsignedBigInt(expectedPoolBalanceDetails.t0Debt2ToCollateral));
+    expectedPoolBalanceDetailsTuple.push(ethereum.Value.fromUnsignedBigInt(expectedPoolBalanceDetails.depositUpToIndex));
+    expectedPoolBalanceDetailsTuple.push(ethereum.Value.fromUnsignedBigInt(expectedPoolBalanceDetails.quoteTokenBalance));
+    expectedPoolBalanceDetailsTuple.push(ethereum.Value.fromUnsignedBigInt(expectedPoolBalanceDetails.collateralTokenBalance));
+
+    createMockedFunction(poolInfoUtilsMulticallAddressTable.get(dataSource.network())!, 'poolBalanceDetails', 'poolBalanceDetails(address,uint256,address,address,bool):((uint256,uint256,uint256,uint256,uint256,uint256,uint256))')
+        .withArgs([
+            ethereum.Value.fromAddress(pool),
+            ethereum.Value.fromUnsignedBigInt(meaningfulIndex),
+            ethereum.Value.fromAddress(quoteToken),
+            ethereum.Value.fromAddress(collateralToken),
+            ethereum.Value.fromBoolean(isNFT)
+        ])
+        .returns([
+            ethereum.Value.fromTuple(expectedPoolBalanceDetailsTuple)
+        ])
+}
+
 // mock auctionInfo contract calls
 export function mockGetAuctionInfo(borrower: Address, pool: Address, expectedInfo: AuctionInfo): void {
-    createMockedFunction(pool, 'auctionInfo', 'auctionInfo(address):(address,uint256,uint256,uint256,uint256,uint256,address,address,address)')
+    createMockedFunction(pool, 'auctionInfo', 'auctionInfo(address):(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address,address)')
         .withArgs([ethereum.Value.fromAddress(borrower)])
         .returns([
             ethereum.Value.fromAddress(expectedInfo.kicker),
@@ -265,6 +336,7 @@ export function mockGetAuctionInfo(borrower: Address, pool: Address, expectedInf
             ethereum.Value.fromUnsignedBigInt(expectedInfo.kickTime),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.referencePrice),
             ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice),
+            ethereum.Value.fromUnsignedBigInt(expectedInfo.thresholdPrice),
             ethereum.Value.fromAddress(expectedInfo.head),
             ethereum.Value.fromAddress(expectedInfo.next),
             ethereum.Value.fromAddress(expectedInfo.prev)
@@ -274,15 +346,18 @@ export function mockGetAuctionInfo(borrower: Address, pool: Address, expectedInf
 // mock auctionStatus poolInfoUtils calls
 export function mockGetAuctionStatus(pool: Address, borrower: Address, expectedInfo: AuctionStatus): void {
   createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 
-  'auctionStatus', 'auctionStatus(address,address):(uint256,uint256,uint256,bool,uint256,uint256)')
+  'auctionStatus', 'auctionStatus(address,address):(uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256)')
   .withArgs([ethereum.Value.fromAddress(pool), ethereum.Value.fromAddress(borrower)])
   .returns([
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.kickTime),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.debtToCover),
-      ethereum.Value.fromBoolean(expectedInfo.isCollateralized),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.price),
-      ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice)
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.kickTime),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.collateral),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.debtToCover),
+        ethereum.Value.fromBoolean(expectedInfo.isCollateralized),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.price),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.neutralPrice),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.referencePrice),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.thresholdPrice),
+        ethereum.Value.fromUnsignedBigInt(expectedInfo.bondFactor)
   ])
 }
 
@@ -366,6 +441,7 @@ export class PoolMockParams {
     // quoteTokenBalance: BigInt
     // TODO: add quoteBalance and collateralBalance
 }
+
 // mock all pool poolInfoUtilis contract calls
 export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMockParams): void {
     const expectedPoolLoansInfo = new LoansInfo(
@@ -375,11 +451,6 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.inflator,
         ONE_BI
     )
-    mockGetPoolLoansInfo(pool, expectedPoolLoansInfo)
-
-    const expectedPoolDebtInfo = new DebtInfo(params.debt, ZERO_BI, ZERO_BI, ZERO_BI)
-    mockGetDebtInfo(pool, expectedPoolDebtInfo)
-
     const expectedPoolPricesInfo = new PoolPricesInfo(
         params.hpb,
         params.hpbIndex,
@@ -388,8 +459,11 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.lup,
         params.lupIndex
     )
-    mockGetPoolPricesInfo(pool, expectedPoolPricesInfo)
-
+    const expectedRatesAndFeesInfo = new RatesAndFees(
+        BigInt.fromString("10000000000000000"),  // 0.01 * 1e18
+        BigInt.fromString("850000000000000000"), // 0.85 * 1e18
+        BigInt.fromString("50000000000000000")   // 0.05 * 1e18
+    )
     const expectedPoolReservesInfo = new ReservesInfo(
         params.reserves,
         params.claimableReserves,
@@ -397,30 +471,44 @@ export function mockPoolInfoUtilsPoolUpdateCalls(pool: Address, params: PoolMock
         params.reserveAuctionPrice,
         params.reserveAuctionTimeRemaining
     )
-    mockGetPoolReserves(pool, expectedPoolReservesInfo)
-
     const expectedPoolUtilizationInfo = new PoolUtilizationInfo(
         params.minDebtAmount,
         params.collateralization,
         params.actualUtilization,
         params.targetUtilization
     )
-    mockGetPoolUtilizationInfo(pool, expectedPoolUtilizationInfo)
 
-    // TODO: pass expected balance to mock balance calls
+    const expectedPoolDetails = new PoolDetails(
+        expectedPoolLoansInfo,
+        expectedPoolPricesInfo,
+        expectedRatesAndFeesInfo,
+        expectedPoolReservesInfo,
+        expectedPoolUtilizationInfo
+    )
+    mockGetPoolDetailsMulticall(pool, expectedPoolDetails)
+
     // load pool instance
     const poolInstance = Pool.load(addressToBytes(pool))!
-    // mock token balance calls
-    mockTokenBalance(Address.fromBytes(poolInstance.collateralToken), pool, decimalToWad(poolInstance.collateralBalance))
-    mockTokenBalance(Address.fromBytes(poolInstance.quoteToken), pool, decimalToWad(poolInstance.quoteTokenBalance))
+    const depositUpToIndex = wmul(params.poolSize, params.actualUtilization)
+    const meaningfulIndex = BigInt.fromI32(max(params.lupIndex.toI32(), params.htpIndex.toI32()))
+    const isNFT = poolInstance.poolType != 'Fungible'
 
-    mockGetRatesAndFees(
-      pool, 
-      BigInt.fromString("850000000000000000"), // 0.85 * 1e18
-      BigInt.fromString("50000000000000000"),  // 0.05 * 1e18
+    mockGetPoolBalanceDetails(
+        pool,
+        meaningfulIndex,
+        Address.fromBytes(poolInstance.quoteToken),
+        Address.fromBytes(poolInstance.collateralToken),
+        isNFT,
+        new PoolBalanceDetails(
+            params.debt,
+            ZERO_BI,
+            ZERO_BI,
+            ZERO_BI,
+            depositUpToIndex,
+            decimalToWad(poolInstance.quoteTokenBalance),
+            decimalToWad(poolInstance.collateralBalance)
+        )
     )
-
-    mockDepositUpToIndex(pool, params.lupIndex, wmul(params.poolSize, params.actualUtilization))
 }
 
 /****************************/

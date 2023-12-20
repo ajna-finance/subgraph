@@ -1,1036 +1,1031 @@
 [
   {
+    "type": "constructor",
     "inputs": [
       {
-        "internalType": "address",
         "name": "ajnaToken_",
-        "type": "address"
+        "type": "address",
+        "internalType": "address"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
+    "stateMutability": "nonpayable"
   },
   {
-    "inputs": [],
-    "name": "AlreadyVoted",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "DelegateRewardInvalid",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "DistributionPeriodStillActive",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ExecuteProposalInvalid",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "FundingVoteWrongDirection",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InsufficientRemainingVotingPower",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InsufficientVotingPower",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidProposal",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidProposalSlate",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidVote",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ProposalAlreadyExists",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ProposalNotSuccessful",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "RewardAlreadyClaimed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ScreeningPeriodEnded",
-    "type": "error"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "delegateeAddress",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "distributionId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rewardClaimed",
-        "type": "uint256"
-      }
-    ],
-    "name": "DelegateRewardClaimed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "distributionId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "startBlock",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "endBlock",
-        "type": "uint256"
-      }
-    ],
-    "name": "DistributionPeriodStarted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "treasuryBalance",
-        "type": "uint256"
-      }
-    ],
-    "name": "FundTreasury",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "distributionId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "fundedSlateHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "FundedSlateUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "proposer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address[]",
-        "name": "targets",
-        "type": "address[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "values",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "string[]",
-        "name": "signatures",
-        "type": "string[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes[]",
-        "name": "calldatas",
-        "type": "bytes[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "startBlock",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "endBlock",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "description",
-        "type": "string"
-      }
-    ],
-    "name": "ProposalCreated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      }
-    ],
-    "name": "ProposalExecuted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "support",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "weight",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "reason",
-        "type": "string"
-      }
-    ],
-    "name": "VoteCast",
-    "type": "event"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "distributionId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
-      }
-    ],
+    "type": "function",
     "name": "_voterInfo",
+    "inputs": [
+      {
+        "name": "distributionId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "voter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
     "outputs": [
       {
-        "internalType": "uint128",
         "name": "fundingVotingPower",
-        "type": "uint128"
+        "type": "uint128",
+        "internalType": "uint128"
       },
       {
-        "internalType": "uint128",
         "name": "fundingRemainingVotingPower",
-        "type": "uint128"
+        "type": "uint128",
+        "internalType": "uint128"
       },
       {
-        "internalType": "uint248",
         "name": "screeningVotesCast",
-        "type": "uint248"
+        "type": "uint248",
+        "internalType": "uint248"
       },
       {
-        "internalType": "bool",
         "name": "hasClaimedReward",
-        "type": "bool"
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "stateMutability": "view"
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "ajnaTokenAddress",
+    "inputs": [],
     "outputs": [
       {
-        "internalType": "address",
         "name": "",
-        "type": "address"
+        "type": "address",
+        "internalType": "address"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "stateMutability": "view"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint24",
-        "name": "distributionId_",
-        "type": "uint24"
-      }
-    ],
+    "type": "function",
     "name": "claimDelegateReward",
+    "inputs": [
+      {
+        "name": "distributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
     "outputs": [
       {
-        "internalType": "uint256",
         "name": "rewardClaimed_",
-        "type": "uint256"
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "stateMutability": "nonpayable"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "targets_",
-        "type": "address[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "values_",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "bytes[]",
-        "name": "calldatas_",
-        "type": "bytes[]"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "descriptionHash_",
-        "type": "bytes32"
-      }
-    ],
+    "type": "function",
     "name": "execute",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "proposalId_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "fundingAmount_",
-        "type": "uint256"
-      }
-    ],
-    "name": "fundTreasury",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "proposalId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "int256",
-            "name": "votesUsed",
-            "type": "int256"
-          }
-        ],
-        "internalType": "struct IGrantFundState.FundingVoteParams[]",
-        "name": "voteParams_",
-        "type": "tuple[]"
-      }
-    ],
-    "name": "fundingVote",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "votesCast_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "endBlock_",
-        "type": "uint256"
-      }
-    ],
-    "name": "getChallengeStageStartBlock",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint24",
-        "name": "distributionId_",
-        "type": "uint24"
-      },
-      {
-        "internalType": "address",
-        "name": "voter_",
-        "type": "address"
-      }
-    ],
-    "name": "getDelegateReward",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "rewards_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "description_",
-        "type": "string"
-      }
-    ],
-    "name": "getDescriptionHash",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getDistributionId",
-    "outputs": [
-      {
-        "internalType": "uint24",
-        "name": "",
-        "type": "uint24"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint24",
-        "name": "distributionId_",
-        "type": "uint24"
-      }
-    ],
-    "name": "getDistributionPeriodInfo",
-    "outputs": [
-      {
-        "internalType": "uint24",
-        "name": "",
-        "type": "uint24"
-      },
-      {
-        "internalType": "uint48",
-        "name": "",
-        "type": "uint48"
-      },
-      {
-        "internalType": "uint48",
-        "name": "",
-        "type": "uint48"
-      },
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "slateHash_",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getFundedProposalSlate",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "startBlock_",
-        "type": "uint256"
-      }
-    ],
-    "name": "getFundingStageEndBlock",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint24",
-        "name": "distributionId_",
-        "type": "uint24"
-      },
-      {
-        "internalType": "address",
-        "name": "account_",
-        "type": "address"
-      }
-    ],
-    "name": "getFundingVotesCast",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "proposalId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "int256",
-            "name": "votesUsed",
-            "type": "int256"
-          }
-        ],
-        "internalType": "struct IGrantFundState.FundingVoteParams[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "distributionId_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "account_",
-        "type": "address"
-      }
-    ],
-    "name": "getHasClaimedRewards",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "proposalId_",
-        "type": "uint256"
-      }
-    ],
-    "name": "getProposalInfo",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint24",
-        "name": "",
-        "type": "uint24"
-      },
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      },
-      {
-        "internalType": "int128",
-        "name": "",
-        "type": "int128"
-      },
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "startBlock_",
-        "type": "uint256"
-      }
-    ],
-    "name": "getScreeningStageEndBlock",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "distributionId_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "account_",
-        "type": "address"
-      }
-    ],
-    "name": "getScreeningVotesCast",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "proposalIds_",
-        "type": "uint256[]"
-      }
-    ],
-    "name": "getSlateHash",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getStage",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "stage_",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint24",
-        "name": "distributionId_",
-        "type": "uint24"
-      }
-    ],
-    "name": "getTopTenProposals",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint24",
-        "name": "distributionId_",
-        "type": "uint24"
-      },
-      {
-        "internalType": "address",
-        "name": "account_",
-        "type": "address"
-      }
-    ],
-    "name": "getVoterInfo",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint24",
-        "name": "distributionId_",
-        "type": "uint24"
-      },
-      {
-        "internalType": "address",
-        "name": "account_",
-        "type": "address"
-      }
-    ],
-    "name": "getVotesFunding",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "votes_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint24",
-        "name": "distributionId_",
-        "type": "uint24"
-      },
-      {
-        "internalType": "address",
-        "name": "account_",
-        "type": "address"
-      }
-    ],
-    "name": "getVotesScreening",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "votes_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
         "name": "targets_",
-        "type": "address[]"
+        "type": "address[]",
+        "internalType": "address[]"
       },
       {
-        "internalType": "uint256[]",
         "name": "values_",
-        "type": "uint256[]"
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       },
       {
-        "internalType": "bytes[]",
         "name": "calldatas_",
-        "type": "bytes[]"
+        "type": "bytes[]",
+        "internalType": "bytes[]"
       },
       {
-        "internalType": "bytes32",
         "name": "descriptionHash_",
-        "type": "bytes32"
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
-    "name": "hashProposal",
     "outputs": [
       {
-        "internalType": "uint256",
         "name": "proposalId_",
-        "type": "uint256"
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
-    "stateMutability": "pure",
-    "type": "function"
+    "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "fundTreasury",
     "inputs": [
       {
-        "internalType": "address[]",
-        "name": "targets_",
-        "type": "address[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "values_",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "bytes[]",
-        "name": "calldatas_",
-        "type": "bytes[]"
-      },
-      {
-        "internalType": "string",
-        "name": "description_",
-        "type": "string"
+        "name": "fundingAmount_",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
-    "name": "propose",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "proposalId_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "fundingVote",
     "inputs": [
       {
+        "name": "voteParams_",
+        "type": "tuple[]",
+        "internalType": "struct IGrantFundState.FundingVoteParams[]",
         "components": [
           {
-            "internalType": "uint256",
             "name": "proposalId",
-            "type": "uint256"
+            "type": "uint256",
+            "internalType": "uint256"
           },
           {
-            "internalType": "uint256",
-            "name": "votes",
-            "type": "uint256"
+            "name": "votesUsed",
+            "type": "int256",
+            "internalType": "int256"
           }
-        ],
-        "internalType": "struct IGrantFundState.ScreeningVoteParams[]",
-        "name": "voteParams_",
-        "type": "tuple[]"
+        ]
       }
     ],
-    "name": "screeningVote",
     "outputs": [
       {
-        "internalType": "uint256",
         "name": "votesCast_",
-        "type": "uint256"
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "stateMutability": "nonpayable"
   },
   {
-    "inputs": [],
-    "name": "startNewDistributionPeriod",
-    "outputs": [
-      {
-        "internalType": "uint24",
-        "name": "newDistributionId_",
-        "type": "uint24"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
+    "type": "function",
+    "name": "getChallengeStageStartBlock",
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "proposalId_",
-        "type": "uint256"
+        "name": "endBlock_",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
-    "name": "state",
     "outputs": [
       {
-        "internalType": "enum IGrantFundState.ProposalState",
         "name": "",
-        "type": "uint8"
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "stateMutability": "pure"
   },
   {
-    "inputs": [],
-    "name": "treasury",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
+    "type": "function",
+    "name": "getDelegateReward",
     "inputs": [
       {
-        "internalType": "uint256[]",
-        "name": "proposalIds_",
-        "type": "uint256[]"
+        "name": "distributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
       },
       {
-        "internalType": "uint24",
-        "name": "distributionId_",
-        "type": "uint24"
+        "name": "voter_",
+        "type": "address",
+        "internalType": "address"
       }
     ],
-    "name": "updateSlate",
     "outputs": [
       {
-        "internalType": "bool",
-        "name": "newTopSlate_",
-        "type": "bool"
+        "name": "rewards_",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDescriptionHash",
+    "inputs": [
+      {
+        "name": "description_",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "getDistributionId",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDistributionPeriodInfo",
+    "inputs": [
+      {
+        "name": "distributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint24",
+        "internalType": "uint24"
+      },
+      {
+        "name": "",
+        "type": "uint48",
+        "internalType": "uint48"
+      },
+      {
+        "name": "",
+        "type": "uint48",
+        "internalType": "uint48"
+      },
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getFundedProposalSlate",
+    "inputs": [
+      {
+        "name": "slateHash_",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getFundingStageEndBlock",
+    "inputs": [
+      {
+        "name": "startBlock_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "getFundingVotesCast",
+    "inputs": [
+      {
+        "name": "distributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
+      },
+      {
+        "name": "account_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple[]",
+        "internalType": "struct IGrantFundState.FundingVoteParams[]",
+        "components": [
+          {
+            "name": "proposalId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "votesUsed",
+            "type": "int256",
+            "internalType": "int256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getHasClaimedRewards",
+    "inputs": [
+      {
+        "name": "distributionId_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "account_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getProposalInfo",
+    "inputs": [
+      {
+        "name": "proposalId_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint24",
+        "internalType": "uint24"
+      },
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
+        "name": "",
+        "type": "int128",
+        "internalType": "int128"
+      },
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getScreeningStageEndBlock",
+    "inputs": [
+      {
+        "name": "startBlock_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "getScreeningVotesCast",
+    "inputs": [
+      {
+        "name": "distributionId_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "account_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getSlateHash",
+    "inputs": [
+      {
+        "name": "proposalIds_",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "getStage",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "stage_",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getTopTenProposals",
+    "inputs": [
+      {
+        "name": "distributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getVoterInfo",
+    "inputs": [
+      {
+        "name": "distributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
+      },
+      {
+        "name": "account_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
+        "name": "",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getVotesFunding",
+    "inputs": [
+      {
+        "name": "distributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
+      },
+      {
+        "name": "account_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "votes_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getVotesScreening",
+    "inputs": [
+      {
+        "name": "distributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
+      },
+      {
+        "name": "account_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "votes_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "hashProposal",
+    "inputs": [
+      {
+        "name": "targets_",
+        "type": "address[]",
+        "internalType": "address[]"
+      },
+      {
+        "name": "values_",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "calldatas_",
+        "type": "bytes[]",
+        "internalType": "bytes[]"
+      },
+      {
+        "name": "descriptionHash_",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "proposalId_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "propose",
+    "inputs": [
+      {
+        "name": "targets_",
+        "type": "address[]",
+        "internalType": "address[]"
+      },
+      {
+        "name": "values_",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "calldatas_",
+        "type": "bytes[]",
+        "internalType": "bytes[]"
+      },
+      {
+        "name": "description_",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "proposalId_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "screeningVote",
+    "inputs": [
+      {
+        "name": "voteParams_",
+        "type": "tuple[]",
+        "internalType": "struct IGrantFundState.ScreeningVoteParams[]",
+        "components": [
+          {
+            "name": "proposalId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "votes",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "votesCast_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "startNewDistributionPeriod",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "newDistributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "state",
+    "inputs": [
+      {
+        "name": "proposalId_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "enum IGrantFundState.ProposalState"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "treasury",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "updateSlate",
+    "inputs": [
+      {
+        "name": "proposalIds_",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "distributionId_",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "newTopSlate_",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "DelegateRewardClaimed",
+    "inputs": [
+      {
+        "name": "delegateeAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "distributionId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "rewardClaimed",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "DistributionPeriodStarted",
+    "inputs": [
+      {
+        "name": "distributionId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "startBlock",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "endBlock",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "FundTreasury",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "treasuryBalance",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "FundedSlateUpdated",
+    "inputs": [
+      {
+        "name": "distributionId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "fundedSlateHash",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ProposalCreated",
+    "inputs": [
+      {
+        "name": "proposalId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "proposer",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "targets",
+        "type": "address[]",
+        "indexed": false,
+        "internalType": "address[]"
+      },
+      {
+        "name": "values",
+        "type": "uint256[]",
+        "indexed": false,
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "signatures",
+        "type": "string[]",
+        "indexed": false,
+        "internalType": "string[]"
+      },
+      {
+        "name": "calldatas",
+        "type": "bytes[]",
+        "indexed": false,
+        "internalType": "bytes[]"
+      },
+      {
+        "name": "startBlock",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "endBlock",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ProposalExecuted",
+    "inputs": [
+      {
+        "name": "proposalId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "VoteCast",
+    "inputs": [
+      {
+        "name": "voter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "proposalId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "support",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
+      },
+      {
+        "name": "weight",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "reason",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "DelegateRewardInvalid",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "DistributionPeriodStillActive",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ExecuteProposalInvalid",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FundingVoteWrongDirection",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientRemainingVotingPower",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientVotingPower",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidProposal",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidProposalSlate",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidVote",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ProposalAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ProposalNotSuccessful",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RewardAlreadyClaimed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ScreeningPeriodEnded",
+    "inputs": []
   }
 ]

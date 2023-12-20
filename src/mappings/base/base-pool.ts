@@ -18,7 +18,7 @@ import { ONE_BI, TEN_BI, ZERO_BD } from "../../utils/constants"
 import { addressToBytes, bigIntArrayToIntArray, wadToDecimal } from "../../utils/convert"
 import { getBucketId, getBucketInfo, loadOrCreateBucket, updateBucketLends } from "../../utils/pool/bucket"
 import { getDepositTime, getLendId, loadOrCreateLend, lpbValueInQuote, saveOrRemoveLend } from "../../utils/pool/lend"
-import { addReserveAuctionToPool, getBurnInfo, getLenderInfo, isERC20Pool, updatePool } from "../../utils/pool/pool"
+import { addReserveAuctionToPool, getBurnInfo, getLenderInfo, isERC20Pool, updatePool } from '../../utils/pool/pool';
 import { incrementTokenTxCount as incrementTokenTxCountERC20Pool } from "../../utils/token-erc20"
 import { incrementTokenTxCount as incrementTokenTxCountERC721Pool } from "../../utils/token-erc721"
 import { loadOrCreateReserveAuction } from "../../utils/pool/reserve-auction"

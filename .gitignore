@@ -71,3 +71,4 @@ data/
 # matchstick test files
 tests/.bin/
 tests/.latest.json
+tests/.docker/

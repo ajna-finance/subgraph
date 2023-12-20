@@ -21,6 +21,8 @@ export function loadOrCreateLoan(loanId: Bytes, poolId: Bytes, borrower: Bytes):
       loan.poolAddress         = poolId.toHexString()
       loan.collateralPledged   = ZERO_BD
       loan.t0debt              = ZERO_BD
+      loan.t0Np                = ZERO_BD
+      loan.thresholdPrice      = ZERO_BD
       loan.inLiquidation       = false
       loan.liquidationAuction  = null
       loan.tokenIdsPledged     = []
@@ -46,31 +48,24 @@ export class BorrowerInfo {
   t0debt: BigInt
   collateral: BigInt
   t0Np: BigInt
-  constructor(t0debt: BigInt, collateral: BigInt, t0Np: BigInt) {
+  thresholdPrice: BigInt
+  constructor(t0debt: BigInt, collateral: BigInt, t0Np: BigInt, thresholdPrice: BigInt) {
     this.t0debt = t0debt
     this.collateral = collateral
     this.t0Np = t0Np
+    this.thresholdPrice = thresholdPrice
   }
 }
 export function getBorrowerInfo(borrower: Bytes, poolId: Bytes): BorrowerInfo {
-  const poolContract = ERC20Pool.bind(Address.fromBytes(poolId))
-  const borrowerInfoResult = poolContract.borrowerInfo(Address.fromBytes(borrower))
+  const poolInfoUtilsAddress  = poolInfoUtilsAddressTable.get(dataSource.network())!
+  const poolInfoUtilsContract = PoolInfoUtils.bind(poolInfoUtilsAddress)
+  const borrowerInfoResult    = poolInfoUtilsContract.borrowerInfo(Address.fromBytes(poolId), Address.fromBytes(borrower))
 
   return new BorrowerInfo(
     borrowerInfoResult.value0,
     borrowerInfoResult.value1,
-    borrowerInfoResult.value2
-  )
-}
-
-export function getBorrowerInfoERC721Pool(borrower: Bytes, poolId: Bytes): BorrowerInfo {
-  const poolContract = ERC721Pool.bind(Address.fromBytes(poolId))
-  const borrowerInfoResult = poolContract.borrowerInfo(Address.fromBytes(borrower))
-
-  return new BorrowerInfo(
-    borrowerInfoResult.value0,
-    borrowerInfoResult.value1,
-    borrowerInfoResult.value2
+    borrowerInfoResult.value2,
+    borrowerInfoResult.value3
   )
 }
 

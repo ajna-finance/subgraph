@@ -69,7 +69,7 @@ dataSources:
         - name: PoolInfoUtils
           file: ./abis/PoolInfoUtils.json
       eventHandlers:
-        - event: PoolCreated(address)
+        - event: PoolCreated(address,bytes32)
           handler: handlePoolCreated
       file: ./src/mappings/erc-20-pool-factory.ts
     network: goerli
@@ -97,7 +97,7 @@ dataSources:
         - name: PoolInfoUtils
           file: ./abis/PoolInfoUtils.json
       eventHandlers:
-        - event: PoolCreated(address)
+        - event: PoolCreated(address,bytes32)
           handler: handlePoolCreated
       file: ./src/mappings/erc-721-pool-factory.ts
     network: goerli
@@ -227,6 +227,8 @@ templates:
           file: ./abis/ERC20Pool.json
         - name: PoolInfoUtils
           file: ./abis/PoolInfoUtils.json
+        - name: PoolInfoUtilsMulticall
+          file: ./abis/PoolInfoUtilsMulticall.json
       eventHandlers:
         - event: AddCollateral(indexed address,indexed uint256,uint256,uint256)
           handler: handleAddCollateral
@@ -332,6 +334,8 @@ templates:
           file: ./abis/ERC721Pool.json
         - name: PoolInfoUtils
           file: ./abis/PoolInfoUtils.json
+        - name: PoolInfoUtilsMulticall
+          file: ./abis/PoolInfoUtilsMulticall.json
       eventHandlers:
         - event: AddCollateralNFT(indexed address,indexed uint256,uint256[],uint256)
           handler: handleAddCollateralNFT
