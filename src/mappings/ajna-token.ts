@@ -75,7 +75,7 @@ export function handleDelegateVotesChanged(
 export function handleAjnaTokenTransfer(
   event: AjnaTokenTransferEvent
 ): void {
-  const ajnaToken = event.transaction.from
+  const ajnaToken = event.transaction.to!
 
   const fromAccount  = loadOrCreateAccount(addressToBytes(event.params.from))
   fromAccount.tokens = wadToDecimal(getTokenBalance(ajnaToken, event.params.from))
