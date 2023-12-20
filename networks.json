@@ -51,18 +51,44 @@
       "startBlock": 46312499
     }
   },
-  "goerli": {
+  "base": {
     "ERC20PoolFactory": {
-      "address": "0x14F2474fB5ea9DF82059053c4F85A8C803Ab10C9",
-      "startBlock": 9888337
+      "address": "0xdc01502485c02496a929c12762cE99Fd755c6a25",
+      "startBlock": 8156311
     },
     "ERC721PoolFactory": {
-      "address": "0xb0d1c875B240EE9f6C2c3284a31b10f1EC6De7d2",
-      "startBlock": 9888337
+      "address": "0x513cc6E8De2FC3c7532d867fc6c287ABb56df230",
+      "startBlock": 8156311
     },
     "PositionManager": {
-      "address": "0xC4114D90F51960854ab574297Cf7CC131d445F29",
-      "startBlock": 9888337
+      "address": "0x72Ce601AecE3C46eF2b7C85712E05d7c0f29A364",
+      "startBlock": 8156311
+    },
+    "GrantFund": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 8156311
+    },
+    "AjnaToken": {
+      "address": "0xf0f326af3b1Ed943ab95C29470730CC8Cf66ae47",
+      "startBlock": 3055193
+    },
+    "BurnWrappedAjna": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 3055193
+    }
+  },
+  "goerli": {
+    "ERC20PoolFactory": {
+      "address": "0xA2d6694F24c84e428B97bF9fCD8E3e3dba3023D0",
+      "startBlock": 10243942
+    },
+    "ERC721PoolFactory": {
+      "address": "0x0CC0Ba1bC6f45513422D6BF301Bd1Cb8c78B5861",
+      "startBlock": 10243942
+    },
+    "PositionManager": {
+      "address": "0x20BE7129B4126dC39aadBfA4C3360b52313a660D",
+      "startBlock": 10243942
     },
     "GrantFund": {
       "address": "0x17C7eb98aD29c8C07C2842C4B64342142C405aF4",
