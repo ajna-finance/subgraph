@@ -78,7 +78,7 @@ export function getRatesAndFees(poolId: Bytes): RatesAndFees {
 
   const lim = poolInfoUtilsContract.lenderInterestMargin(poolAddress)
   const bfr = poolInfoUtilsContract.borrowFeeRate(poolAddress)
-  const dfr = poolInfoUtilsContract.unutilizedDepositFeeRate(poolAddress)
+  const dfr = poolInfoUtilsContract.depositFeeRate(poolAddress)
   return new RatesAndFees(lim, bfr, dfr);
 }
 
@@ -468,7 +468,7 @@ export function getDebtInfoERC721Pool(pool: Pool): DebtInfo {
 
 export function getTotalBucketTokens(pool: Bytes): BigInt {
   const poolContract = ERC721Pool.bind(Address.fromBytes(pool))
-  return poolContract.totalBucketTokens()
+  return BigInt.fromU64(poolContract.bucketTokenIds.length)
 }
 
 export function isERC20Pool(pool: Pool): boolean {

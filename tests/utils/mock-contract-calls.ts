@@ -182,7 +182,7 @@ export function mockGetRatesAndFees(pool: Address, expectedLenderInterestMargin:
   createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'borrowFeeRate', 'borrowFeeRate(address):(uint256)')
       .withArgs([ethereum.Value.fromAddress(pool)])
       .returns([ethereum.Value.fromUnsignedBigInt(expectedBorrowFeeRate)])
-  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'unutilizedDepositFeeRate', 'unutilizedDepositFeeRate(address):(uint256)')
+  createMockedFunction(poolInfoUtilsAddressTable.get(dataSource.network())!, 'depositFeeRate', 'depositFeeRate(address):(uint256)')
       .withArgs([ethereum.Value.fromAddress(pool)])
       .returns([ethereum.Value.fromUnsignedBigInt(expectedDepositFeeRate)])
 }
