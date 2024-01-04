@@ -33,7 +33,6 @@ poolInfoUtilsAddressTable.set('mainnet', Address.fromString('0x154FFf344f426F99E
 poolInfoUtilsAddressTable.set('matic', Address.fromString('0xA9Ada58DD3c820b30D3bf5B490226F2ef92107bA'))
 poolInfoUtilsAddressTable.set('base', Address.fromString('0x1358e3be37C191Eb5B842F673fcB5C79Cc4F6644'))
 poolInfoUtilsAddressTable.set('goerli', Address.fromString('0xdE8D83e069F552fbf3EE5bF04E8C4fa53a097ee5'))
-poolInfoUtilsAddressTable.set('mumbai', Address.fromString('0x39250241CC84Dadb1cDFE3A1a717631e2aA603eB'))
 poolInfoUtilsAddressTable.set('ganache', Address.fromString('0x6c5c7fD98415168ada1930d44447790959097482'))
 export const poolInfoUtilsMulticallAddressTable = new TypedMap<string, Address>()
 poolInfoUtilsMulticallAddressTable.set('base', Address.fromString('0x372F9c6A49a4E68e47459Eed6e6452c0823956b6'))
