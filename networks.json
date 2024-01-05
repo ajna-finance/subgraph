@@ -103,6 +103,32 @@
       "startBlock": 46312499
     }
   },
+  "optimism": {
+    "ERC20PoolFactory": {
+      "address": "0x43cD60250CBBC0C22663438dcf644F5162988C06",
+      "startBlock": 114432276
+    },
+    "ERC721PoolFactory": {
+      "address": "0x7F4bE0828dC1523A27f20a597d1F1bB4b5134123",
+      "startBlock": 114432276
+    },
+    "PositionManager": {
+      "address": "0x80A21A780f1300aa37Df1CCA0F96981FBc2785BD",
+      "startBlock": 114432276
+    },
+    "GrantFund": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 114432276
+    },
+    "AjnaToken": {
+      "address": "0x6c518f9D1a163379235816c543E62922a79863Fa",
+      "startBlock": 108793581
+    },
+    "BurnWrappedAjna": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 114432276
+    }
+  },
   "goerli": {
     "ERC20PoolFactory": {
       "address": "0xDB61f8aD0B3ed0c5522b8FE71b80023fe9188e9e",
