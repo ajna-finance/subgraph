@@ -79,20 +79,20 @@
   },
   "matic": {
     "ERC20PoolFactory": {
-      "address": "0x7f18C4DAfA5AEF9B0C4baF47e426bc57494ceE33",
-      "startBlock": 46312499
+      "address": "0x3D6b8B4a2AEC46961AE337F4A9EBbf283aA482AA",
+      "startBlock": 51974039
     },
     "ERC721PoolFactory": {
-      "address": "0x595c823EdAA612972d77aCf324C11F6284B9f5F6",
-      "startBlock": 46312499
+      "address": "0x1D705aa62DC4E95fd8A473476aF619AD0853E560",
+      "startBlock": 51974039
     },
     "PositionManager": {
-      "address": "0x0000000000000000000000000000000000000000",
-      "startBlock": 46312499
+      "address": "0x4f5c573115c8F66F046Ab3328e44Ebc4335A584e",
+      "startBlock": 51974039
     },
     "GrantFund": {
       "address": "0x0000000000000000000000000000000000000000",
-      "startBlock": 46312499
+      "startBlock": 51974039
     },
     "AjnaToken": {
       "address": "0xA63b19647787Da652D0826424460D1BBf43Bf9c6",
@@ -100,7 +100,7 @@
     },
     "BurnWrappedAjna": {
       "address": "0x0000000000000000000000000000000000000000",
-      "startBlock": 46312499
+      "startBlock": 51974039
     }
   },
   "optimism": {
