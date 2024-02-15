@@ -1,19 +1,19 @@
-version: '3.7'
+version: "3.7"
 
 services:
   ajna-testnet:
-    image: ghcr.io/ajna-finance/ajna-testnet:rc8b
+    image: ghcr.io/builtbymom/ajna-testnet:v0.1.0.rc10
     ports:
       - 8555:8555
     container_name: ajna-testnet-devenv
   graph-node:
     image: graphprotocol/graph-node
     ports:
-      - '${GRAPHQL_HTTP:-8000}:8000'
-      - '${GRAPHQL_WSS:-8001}:8001'
-      - '${GRAPHQL_ADMIN:-8020}:8020'
-      - '${GRAPHQL_INDEXER:-8030}:8030'
-      - '${GRAPHQL_METRICS:-8040}:8040'
+      - "${GRAPHQL_HTTP:-8000}:8000"
+      - "${GRAPHQL_WSS:-8001}:8001"
+      - "${GRAPHQL_ADMIN:-8020}:8020"
+      - "${GRAPHQL_INDEXER:-8030}:8030"
+      - "${GRAPHQL_METRICS:-8040}:8040"
     depends_on:
       - ipfs
       - postgres
@@ -24,7 +24,7 @@ services:
       postgres_user: graph-node
       postgres_pass: let-me-in
       postgres_db: graph-node
-      ipfs: 'ipfs:5001'
+      ipfs: "ipfs:5001"
       ethereum: ganache:http://ajna-testnet:8555
       ETHEREUM_REORG_THRESHOLD: 1
       ETHEREUM_ANCESTOR_COUNT: 1
@@ -33,13 +33,13 @@ services:
   ipfs:
     image: ipfs/kubo:master-latest
     ports:
-      - '${GRAPHQL_IPFS:-5001}:5001'
+      - "${GRAPHQL_IPFS:-5001}:5001"
     volumes:
       - ${GRAPHQL_DATADIR:-./data}/ipfs:/data/ipfs
   postgres:
     image: postgres
     expose:
-      - '5432'
+      - "5432"
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
     environment:
       POSTGRES_USER: graph-node

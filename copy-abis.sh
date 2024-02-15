@@ -1,6 +1,6 @@
 #!/bin/bash
-ABI_PATH_CONTRACTS="${1:-../contracts/forge_out}"
-ABI_PATH_GRANTS="${2:-../ecosystem-coordination/out}"
+ABI_PATH_CONTRACTS="${1:-../ajna-core/forge_out}"
+ABI_PATH_GRANTS="${2:-../ajna-grants/out}"
 
 # This script generates ABIs from forge output.
 # Before running, ensure forge output in your ABI_PATHs have been compiled from the 

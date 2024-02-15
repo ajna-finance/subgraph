@@ -68,6 +68,8 @@ dataSources:
           file: ./abis/ERC20.json
         - name: PoolInfoUtils
           file: ./abis/PoolInfoUtils.json
+        - name: DSToken
+          file: ./abis/DSToken.json
       eventHandlers:
         - event: PoolCreated(address,bytes32)
           handler: handlePoolCreated
