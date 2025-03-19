@@ -4,6 +4,8 @@
 
 This Subgraph ingests contracts used by the Ajna Protocol. Core contracts can be found [here](https://github.com/ajna-finance/contracts).
 
+This repository is no longer maintained; please refer to https://github.com/BuiltByMom/ajna-subgraph. 
+
 
 ## Installation
 Install using `yarn`, because `npm` has an issue installing [Gluegun](https://github.com/infinitered/gluegun).
